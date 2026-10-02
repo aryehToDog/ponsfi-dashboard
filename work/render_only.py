@@ -9,26 +9,23 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v1.4「浏览量统计」 · 2026-10-02
+     ponsfi.xyz 看板 · 版本 v1.5「跌档双曲轮换」 · 2026-10-02
      历史备份（每个都含同名 zip）：
-       backups/ponsfi-v1-2026-10-02/  ponsfi-v1.1-… / ponsfi-v1.2-… / ponsfi-v1.3-2026-10-02/
-     本版备份：backups/ponsfi-v1.4-2026-10-02/  ＋  ponsfi-v1.4-2026-10-02.zip
-     v1.4 新增：页脚浏览量统计（自建计数，不接任何第三方统计）——
-               「👁 总浏览 / 今日 / 今日访客」跟着版本号排在页脚最下面一行。
-               · 后端 deploy/counter/counter.py：纯标准库小服务，systemd 常驻，
-                 nginx 把 /api/hits 反代到 127.0.0.1:8788（见 /etc/nginx/conf.d/pons-dashboard.conf）
-               · 每次打开页面计 1 次浏览；同一天同一 IP 只计 1 个访客（存的是加盐哈希，不存原始 IP）
-               · 爬虫 / 探针（bot、spider、curl、wget、监控…）不计入
-               · 数据留在 /var/lib/pons-counter/counts.json，保留最近 400 天
-               · 只读统计：https://ponsfi.xyz/api/stats
-               · 本地 file:// 打开不计数；计数服务挂了页面也不会报错，只是不显示这块
+       backups/ponsfi-v1-… / ponsfi-v1.1-… / ponsfi-v1.2-… / ponsfi-v1.3-… / ponsfi-v1.4-2026-10-02/
+     本版备份：backups/ponsfi-v1.5-2026-10-02/  ＋  ponsfi-v1.5-2026-10-02.zip
+     v1.5 改动：跌幅档从 1 首变 2 首，放完一首自动换下一首，来回轮换 ——
+               《梦的翅膀受了伤》(audio/down-meng.mp3) → 《兄弟抱一下》(audio/down.mp3) → …
+               · 进跌档先放《梦的翅膀受了伤》；涨档仍是《逍遥仙》(audio/up.mp3) 单曲循环
+               · 曲目表在 rebuild_template.py 的 BGM_TRACKS；轮换游标 bgmRot
+               · BGM 详情面板会显示「第 1/2 首」和当前曲名，方便确认在放哪首
+     v1.4 新增：页脚浏览量统计（自建计数 /api/hits，见 deploy/counter/）
      v1.3 新增：收入排行板块（DefiLlama 全站榜单裁剪，见 work/leaderboard.py）
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      ========================================================================== -->
-<meta name="dashboard-version" content="v1.4-2026-10-02">
+<meta name="dashboard-version" content="v1.5-2026-10-02">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v1.4 · 2026-10-02"
+VER = "v1.5 · 2026-10-02"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

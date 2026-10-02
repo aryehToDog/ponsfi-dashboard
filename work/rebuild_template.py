@@ -927,7 +927,7 @@ BGM_CSS = r'''
 '''
 
 BGM_HTML = (
-    '  <!-- ===== 行情BGM：涨 →《逍遥仙》· 跌 →《兄弟抱一下》（音源、阈值改这里）===== -->'
+    '  <!-- ===== 行情BGM：涨 →《逍遥仙》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》轮换（音源、阈值改这里）===== -->'
     '  <div class="bgm" id="bgm">'
     '    <div class="bgm-det" id="bgmDet">'
     '      <div class="bgm-head" id="bgmScore"></div>'
@@ -945,7 +945,8 @@ BGM_HTML = (
 
 BGM_JS = r'''
 /* ==================== 行情 BGM ====================
-   涨 →《逍遥仙》　跌 →《兄弟抱一下》　（以币价为主：涨了开心，跌了难受）
+   涨 →《逍遥仙》　跌 →《梦的翅膀受了伤》→《兄弟抱一下》→ 两首来回轮着放
+   （以币价为主：涨了开心，跌了难受；跌幅这一档两首换着听，不腻）
    评分：单币情绪 = 7 日涨跌 × 0.65 + 24h 涨跌 × 0.35（单位 %）
         综合情绪 = 按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
    分档：≥ +3% 涨档 · ≤ −3% 跌档；回到 ±1.5% 以内才退出该档（滞回，防抖）
@@ -955,17 +956,32 @@ BGM_JS = r'''
    音源：优先 audio/up.mp3、audio/down.mp3（你自己上传的真歌）；
         文件不存在时自动回落到内置占位旋律（Web Audio 合成的原创乐句，不含任何版权素材）
    ================================================== */
-const BGM_FILES = { up:'audio/up.mp3', down:'audio/down.mp3' };
+/* 每个档位一组曲目：跌幅档两首轮换，第一首《梦的翅膀受了伤》，第二首《兄弟抱一下》 */
+const BGM_TRACKS = {
+  up:   [{ src:'audio/up.mp3',        name:'bgmUpName'   }],
+  down: [{ src:'audio/down-meng.mp3', name:'bgmDownName2' },
+         { src:'audio/down.mp3',      name:'bgmDownName'  }]
+};
 const BGM_TH = 3.0, BGM_EXIT = 1.5, BGM_MIN_MS = 90000, BGM_FADE_MS = 1200;
 
-let bgmOn=true, bgmBand=null, bgmCur=null, bgmSince=0, bgmMoodCache=null;
+let bgmOn=true, bgmBand=null, bgmCur=null, bgmCurIdx=0, bgmSince=0, bgmMoodCache=null;
 const bgmEls={}, bgmMissing={};
+const bgmRot={ up:0, down:0 };      /* 每档下一首该放第几首（轮换游标） */
 /* 默认自动开；用户手动关过（静音）就再也不自动响 */
 try{ if(localStorage.getItem('pons-bgm-muted')==='1') bgmOn=false; }catch(e){}
 var bgmStartedOnce=false, bgmListenersOn=false, bgmSkipToggle=false;
 
 function bgmBandTxt(b){ return b==='up'? t('bgmBandUp') : b==='down'? t('bgmBandDown') : t('bgmBandFlat'); }
-function bgmName(key){ return key==='up'? t('bgmUpName') : t('bgmDownName'); }
+function bgmTrack(band, idx){ var l=BGM_TRACKS[band]||[]; return l[idx]||l[0]||null; }
+function bgmName(band, idx){
+  if(band===null||band===undefined) return t('bgmName');
+  var tr=bgmTrack(band, idx||0);
+  return tr? t(tr.name) : (band==='up'? t('bgmUpName') : t('bgmDownName'));
+}
+function bgmTrackNo(band, idx){
+  var n=(BGM_TRACKS[band]||[]).length;
+  return n>1? t('bgmTrackNo')((idx||0)+1, n) : '';
+}
 function bgmPct(v){ return (v===null||v===undefined||!isFinite(v))? '—' : (v>=0?'+':'')+v.toFixed(1)+'%'; }
 
 /* ---- 自动播放闸门 ----
@@ -999,7 +1015,9 @@ function bgmOffState(){ return !bgmOn; }
 function bgmKickstart(){
   if(!bgmOn || bgmCur) return;
   try{ if(bgmActx && bgmActx.state==='suspended') bgmActx.resume(); }catch(e){}
-  ['up','down'].forEach(function(k){ try{ bgmEl(k).load(); }catch(e){} });
+  Object.keys(BGM_TRACKS).forEach(function(b){
+    BGM_TRACKS[b].forEach(function(_tr,i){ try{ bgmEl(b,i).load(); }catch(e){} });
+  });
   bgmBand = null; bgmSince = 0;
   bgmSync();
   if(bgmOn && !bgmCur && bgmMoodCache) bgmSwitch(bgmMoodCache.score>=0? 'up' : 'down');
@@ -1011,15 +1029,21 @@ function bgmOnPlayed(){
   if(!bgmStartedOnce){ bgmStartedOnce = true; if(typeof toast==='function') toast(t('bgmTip')); }
 }
 
-function bgmEl(key){
+function bgmEl(band, idx){
+  var key = band + idx;
   if(bgmEls[key]) return bgmEls[key];
+  var tr = bgmTrack(band, idx);
   var a = new Audio();
-  a.loop = true; a.preload = 'none'; a.volume = 0;
-  a.src = BGM_FILES[key];
+  a.loop = ((BGM_TRACKS[band]||[]).length < 2);   /* 只有一首就单曲循环；两首就放完换下一首 */
+  a.preload = 'none'; a.volume = 0;
+  a.src = tr.src;
   a.addEventListener('error', function(){
     bgmMissing[key] = true;
-    if(bgmOn && bgmCur===key && bgmSynthOn!==key) bgmSynthStart(key);
+    if(bgmOn && bgmCur===band && bgmCurIdx===idx && bgmSynthOn!==band) bgmSynthStart(band);
     bgmPaint();
+  });
+  a.addEventListener('ended', function(){
+    if(bgmOn && bgmCur===band && bgmCurIdx===idx) bgmNext();   /* 这首放完 → 同档下一首 */
   });
   bgmEls[key] = a; return a;
 }
@@ -1095,13 +1119,15 @@ function bgmStopAll(){
   bgmCur = null;
 }
 
-function bgmSwitch(key){
-  if(bgmCur === key) return;
+function bgmPlay(band, idx){
+  var tr = bgmTrack(band, idx);
+  if(!tr) return;
+  var key = band + idx;
   Object.keys(bgmEls).forEach(function(k){ if(k!==key) bgmFade(bgmEls[k], 0, BGM_FADE_MS); });
   bgmSynthStop();
-  bgmCur = key; bgmSince = Date.now();
-  if(bgmMissing[key]){ bgmSynthStart(key); bgmPaint(); return; }
-  var a = bgmEl(key);
+  bgmCur = band; bgmCurIdx = idx; bgmSince = Date.now();
+  if(bgmMissing[key]){ bgmSynthStart(band); bgmPaint(); return; }
+  var a = bgmEl(band, idx);
   a.volume = 0;
   var pr = null;
   try{ pr = a.play(); }catch(e){}
@@ -1111,10 +1137,30 @@ function bgmSwitch(key){
     if(n === 'NotAllowedError' || n === 'AbortError'){    /* 被自动播放策略拦下：等第一次交互 */
       bgmCur = null; bgmArmGesture(); bgmPaint(); return;
     }
-    bgmMissing[key] = true; bgmSynthStart(key); bgmArmGesture(); bgmPaint();
+    bgmMissing[key] = true; bgmSynthStart(band); bgmArmGesture(); bgmPaint();
   }
   if(pr && pr.then) pr.then(go).catch(fail); else go();
   bgmPaint();
+}
+
+/* 切到某一档：同一档正在放就不打断；进档时取轮换游标那首，取完游标后移 */
+function bgmSwitch(band){
+  if(bgmCur === band) return;
+  var list = BGM_TRACKS[band] || [];
+  if(!list.length) return;
+  var idx = (bgmRot[band]||0) % list.length;
+  bgmRot[band] = (idx + 1) % list.length;
+  bgmPlay(band, idx);
+}
+
+/* 一首放完 → 同档下一首（跌幅档两首来回轮） */
+function bgmNext(){
+  if(!bgmCur) return;
+  var list = BGM_TRACKS[bgmCur] || [];
+  if(list.length < 2) return;
+  var idx = (bgmRot[bgmCur]||0) % list.length;
+  bgmRot[bgmCur] = (idx + 1) % list.length;
+  bgmPlay(bgmCur, idx);
 }
 
 function bgmMood(){
@@ -1163,7 +1209,7 @@ function bgmPaint(){
   root.classList.toggle('up', !!playing && bgmCur==='up');
   root.classList.toggle('down', !!playing && bgmCur==='down');
   var tEl = document.getElementById('bgmT'), sEl = document.getElementById('bgmS');
-  if(tEl) tEl.textContent = bgmCur? bgmName(bgmCur) : t('bgmName');
+  if(tEl) tEl.textContent = bgmCur? bgmName(bgmCur, bgmCurIdx) : t('bgmName');
   if(sEl){
     if(!bgmOn) sEl.textContent = t('bgmOff');
     else if(!m) sEl.textContent = t('bgmNoData');
@@ -1192,8 +1238,9 @@ function bgmPaint(){
   }
   var src = document.getElementById('bgmSrc');
   if(src){
-    if(bgmOn && bgmCur && bgmMissing[bgmCur]) src.textContent = t('bgmPlaceholder');
-    else if(bgmOn && bgmCur) src.textContent = t('bgmReal') + ' · ' + t('bgmMin') + '　｜　' + t('bgmHow');
+    var no = bgmCur? bgmTrackNo(bgmCur, bgmCurIdx) : '';
+    if(bgmOn && bgmCur && bgmMissing[bgmCur+bgmCurIdx]) src.textContent = t('bgmPlaceholder');
+    else if(bgmOn && bgmCur) src.textContent = (no? no+' · ' : '') + t('bgmReal') + ' · ' + t('bgmMin') + '　｜　' + t('bgmHow');
     else src.textContent = t('bgmRule') + '　｜　' + t('bgmHow');
   }
 }

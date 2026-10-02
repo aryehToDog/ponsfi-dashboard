@@ -550,6 +550,113 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   .tip-mini{top:11px;left:58px;padding:7px 11px}
   .topbar .tb-t{padding-left:140px}
 }
+
+/* ============================================================
+   收入排行 —— 「我们现在坐在第几排」
+   一张卡 = 一个项目：名次 + 对数刻度轴 + 三个口径 + 环比 + 还差多远
+   ============================================================ */
+.rank-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:var(--fs-11);
+  color:var(--mut);line-height:1.7;margin:-2px 0 11px}
+.rank-sub .rank-force{font-size:var(--fs-11);font-weight:700;padding:4px 11px;color:var(--accent);
+  border-color:color-mix(in srgb,var(--accent) 40%,var(--line2));
+  background:color-mix(in srgb,var(--accent) 10%,var(--panel))}
+.rank-sub .rank-force:hover{border-color:var(--accent)}
+.rank-updated{font-size:var(--fs-11);color:var(--mut2);margin-left:auto}
+.rank-warn{color:var(--wn-txt);font-weight:600}
+
+/* ---- 一句话总结：近一个月名次怎么动 ---- */
+.rank-insight{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:0 0 13px;padding:9px 13px;
+  border-radius:11px;font-size:var(--fs-12);line-height:1.7;color:var(--txt);border:1px solid var(--line);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 13%,transparent),transparent 58%),var(--panel)}
+.rank-insight .ri-t{font-size:var(--fs-11);font-weight:700;letter-spacing:.4px;color:var(--mut)}
+.rank-insight .ri-p{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.rank-insight .ri-p b{font-weight:800;letter-spacing:.2px}
+.rank-insight .ri-p i{font-style:normal;font-family:var(--font-num);color:var(--mut)}
+.rank-insight .ri-p em{font-style:normal;font-weight:700;font-size:var(--fs-11);padding:1px 7px;
+  border-radius:5px;background:var(--panel2);border:1px solid var(--line2)}
+.rank-insight .rd-up{color:var(--up)} .rank-insight .rd-down{color:var(--down)}
+.rank-insight .rd-flat{color:var(--mut)}
+
+/* ---- 名次卡 ---- */
+.rank-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px 14px 19px;box-shadow:var(--card-shadow);overflow:hidden}
+.rank-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--rank-c,var(--accent))}
+.rc-pons{--rank-c:var(--pons)} .rc-stonk{--rank-c:var(--stonk)}
+.rank-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.rank-pct{font-size:var(--fs-11);font-weight:700;color:var(--mut);background:var(--panel2);
+  border:1px solid var(--line2);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.rank-big{font-family:var(--font-num);font-size:36px;font-weight:800;letter-spacing:-1.6px;line-height:1.02;
+  color:color-mix(in srgb,var(--rank-c,var(--accent)) 72%,var(--txt))}
+.rank-big small{display:block;font-family:var(--font-ui);font-size:var(--fs-11);font-weight:500;
+  letter-spacing:0;color:var(--mut);margin-top:4px}
+
+/* ---- 对数刻度轴：#1 在最左，#总数 在最右 ---- */
+.rank-scale{padding:0 9px;margin:13px 0 12px}
+.rs-track{position:relative;height:5px;border-radius:999px;background:var(--panel3);
+  border:1px solid var(--line);box-shadow:inset 0 1px 2px rgba(0,0,0,.16)}
+.rs-track i{position:absolute;top:-4.5px;bottom:-4.5px;width:3px;margin-left:-1.5px;border-radius:2px;
+  background:var(--rank-c,var(--accent));
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--rank-c,var(--accent)) 20%,transparent)}
+.rs-ticks{position:relative;height:15px;margin-top:5px}
+.rs-ticks span{position:absolute;top:0;transform:translateX(-50%);font-size:10px;color:var(--mut2);
+  font-family:var(--font-num);letter-spacing:-.2px}
+.rs-ticks span:first-child{transform:none}
+.rs-ticks span.rt-end{transform:translateX(-100%)}
+
+/* ---- 三个口径一栏 ---- */
+.rank-kv{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.rank-kv span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  font-size:var(--fs-11);color:var(--mut);background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:4px 9px;font-variant-numeric:tabular-nums}
+.rank-kv span b{color:var(--mut2);font-weight:600}
+.rank-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
+.rank-kv span em{font-style:normal;font-family:var(--font-num);color:var(--mut)}
+
+/* ---- 环比 + 还差多远 ---- */
+.rank-delta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:var(--fs-12);font-weight:700;
+  padding-top:10px;border-top:1px dashed var(--line)}
+.rank-delta .rd-up{color:var(--up)} .rank-delta .rd-down{color:var(--down)}
+.rank-delta .rd-flat{color:var(--mut)}
+.rank-delta .rd-why{font-size:var(--fs-11);font-weight:500;color:var(--mut2)}
+.rank-gap{margin-top:9px;font-size:var(--fs-12);line-height:1.7;color:var(--txt);border-radius:9px;
+  padding:8px 11px;background:color-mix(in srgb,var(--accent) 9%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 26%,var(--line))}
+.rank-gap .rd-why{color:var(--mut2);font-size:var(--fs-11)}
+.rank-gap b{color:color-mix(in srgb,var(--accent) 66%,var(--txt))}
+
+/* ---- 榜首 10 名 + 上下邻居 ---- */
+.rank-block{margin-top:16px}
+.rank-h{display:flex;align-items:center;gap:10px;margin:0 0 9px}
+.rank-h .rh-t{font-size:var(--fs-12);font-weight:700;letter-spacing:.3px;color:var(--mut)}
+.rank-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.rank-list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:var(--card-shadow)}
+.rank-row{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(0,168px) 96px;align-items:center;
+  gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:var(--fs-12);
+  transition:background .15s ease}
+.rank-row:last-child{border-bottom:0}
+.rank-row:hover{background:var(--panel2)}
+.rank-row .rr-rank{font-family:var(--font-num);font-size:var(--fs-11);font-weight:700;color:var(--mut2)}
+.rank-row .rr-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.rank-row .rr-cat{font-size:var(--fs-11);color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-row .rr-val{font-family:var(--font-num);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.rank-row.me{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.rank-row.me .rr-name{font-weight:800;color:var(--txt)}
+.rank-row.me .rr-rank,.rank-row.me .rr-val{color:var(--accent)}
+.rank-row .rr-me{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.4px;color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 16%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:5px;
+  padding:1px 6px;margin-left:7px;vertical-align:1px;white-space:nowrap}
+.rank-near{margin-top:14px;align-items:start}
+@media(max-width:680px){
+  .rank-card{padding:13px 13px 13px 16px}
+  .rank-big{font-size:30px}
+  .rank-row{grid-template-columns:38px minmax(0,1fr) 84px;gap:8px;padding:8px 11px}
+  .rank-row .rr-cat{display:none}
+  .rs-ticks .rt-1000{display:none}
+  .rank-updated{margin-left:0;flex-basis:100%}
+}
 """
 
 # ============================================================

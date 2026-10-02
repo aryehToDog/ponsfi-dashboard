@@ -560,6 +560,113 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   .topbar .tb-t{padding-left:140px}
 }
 
+/* ============================================================
+   收入排行 —— 「我们现在坐在第几排」
+   一张卡 = 一个项目：名次 + 对数刻度轴 + 三个口径 + 环比 + 还差多远
+   ============================================================ */
+.rank-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:var(--fs-11);
+  color:var(--mut);line-height:1.7;margin:-2px 0 11px}
+.rank-sub .rank-force{font-size:var(--fs-11);font-weight:700;padding:4px 11px;color:var(--accent);
+  border-color:color-mix(in srgb,var(--accent) 40%,var(--line2));
+  background:color-mix(in srgb,var(--accent) 10%,var(--panel))}
+.rank-sub .rank-force:hover{border-color:var(--accent)}
+.rank-updated{font-size:var(--fs-11);color:var(--mut2);margin-left:auto}
+.rank-warn{color:var(--wn-txt);font-weight:600}
+
+/* ---- 一句话总结：近一个月名次怎么动 ---- */
+.rank-insight{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:0 0 13px;padding:9px 13px;
+  border-radius:11px;font-size:var(--fs-12);line-height:1.7;color:var(--txt);border:1px solid var(--line);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 13%,transparent),transparent 58%),var(--panel)}
+.rank-insight .ri-t{font-size:var(--fs-11);font-weight:700;letter-spacing:.4px;color:var(--mut)}
+.rank-insight .ri-p{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.rank-insight .ri-p b{font-weight:800;letter-spacing:.2px}
+.rank-insight .ri-p i{font-style:normal;font-family:var(--font-num);color:var(--mut)}
+.rank-insight .ri-p em{font-style:normal;font-weight:700;font-size:var(--fs-11);padding:1px 7px;
+  border-radius:5px;background:var(--panel2);border:1px solid var(--line2)}
+.rank-insight .rd-up{color:var(--up)} .rank-insight .rd-down{color:var(--down)}
+.rank-insight .rd-flat{color:var(--mut)}
+
+/* ---- 名次卡 ---- */
+.rank-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px 14px 19px;box-shadow:var(--card-shadow);overflow:hidden}
+.rank-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--rank-c,var(--accent))}
+.rc-pons{--rank-c:var(--pons)} .rc-stonk{--rank-c:var(--stonk)}
+.rank-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.rank-pct{font-size:var(--fs-11);font-weight:700;color:var(--mut);background:var(--panel2);
+  border:1px solid var(--line2);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.rank-big{font-family:var(--font-num);font-size:36px;font-weight:800;letter-spacing:-1.6px;line-height:1.02;
+  color:color-mix(in srgb,var(--rank-c,var(--accent)) 72%,var(--txt))}
+.rank-big small{display:block;font-family:var(--font-ui);font-size:var(--fs-11);font-weight:500;
+  letter-spacing:0;color:var(--mut);margin-top:4px}
+
+/* ---- 对数刻度轴：#1 在最左，#总数 在最右 ---- */
+.rank-scale{padding:0 9px;margin:13px 0 12px}
+.rs-track{position:relative;height:5px;border-radius:999px;background:var(--panel3);
+  border:1px solid var(--line);box-shadow:inset 0 1px 2px rgba(0,0,0,.16)}
+.rs-track i{position:absolute;top:-4.5px;bottom:-4.5px;width:3px;margin-left:-1.5px;border-radius:2px;
+  background:var(--rank-c,var(--accent));
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--rank-c,var(--accent)) 20%,transparent)}
+.rs-ticks{position:relative;height:15px;margin-top:5px}
+.rs-ticks span{position:absolute;top:0;transform:translateX(-50%);font-size:10px;color:var(--mut2);
+  font-family:var(--font-num);letter-spacing:-.2px}
+.rs-ticks span:first-child{transform:none}
+.rs-ticks span.rt-end{transform:translateX(-100%)}
+
+/* ---- 三个口径一栏 ---- */
+.rank-kv{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.rank-kv span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  font-size:var(--fs-11);color:var(--mut);background:var(--panel2);border:1px solid var(--line);
+  border-radius:8px;padding:4px 9px;font-variant-numeric:tabular-nums}
+.rank-kv span b{color:var(--mut2);font-weight:600}
+.rank-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
+.rank-kv span em{font-style:normal;font-family:var(--font-num);color:var(--mut)}
+
+/* ---- 环比 + 还差多远 ---- */
+.rank-delta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:var(--fs-12);font-weight:700;
+  padding-top:10px;border-top:1px dashed var(--line)}
+.rank-delta .rd-up{color:var(--up)} .rank-delta .rd-down{color:var(--down)}
+.rank-delta .rd-flat{color:var(--mut)}
+.rank-delta .rd-why{font-size:var(--fs-11);font-weight:500;color:var(--mut2)}
+.rank-gap{margin-top:9px;font-size:var(--fs-12);line-height:1.7;color:var(--txt);border-radius:9px;
+  padding:8px 11px;background:color-mix(in srgb,var(--accent) 9%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 26%,var(--line))}
+.rank-gap .rd-why{color:var(--mut2);font-size:var(--fs-11)}
+.rank-gap b{color:color-mix(in srgb,var(--accent) 66%,var(--txt))}
+
+/* ---- 榜首 10 名 + 上下邻居 ---- */
+.rank-block{margin-top:16px}
+.rank-h{display:flex;align-items:center;gap:10px;margin:0 0 9px}
+.rank-h .rh-t{font-size:var(--fs-12);font-weight:700;letter-spacing:.3px;color:var(--mut)}
+.rank-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.rank-list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:var(--card-shadow)}
+.rank-row{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(0,168px) 96px;align-items:center;
+  gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:var(--fs-12);
+  transition:background .15s ease}
+.rank-row:last-child{border-bottom:0}
+.rank-row:hover{background:var(--panel2)}
+.rank-row .rr-rank{font-family:var(--font-num);font-size:var(--fs-11);font-weight:700;color:var(--mut2)}
+.rank-row .rr-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.rank-row .rr-cat{font-size:var(--fs-11);color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-row .rr-val{font-family:var(--font-num);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.rank-row.me{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.rank-row.me .rr-name{font-weight:800;color:var(--txt)}
+.rank-row.me .rr-rank,.rank-row.me .rr-val{color:var(--accent)}
+.rank-row .rr-me{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.4px;color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 16%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:5px;
+  padding:1px 6px;margin-left:7px;vertical-align:1px;white-space:nowrap}
+.rank-near{margin-top:14px;align-items:start}
+@media(max-width:680px){
+  .rank-card{padding:13px 13px 13px 16px}
+  .rank-big{font-size:30px}
+  .rank-row{grid-template-columns:38px minmax(0,1fr) 84px;gap:8px;padding:8px 11px}
+  .rank-row .rr-cat{display:none}
+  .rs-ticks .rt-1000{display:none}
+  .rank-updated{margin-left:0;flex-basis:100%}
+}
+
 /* ---------- 行情 BGM：涨听《逍遥仙》· 跌听《兄弟抱一下》 ---------- */
 .bgm{position:fixed;right:16px;bottom:16px;z-index:130;display:flex;flex-direction:column;align-items:flex-end;
   gap:8px;width:min(356px,calc(100vw - 32px));pointer-events:none}
@@ -678,6 +785,17 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   <div class="sec-title" id="st-rules">规则引擎 · 加仓与止损信号</div>
   <div class="rule-legend" id="rule-legend"></div>
   <div class="rules" id="rules"></div>
+
+  <div class="sec-title" id="st-rank">收入排行 · 在整个行业里的位置</div>
+  <div class="rank-sub" id="rankSub"></div>
+  <div class="rank-insight" id="rankInsight"></div>
+  <div class="tabs" id="rankTabs"></div>
+  <div class="grid2" id="rankCards"></div>
+  <div class="rank-block">
+    <div class="rank-h" id="rankTopH"></div>
+    <div class="rank-list" id="rankTop"></div>
+  </div>
+  <div class="grid2 rank-near" id="rankNear"></div>
 
   <div class="sec-title" id="st-chart">趋势图</div>
   <div class="tabs" id="tabs"></div>
@@ -845,6 +963,29 @@ zh:{
   bgmMin:'同一首至少播 90 秒才允许切换 · 切换带 1.2 秒淡入淡出',
   bgmSev7:'7日',
   verTip:'当前线上版本 · 有更新时这个号会变',
+  secRank:'收入排行 · 在整个行业里的位置',
+  rankSub:n=>'数据源 DefiLlama · 共 '+n+' 个协议 · 按所选口径的收入总额排序（含未上链的 CeFi）',
+  rankPct:p=>'前 '+p+'%',
+  rankOf:'共 ',
+  rankDeltaUp:n=>'比一个月前 ↑ 上升 '+n+' 位',
+  rankDeltaDown:n=>'比一个月前 ↓ 下滑 '+n+' 位',
+  rankDeltaFlat:'排名与一个月前持平',
+  rankDeltaNone:'当月基准口径',
+  rankDeltaWhy:(a,b)=>'（30 日口径 #'+a+' → 现在 #'+b+'）',
+  rankGap:(v,r,n)=>'再涨 <b class="hi">'+v+'</b>/天，就能超过 <b>#'+r+'</b> '+n,
+  rankGapTop:'已经在前十之内，再往上每一名都很难',
+  rankTopH:'榜首 10 名 · 天花板在哪',
+  rankNearH:t=>t+' 的上下邻居',
+  rankBelowH:t=>t+' 身后 8 名 · 谁在追',
+  rankMonth:'近一个月名次变化',
+  rankInsightUp:n=>'上升 '+n+' 位', rankInsightDown:n=>'下滑 '+n+' 位', rankInsightFlat:'持平',
+  rankMe:'你关注的',
+  rankNeed:'再涨',
+  rankUpdated:u=>'排行数据时间：'+u,
+  rankRefresh:'↻ 更新排行',
+  rankLoading:'正在拉取全站榜单（约 1MB）…',
+  rankNoData:'排行数据暂缺，点「刷新数据」或「↻ 更新排行」拉一次',
+  rankTab24:'24 小时', rankTab7:'7 日', rankTab30:'30 日',
   bgmTip:'🔊 行情BGM 已开启 · 点右下角可静音',
   bgmWait:'待启动 · 触碰页面即响',
   bgmSev24:'24h',
@@ -991,6 +1132,29 @@ en:{
   bgmMin:'Min 90s per track · 1.2s crossfade on every switch',
   bgmSev7:'7d',
   verTip:'Live build tag — this changes whenever the dashboard updates',
+  secRank:'Revenue ranking · where they sit in the whole industry',
+  rankSub:n=>'Source: DefiLlama · '+n+' protocols · ranked by total revenue for the selected window',
+  rankPct:p=>'top '+p+'%',
+  rankOf:'of ',
+  rankDeltaUp:n=>'Up '+n+' places vs one month ago',
+  rankDeltaDown:n=>'Down '+n+' places vs one month ago',
+  rankDeltaFlat:'Rank unchanged vs one month ago',
+  rankDeltaNone:'This is the monthly baseline',
+  rankDeltaWhy:(a,b)=>'(30-day rank #'+a+' → now #'+b+')',
+  rankGap:(v,r,n)=>'Add <b class="hi">'+v+'</b>/day to pass <b>#'+r+'</b> '+n,
+  rankGapTop:'Already top-10 — every further place is hard fought',
+  rankTopH:'Top 10 · how high the ceiling goes',
+  rankNearH:t=>'Neighbours around '+t,
+  rankBelowH:t=>'Chasing '+t+' · next 8',
+  rankMonth:'Rank move over the past month',
+  rankInsightUp:n=>'up '+n, rankInsightDown:n=>'down '+n, rankInsightFlat:'flat',
+  rankMe:'YOURS',
+  rankNeed:'add',
+  rankUpdated:u=>'Leaderboard as of '+u,
+  rankRefresh:'↻ Refresh ranking',
+  rankLoading:'Fetching the full leaderboard (~1MB)…',
+  rankNoData:'No ranking data yet — hit Refresh or ↻ to pull it',
+  rankTab24:'24h', rankTab7:'7D', rankTab30:'30D',
   bgmTip:'🔊 Market BGM is on · tap the corner chip to mute',
   bgmWait:'Standby · starts on your first tap',
   bgmSev24:'24h',
@@ -1053,6 +1217,8 @@ const fmtU = v => {
   return '$' + v.toFixed(0);
 };
 const fmtN = (v,d=2) => (v===null||isNaN(v))?'—':v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+/* 榜单名字来自外部 API，插进 innerHTML 前先转义，避免把页面结构顶坏 */
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey = ts => new Date(ts*1000).toISOString().slice(0,10);
 const toMap = arr => { const m={}; (arr||[]).forEach(([ts,v])=>{ const k=dayKey(ts); m[k]=(m[k]||0)+v; }); return m; };
 const sortedKeys = m => Object.keys(m).sort();
@@ -1137,6 +1303,7 @@ function stats(rows, p){
 function renderStatic(){
   document.getElementById('h1t').textContent = t('h1');
   document.getElementById('st-rules').textContent = t('secRules');
+  document.getElementById('st-rank').textContent = t('secRank');
   document.getElementById('st-chart').textContent = t('secChart');
   document.getElementById('st-table').textContent = t('secTable');
   document.getElementById('st-guide').textContent = t('secGuide');
@@ -1149,6 +1316,179 @@ function renderStatic(){
       '<span class="lg"><span class="tag ok">'+t('lvOk')+'</span>'+t('legendOk')+'</span>'+
       '<span class="lg"><span class="tag warn">'+t('lvWarn')+'</span>'+t('legendWarn')+'</span>'+
       '<span class="lg"><span class="tag bad">'+t('lvBad')+'</span>'+t('legendBad')+'</span>';
+}
+
+/* ---------- 收入排行：把 DefiLlama 全站榜单裁成"你的位置" ---------- */
+const RANK_METRICS=[{k:'total24h',zh:'24 小时',en:'24H'},{k:'total7d',zh:'7 日',en:'7D'},{k:'total30d',zh:'30 日',en:'30D'}];
+const RANK_DAYS={total24h:1,total7d:7,total30d:30};
+const RANK_TARGET_IDS=['pons','stonkfun'];
+const RANK_TOP_N=10, RANK_NEAR=4, RANK_SLUGS={pons:'pons-v2',stonkfun:'stonkfun'};
+let RANK_BY='total7d';
+
+function rankBoard(){ return DATA.leaderboard || BUNDLE.leaderboard || null; }
+function rankTabLabel(k){ var m=RANK_METRICS.find(function(x){return x.k===k;}); return m? (LANG==='zh'?m.zh:m.en) : k; }
+function rankPos(r,total){ return Math.min(100, Math.log10(Math.max(r,1))/Math.log10(Math.max(total,10))*100); }
+
+/* 前端复刻 leaderboard.py 的裁剪逻辑：刷新时用同一套规则重算 */
+function buildRankBoard(protocols){
+  var total=protocols.length, board={};
+  RANK_METRICS.forEach(function(m){
+    var arr=protocols.slice().sort(function(a,b){ return ((b[m.k]||0)-(a[m.k]||0)); });
+    var index={}; arr.forEach(function(p,i){ index[p.slug]=i+1; });
+    var pack=function(p,r,me){ return {r:r,n:(p.name||'').trim(),c:(p.category||'').trim(),
+      v:Math.round((p[m.k]||0)*100)/100, me:!!me}; };
+    var o={top:[],near:{},rank:{}};
+    arr.slice(0,RANK_TOP_N).forEach(function(p,i){
+      o.top.push(pack(p,i+1, RANK_TARGET_IDS.some(function(tid){ return RANK_SLUGS[tid]===p.slug; })));
+    });
+    RANK_TARGET_IDS.forEach(function(tid){
+      o.rank[tid]=index[RANK_SLUGS[tid]]||null;
+      var r=o.rank[tid]; if(!r){ o.near[tid]=[]; return; }
+      var i=r-1, lo, hi;
+      if(r<=RANK_TOP_N){ lo=i; hi=Math.min(total,i+RANK_NEAR*2+1); }   /* 已在 Top10 里 → 只看身后追兵 */
+      else { lo=Math.max(0,i-RANK_NEAR); hi=Math.min(total,i+RANK_NEAR+1); }
+      var rows=[];
+      for(var j=lo;j<hi;j++) rows.push(pack(arr[j],j+1,(j+1)===r));
+      o.near[tid]=rows;
+    });
+    board[m.k]=o;
+  });
+  return {total:total, board:board, updated:new Date().toISOString(), source:'defillama.com/revenue'};
+}
+
+/* 实时刷新：整包 4.2MB 太重，浏览器只下压缩后的 ~860KB，并且缓存 6 小时 */
+async function loadLeaderboard(force){
+  let cache=null;
+  try{ cache=JSON.parse(localStorage.getItem('pons-rank')||'null'); }catch(e){}
+  if(cache && cache.d && !force && (Date.now()-cache.t)<6*3600*1000){ DATA.leaderboard=cache.d; return 1; }
+  const j=await fetchJSON('https://api.llama.fi/overview/fees?dataType=dailyRevenue&excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true');
+  const d=buildRankBoard(j.protocols||[]);
+  if(j.updated) d.updated=j.updated;
+  DATA.leaderboard=d;
+  try{ localStorage.setItem('pons-rank', JSON.stringify({t:Date.now(), d:d})); }catch(e){}
+  return 1;
+}
+async function rankForce(){
+  const sub=document.getElementById('rankSub');
+  if(sub) sub.textContent=t('rankLoading');
+  try{ await loadLeaderboard(true); renderRank(); }
+  catch(e){ if(sub) sub.textContent=t('rankNoData'); }
+}
+
+function renderRank(){
+  const b=rankBoard();
+  const sub=document.getElementById('rankSub'), tabs=document.getElementById('rankTabs');
+  const cards=document.getElementById('rankCards'), topEl=document.getElementById('rankTop');
+  const nearEl=document.getElementById('rankNear'), topH=document.getElementById('rankTopH');
+  if(!b){
+    if(tabs) tabs.innerHTML=''; if(cards) cards.innerHTML=''; if(topEl) topEl.innerHTML='';
+    if(nearEl) nearEl.innerHTML=''; if(topH) topH.textContent='';
+    if(sub) sub.innerHTML='<span class="rank-warn">'+t('rankNoData')+'</span>';
+    return;
+  }
+  const data=b.board[RANK_BY]||{};
+  const total=b.total, mine=(data.near||{}), rk=(data.rank||{});
+
+  if(sub){
+    const up=b.updated? new Date(b.updated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'):'—';
+    sub.innerHTML = t('rankSub')(fmtN(total,0))
+      + ' <button class="rank-force" onclick="rankForce()">'+t('rankRefresh')+'</button>'
+      + '<div class="rank-updated">'+t('rankUpdated')(up)+'</div>';
+  }
+  if(tabs){
+    tabs.innerHTML = RANK_METRICS.map(function(m){
+      return '<button class="tab'+(m.k===RANK_BY?' on':'')+'" onclick="RANK_BY=\''+m.k+'\';renderRank();">'+rankTabLabel(m.k)+'</button>';
+    }).join('');
+  }
+  const ins=document.getElementById('rankInsight');
+  if(ins){
+    const r30all=b.board.total30d&&b.board.total30d.rank||{};
+    ins.innerHTML = '<span class="ri-t">'+t('rankMonth')+'</span>'+RANK_TARGET_IDS.map(function(tid){
+      const p=PROJECTS.find(function(x){return x.id===tid;})||{ticker:tid,color:'var(--mut)'};
+      const r=rk[tid], r30=r30all[tid];
+      if(!r||!r30) return '';
+      const d=r30-r;
+      const tail = d>0? '<em class="rd-up">'+t('rankInsightUp')(d)+'</em>'
+                 : d<0? '<em class="rd-down">'+t('rankInsightDown')(-d)+'</em>'
+                 : '<em class="rd-flat">'+t('rankInsightFlat')+'</em>';
+      return '<span class="ri-p"><b style="color:'+p.color+'">'+p.ticker+'</b>'
+           + '<i>#'+r30+' → #'+r+'</i>'+tail+'</span>';
+    }).join('');
+  }
+
+  if(cards){
+    cards.innerHTML = RANK_TARGET_IDS.map(function(tid){
+      const p=PROJECTS.find(function(x){return x.id===tid;})||{ticker:tid,color:'var(--mut)'};
+      const r=rk[tid]; if(!r) return '';
+      const rows=mine[tid]||[];
+      const meRow=rows.find(function(x){return x.me;})||{v:0};
+      const above=(data.top||[]).concat(rows).filter(function(x){return x.r<r;})
+                    .sort(function(a,b){return b.r-a.r;})[0];
+      const pct=(r/total*100).toFixed(r<=20?1:0);
+      const r30=(b.board.total30d.rank||{})[tid];
+      let deltaHTML='';
+      if(RANK_BY==='total30d' || !r30){ deltaHTML='<span class="rd-flat">'+t('rankDeltaNone')+'</span>'; }
+      else{
+        const d=r30-r;
+        const why=t('rankDeltaWhy')(r30,r);
+        if(d>0) deltaHTML='<span class="rd-up">'+t('rankDeltaUp')(Math.abs(d))+'</span> <span class="rd-why">'+why+'</span>';
+        else if(d<0) deltaHTML='<span class="rd-down">'+t('rankDeltaDown')(Math.abs(d))+'</span> <span class="rd-why">'+why+'</span>';
+        else deltaHTML='<span class="rd-flat">'+t('rankDeltaFlat')+'</span>';
+      }
+      let gapHTML;
+      if(r<=1){ gapHTML='<span class="rd-why">'+t('rankGapTop')+'</span>'; }
+      else if(above){
+        const need=(above.v-meRow.v)/RANK_DAYS[RANK_BY];
+        gapHTML = need>0
+          ? t('rankGap')(fmtU(need), above.r, esc(above.n)) + ' <span class="rd-why">'+(LANG==='zh'?'（'+fmtU(above.v)+' vs '+fmtU(meRow.v)+'，同口径）':'('+fmtU(above.v)+' vs '+fmtU(meRow.v)+')')+'</span>'
+          : t('rankGapTop');
+      } else gapHTML='';
+      const ticks=[1,10,100,1000].filter(function(x){return x<total;}).map(function(x){
+        return '<span class="rt-'+x+'" style="left:'+rankPos(x,total).toFixed(2)+'%">#'+x+'</span>';
+      }).join('')+'<span class="rt-end" style="left:100%">#'+fmtN(total,0)+'</span>';
+      return '<div class="rank-card rc-'+tid+'">'
+        + '<div class="rank-card-head">'
+        +   '<span class="proj-name"><span class="dot" style="background:'+p.color+';color:'+p.color+'"></span>'+p.ticker+'</span>'
+        +   '<span class="rank-pct">'+t('rankPct')(pct)+'</span>'
+        + '</div>'
+        + '<div class="rank-big">#'+r+'<small>'+t('rankOf')+fmtN(total,0)+'</small></div>'
+        + '<div class="rank-scale"><div class="rs-track"><i style="left:'+rankPos(r,total).toFixed(2)+'%"></i></div><div class="rs-ticks">'+ticks+'</div></div>'
+        + '<div class="rank-kv">'+RANK_METRICS.map(function(m){
+            const rr=b.board[m.k]&&b.board[m.k].rank? b.board[m.k].rank[tid]:null;
+            const vv=b.board[m.k]&&b.board[m.k].near&&b.board[m.k].near[tid]? (b.board[m.k].near[tid].find(function(x){return x.me;})||{}).v : null;
+            return '<span><b>'+rankTabLabel(m.k)+'</b><i>'+(rr?'#'+rr:'—')+'</i><em>'+fmtU(vv)+'</em></span>';
+          }).join('')+'</div>'
+        + '<div class="rank-delta">'+deltaHTML+'</div>'
+        + (gapHTML? '<div class="rank-gap">'+gapHTML+'</div>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  if(topH) topH.innerHTML = '<span class="rh-t">'+t('rankTopH')+'</span>';
+  if(topEl){
+    topEl.innerHTML=(data.top||[]).map(function(x,i){
+      return '<div class="rank-row'+(x.me?' me':'')+'">'
+        + '<span class="rr-rank">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':('#'+x.r))+'</span>'
+        + '<span class="rr-name">'+esc(x.n)+'</span>'
+        + '<span class="rr-cat">'+esc(x.c)+'</span>'
+        + '<span class="rr-val mono">'+fmtU(x.v)+'</span></div>';
+    }).join('');
+  }
+  if(nearEl){
+    nearEl.innerHTML = RANK_TARGET_IDS.map(function(tid){
+      const p=PROJECTS.find(function(x){return x.id===tid;})||{ticker:tid,color:'var(--mut)'};
+      const rows=mine[tid]||[];
+      return '<div class="rank-block">'
+        + '<div class="rank-h"><span class="rh-t">'+t((rk[tid]&&rk[tid]<=RANK_TOP_N)?'rankBelowH':'rankNearH')(p.ticker)+'</span></div>'
+        + '<div class="rank-list">'+rows.map(function(x){
+            return '<div class="rank-row'+(x.me?' me':'')+'">'
+              + '<span class="rr-rank">#'+x.r+'</span>'
+              + '<span class="rr-name">'+esc(x.n)+(x.me?' <em class="rr-me">'+t('rankMe')+'</em>':'')+'</span>'
+              + '<span class="rr-cat">'+esc(x.c)+'</span>'
+              + '<span class="rr-val mono">'+fmtU(x.v)+'</span></div>';
+          }).join('')+'</div></div>';
+    }).join('');
+  }
 }
 
 /* ---------- render cards ---------- */
@@ -1722,6 +2062,7 @@ async function loadLive(){
   try{ await loadFees(); }catch(e){ ok = false; }
   try{ priceOk = await loadPrices(); }catch(e){}
   try{ ok = ok && true; await loadMarket(); }catch(e){}
+  try{ await loadLeaderboard(); }catch(e){}
   DATA.generated = new Date().toISOString();
   BUSY = false;
   if(btn){ btn.disabled = false; btn.classList.remove('busy'); }
@@ -1746,7 +2087,7 @@ function flashPrices(){
   });
 }
 function renderAll(){
-  [renderCards, renderRules, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
+  [renderCards, renderRules, renderRank, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

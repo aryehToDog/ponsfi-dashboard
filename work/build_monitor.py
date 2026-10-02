@@ -93,6 +93,19 @@ def fetch_bundle():
             bundle["price"][name] = p["coins"][key]["price"]
     except Exception as exc:
         errors.append(f"price: {exc}")
+    # 全站收入排行榜（裁过的小快照，见 leaderboard.py）
+    try:
+        from leaderboard import fetch_board
+        bundle["leaderboard"] = fetch_board()
+    except Exception as exc:
+        errors.append(f"leaderboard: {exc}")
+    if not bundle.get("leaderboard"):
+        try:
+            old = json.load(open(OUT_JSON, encoding="utf-8"))
+            if old.get("leaderboard"):
+                bundle["leaderboard"] = old["leaderboard"]
+        except Exception:
+            pass
     return bundle, errors
 
 

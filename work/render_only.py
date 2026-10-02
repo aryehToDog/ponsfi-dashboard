@@ -9,24 +9,23 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v1.2「自动行情 BGM」 · 2026-10-02
-     上一版备份：backups/ponsfi-v1-2026-10-02/  ＋  ponsfi-v1-2026-10-02.zip
-     本版备份：  backups/ponsfi-v1.1-2026-10-02/  ＋  ponsfi-v1.1-2026-10-02.zip
-     v1.2 新增：行情 BGM 改为自动播放 —— 加载即尝试出声（老访客全自动），
-               被浏览器拦下时等用户第一次点/划/滚立刻淡入；按钮改为「静音/取消静音」，
-               访客手动静音过就永不再自动响；首次响起弹一次小提示告知可静音。
-     v1.1 新增：右下角「行情BGM」——涨 →《逍遥仙》· 跌 →《兄弟抱一下》
-               评分 = 按市值加权（7 日涨跌 × 0.65 + 24h 涨跌 × 0.35）
-               ≥ +3% 涨档 · ≤ −3% 跌档 · ±1.5% 滞回防抖 · 横盘不切歌
-               同一首至少播 90 秒 · 1.2 秒交叉淡入淡出 · 开着时每 5 分钟自动刷新
-               真歌放服务器 /var/www/pons-dashboard/audio/up.mp3 与 down.mp3；
-               没有文件时自动播放内置原创占位旋律（Web Audio 合成）
+     ponsfi.xyz 看板 · 版本 v1.3「收入排行」 · 2026-10-02
+     历史备份（每个都含同名 zip）：
+       backups/ponsfi-v1-2026-10-02/  backups/ponsfi-v1.1-2026-10-02/  backups/ponsfi-v1.2-2026-10-02/
+     本版备份：backups/ponsfi-v1.3-2026-10-02/  ＋  ponsfi-v1.3-2026-10-02.zip
+     v1.3 新增：新增「收入排行 · 在整个行业里的位置」板块 ——
+               数据来自 DefiLlama 全站收入榜（2,455 个协议），两个项目各一张名次卡：
+               24h / 7日 / 30日 三个口径的名次、百分位、对数刻度轴（#1 → #总数）、
+               环比（30 日口径 → 现在）、以及「再涨 $X/天就能超过上一名」；
+               另附榜首 Top10（天花板在哪）与自身上下/身后的邻居，并用一句话总结近一个月的名次变化。
+               榜单快照走 dashboard-data.json 的 leaderboard 字段（约 7KB），
+               页面每 6 小时自动刷新一次，也可点「↻ 更新排行」手动拉。
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      ========================================================================== -->
-<meta name="dashboard-version" content="v1.2-2026-10-02">
+<meta name="dashboard-version" content="v1.3-2026-10-02">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v1.2 · 2026-10-02"
+VER = "v1.3 · 2026-10-02"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

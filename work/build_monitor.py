@@ -8,6 +8,7 @@
 import datetime
 import json
 import os
+import subprocess
 import sys
 import urllib.request
 
@@ -110,13 +111,8 @@ def fetch_bundle():
 
 
 def write_panel(bundle):
-    with open(TEMPLATE, encoding="utf-8") as fh:
-        html = fh.read()
-    payload = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"))
-    if "/*__DATA__*/" not in html:
-        raise SystemExit("template.html 里找不到 /*__DATA__*/ 占位符")
-    with open(OUT_HTML, "w", encoding="utf-8") as fh:
-        fh.write(html.replace("/*__DATA__*/", payload))
+    """渲染这一步统一交给 render_only.py —— 它会注入版本标签与备份说明，别再自己拼一份。"""
+    subprocess.run([sys.executable, os.path.join(HERE, "render_only.py")], check=True)
 
 
 def main():

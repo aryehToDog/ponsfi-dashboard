@@ -1,0 +1,5 @@
+*.md
+*.sh
+docker-compose.yml
+Dockerfile
+nginx.conf

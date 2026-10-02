@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.ponspulse.daily-check</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/open</string>
+        <string>-g</string>
+        <string>-a</string>
+        <string>/System/Applications/Utilities/Terminal.app</string>
+        <string>/Users/alasijiadegou/Documents/Codex/2026-09-28/https-x-com-ponsdotfamily-https-x/outputs/每日检查.command</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/alasijiadegou</string>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/alasijiadegou/Documents/Codex/2026-09-28/https-x-com-ponsdotfamily-https-x/work/daily-check.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/alasijiadegou/Documents/Codex/2026-09-28/https-x-com-ponsdotfamily-https-x/work/daily-check.err.log</string>
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

@@ -1,0 +1,20 @@
+[Unit]
+Description=ponsfi.xyz page-view counter (127.0.0.1:8788)
+After=network.target
+
+[Service]
+Type=simple
+Environment=COUNTER_DIR=/var/lib/pons-counter
+Environment=COUNTER_PORT=8788
+ExecStart=/usr/bin/python3 /opt/pons-counter/counter.py
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ReadWritePaths=/var/lib/pons-counter
+
+[Install]
+WantedBy=multi-user.target

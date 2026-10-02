@@ -289,6 +289,16 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel)}
 .dash-ver::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--up);opacity:.75;
   box-shadow:0 0 0 3px color-mix(in srgb,var(--up) 14%,transparent)}
+/* 页脚底行：版本号 + 浏览量（一行排开，窄屏自动换行） */
+.foot-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px}
+.foot-meta .dash-ver{margin-top:0}
+.pv{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.4px;
+  color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel);
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+.pv b{font-weight:800;color:var(--txt);letter-spacing:0}
+.pv .pv-ic{font-size:12px;line-height:1;opacity:.85}
+.pv .pv-k{color:var(--mut2)}
+.pv i{font-style:normal;color:var(--line2);margin:0 1px}
 .warnline{stroke-dasharray:4 4}
 
 /* ---------- 作者名片 ---------- */
@@ -1275,9 +1285,9 @@ assert "const FOOT_AUTHOR = /*__FOOT_AUTHOR__*/ {zh:'', en:''};" in src
 src = src.replace("const FOOT_AUTHOR = /*__FOOT_AUTHOR__*/ {zh:'', en:''};", FOOT_OBJ, 1)
 
 # 6) 主题脚本（放到最后初始化之前）
-anchor = "renderAll();\nloadLive();"
+anchor = "renderStatic();\nrenderAll();\nloadViews();\nloadLive();"
 assert anchor in src
-src = src.replace(anchor, THEME_JS + TIP_JS + BGM_JS + "\nrenderTip();\nrenderAll();\nloadLive();", 1)
+src = src.replace(anchor, THEME_JS + TIP_JS + BGM_JS + "\nrenderTip();\nrenderStatic();\nrenderAll();\nloadViews();\nloadLive();", 1)
 
 # 7) 把 JS 里写死的颜色换成主题变量
 js_fix = [

@@ -298,6 +298,16 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel)}
 .dash-ver::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--up);opacity:.75;
   box-shadow:0 0 0 3px color-mix(in srgb,var(--up) 14%,transparent)}
+/* 页脚底行：版本号 + 浏览量（一行排开，窄屏自动换行） */
+.foot-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px}
+.foot-meta .dash-ver{margin-top:0}
+.pv{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.4px;
+  color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel);
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+.pv b{font-weight:800;color:var(--txt);letter-spacing:0}
+.pv .pv-ic{font-size:12px;line-height:1;opacity:.85}
+.pv .pv-k{color:var(--mut2)}
+.pv i{font-style:normal;color:var(--line2);margin:0 1px}
 .warnline{stroke-dasharray:4 4}
 
 /* ---------- 作者名片 ---------- */
@@ -963,6 +973,8 @@ zh:{
   bgmMin:'同一首至少播 90 秒才允许切换 · 切换带 1.2 秒淡入淡出',
   bgmSev7:'7日',
   verTip:'当前线上版本 · 有更新时这个号会变',
+  pvTotal:'总浏览', pvToday:'今日', pvUv:'今日访客',
+  pvTip:'每次打开页面计 1 次浏览；同一天同一设备只计 1 个访客。数据来自本站自建计数，不接任何第三方统计',
   secRank:'收入排行 · 在整个行业里的位置',
   rankSub:n=>'数据源 DefiLlama · 共 '+n+' 个协议 · 按所选口径的收入总额排序（含未上链的 CeFi）',
   rankPct:p=>'前 '+p+'%',
@@ -1132,6 +1144,8 @@ en:{
   bgmMin:'Min 90s per track · 1.2s crossfade on every switch',
   bgmSev7:'7d',
   verTip:'Live build tag — this changes whenever the dashboard updates',
+  pvTotal:'views', pvToday:'today', pvUv:'visitors',
+  pvTip:'One view per page load; one visitor per device per day. Counted by this site\u2019s own server-side counter — no third-party analytics.',
   secRank:'Revenue ranking · where they sit in the whole industry',
   rankSub:n=>'Source: DefiLlama · '+n+' protocols · ranked by total revenue for the selected window',
   rankPct:p=>'top '+p+'%',
@@ -2086,6 +2100,27 @@ function flashPrices(){
     setTimeout(()=>el.classList.remove('flash'), 1600);
   });
 }
+/* ---------- 浏览量：本站自建计数（/api/hits），第三方看不到数据 ---------- */
+let PV_DATA = null;
+function paintViews(){
+  const el = document.getElementById('pvStat');
+  if(!el) return;
+  if(!PV_DATA){ el.style.display='none'; return; }
+  el.style.display = '';
+  el.innerHTML = '<span class="pv-ic">👁</span>'
+    + '<span class="pv-k">'+t('pvTotal')+'</span> <b>'+fmtN(PV_DATA.total,0)+'</b>'
+    + '<i>·</i><span class="pv-k">'+t('pvToday')+'</span> <b>'+fmtN(PV_DATA.today,0)+'</b>'
+    + '<i>·</i><span class="pv-k">'+t('pvUv')+'</span> <b>'+fmtN(PV_DATA.uvToday||0,0)+'</b>';
+}
+function loadViews(){
+  /* 只有真正挂在 http(s) 上才计数：本地双击打开的 file:// 页面不算流量 */
+  if(location.protocol!=='http:' && location.protocol!=='https:') return;
+  fetch('/api/hits?t='+Date.now(), {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if(d && typeof d.total==='number'){ PV_DATA = d; paintViews(); } })
+    .catch(function(){ /* 计数服务不在也不影响页面 */ });
+}
+
 function renderAll(){
   [renderCards, renderRules, renderRank, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
@@ -2093,7 +2128,9 @@ function renderAll(){
   const g = DATA.generated || BUNDLE.generated;
   document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB');
   document.getElementById('foot').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
-      + '<div><span class="dash-ver" title="'+t('verTip')+'">'+DASH_VER+'</span></div>';
+      + '<div class="foot-meta"><span class="dash-ver" title="'+t('verTip')+'">'+DASH_VER+'</span>'
+      + '<span class="pv" id="pvStat" title="'+t('pvTip')+'"></span></div>';
+  paintViews();
 }
 
 /* ---------- 手机端：确保头像 / 关注按钮一定能跳转 X ---------- */
@@ -2116,7 +2153,6 @@ function renderAll(){
 /* ---------- 启动 ---------- */
 document.documentElement.lang = (LANG==='zh'?'zh-CN':'en');
 document.title = t('docTitle');
-renderStatic();
 
 /* ---------- 主题切换 ---------- */
 const THEMES=[{k:'auto',ic:'◐',zh:'系统',en:'Auto'},{k:'light',ic:'☀',zh:'浅色',en:'Light'},{k:'dark',ic:'☾',zh:'深色',en:'Dark'}];
@@ -2529,7 +2565,9 @@ function bgmKeepFresh(){
 })();
 
 renderTip();
+renderStatic();
 renderAll();
+loadViews();
 loadLive();
 </script>
 </body>

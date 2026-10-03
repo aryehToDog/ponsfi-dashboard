@@ -9,7 +9,14 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v2.1「跌幅档三首」 · 2026-10-03
+     ponsfi.xyz 看板 · 版本 v2.2「无人之岛 · 歌词上线」 · 2026-10-03
+     v2.2 新增：《无人之岛》配上官方歌词时间轴（audio/down-wuren.lrc，42 句）
+       · 原始 lrc 前 16 秒是制作人员名单（词/曲/编曲/缩混/录音室…），显示出来很怪 → 已从文件里删掉，
+         歌词从 [00:16]「黑色的背后是黎明」开始；顺便把解析器的过滤正则补全（缩混/配唱/录音室/混音室/企划/母带/宣发）
+       · 时间轴核对：把 m4a 解码成 WAV 算了每秒能量包络 —— 副歌「如果云层是天空的一封信」正好踩在
+         01:12 的能量大跳点（2037 → 11151），其它乐句也一一对上 → 不需要 lrcOffset
+       · 别再把 fetch 放到 file:// 里测：file:// 下 fetch 会被拦，本地页面永远读不到 lrc（要起本地 http 服务器）
+         ｜ 线上是同源 https，走的就是普通静态文件，和 up.lrc / down-v2.lrc 一模一样
      v2.1 新增：《无人之岛》进跌幅歌单（跌档现在三首轮换：梦的翅膀受了伤 → 兄弟抱一下 → 无人之岛）
        · 音频 audio/down-wuren.m4a（原始文件是 .aac 后缀，其实是 M4A/AAC 容器，实测浏览器能直接播：
          readyState=4、duration=285.3s、无 decode 错误；服务器 MIME 是 audio/x-m4a，Chrome/Safari/Firefox 都吃）
@@ -72,10 +79,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v2.1-2026-10-03">
+<meta name="dashboard-version" content="v2.2-2026-10-03">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v2.1 · 2026-10-03"
+VER = "v2.2 · 2026-10-03"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

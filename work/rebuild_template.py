@@ -1244,8 +1244,9 @@ const BGM_TRACKS = {
   down: [{ src:'audio/down-meng.mp3', lrc:'audio/down-meng.lrc', name:'bgmDownName2' },
          /* down-v2 = 跟《美好》专辑版 mp3 对齐的时间轴（旧的 down.lrc 是网易云「2021 版」，两版编曲不同、对不上） */
          { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 },
-         /* 无人之岛：手头只有 m4a（AAC），没配 lrc —— 没歌词时歌词块整块收起、共勉顶上，这是设计好的行为 */
-         { src:'audio/down-wuren.m4a', lrc:'',                   name:'bgmDownName3' }]
+         /* 无人之岛：m4a（AAC）+ 官方时间轴 lrc；时间轴已用音频能量包络核对过
+            （副歌「如果云层是天空的一封信」正好落在 01:12 的能量大跳点上），不需要 lrcOffset */
+         { src:'audio/down-wuren.m4a', lrc:'audio/down-wuren.lrc', name:'bgmDownName3' }]
 };
 /* 歌词与音频同目录同名（.lrc）。新增歌曲：mp3 + lrc 一起放进 audio/，这里补一条。 */
 const BGM_TH = 3.0, BGM_EXIT = 1.5, BGM_MIN_MS = 90000, BGM_FADE_MS = 1200;
@@ -1608,7 +1609,7 @@ function lyricParse(raw){
     if(!stamps.length) return;
     var txt = line.slice(end).trim();
     if(!txt) return;
-    if(/^(作词|作曲|编曲|制作人|出品人|混音|录音|和声|监制|统筹|发行|吉他|贝斯|鼓|键盘|弦乐|词|曲|OP|SP)\s*[:：]/.test(txt)) return;
+    if(/^(作词|作曲|编曲|制作人|配唱|出品人|出品|发行|混音室|混音|录音室|录音|和声编写|和声|缩混|母带|监制|统筹|企划|宣发|吉他|贝斯|鼓|键盘|弦乐|词|曲|OP|SP)\s*[:：]/.test(txt)) return;
     stamps.forEach(function(sec){ out.push({ t:sec, s:txt }); });
   });
   out.sort(function(a,b){ return a.t - b.t; });

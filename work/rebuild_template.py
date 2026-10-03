@@ -393,6 +393,15 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   .tab:hover{color:inherit}
 }
 
+/* ---------- 数据源滞后提示（DefiLlama 有时晚 1-2 天出数）---------- */
+.lagtag{display:inline-flex;align-items:center;margin-left:8px;padding:2px 7px;border-radius:999px;
+  font-size:10.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;
+  color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);vertical-align:middle}
+#tbl td.pend{color:var(--mut2)}
+#tbl td.pend .pend-v{font-size:11px;font-weight:700;color:var(--mut2);letter-spacing:.3px}
+#tbl .win{display:block;margin-top:1px;font-size:10px;font-weight:600;color:var(--mut2);letter-spacing:.2px}
+
 /* ---------- 响应式 ---------- */
 @media(max-width:900px){
   .grid2,.guide,.cmp-head,.cmp-pair{grid-template-columns:1fr}

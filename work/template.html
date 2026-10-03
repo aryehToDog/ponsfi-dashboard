@@ -402,6 +402,15 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   .tab:hover{color:inherit}
 }
 
+/* ---------- 数据源滞后提示（DefiLlama 有时晚 1-2 天出数）---------- */
+.lagtag{display:inline-flex;align-items:center;margin-left:8px;padding:2px 7px;border-radius:999px;
+  font-size:10.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;
+  color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);vertical-align:middle}
+#tbl td.pend{color:var(--mut2)}
+#tbl td.pend .pend-v{font-size:11px;font-weight:700;color:var(--mut2);letter-spacing:.3px}
+#tbl .win{display:block;margin-top:1px;font-size:10px;font-weight:600;color:var(--mut2);letter-spacing:.2px}
+
 /* ---------- 响应式 ---------- */
 @media(max-width:900px){
   .grid2,.guide,.cmp-head,.cmp-pair{grid-template-columns:1fr}
@@ -1012,6 +1021,11 @@ zh:{
   base100:'基准 100', start100:'起点=100', stopLoss:t=>t+' 止损线',
   cumName:n=>n+' 累计回购（窗口内）',
   thDate:'日期', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
+  pendingCell:'待更新',
+  pendingTip:'DefiLlama 还没出这天的数字（不是看板坏了）。出数后刷新一下就自动补上。',
+  srcLatest:d=>'数据源最新 '+d,
+  lagBadge:d=>'数据滞后 '+d+' 天',
+  lagTip:'DefiLlama 还没更新最近这几天的收入，所以这条线用的是它最后一次更新前的 7 天窗口 —— 两家的 7 日均对比时注意口径差。',
   gPsT:'P/S 年化 —— 你花多少钱，买它一年的收入',
   gPsF:'P/S ＝ <b class="hi">市值</b> ÷ (<b class="hi">日均收入 × 365 天</b>)',
   gPsL:'<b class="hl">数字越小越便宜</b>，可以理解成「按现在的赚钱速度要几年回本」。它把「公司贵不贵」和「币价高低」分开看——<b class="hl">币价低不代表便宜</b>，要看它每年能赚多少。',
@@ -1198,6 +1212,11 @@ en:{
   base100:'Base 100', start100:'start = 100', stopLoss:t=>t+' stop-loss',
   cumName:n=>n+' cumulative buyback (window)',
   thDate:'Date', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
+  pendingCell:'pending',
+  pendingTip:'DefiLlama has not published this day yet (the dashboard is fine). It fills in on the next refresh.',
+  srcLatest:d=>'latest '+d,
+  lagBadge:d=>d+'d behind',
+  lagTip:'DefiLlama has not updated the last few days for this protocol, so its 7-day average uses the last 7 days that do have data — keep that in mind when comparing the two.',
   gPsT:'Annualized P/S — what you pay for one year of revenue',
   gPsF:'P/S = <b class="hi">market cap</b> ÷ (<b class="hi">daily revenue × 365</b>)',
   gPsL:'<b class="hl">The lower the number, the cheaper it is</b>: how many years of today\'s earnings you are paying for. It separates "is the business expensive" from "is the token price high".',
@@ -1394,6 +1413,17 @@ function stats(rows, p){
   const hold= rows.map(r=>r[p.id+'_hold']).map(v=>v??0);
   const idxValid = rows.map((r,i)=>r[p.id+'_rev']!==null?i:-1).filter(i=>i>=0);
   const last = idxValid[idxValid.length-1];
+  /* 数据源滞后几天：DefiLlama 偶尔会晚一到两天才出数（常见于周末/新协议），
+     这时 7 日均的窗口会整体往回退 —— 页面必须把这件事说出来，不能装作没发生 */
+  const lag = (rows.length - 1) - last;
+  const lastDate = rows[last] ? rows[last].date : '';
+  /* 回购销毁那条序列也可能比收入少一天（DefiLlama 两个接口各自出数），
+     所以单独记一个"回购最后一根有数的日期"，表格里好把那天标成"待更新"而不是"—" */
+  const idxHold = rows.map((r,i)=>r[p.id+'_hold']!==null?i:-1).filter(i=>i>=0);
+  const holdLast = idxHold.length? idxHold[idxHold.length-1] : last;
+  const holdLastDate = rows[holdLast] ? rows[holdLast].date : lastDate;
+  const winFrom = rows[Math.max(0, last-6)] ? rows[Math.max(0, last-6)].date : '';
+  const winTo = lastDate;
   const sum = (a,b)=>{ let s=0,n=0; for(let i=Math.max(0,a);i<=b;i++){ if(rows[i][p.id+'_rev']!==null){s+=rev[i];n++;} } return {s,n}; };
   const w7  = sum(last-6, last), w7p = sum(last-13, last-7), w30 = sum(last-29, last);
   const avg7 = w7.n? w7.s/w7.n : 0, avg7p = w7p.n? w7p.s/w7p.n : 0, avg30 = w30.n? w30.s/w30.n : 0;
@@ -1431,7 +1461,7 @@ function stats(rows, p){
   const price7 = (function(){ for(let i=last-7;i>=0;i--){ const v=rows[i][p.id+'_price']; if(v!==null&&v!==undefined) return v; } return null; })();
   const priceChg7 = (price7&&priceNow)? priceNow/price7-1 : null;
   return {price7, priceChg7, burnDays, streakUp, streakDown, dailyRate, daysToWarn,
-    last, avg7, avg7p, avg30, holdSum7, peak, peakDay, lastRev:rev[last],
+    last, lag, lastDate, holdLast, holdLastDate, winFrom, winTo, avg7, avg7p, avg30, holdSum7, peak, peakDay, lastRev:rev[last],
     psv: priceNow, mcap, ps7: avg7>0? mcap/(avg7*365):null, ps30: avg30>0? mcap/(avg30*365):null,
     retrace, slope, ath, priceArr, burnPct: p.burned/p.maxSupply, rows,
     vol24, volChange: (mk.change24h ?? null), turnover, burnForce, burnYield};
@@ -1647,7 +1677,7 @@ function renderCards(){
     return `<div class="card">
       <div class="proj-head">
         <div>
-          <div class="proj-name"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span></div>
+          <div class="proj-name"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span>${s.lag>0? `<span class="lagtag" title="${t('lagTip')}">${t('lagBadge')(s.lag)}</span>`:''}</div>
           <div style="color:var(--mut);font-size:11.5px;margin-top:3px">${p.chain} · ${t('burned')}${(s.burnPct*100).toFixed(1)}% (${fmtN(p.burned/1e6,1)}M ${p.ticker})</div>
         </div>
         <div class="price">
@@ -2032,31 +2062,41 @@ function renderTable(){
     if(!isFinite(d)||Math.abs(d)<0.005) return '<span class="dlt flat">–</span>';
     return '<span class="dlt '+(d>0?'up':'dn')+'">'+(d>0?'▲':'▼')+Math.abs(d*100).toFixed(0)+'%</span>';
   };
-  const cell = (cl,k,v,extra)=> `<td class="mono ${cl}"><span class="bar" style="--w:${w(k,v)}%"></span><span class="v">${fmtU(v)}</span>${extra||''}</td>`;
+  const cell = (cl,k,v,extra,pending)=> pending
+    ? `<td class="mono ${cl} pend" title="${t('pendingTip')}"><span class="v pend-v">${t('pendingCell')}</span></td>`
+    : `<td class="mono ${cl}"><span class="bar" style="--w:${w(k,v)}%"></span><span class="v">${fmtU(v)}</span>${extra||''}</td>`;
+  const lagTag = id => { const s = st[id]; return s.lag>0
+    ? `<span class="lagtag" title="${t('lagTip')}">${t('srcLatest')(s.lastDate.slice(5))}</span>` : ''; };
 
   document.getElementById('tbl').querySelector('thead').innerHTML =
     `<tr class="grp"><th class="c-date" rowspan="2">${t('thDate')}</th>`+
-    `<th class="g-pons" colspan="3">PONS <span style="opacity:.45;font-weight:500;letter-spacing:0">· Robinhood</span></th>`+
-    `<th class="g-stonk" colspan="3">STONK <span style="opacity:.45;font-weight:500;letter-spacing:0">· Solana</span></th></tr>`+
+    `<th class="g-pons" colspan="3">PONS <span style="opacity:.45;font-weight:500;letter-spacing:0">· Robinhood</span>${lagTag('pons')}</th>`+
+    `<th class="g-stonk" colspan="3">STONK <span style="opacity:.45;font-weight:500;letter-spacing:0">· Solana</span>${lagTag('stonkfun')}</th></tr>`+
     `<tr class="sub"><th class="g-pons">${t('thRev')}</th><th class="g-pons">${t('thBurn')}</th><th class="g-pons">${t('thPrice')}</th>`+
     `<th class="g-stonk">${t('thRev')}</th><th class="g-stonk">${t('thBurn')}</th><th class="g-stonk">${t('thPrice')}</th></tr>`;
 
   const sum = `<tr class="sum"><td class="mono c-date">${t('thAvg7')}</td>`+
     PROJECTS.map(p=>{
       const s=st[p.id], g='g-'+gc(p);
-      return cell(g+' v-rev', p.id+'_rev',  s.avg7) +
+      const win = s.lag>0? `<small class="win">${s.winFrom.slice(5)} ~ ${s.winTo? s.winTo.slice(5):s.lastDate.slice(5)}</small>` : '';
+      return cell(g+' v-rev', p.id+'_rev',  s.avg7, win) +
              cell(g+' v-bb',  p.id+'_hold', s.holdSum7/7) +
              priceTd(s.psv);
     }).join('') + `</tr>`;
 
+  const pLast = st.pons.lastDate, bLast = st.stonkfun.lastDate;
+  const pHoldLast = st.pons.holdLastDate, bHoldLast = st.stonkfun.holdLastDate;
   const body = rows.map((r,i)=>{
     const prev = rows[i+1] || {};
+    /* 源站还没出这天 → 标"待更新"而不是一个光秃秃的破折号；收入与回购两条线各自判断 */
+    const pPend = r.date > pLast,   pHoldPend = r.date > pHoldLast;
+    const bPend = r.date > bLast,   bHoldPend = r.date > bHoldLast;
     return `<tr><td class="mono c-date">${r.date}</td>`+
-      cell('g-pons v-rev','pons_rev',r.pons_rev, dlt(r.pons_rev, prev.pons_rev))+
-      cell('g-pons v-bb','pons_hold',r.pons_hold)+
+      cell('g-pons v-rev','pons_rev',r.pons_rev, dlt(r.pons_rev, prev.pons_rev), pPend)+
+      cell('g-pons v-bb','pons_hold',r.pons_hold, '', pHoldPend)+
       priceTd(r.pons_price)+
-      cell('g-stonk v-rev','stonkfun_rev',r.stonkfun_rev, dlt(r.stonkfun_rev, prev.stonkfun_rev))+
-      cell('g-stonk v-bb','stonkfun_hold',r.stonkfun_hold)+
+      cell('g-stonk v-rev','stonkfun_rev',r.stonkfun_rev, dlt(r.stonkfun_rev, prev.stonkfun_rev), bPend)+
+      cell('g-stonk v-bb','stonkfun_hold',r.stonkfun_hold, '', bHoldPend)+
       priceTd(r.stonkfun_price)+`</tr>`;
   }).join('');
 

@@ -747,20 +747,22 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .bgm-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .bgm-head b{font-size:var(--fs-16);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
 .bgm-head b.u{color:var(--up)} .bgm-head b.d{color:var(--down)}
+.bgm-labw{display:inline-flex;align-items:baseline;gap:7px;min-width:0}
+.bgm-hl{font-size:11px;color:var(--mut2);letter-spacing:.2px;white-space:nowrap}
 .bgm-tag{font-size:10.5px;font-weight:700;letter-spacing:.6px;padding:2px 9px;border-radius:999px;
   border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
 .bgm-tag.up{color:var(--up);border-color:color-mix(in srgb,var(--up) 48%,var(--line2));
   background:color-mix(in srgb,var(--up) 12%,transparent)}
 .bgm-tag.down{color:var(--down);border-color:color-mix(in srgb,var(--down) 48%,var(--line2));
   background:color-mix(in srgb,var(--down) 12%,transparent)}
-.bgm-legend{font-size:10.5px;color:var(--mut2);line-height:1.62;margin:5px 0 8px}
+.bgm-legend{font-size:10.5px;color:var(--mut2);line-height:1.62;margin:5px 0 8px;white-space:pre-line}
 .bgm-prow{display:flex;align-items:center;gap:9px;font-size:var(--fs-11);padding:5px 0;
-  border-top:1px dashed var(--line)}
+  border-top:1px dashed var(--line);flex-wrap:wrap}
 .bgm-pn{display:inline-flex;align-items:center;gap:6px;font-weight:700;min-width:70px}
 .bgm-pn i{width:6px;height:6px;border-radius:50%;display:inline-block}
 .bgm-pv{font-weight:700;font-variant-numeric:tabular-nums;min-width:56px}
 .bgm-pv.u{color:var(--up)} .bgm-pv.d{color:var(--down)}
-.bgm-pd{color:var(--mut2);font-size:10.5px;margin-left:auto;font-variant-numeric:tabular-nums}
+.bgm-pd{color:var(--mut2);font-size:10.5px;margin-left:auto;flex:0 0 auto;font-variant-numeric:tabular-nums}
 .bgm-src{font-size:10.5px;color:var(--mut2);line-height:1.62;margin-top:9px;
   border-top:1px dashed var(--line);padding-top:8px}
 @media(max-width:640px){.bgm{right:12px;bottom:12px;width:min(330px,calc(100vw - 24px))}}
@@ -992,23 +994,23 @@ zh:{
   gMomBands:[['&gt; −15%','g-ok','收入平稳，维持仓位'],['−15% ~ −25%','g-warn','走弱，只观察不加仓'],['&lt; −25%','g-bad','骤降，暂停一切加仓']],
   gMomFoot:'两家都在 <b class="hi">−35%</b> 附近 → 已越过 −25% 触发线，按规则＝<b class="hl">暂停加仓</b>',
   bgmName:'行情BGM',
-  bgmOff:'点一下开启',
+  bgmOff:'点一下开始听',
   bgmUpName:'逍遥仙',
   bgmDownName:'兄弟抱一下',
   bgmDownName2:'梦的翅膀受了伤',
-  bgmTrackNo:(i,n)=>'第 '+i+'/'+n+' 首',
-  bgmBandUp:'涨档',
-  bgmBandDown:'跌档',
-  bgmBandFlat:'横盘',
-  bgmRule:'综合情绪 ≥ +3% → 放《逍遥仙》；≤ −3% → 跌档两首轮换（先《梦的翅膀受了伤》，再《兄弟抱一下》）；中间保持当前这首不切',
-  bgmLegend:'≥ +3% 涨档　·　≤ −3% 跌档　·　±1.5% 以内退出该档（防抖）',
-  bgmHow:'综合情绪 = 按市值加权（7 日涨跌 × 0.65 + 24h 涨跌 × 0.35）',
-  bgmNoData:'价格数据不足，暂不播放',
-  bgmHold:'横盘不上不下，继续放这首',
-  bgmPlaceholder:'内置占位旋律（原创合成）· 把 mp3 放到 audio/up.mp3、audio/down-meng.mp3、audio/down.mp3 后自动换成真歌',
-  bgmReal:'真歌模式',
-  bgmMin:'同一首至少播 90 秒才允许切换 · 切换带 1.2 秒淡入淡出',
-  bgmSev7:'7日',
+  bgmTrackNo:(i,n)=>'第 '+i+' 首（共 '+n+' 首）',
+  bgmBandUp:'涨了',
+  bgmBandDown:'跌了',
+  bgmBandFlat:'不涨不跌',
+  bgmLab:'两家平均涨跌',
+  bgmRule:'涨 3% 以上放《逍遥仙》；跌 3% 以上两首疗伤歌轮着放；中间不换歌',
+  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了放《逍遥仙》，跌了放《梦的翅膀受了伤》《兄弟抱一下》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
+  bgmNoData:'价格还没到，先不播',
+  bgmHold:'不涨不跌，继续放这首',
+  bgmPlaceholder:'占位旋律（没读到歌曲文件，先用原创旋律垫着）',
+  bgmReal:'正在放真歌',
+  bgmMin:'每首至少放满 90 秒才换、换歌带 1.2 秒淡入淡出',
+  bgmSev7:'近 7 天',
   verTip:'当前线上版本 · 有更新时这个号会变',
   pvTotal:'总浏览', pvToday:'今日', pvUv:'今日访客',
   pvTip:'每次打开页面计 1 次浏览；同一天同一设备只计 1 个访客。数据来自本站自建计数，不接任何第三方统计',
@@ -1036,8 +1038,8 @@ zh:{
   rankNoData:'排行数据暂缺，点「刷新数据」或「↻ 更新排行」拉一次',
   rankTab24:'24 小时', rankTab7:'7 日', rankTab30:'30 日',
   bgmTip:'🔊 行情BGM 已开启 · 点右下角可静音',
-  bgmWait:'待启动 · 触碰页面即响',
-  bgmSev24:'24h',
+  bgmWait:'还没开始 · 碰一下页面就响',
+  bgmSev24:'近 24 小时',
   foot1:'数据源：收入/回购＝DefiLlama（fees/revenue/holders-revenue API）；成交额/市值＝CoinGecko。Pons 收入=协议留存收入（创作者与 Uniswap 分成已扣除）；StonkFun 收入=其自留交易费（费用=收入）。P/S 年化 = 市值 ÷ (日均收入 × 365)，越低越便宜。参照系：pump.fun 30 日收入 $4,528 万、市值 $24.6 亿 → 4.45x。',
   foot2:'规则阈值：Pons 日收入 7 日均 &lt; $10 万＝离场，&lt; $15 万＝暂停加仓；StonkFun &lt; $20 万＝离场，&lt; $28 万＝暂停加仓。本面板仅为研究工具，不构成投资建议。'
 },
@@ -1165,22 +1167,22 @@ en:{
   gMomBands:[['&gt; −15%','g-ok','Stable — keep position'],['−15% ~ −25%','g-warn','Weakening — watch, do not add'],['&lt; −25%','g-bad','Sharp drop — pause all buying']],
   gMomFoot:'Both are near <b class="hi">−35%</b> → past the −25% trigger, which means: <b class="hl">pause all buying</b>',
   bgmName:'Market BGM',
-  bgmOff:'Tap to enable',
+  bgmOff:'Tap to play',
   bgmUpName:'Xiao Yao Xian',
   bgmDownName:'Brothers Hug',
   bgmDownName2:'Dream Wings Hurt',
-  bgmTrackNo:(i,n)=>'track '+i+'/'+n,
+  bgmTrackNo:(i,n)=>'track '+i+' of '+n,
   bgmBandUp:'UP',
   bgmBandDown:'DOWN',
   bgmBandFlat:'FLAT',
-  bgmRule:'Mood ≥ +3% → "Xiao Yao Xian"; ≤ −3% → two down tracks alternate ("Dream Wings Hurt" then "Brothers Hug"); in between keeps the current track',
-  bgmLegend:'≥ +3% up　·　≤ −3% down　·　exits the band inside ±1.5% (anti-flap)',
-  bgmHow:'Mood = market-cap weighted (7-day change × 0.65 + 24h change × 0.35)',
-  bgmNoData:'Not enough price data — nothing to play yet',
+  bgmLab:'Avg move',
+  bgmRule:'Up 3%+ plays "Xiao Yao Xian"; down 3%+ alternates the two sad songs; in between keeps the current one',
+  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → "Xiao Yao Xian". Down → "Dream Wings Hurt" / "Brothers Hug"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
+  bgmNoData:'No price data yet — nothing to play',
   bgmHold:'Flat both ways — keeping this track',
-  bgmPlaceholder:'Built-in placeholder melody (original synth) · drop mp3s at audio/up.mp3, audio/down-meng.mp3 and audio/down.mp3 to swap in the real songs',
-  bgmReal:'Real tracks',
-  bgmMin:'Min 90s per track · 1.2s crossfade on every switch',
+  bgmPlaceholder:'Placeholder melody (song files not found)',
+  bgmReal:'Real track',
+  bgmMin:'each song plays at least 90s · 1.2s crossfade',
   bgmSev7:'7d',
   verTip:'Live build tag — this changes whenever the dashboard updates',
   pvTotal:'views', pvToday:'today', pvUv:'visitors',
@@ -1209,8 +1211,8 @@ en:{
   rankNoData:'No ranking data yet — hit Refresh or ↻ to pull it',
   rankTab24:'24h', rankTab7:'7D', rankTab30:'30D',
   bgmTip:'🔊 Market BGM is on · tap the corner chip to mute',
-  bgmWait:'Standby · starts on your first tap',
-  bgmSev24:'24h',
+  bgmWait:'Not started · tap the page to start',
+  bgmSev24:'last 24h',
   foot1:'Sources: revenue/buyback = DefiLlama (fees / revenue / holders-revenue APIs); volume & market cap = CoinGecko. Pons revenue = protocol-retained revenue (creator and Uniswap splits already deducted); StonkFun revenue = its retained trading fees (fees = revenue). Annualized P/S = mcap ÷ (daily revenue × 365), lower is cheaper. Reference point: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
   foot2:'Thresholds: Pons 7-day avg revenue &lt; $100K = exit, &lt; $150K = pause buying; StonkFun &lt; $200K = exit, &lt; $280K = pause buying. Research tool only — not investment advice.'
 }
@@ -2304,8 +2306,8 @@ function renderTip(){
 /* ==================== 行情 BGM ====================
    涨 →《逍遥仙》　跌 →《梦的翅膀受了伤》→《兄弟抱一下》→ 两首来回轮着放
    （以币价为主：涨了开心，跌了难受；跌幅这一档两首换着听，不腻）
-   评分：单币情绪 = 7 日涨跌 × 0.65 + 24h 涨跌 × 0.35（单位 %）
-        综合情绪 = 按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
+   面板上的「两家平均涨跌」：单个币 = 近 7 天涨跌 × 0.65 + 近 24 小时涨跌 × 0.35
+        两家再按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
    分档：≥ +3% 涨档 · ≤ −3% 跌档；回到 ±1.5% 以内才退出该档（滞回，防抖）
    横盘不上不下时：不切歌，继续放当前这首
    同一首至少播 90 秒才允许切；切换用 1.2 秒交叉淡入淡出
@@ -2585,7 +2587,8 @@ function bgmPaint(){
   var sc = document.getElementById('bgmScore');
   if(sc){
     sc.innerHTML = m
-      ? '<b class="'+(m.score>=0?'u':'d')+'">'+(m.score>=0?'+':'')+m.score.toFixed(2)+'%</b>'
+      ? '<span class="bgm-labw"><span class="bgm-hl">'+t('bgmLab')+'</span>'
+          + '<b class="'+(m.score>=0?'u':'d')+'">'+(m.score>=0?'+':'')+m.score.toFixed(2)+'%</b></span>'
         + '<span class="bgm-tag '+(bgmBand||'flat')+'">'+bgmBandTxt(bgmBand)+'</span>'
       : '<b>—</b><span class="bgm-tag">'+t('bgmNoData')+'</span>';
   }
@@ -2603,8 +2606,8 @@ function bgmPaint(){
   if(src){
     var no = bgmCur? bgmTrackNo(bgmCur, bgmCurIdx) : '';
     if(bgmOn && bgmCur && bgmMissing[bgmCur+bgmCurIdx]) src.textContent = t('bgmPlaceholder');
-    else if(bgmOn && bgmCur) src.textContent = (no? no+' · ' : '') + t('bgmReal') + ' · ' + t('bgmMin') + '　｜　' + t('bgmHow');
-    else src.textContent = t('bgmRule') + '　｜　' + t('bgmHow');
+    else if(bgmOn && bgmCur) src.textContent = (no? no+' · ' : '') + t('bgmReal') + ' · ' + t('bgmMin');
+    else src.textContent = t('bgmRule');
   }
 }
 

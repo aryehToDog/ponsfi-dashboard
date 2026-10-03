@@ -942,20 +942,22 @@ BGM_CSS = r'''
 .bgm-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .bgm-head b{font-size:var(--fs-16);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
 .bgm-head b.u{color:var(--up)} .bgm-head b.d{color:var(--down)}
+.bgm-labw{display:inline-flex;align-items:baseline;gap:7px;min-width:0}
+.bgm-hl{font-size:11px;color:var(--mut2);letter-spacing:.2px;white-space:nowrap}
 .bgm-tag{font-size:10.5px;font-weight:700;letter-spacing:.6px;padding:2px 9px;border-radius:999px;
   border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
 .bgm-tag.up{color:var(--up);border-color:color-mix(in srgb,var(--up) 48%,var(--line2));
   background:color-mix(in srgb,var(--up) 12%,transparent)}
 .bgm-tag.down{color:var(--down);border-color:color-mix(in srgb,var(--down) 48%,var(--line2));
   background:color-mix(in srgb,var(--down) 12%,transparent)}
-.bgm-legend{font-size:10.5px;color:var(--mut2);line-height:1.62;margin:5px 0 8px}
+.bgm-legend{font-size:10.5px;color:var(--mut2);line-height:1.62;margin:5px 0 8px;white-space:pre-line}
 .bgm-prow{display:flex;align-items:center;gap:9px;font-size:var(--fs-11);padding:5px 0;
-  border-top:1px dashed var(--line)}
+  border-top:1px dashed var(--line);flex-wrap:wrap}
 .bgm-pn{display:inline-flex;align-items:center;gap:6px;font-weight:700;min-width:70px}
 .bgm-pn i{width:6px;height:6px;border-radius:50%;display:inline-block}
 .bgm-pv{font-weight:700;font-variant-numeric:tabular-nums;min-width:56px}
 .bgm-pv.u{color:var(--up)} .bgm-pv.d{color:var(--down)}
-.bgm-pd{color:var(--mut2);font-size:10.5px;margin-left:auto;font-variant-numeric:tabular-nums}
+.bgm-pd{color:var(--mut2);font-size:10.5px;margin-left:auto;flex:0 0 auto;font-variant-numeric:tabular-nums}
 .bgm-src{font-size:10.5px;color:var(--mut2);line-height:1.62;margin-top:9px;
   border-top:1px dashed var(--line);padding-top:8px}
 @media(max-width:640px){.bgm{right:12px;bottom:12px;width:min(330px,calc(100vw - 24px))}}
@@ -982,8 +984,8 @@ BGM_JS = r'''
 /* ==================== 行情 BGM ====================
    涨 →《逍遥仙》　跌 →《梦的翅膀受了伤》→《兄弟抱一下》→ 两首来回轮着放
    （以币价为主：涨了开心，跌了难受；跌幅这一档两首换着听，不腻）
-   评分：单币情绪 = 7 日涨跌 × 0.65 + 24h 涨跌 × 0.35（单位 %）
-        综合情绪 = 按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
+   面板上的「两家平均涨跌」：单个币 = 近 7 天涨跌 × 0.65 + 近 24 小时涨跌 × 0.35
+        两家再按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
    分档：≥ +3% 涨档 · ≤ −3% 跌档；回到 ±1.5% 以内才退出该档（滞回，防抖）
    横盘不上不下时：不切歌，继续放当前这首
    同一首至少播 90 秒才允许切；切换用 1.2 秒交叉淡入淡出
@@ -1263,7 +1265,8 @@ function bgmPaint(){
   var sc = document.getElementById('bgmScore');
   if(sc){
     sc.innerHTML = m
-      ? '<b class="'+(m.score>=0?'u':'d')+'">'+(m.score>=0?'+':'')+m.score.toFixed(2)+'%</b>'
+      ? '<span class="bgm-labw"><span class="bgm-hl">'+t('bgmLab')+'</span>'
+          + '<b class="'+(m.score>=0?'u':'d')+'">'+(m.score>=0?'+':'')+m.score.toFixed(2)+'%</b></span>'
         + '<span class="bgm-tag '+(bgmBand||'flat')+'">'+bgmBandTxt(bgmBand)+'</span>'
       : '<b>—</b><span class="bgm-tag">'+t('bgmNoData')+'</span>';
   }
@@ -1281,8 +1284,8 @@ function bgmPaint(){
   if(src){
     var no = bgmCur? bgmTrackNo(bgmCur, bgmCurIdx) : '';
     if(bgmOn && bgmCur && bgmMissing[bgmCur+bgmCurIdx]) src.textContent = t('bgmPlaceholder');
-    else if(bgmOn && bgmCur) src.textContent = (no? no+' · ' : '') + t('bgmReal') + ' · ' + t('bgmMin') + '　｜　' + t('bgmHow');
-    else src.textContent = t('bgmRule') + '　｜　' + t('bgmHow');
+    else if(bgmOn && bgmCur) src.textContent = (no? no+' · ' : '') + t('bgmReal') + ' · ' + t('bgmMin');
+    else src.textContent = t('bgmRule');
   }
 }
 

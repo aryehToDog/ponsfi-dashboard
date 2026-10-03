@@ -892,6 +892,8 @@ h1 span{font-size:var(--fs-11);font-weight:500}
     </div>
   </header>
 
+  <div class="safe-line" id="safeLine"><span class="sf-ic">🔒</span><span id="safeTxt"></span></div>
+
   <div class="grid2" id="cards"></div>
 
   <div class="sec-title" id="st-rules">规则引擎 · 加仓与止损信号</div>
@@ -927,7 +929,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   <div class="guide" id="guide"></div>
 
   <div class="foot" id="foot"></div>
-  <!-- ===== 行情BGM：涨 →《逍遥仙》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》轮换（音源、阈值改这里）===== -->  <div class="bgm" id="bgm">    <div class="bgm-det" id="bgmDet">      <div class="bgm-head" id="bgmScore"></div>      <div class="bgm-legend" id="bgmLegend"></div>      <div class="bgm-parts" id="bgmParts"></div>      <div class="bgm-src" id="bgmSrc"></div>    </div>    <button class="bgm-card" id="bgmCard" type="button" onclick="bgmToggle()" onmouseenter="bgmDetShow()">      <span class="bgm-eq" id="bgmEq"><i></i><i></i><i></i></span>      <span class="bgm-txt"><span class="bgm-t" id="bgmT">行情BGM</span><span class="bgm-s" id="bgmS">点一下开启</span></span>      <span class="bgm-cv" id="bgmCv" onclick="event.stopPropagation();bgmDetToggle()">▴</span>    </button>  </div></div>
+  <!-- ===== 行情BGM：涨 →《逍遥仙》/《不凡》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》/《无人之岛》轮换（音源、阈值改这里）===== -->  <div class="bgm" id="bgm">    <div class="bgm-det" id="bgmDet">      <div class="bgm-head" id="bgmScore"></div>      <div class="bgm-legend" id="bgmLegend"></div>      <div class="bgm-parts" id="bgmParts"></div>      <div class="bgm-src" id="bgmSrc"></div>    </div>    <button class="bgm-card" id="bgmCard" type="button" onclick="bgmToggle()" onmouseenter="bgmDetShow()">      <span class="bgm-eq" id="bgmEq"><i></i><i></i><i></i></span>      <span class="bgm-txt"><span class="bgm-t" id="bgmT">行情BGM</span><span class="bgm-s" id="bgmS">点一下开启</span></span>      <span class="bgm-cv" id="bgmCv" onclick="event.stopPropagation();bgmDetToggle()">▴</span>    </button>  </div></div>
 
 <script>
 const BUNDLE = /*__DATA__*/;
@@ -1066,6 +1068,7 @@ zh:{
   bgmName:'行情BGM',
   bgmOff:'点一下开始听',
   bgmUpName:'逍遥仙',
+  bgmUpName2:'不凡',
   bgmDownName:'兄弟抱一下',
   bgmDownName2:'梦的翅膀受了伤',
   bgmDownName3:'无人之岛',
@@ -1074,8 +1077,8 @@ zh:{
   bgmBandDown:'跌了',
   bgmBandFlat:'不涨不跌',
   bgmLab:'两家平均涨跌',
-  bgmRule:'涨 3% 以上放《逍遥仙》；跌 3% 以上三首疗伤歌轮着放；中间不换歌',
-  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了放《逍遥仙》，跌了放《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
+  bgmRule:'涨 3% 以上放《逍遥仙》《不凡》轮着来；跌 3% 以上三首疗伤歌轮着放；中间不换歌',
+  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了放《逍遥仙》《不凡》，跌了放《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
   bgmNoData:'价格还没到，先不播',
   bgmHold:'不涨不跌，继续放这首',
   bgmPlaceholder:'占位旋律（没读到歌曲文件，先用原创旋律垫着）',
@@ -1123,6 +1126,7 @@ zh:{
   bgmTip:'🔊 行情BGM 已开启 · 点右下角可静音',
   bgmWait:'还没开始 · 碰一下页面就响',
   bgmSev24:'近 24 小时',
+  safeLine:'<b>只读数据面板</b> · 不连接钱包 · 不请求签名 · 不发起任何交易<span class="sf-sep">　|　</span>数据全部来自公开接口',
   foot1:'数据源：收入/回购＝DefiLlama（fees/revenue/holders-revenue API）；成交额/市值＝CoinGecko。Pons 收入=协议留存收入（创作者与 Uniswap 分成已扣除）；StonkFun 收入=其自留交易费（费用=收入）。P/S 年化 = 市值 ÷ (日均收入 × 365)，越低越便宜。参照系：pump.fun 30 日收入 $4,528 万、市值 $24.6 亿 → 4.45x。',
   foot2:'规则阈值：Pons 日收入 7 日均 &lt; $10 万＝离场，&lt; $15 万＝暂停加仓；StonkFun &lt; $20 万＝离场，&lt; $28 万＝暂停加仓。本面板仅为研究工具，不构成投资建议。'
 },
@@ -1257,6 +1261,7 @@ en:{
   bgmName:'Market BGM',
   bgmOff:'Tap to play',
   bgmUpName:'Xiao Yao Xian',
+  bgmUpName2:'Bu Fan',
   bgmDownName:'Brothers Hug',
   bgmDownName2:'Dream Wings Hurt',
   bgmDownName3:'Nobody\u2019s Island',
@@ -1265,8 +1270,8 @@ en:{
   bgmBandDown:'DOWN',
   bgmBandFlat:'FLAT',
   bgmLab:'Avg move',
-  bgmRule:'Up 3%+ plays "Xiao Yao Xian"; down 3%+ alternates the three sad songs; in between keeps the current one',
-  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → "Xiao Yao Xian". Down → "Dream Wings Hurt" / "Brothers Hug" / "Nobody\u2019s Island"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
+  bgmRule:'Up 3%+ alternates "Xiao Yao Xian" / "Bu Fan"; down 3%+ alternates the three sad songs; in between keeps the current one',
+  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → "Xiao Yao Xian" / "Bu Fan". Down → "Dream Wings Hurt" / "Brothers Hug" / "Nobody\u2019s Island"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
   bgmNoData:'No price data yet — nothing to play',
   bgmHold:'Flat both ways — keeping this track',
   bgmPlaceholder:'Placeholder melody (song files not found)',
@@ -1314,6 +1319,7 @@ en:{
   bgmTip:'🔊 Market BGM is on · tap the corner chip to mute',
   bgmWait:'Not started · tap the page to start',
   bgmSev24:'last 24h',
+  safeLine:'<b>Read-only dashboard</b> · no wallet connection · no signatures · no transactions<span class="sf-sep">　|　</span>all data from public APIs',
   foot1:'Sources: revenue/buyback = DefiLlama (fees / revenue / holders-revenue APIs); volume & market cap = CoinGecko. Pons revenue = protocol-retained revenue (creator and Uniswap splits already deducted); StonkFun revenue = its retained trading fees (fees = revenue). Annualized P/S = mcap ÷ (daily revenue × 365), lower is cheaper. Reference point: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
   foot2:'Thresholds: Pons 7-day avg revenue &lt; $100K = exit, &lt; $150K = pause buying; StonkFun &lt; $200K = exit, &lt; $280K = pause buying. Research tool only — not investment advice.'
 }
@@ -1470,6 +1476,7 @@ function stats(rows, p){
 /* ---------- 静态文案 ---------- */
 function renderStatic(){
   document.getElementById('h1t').textContent = t('h1');
+  var _sl = document.getElementById('safeTxt'); if(_sl) _sl.innerHTML = t('safeLine');
   document.getElementById('st-rules').textContent = t('secRules');
   document.getElementById('st-rank').textContent = t('secRank');
   document.getElementById('st-chart').textContent = t('secChart');
@@ -2427,7 +2434,7 @@ function renderTip(){
 }
 
 /* ==================== 行情 BGM ====================
-   涨 →《逍遥仙》　跌 →《梦的翅膀受了伤》→《兄弟抱一下》→ 两首来回轮着放
+   涨 →《逍遥仙》《不凡》轮着放　跌 →《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》轮着放
    （以币价为主：涨了开心，跌了难受；跌幅这一档两首换着听，不腻）
    面板上的「两家平均涨跌」：单个币 = 近 7 天涨跌 × 0.65 + 近 24 小时涨跌 × 0.35
         两家再按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
@@ -2438,9 +2445,12 @@ function renderTip(){
    音源：优先 audio/up.mp3、audio/down.mp3（你自己上传的真歌）；
         文件不存在时自动回落到内置占位旋律（Web Audio 合成的原创乐句，不含任何版权素材）
    ================================================== */
-/* 每个档位一组曲目：跌幅档两首轮换，第一首《梦的翅膀受了伤》，第二首《兄弟抱一下》 */
+/* 每个档位一组曲目：涨档两首轮换（逍遥仙 → 不凡），跌档三首轮换（梦的翅膀受了伤 → 兄弟抱一下 → 无人之岛） */
 const BGM_TRACKS = {
-  up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   }],
+  up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   },
+         /* 不凡（王铮亮）：时间轴用的是网易云官方 lrc 的毫秒级时间，和本地这份 mp3（同一版，211.8s）逐句核对过
+            —— 官方歌词里 1:31~2:19 / 2:32~3:05 两段本来就没有词（纯音乐），不是漏抓 */
+         { src:'audio/up-bufan.mp3',  lrc:'audio/up-bufan.lrc',  name:'bgmUpName2'  }],
   down: [{ src:'audio/down-meng.mp3', lrc:'audio/down-meng.lrc', name:'bgmDownName2' },
          /* down-v2 = 跟《美好》专辑版 mp3 对齐的时间轴（旧的 down.lrc 是网易云「2021 版」，两版编曲不同、对不上） */
          { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 },
@@ -2809,7 +2819,7 @@ function lyricParse(raw){
     if(!stamps.length) return;
     var txt = line.slice(end).trim();
     if(!txt) return;
-    if(/^(作词|作曲|编曲|制作人|配唱|出品人|出品|发行|混音室|混音|录音室|录音|和声编写|和声|缩混|母带|监制|统筹|企划|宣发|吉他|贝斯|鼓|键盘|弦乐|词|曲|OP|SP)\s*[:：]/.test(txt)) return;
+    if(/^(作词|作曲|编曲|制作人|制作助理|配唱|出品人|出品公司|出品|发行|混音室|混音师|混音|录音棚|录音室|录音师|录音|和声编写|和声|缩混|母带师|母带|监制|统筹|企划|宣发|封面|视觉|吉他|贝斯|鼓|键盘|弦乐|词|曲|OP|SP)\s*[:：]/.test(txt)) return;
     stamps.forEach(function(sec){ out.push({ t:sec, s:txt }); });
   });
   out.sort(function(a,b){ return a.t - b.t; });

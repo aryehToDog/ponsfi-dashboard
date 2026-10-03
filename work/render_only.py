@@ -9,6 +9,34 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v2.5「只读声明」 · 2026-10-03
+     【为什么做这一版】用户在 X / 钱包内置浏览器里打开 ponsfi.xyz，被拦了两次：
+       ① MetaMask Phishing Protection：「This website might be harmful」
+       ② OKX Wallet：「你访问的网站存在钓鱼风险」
+     【查证结论】误报，不是站点有问题：
+       · MetaMask 的官方黑名单（github.com/MetaMask/eth-phishing-detect 的 src/config.json，
+         blacklist 共 10 万条）里确实有 ponsfi.xyz 这一条 —— 就是它在弹警告
+       · urlscan.io 查历史：ponsfi.xyz 只有 2026-10-03 当天 2 次扫描（都是这个站自己），
+         没有前持有者的钓鱼历史 → 属于「新注册 + 加密关键词 + .xyz」被自动收录，典型的误伤
+       · 本站不连接钱包、不请求签名、不发起交易，只是一个读公开数据的静态页面
+     【这一版改了什么】标题下面加了一行「只读声明」（中英各一份）：
+       🔒 只读数据面板 · 不连接钱包 · 不请求签名 · 不发起任何交易 ｜ 数据全部来自公开接口
+       —— 对真人用户是安心提示，对申诉审核和自动扫描是明确的「不是 dApp」信号。
+     【误报怎么申诉（每一步都是官方入口）】
+       ① MetaMask（真正管用的那条）：它的黑名单来自 ChainPatrol → 去 chainpatrol.io/report 提交复核，
+          或到 github.com/MetaMask/eth-phishing-detect 提 PR 把 ponsfi.xyz 从 blacklist 里删掉
+          （官方 README 写明：git log -S 查这条是什么时候加的；移除用 yarn remove:blocklist）
+       ② OKX Wallet：拦截页上那个「误报快捷反馈」，或 okx.com/web3/security
+       ③ 顺手交一份 Google Safe Browsing 误报申诉：safebrowsing.google.com/safebrowsing/report_error/
+     【给用户的临时办法】在钱包浏览器里点「继续访问 / Proceed anyway」即可；
+       发给朋友的链接建议让对方用系统浏览器（Safari / Chrome）打开，那边不会有这个拦截。
+     v2.4 新增：涨档加第二首《不凡》（王铮亮）
+       · audio/up-bufan.mp3（3:31.85）+ audio/up-bufan.lrc（30 句，毫秒级时间轴）
+       · 时间轴来源：网易云官方 lrc（同一版，211,802 ms 与本地 mp3 的 211.85 s 对上），
+         丢掉全部署名行与空文本行后逐句核对，与用户下载的那份只差 ±0.5 秒
+       · 官方歌词里 1:31~2:19 与 2:32~3:05 本来就没有词（纯音乐段），不是漏抓
+       · 顺带把解析器的署名过滤正则补全：+ 制作助理 / 出品公司 / 混音师 / 录音棚 / 录音师 / 母带师 / 封面 / 视觉
+       · 涨档现在两首轮换（bgmRot.up 通用逻辑），面板会显示「第 1 首（共 2 首）」；中英文案同步
      ponsfi.xyz 看板 · 版本 v2.3「数据滞后讲明白」 · 2026-10-03
      【为什么会做这一版】
        用户截图问：STONK 的 10-02 / 10-03 怎么没数据，是不是 bug？
@@ -55,7 +83,8 @@ BANNER = """<!-- ===============================================================
           靠右贴齐（不再吊在半空），和右边的「关注 / 打赏」连成一组。
      历史备份（每个都含同名 zip，都在 backups/ 下）：
        v1 / v1.1 / v1.2 / v1.3 / v1.4 / v1.5 / v1.6 / v1.7 / v1.8-2026-10-02 / v1.9-2026-10-03 /
-       v2.0-2026-10-03 / v2.0.1-2026-10-03 / v2.1-2026-10-03 / v2.2-2026-10-03 /（本版）v2.3-2026-10-03
+       v2.0-2026-10-03 / v2.0.1-2026-10-03 / v2.1-2026-10-03 / v2.2-2026-10-03 / v2.3-2026-10-03 /
+       v2.4-2026-10-03 /（本版）v2.5-2026-10-03
      v2.0 改动（这一版只动「共勉 / 点赞」的位置和默认口径，数据与规则逻辑没碰）：
        ① 「共勉」从独立板块搬进作者名片中间那块空白 —— 每次刷新随机显示一句，不轮播，
           换页也不重复上一句（localStorage 记着上一条）。名片不再空一块。
@@ -101,10 +130,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v2.3-2026-10-03">
+<meta name="dashboard-version" content="v2.5-2026-10-03">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v2.3 · 2026-10-03"
+VER = "v2.5 · 2026-10-03"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

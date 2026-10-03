@@ -982,7 +982,7 @@ BGM_CSS = r'''
 '''
 
 BGM_HTML = (
-    '  <!-- ===== 行情BGM：涨 →《逍遥仙》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》轮换（音源、阈值改这里）===== -->'
+    '  <!-- ===== 行情BGM：涨 →《逍遥仙》/《不凡》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》/《无人之岛》轮换（音源、阈值改这里）===== -->'
     '  <div class="bgm" id="bgm">'
     '    <div class="bgm-det" id="bgmDet">'
     '      <div class="bgm-head" id="bgmScore"></div>'
@@ -1236,7 +1236,7 @@ function qInit(){
 
 BGM_JS = r'''
 /* ==================== 行情 BGM ====================
-   涨 →《逍遥仙》　跌 →《梦的翅膀受了伤》→《兄弟抱一下》→ 两首来回轮着放
+   涨 →《逍遥仙》《不凡》轮着放　跌 →《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》轮着放
    （以币价为主：涨了开心，跌了难受；跌幅这一档两首换着听，不腻）
    面板上的「两家平均涨跌」：单个币 = 近 7 天涨跌 × 0.65 + 近 24 小时涨跌 × 0.35
         两家再按市值加权（谁盘子大谁影响大，避免小盘插针带节奏）
@@ -1247,9 +1247,12 @@ BGM_JS = r'''
    音源：优先 audio/up.mp3、audio/down.mp3（你自己上传的真歌）；
         文件不存在时自动回落到内置占位旋律（Web Audio 合成的原创乐句，不含任何版权素材）
    ================================================== */
-/* 每个档位一组曲目：跌幅档两首轮换，第一首《梦的翅膀受了伤》，第二首《兄弟抱一下》 */
+/* 每个档位一组曲目：涨档两首轮换（逍遥仙 → 不凡），跌档三首轮换（梦的翅膀受了伤 → 兄弟抱一下 → 无人之岛） */
 const BGM_TRACKS = {
-  up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   }],
+  up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   },
+         /* 不凡（王铮亮）：时间轴用的是网易云官方 lrc 的毫秒级时间，和本地这份 mp3（同一版，211.8s）逐句核对过
+            —— 官方歌词里 1:31~2:19 / 2:32~3:05 两段本来就没有词（纯音乐），不是漏抓 */
+         { src:'audio/up-bufan.mp3',  lrc:'audio/up-bufan.lrc',  name:'bgmUpName2'  }],
   down: [{ src:'audio/down-meng.mp3', lrc:'audio/down-meng.lrc', name:'bgmDownName2' },
          /* down-v2 = 跟《美好》专辑版 mp3 对齐的时间轴（旧的 down.lrc 是网易云「2021 版」，两版编曲不同、对不上） */
          { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 },
@@ -1618,7 +1621,7 @@ function lyricParse(raw){
     if(!stamps.length) return;
     var txt = line.slice(end).trim();
     if(!txt) return;
-    if(/^(作词|作曲|编曲|制作人|配唱|出品人|出品|发行|混音室|混音|录音室|录音|和声编写|和声|缩混|母带|监制|统筹|企划|宣发|吉他|贝斯|鼓|键盘|弦乐|词|曲|OP|SP)\s*[:：]/.test(txt)) return;
+    if(/^(作词|作曲|编曲|制作人|制作助理|配唱|出品人|出品公司|出品|发行|混音室|混音师|混音|录音棚|录音室|录音师|录音|和声编写|和声|缩混|母带师|母带|监制|统筹|企划|宣发|封面|视觉|吉他|贝斯|鼓|键盘|弦乐|词|曲|OP|SP)\s*[:：]/.test(txt)) return;
     stamps.forEach(function(sec){ out.push({ t:sec, s:txt }); });
   });
   out.sort(function(a,b){ return a.t - b.t; });

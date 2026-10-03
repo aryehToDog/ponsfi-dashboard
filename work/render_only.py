@@ -9,7 +9,15 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v2.0「共勉搬进作者名片」 · 2026-10-03
+     ponsfi.xyz 看板 · 版本 v2.0.1「共勉搬进作者名片」 · 2026-10-03
+     v2.0.1 紧急修的两个问题（v2.0 只上线了十几分钟）：
+       ① 共勉被挤成半宽、右边一大片空白、句子被迫折成两行 —— 根因是 QUOTE_JS 里的状态量
+          用了 let：函数声明会提升而 let 不会，BGM_JS 结尾的初始化（lyricPaintIdle）比
+          QUOTE_JS 先跑，回调进 qBoxShowSoon 时撞上「暂时性死区」（Cannot access 'QBoxT'
+          before initialization），异常被外层 try/catch 静默吞掉，于是歌词块永远不收起、
+          一半宽度被它占着。改成 var 后恢复正常（初始化也能正常收起来了）。
+       ② 顺手做的设计调整：共勉正文 12.5px → 13px；点赞胶囊常驻粉色心形 + 淡粉底，
+          靠右贴齐（不再吊在半空），和右边的「关注 / 打赏」连成一组。
      历史备份（每个都含同名 zip）：
        backups/ponsfi-v1-… / v1.1-… / v1.2-… / v1.3-… / v1.4-… / v1.5-… / v1.6-… / v1.7-… / v1.8-2026-10-02/ / v1.9-2026-10-03/
      本版备份：backups/ponsfi-v2.0-2026-10-03/  ＋  ponsfi-v2.0-2026-10-03.zip
@@ -58,10 +66,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v2.0-2026-10-03">
+<meta name="dashboard-version" content="v2.0.1-2026-10-03">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v2.0 · 2026-10-03"
+VER = "v2.0.1 · 2026-10-03"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

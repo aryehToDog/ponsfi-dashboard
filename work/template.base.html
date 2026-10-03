@@ -313,10 +313,6 @@ zh:{
   bgmLegend:'≥ +3% 涨档　·　≤ −3% 跌档　·　±1.5% 以内退出该档（防抖）',
   bgmHow:'综合情绪 = 按市值加权（7 日涨跌 × 0.65 + 24h 涨跌 × 0.35）',
   bgmNoData:'价格数据不足，暂不播放',
-  lyIdle:'行情BGM 待命 · 点右下角播放',
-  lyLoading:'歌词加载中…',
-  lyNoLyric:'纯音乐 · 暂无歌词',
-  lyClip:'试听片段 · 歌词暂不同步',
   bgmHold:'横盘不上不下，继续放这首',
   bgmPlaceholder:'内置占位旋律（原创合成）· 把 mp3 放到 audio/up.mp3、audio/down-meng.mp3、audio/down.mp3 后自动换成真歌',
   bgmReal:'真歌模式',
@@ -490,10 +486,6 @@ en:{
   bgmLegend:'≥ +3% up　·　≤ −3% down　·　exits the band inside ±1.5% (anti-flap)',
   bgmHow:'Mood = market-cap weighted (7-day change × 0.65 + 24h change × 0.35)',
   bgmNoData:'Not enough price data — nothing to play yet',
-  lyIdle:'Market BGM on standby · tap the corner to play',
-  lyLoading:'Loading lyrics…',
-  lyNoLyric:'Instrumental · no lyrics',
-  lyClip:'Preview clip · lyrics not synced',
   bgmHold:'Flat both ways — keeping this track',
   bgmPlaceholder:'Built-in placeholder melody (original synth) · drop mp3s at audio/up.mp3, audio/down-meng.mp3 and audio/down.mp3 to swap in the real songs',
   bgmReal:'Real tracks',
@@ -549,7 +541,6 @@ function setLang(l){
   if(b) b.textContent = (LANG==='zh'?'EN':'中文');
   if(typeof applyTheme==='function') applyTheme(typeof curTheme==='function'?curTheme():'auto');
   renderStatic(); renderAll(); if(typeof renderTip==='function') renderTip();
-  if(typeof lyricRelang==='function') lyricRelang();
 }
 function cycleLang(){ setLang(LANG==='zh'?'en':'zh'); }
 

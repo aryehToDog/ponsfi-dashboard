@@ -356,7 +356,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 /* ---------- 作者名片 · 横幅歌词（跟着右下角行情 BGM 走） ---------- */
 .lyric{flex:1 1 180px;min-width:0;display:flex;justify-content:center;align-items:center;
-  opacity:0;transition:opacity .7s ease;pointer-events:none}
+  opacity:0;transition:opacity .6s ease;pointer-events:none}
+.lyric.hidden{display:none}   /* 没歌词可显示时整块收掉，不留空话 */
 .lyric.on{opacity:1}
 .ly-in{width:100%;max-width:620px;display:flex;flex-direction:column;gap:6px}
 .ly-window{position:relative;height:54px;overflow:hidden;
@@ -1003,10 +1004,6 @@ zh:{
   bgmLegend:'≥ +3% 涨档　·　≤ −3% 跌档　·　±1.5% 以内退出该档（防抖）',
   bgmHow:'综合情绪 = 按市值加权（7 日涨跌 × 0.65 + 24h 涨跌 × 0.35）',
   bgmNoData:'价格数据不足，暂不播放',
-  lyIdle:'行情BGM 待命 · 点右下角播放',
-  lyLoading:'歌词加载中…',
-  lyNoLyric:'纯音乐 · 暂无歌词',
-  lyClip:'试听片段 · 歌词暂不同步',
   bgmHold:'横盘不上不下，继续放这首',
   bgmPlaceholder:'内置占位旋律（原创合成）· 把 mp3 放到 audio/up.mp3、audio/down-meng.mp3、audio/down.mp3 后自动换成真歌',
   bgmReal:'真歌模式',
@@ -1180,10 +1177,6 @@ en:{
   bgmLegend:'≥ +3% up　·　≤ −3% down　·　exits the band inside ±1.5% (anti-flap)',
   bgmHow:'Mood = market-cap weighted (7-day change × 0.65 + 24h change × 0.35)',
   bgmNoData:'Not enough price data — nothing to play yet',
-  lyIdle:'Market BGM on standby · tap the corner to play',
-  lyLoading:'Loading lyrics…',
-  lyNoLyric:'Instrumental · no lyrics',
-  lyClip:'Preview clip · lyrics not synced',
   bgmHold:'Flat both ways — keeping this track',
   bgmPlaceholder:'Built-in placeholder melody (original synth) · drop mp3s at audio/up.mp3, audio/down-meng.mp3 and audio/down.mp3 to swap in the real songs',
   bgmReal:'Real tracks',
@@ -1239,7 +1232,6 @@ function setLang(l){
   if(b) b.textContent = (LANG==='zh'?'EN':'中文');
   if(typeof applyTheme==='function') applyTheme(typeof curTheme==='function'?curTheme():'auto');
   renderStatic(); renderAll(); if(typeof renderTip==='function') renderTip();
-  if(typeof lyricRelang==='function') lyricRelang();
 }
 function cycleLang(){ setLang(LANG==='zh'?'en':'zh'); }
 
@@ -2325,7 +2317,8 @@ function renderTip(){
 const BGM_TRACKS = {
   up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   }],
   down: [{ src:'audio/down-meng.mp3', lrc:'audio/down-meng.lrc', name:'bgmDownName2' },
-         { src:'audio/down.mp3',      lrc:'audio/down.lrc',      name:'bgmDownName'  }]
+         /* down-v2 = 跟《美好》专辑版 mp3 对齐的时间轴（旧的 down.lrc 是网易云「2021 版」，两版编曲不同、对不上） */
+         { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 }]
 };
 /* 歌词与音频同目录同名（.lrc）。新增歌曲：mp3 + lrc 一起放进 audio/，这里补一条。 */
 const BGM_TH = 3.0, BGM_EXIT = 1.5, BGM_MIN_MS = 90000, BGM_FADE_MS = 1200;
@@ -2496,7 +2489,7 @@ function bgmPlay(band, idx){
   Object.keys(bgmEls).forEach(function(k){ if(k!==key) bgmFade(bgmEls[k], 0, BGM_FADE_MS); });
   bgmSynthStop();
   bgmCur = band; bgmCurIdx = idx; bgmSince = Date.now();
-  if(bgmMissing[key]){ lyricNote(t('lyNoLyric'),'lyNoLyric'); bgmSynthStart(band); bgmPaint(); return; }
+  if(bgmMissing[key]){ lyricClear(); bgmSynthStart(band); bgmPaint(); return; }
   var a = bgmEl(band, idx);
   a.volume = 0;
   var pr = null;
@@ -2655,17 +2648,24 @@ function bgmKeepFresh(){
 }
 
 /* ==================== 横幅歌词（跟着 BGM 走） ====================
-   歌词文件与音频同目录：audio/up.lrc · audio/down-meng.lrc · audio/down.lrc
-   格式：标准 LRC [mm:ss.xx]歌词，自动滤掉 作词/作曲/编曲 等元数据行
-   当前行居中高亮，上下行渐隐；下面一条细进度条跟着播放进度
-   音源明显短于歌词时间轴（试听片段）时自动降级成提示，避免歌词卡死不动
+   歌词文件与音频同目录（LRC）：audio/up.lrc · audio/down-meng.lrc · audio/down-v2.lrc
+   当前行居中高亮、上下行渐隐，下面一条细进度条；窄屏铺满一整行
+   · 只有「真的有歌词」时才显示；待命 / 加载中 / 纯音乐 / 试听片段 → 整块收起，不留空话
+   · 音源明显短于歌词时间轴（试听片段）→ 自动收起，不硬套
+   · 每条曲目可加 lrcOffset（秒）：正数＝歌词提前，负数＝歌词延后；用来微调个别版本
    ================================================================ */
 const LY_LH = 18, LY_CACHE = {};
-let lyLines = [], lyNodes = null, lyIdx = -1, lyTok = 0, lyReady = false, lyFit = false, lyNoteKey = null;
+let lyLines = [], lyNodes = null, lyIdx = -1, lyTok = 0, lyReady = false, lyFit = false, lyHideTimer = null;
 
 function lyTrackEl(){ return document.getElementById('lyTrack'); }
 function lyRootEl(){ return document.getElementById('lyric'); }
 function lyBarEl(){ return document.getElementById('lyBarI'); }
+
+/* 当前曲目的时间轴微调（秒） */
+function lyricOff(){
+  var tr = (bgmCur!==null && bgmCur!==undefined)? bgmTrack(bgmCur, bgmCurIdx) : null;
+  return (tr && isFinite(tr.lrcOffset))? Number(tr.lrcOffset) : 0;
+}
 
 /* LRC → [{t:秒, s:文本}]，过滤元数据行与空行 */
 function lyricParse(raw){
@@ -2687,18 +2687,36 @@ function lyricParse(raw){
   return out;
 }
 
-/* 单行提示态：待命 / 加载中 / 无歌词 / 试听片段 */
-function lyricNote(msg, key){
-  lyReady = false; lyIdx = -1; lyLines = []; lyNodes = null; lyNoteKey = key || null;
-  var tr = lyTrackEl(), r = lyRootEl();
-  if(!tr || !r) return;
-  tr.style.transform = 'translateY(' + ((tr.parentNode.clientHeight - LY_LH)/2) + 'px)';
-  tr.innerHTML = '<div class="ly-line idle on"><i class="ly-note">\u266a</i>' + esc(msg) + '</div>';
-  r.classList.add('on', 'note');
-  var bi = lyBarEl(); if(bi) bi.style.width = '0%';
+function lyricShow(){
+  var r = lyRootEl(); if(!r) return;
+  if(lyHideTimer){ clearTimeout(lyHideTimer); lyHideTimer = null; }
+  r.classList.remove('hidden');
+  requestAnimationFrame(function(){ r.classList.add('on'); });
 }
-function lyricPaintIdle(){ lyricNote(t('lyIdle'), 'lyIdle'); }
+function lyricHide(){
+  var r = lyRootEl(); if(!r) return;
+  r.classList.remove('on');
+  if(lyHideTimer) clearTimeout(lyHideTimer);
+  lyHideTimer = setTimeout(function(){                 /* 先淡出，再从排版里收掉 */
+    lyHideTimer = null;
+    if(!r.classList.contains('on')) r.classList.add('hidden');
+  }, 620);
+}
+/* 没有歌词可显示时的唯一出口：清空 + 整块收起 */
+function lyricClear(){
+  lyReady = false; lyIdx = -1; lyLines = []; lyNodes = null; lyFit = false;
+  var tr = lyTrackEl();
+  if(tr){ tr.innerHTML = ''; tr.style.transform = 'translateY(0px)'; }
+  var bi = lyBarEl(); if(bi) bi.style.width = '0%';
+  lyricHide();
+}
+function lyricPaintIdle(){ lyricClear(); }
 
+function lyricIdxAt(time){
+  var i = -1;
+  for(var k = 0; k < lyLines.length; k++){ if(time + 0.15 >= lyLines[k].t) i = k; else break; }
+  return i;
+}
 function lyricShift(){
   var tr = lyTrackEl(); if(!tr) return;
   var di = lyIdx < 0 ? 0 : lyIdx;
@@ -2713,61 +2731,69 @@ function lyricSetIdx(i){
   }
   lyricShift();
 }
-function lyricIdxAt(time){
-  var i = -1;
-  for(var k = 0; k < lyLines.length; k++){ if(time + 0.15 >= lyLines[k].t) i = k; else break; }
-  return i;
-}
 function lyricMount(lines){
   var tr = lyTrackEl(); if(!tr) return;
   lyLines = lines; lyIdx = -1; lyReady = true; lyFit = false;
   tr.innerHTML = lines.map(function(l){ return '<div class="ly-line">' + esc(l.s) + '</div>'; }).join('');
   lyNodes = tr.children;
-  var r = lyRootEl(); if(r) r.classList.remove('note');
   /* 歌词是异步来的：到位时可能已经唱到中段了，第一下直接归位、不要从第一行滚过去 */
   var el = (bgmCur!==null && bgmCur!==undefined)? bgmEls[bgmCur + bgmCurIdx] : null;
-  var now = (el && isFinite(el.currentTime))? el.currentTime : 0;
+  var now = ((el && isFinite(el.currentTime))? el.currentTime : 0) + lyricOff();
   tr.style.transition = 'none';
   lyricSetIdx(lyricIdxAt(now));
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ tr.style.transition = ''; }); });
+  lyricShow();
 }
 function lyricOnTrack(band, idx){
   var tr = bgmTrack(band, idx), url = tr && tr.lrc;
-  if(!url){ lyricNote(t('lyNoLyric'), 'lyNoLyric'); return; }
+  if(!url){ lyricClear(); return; }
   var key = band + idx, tok = ++lyTok, hit = LY_CACHE[key];
-  if(hit){ if(hit.length) lyricMount(hit); else lyricNote(t('lyNoLyric'), 'lyNoLyric'); return; }
-  lyricNote(t('lyLoading'), 'lyLoading');
+  if(hit){ if(hit.length) lyricMount(hit); else lyricClear(); return; }
+  lyricClear();                                        /* 取词之前先收起，等真有词再出现 */
   fetch(url, {cache:'force-cache'}).then(function(r){
     return r.ok ? r.text() : Promise.reject(new Error('lrc ' + r.status));
   }).then(function(txt){
     var lines = lyricParse(txt);
     LY_CACHE[key] = lines;
-    if(tok !== lyTok || bgmCur !== band) return;     /* 已经切歌 / 已经停播 → 丢弃这次结果 */
-    if(lines.length) lyricMount(lines); else lyricNote(t('lyNoLyric'), 'lyNoLyric');
+    if(tok !== lyTok || bgmCur !== band) return;       /* 已经切歌 / 已经停播 → 丢弃这次结果 */
+    if(lines.length) lyricMount(lines); else lyricClear();
   }).catch(function(){
     if(tok !== lyTok || bgmCur !== band) return;
     LY_CACHE[key] = [];
-    lyricNote(t('lyNoLyric'), 'lyNoLyric');
+    lyricClear();
   });
 }
 function lyricSeek(time, dur){
   if(!lyReady || !lyLines.length) return;
+  var off = lyricOff(), lt = time + off;
   if(dur && isFinite(dur) && dur > 0 && !lyFit){
     lyFit = true;
-    if(dur + 3 < lyLines[lyLines.length-1].t){       /* 试听片段：时间轴对不上，别硬套 */
-      lyricNote(t('lyClip'), 'lyClip'); return;
+    if(dur + 3 < lyLines[lyLines.length-1].t - off){   /* 试听片段：时间轴对不上，别硬套 */
+      lyricClear(); return;
     }
   }
-  var i = lyricIdxAt(time);
+  var i = lyricIdxAt(lt);
   if(i !== lyIdx) lyricSetIdx(i);
   var bi = lyBarEl();
-  if(bi) bi.style.width = (dur && isFinite(dur) && dur > 0 ? Math.min(100, time/dur*100) : 0) + '%';
-}
-function lyricRelang(){
-  if(lyReady) return;                                /* 有歌词时切语言不用动 */
-  lyricNote(t(lyNoteKey || 'lyIdle'), lyNoteKey || 'lyIdle');
+  if(bi) bi.style.width = (dur && isFinite(dur) && dur > 0 ? Math.min(100, Math.max(0, lt)/dur*100) : 0) + '%';
 }
 try{ lyricPaintIdle(); }catch(e){}
+
+/* 展开的详情面板：点到别处 / 滑动页面 → 立刻收起（PC 与手机同一套行为）
+   手机上面板里的按钮小，用户大概率会直接点屏幕其它地方来关，这里兜住这个直觉 */
+(function(){
+  function bgmAway(ev){
+    var r = document.getElementById('bgm');
+    if(!r || !r.classList.contains('det')) return;
+    /* 注意：scroll/wheel 的事件目标是 window（不是 Node），直接 contains 会抛异常 */
+    if(ev && ev.target && ev.target.nodeType && r.contains(ev.target)) return;   /* 点播放器自己不算 */
+    bgmDetHide();
+  }
+  ['pointerdown','mousedown','touchstart','touchmove','wheel'].forEach(function(ev){
+    window.addEventListener(ev, bgmAway, {capture:true, passive:true});
+  });
+  window.addEventListener('scroll', bgmAway, {passive:true});
+})();
 
 /* 每次渲染完（手动刷新 / 自动刷新 / 切语言）重算情绪并决定要不要换歌 */
 (function(){

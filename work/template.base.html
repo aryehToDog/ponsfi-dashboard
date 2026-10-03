@@ -318,7 +318,7 @@ zh:{
   bgmReal:'正在放真歌',
   bgmMin:'每首至少放满 90 秒才换、换歌带 1.2 秒淡入淡出',
   bgmSev7:'近 7 天',
-  /* —— 共勉：六句话轮播 + 点赞（文案改这里，中英各一份）—— */
+  /* —— 共勉：每次刷新随机一句（不轮播）+ 点赞（文案改这里，中英各一份）—— */
   secQuote:'共勉',
   quotes:[
     '遗憾与失败始终贯彻人生，真正改变命运的是极少数几次下注，难得的是在一次次失败后仍有勇气追逐梦想',
@@ -329,10 +329,7 @@ zh:{
     '所以我们一直在讲的确定性其实就是：1、你比其他人知道的多。2、你比其他人知道的早。3、你比其他人认知高'
   ],
   qLike:'点赞',
-  qThanks:'谢谢 ❤',
-  qLikes:'累计点赞',
-  qLikeTip:'每点一次 +1，可以连点 · 六句话共用这一个数，只加不减',
-  qRotTip:'每 8 秒换一句 · 鼠标移上来看会暂停',
+  qLikeTip:'每点一次 +1，可以连点；六句话共用一个数，只加不减',
   verTip:'当前线上版本 · 有更新时这个号会变',
   pvTotal:'总浏览', pvToday:'今日', pvUv:'今日访客',
   pvTip:'每次打开页面计 1 次浏览；同一天同一设备只计 1 个访客。数据来自本站自建计数，不接任何第三方统计',
@@ -506,7 +503,7 @@ en:{
   bgmReal:'Real track',
   bgmMin:'each song plays at least 90s · 1.2s crossfade',
   bgmSev7:'7d',
-  /* —— A few words: 6 rotating quotes + one shared like counter —— */
+  /* —— A few words: one random quote per page load (no rotation) + one shared like counter —— */
   secQuote:'A few words',
   quotes:[
     'Regret and failure run through every life. What truly changes your fate is a handful of bets \u2014 and what is rare is the courage to keep chasing the dream after failing again and again.',
@@ -517,10 +514,7 @@ en:{
     'So the \u201Ccertainty\u201D we keep talking about really means three things: 1) you know more than others; 2) you know it earlier than others; 3) you understand it deeper than others.'
   ],
   qLike:'Like',
-  qThanks:'Thanks \u2764',
-  qLikes:'likes',
-  qLikeTip:'Each tap adds +1 \u2014 tap as many times as you like; all six quotes share this one total.',
-  qRotTip:'Changes every 8s \u00B7 pauses while you hover',
+  qLikeTip:'Each tap adds +1 \u2014 tap as often as you like. All six quotes share one total, and it only ever goes up.',
   verTip:'Live build tag — this changes whenever the dashboard updates',
   pvTotal:'views', pvToday:'today', pvUv:'visitors',
   pvTip:'One view per page load; one visitor per device per day. Counted by this site\u2019s own server-side counter — no third-party analytics.',
@@ -598,7 +592,7 @@ const CG_IDS = {pons:'pons', stonkfun:'stonk-3'};
 const LLAMA_IDS = {pons:'robinhood:0x39dBED3a2bd333467115dE45665cC57F813C4571',
                    stonkfun:'solana:6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx'};
 let DATA = JSON.parse(JSON.stringify(BUNDLE));
-let MODE = 'rev7';
+let MODE = 'rev';
 
 /* ---------- utils ---------- */
 const fmtU = v => {
@@ -716,7 +710,7 @@ const RANK_METRICS=[{k:'total24h',zh:'24 小时',en:'24H'},{k:'total7d',zh:'7 �
 const RANK_DAYS={total24h:1,total7d:7,total30d:30};
 const RANK_TARGET_IDS=['pons','stonkfun'];
 const RANK_TOP_N=10, RANK_NEAR=4, RANK_SLUGS={pons:'pons-v2',stonkfun:'stonkfun'};
-let RANK_BY='total7d';
+let RANK_BY='total24h';
 
 function rankBoard(){ return DATA.leaderboard || BUNDLE.leaderboard || null; }
 function rankTabLabel(k){ var m=RANK_METRICS.find(function(x){return x.k===k;}); return m? (LANG==='zh'?m.zh:m.en) : k; }

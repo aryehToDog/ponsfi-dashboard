@@ -318,6 +318,21 @@ zh:{
   bgmReal:'正在放真歌',
   bgmMin:'每首至少放满 90 秒才换、换歌带 1.2 秒淡入淡出',
   bgmSev7:'近 7 天',
+  /* —— 共勉：六句话轮播 + 点赞（文案改这里，中英各一份）—— */
+  secQuote:'共勉',
+  quotes:[
+    '遗憾与失败始终贯彻人生，真正改变命运的是极少数几次下注，难得的是在一次次失败后仍有勇气追逐梦想',
+    '时常站在风口，从未把握住，本以为是时运不济，细细想来其实是实力的不足，命运的必然',
+    '强大的投资者本就是享受孤独的，分享只是兴趣爱好',
+    'If you don\u2019t believe me or don\u2019t get it, I don\u2019t have time to try to convince you, sorry',
+    '你总以为机会无限，所以从不珍惜，可花有重开日，人无再少年',
+    '所以我们一直在讲的确定性其实就是：1、你比其他人知道的多。2、你比其他人知道的早。3、你比其他人认知高'
+  ],
+  qLike:'点赞',
+  qThanks:'谢谢 ❤',
+  qLikes:'累计点赞',
+  qLikeTip:'每点一次 +1，可以连点 · 六句话共用这一个数，只加不减',
+  qRotTip:'每 8 秒换一句 · 鼠标移上来看会暂停',
   verTip:'当前线上版本 · 有更新时这个号会变',
   pvTotal:'总浏览', pvToday:'今日', pvUv:'今日访客',
   pvTip:'每次打开页面计 1 次浏览；同一天同一设备只计 1 个访客。数据来自本站自建计数，不接任何第三方统计',
@@ -491,6 +506,21 @@ en:{
   bgmReal:'Real track',
   bgmMin:'each song plays at least 90s · 1.2s crossfade',
   bgmSev7:'7d',
+  /* —— A few words: 6 rotating quotes + one shared like counter —— */
+  secQuote:'A few words',
+  quotes:[
+    'Regret and failure run through every life. What truly changes your fate is a handful of bets \u2014 and what is rare is the courage to keep chasing the dream after failing again and again.',
+    'I kept standing in the tailwind, never catching it. I blamed luck; looking closer, it was a lack of skill \u2014 and therefore inevitable.',
+    'Strong investors enjoy being alone in the first place. Sharing is just a hobby.',
+    'If you don\u2019t believe me or don\u2019t get it, I don\u2019t have time to try to convince you, sorry',
+    'We always think opportunities are endless, so we never treasure them. But flowers bloom again \u2014 a person is never young twice.',
+    'So the \u201Ccertainty\u201D we keep talking about really means three things: 1) you know more than others; 2) you know it earlier than others; 3) you understand it deeper than others.'
+  ],
+  qLike:'Like',
+  qThanks:'Thanks \u2764',
+  qLikes:'likes',
+  qLikeTip:'Each tap adds +1 \u2014 tap as many times as you like; all six quotes share this one total.',
+  qRotTip:'Changes every 8s \u00B7 pauses while you hover',
   verTip:'Live build tag — this changes whenever the dashboard updates',
   pvTotal:'views', pvToday:'today', pvUv:'visitors',
   pvTip:'One view per page load; one visitor per device per day. Counted by this site\u2019s own server-side counter — no third-party analytics.',
@@ -541,6 +571,7 @@ function setLang(l){
   if(b) b.textContent = (LANG==='zh'?'EN':'中文');
   if(typeof applyTheme==='function') applyTheme(typeof curTheme==='function'?curTheme():'auto');
   renderStatic(); renderAll(); if(typeof renderTip==='function') renderTip();
+  if(typeof qRedraw==='function') qRedraw();   /* 共勉栏跟着切语言 */
 }
 function cycleLang(){ setLang(LANG==='zh'?'en':'zh'); }
 

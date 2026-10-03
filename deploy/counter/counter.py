@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """ponsfi.xyz 极简浏览计数器 —— 只用 Python 标准库，不需要装任何依赖。
 
-  GET /hit     计一次浏览（PV +1；同一天同一 IP 去重算 UV），返回统计
-  GET /stats   只读统计，不计数
-  GET /health  存活检查
+  GET /hit          计一次浏览（PV +1；同一天同一 IP 去重算 UV），返回统计
+  GET /stats        只读统计，不计数
+  GET /likes                 只读点赞总数
+  GET /likes?d=N             「共勉」栏点赞 +N（只能加不能减；N 上限 20，
+                             连点由前端攒成一批发过来，少几个请求）
+  GET /like?d=N             同上（两个路径都接）
+  GET /health       存活检查
 
 数据落在 $COUNTER_DIR/counts.json（默认 /var/lib/pons-counter），
 先写临时文件再 os.replace，进程被杀也不会写坏；每天保留最近 400 天。
@@ -16,6 +20,7 @@ import re
 import sys
 import tempfile
 import threading
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -52,6 +57,8 @@ def load():
     d.setdefault("total", 0)
     d.setdefault("days", {})
     d.setdefault("since", today())
+    d.setdefault("likes", 0)
+    d.setdefault("likeDays", {})
     return d
 
 
@@ -79,9 +86,30 @@ def snapshot(d):
         "total": int(d["total"]),
         "today": int(day.get("pv", 0)),
         "uvToday": len(day.get("uv") or []),
+        "likes": int(d.get("likes", 0)),
+        "likesToday": int((d.get("likeDays") or {}).get(t, 0)),
         "day": t,
         "since": d.get("since", t),
     }
+
+
+def likes_only(d):
+    """只读：共勉栏的累计点赞数（六句话共用同一个数）。"""
+    return {"likes": int(d.get("likes", 0)),
+            "likesToday": int((d.get("likeDays") or {}).get(today(), 0))}
+
+
+def like(delta):
+    """点赞 +delta（delta > 0）；返回新的总数。只加不减，所以永远不小于 0。"""
+    day_key = today()
+    with _lock:
+        d = load()
+        cur = max(0, int(d.get("likes", 0)) + int(delta))
+        d["likes"] = cur
+        ld = d.setdefault("likeDays", {})
+        ld[day_key] = max(0, int(ld.get(day_key, 0)) + int(delta))
+        save(d)
+        return {"likes": cur, "likesToday": int(ld.get(day_key, 0))}
 
 
 def visitor_hash(ip, day):
@@ -122,8 +150,18 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass                                # 不刷日志，需要时看 systemd journal
 
+    def _delta(self):
+        """从 ?d=N 取增量。只认正数（点赞只加不减），非法/负数一律当 0＝只读；单次最多 20。"""
+        try:
+            q = urllib.parse.urlparse(self.path).query
+            v = int(urllib.parse.parse_qs(q).get("d", ["0"])[0])
+        except Exception:
+            return 0
+        return min(v, 20) if v > 0 else 0
+
     def do_GET(self):
-        path = self.path.split("?")[0].rstrip("/") or "/hit"
+        raw = self.path
+        path = raw.split("?")[0].rstrip("/") or "/hit"
         ip = (self.headers.get("CF-Connecting-IP")
               or self.headers.get("X-Real-IP")
               or self.client_address[0])
@@ -135,6 +173,15 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/stats":
                 with _lock:
                     self._send(200, snapshot(load()))
+            elif path in ("/likes", "/like"):
+                # nginx 把 /api/likes 统一转到 /likes：带 ?d=1 / ?d=-1 才是点赞/取消，
+                # 不带 d（或 d=0）＝只读。两个路径都接，少一层出错的可能。
+                delta = self._delta()
+                if delta:
+                    self._send(200, like(delta))
+                else:
+                    with _lock:
+                        self._send(200, likes_only(load()))
             elif path == "/health":
                 self._send(200, {"ok": True})
             else:
@@ -145,8 +192,8 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     counts = snapshot(load())
-    print(f"pons-counter 启动 · 端口 {PORT} · 目录 {DATA_DIR} · 已有 {counts['total']} 次浏览",
-          flush=True)
+    print(f"pons-counter 启动 · 端口 {PORT} · 目录 {DATA_DIR} · 已有 {counts['total']} 次浏览"
+          f" · {counts['likes']} 个赞", flush=True)
     ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 
 

@@ -9,10 +9,19 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v1.8「BGM 文案说人话」 · 2026-10-03
+     ponsfi.xyz 看板 · 版本 v1.9「共勉 + 点赞」 · 2026-10-03
      历史备份（每个都含同名 zip）：
-       backups/ponsfi-v1-… / v1.1-… / v1.2-… / v1.3-… / v1.4-… / v1.5-… / v1.6-… / v1.7-2026-10-02/
-     本版备份：backups/ponsfi-v1.8-2026-10-03/  ＋  ponsfi-v1.8-2026-10-03.zip
+       backups/ponsfi-v1-… / v1.1-… / v1.2-… / v1.3-… / v1.4-… / v1.5-… / v1.6-… / v1.7-… / v1.8-2026-10-02/
+     本版备份：backups/ponsfi-v1.9-2026-10-03/  ＋  ponsfi-v1.9-2026-10-03.zip
+     v1.9 新增：指标说明下方多了一块「共勉」——
+       · 六句话每 8 秒轮换一句（只淡换文字，卡片和按钮都不动；鼠标移上去暂停）
+       · 右侧一个固定的点赞按钮：不随句子变化消失，只加不减、可以一直连点
+         点下去：心形短暂变实心 + 数字蹦一下 + 冒出「+1」+ 一把撒花粒子（canvas，零依赖）
+       · 六个句子共用同一个累计数（服务端 /api/likes 计数，不是本地假数）
+         ｜ 计数服务：deploy/counter/counter.py（新增 /likes；?d=N 只认正数，单次≤20）
+         ｜ 连点先在本地累加，攒成一批再发（5 连点 = d=1 + d=4 两个请求）
+         ｜ nginx：/etc/nginx/conf.d/pons-dashboard.conf 里的 location = /api/likes
+         ｜ 文案：template.base.html 的 i18n（secQuote / quotes / qLike / qThanks…），中英各一份
      v1.8 改动（只动 BGM 面板的文案与排版，逻辑一行没变）：
        ① 右上角徽章「涨档 / 跌档 / 横盘」→ 大白话「涨了 / 跌了 / 不涨不跌」
        ② 大号百分比旁边加小标题「两家平均涨跌」，一眼知道这数是什么
@@ -36,10 +45,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v1.8-2026-10-03">
+<meta name="dashboard-version" content="v1.9-2026-10-03">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v1.8 · 2026-10-03"
+VER = "v1.9 · 2026-10-03"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

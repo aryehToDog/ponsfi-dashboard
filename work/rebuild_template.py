@@ -980,6 +980,282 @@ BGM_HTML = (
     '  </div>'
 )
 
+# ---- 共勉：六句话轮播 + 累计点赞 ----
+QUOTE_CSS = r'''
+/* ---------- 共勉：六句话轮播 + 点赞（点赞数六句共用一份） ---------- */
+:root{--like:#ff6b8a}
+:root[data-theme="light"]{--like:#e0325a}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]):not([data-theme="light"]){--like:#e0325a}}
+.quote{position:relative;margin-bottom:8px;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 46%),var(--panel);
+  box-shadow:var(--card-shadow)}
+.quote::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,transparent,var(--accent),transparent);opacity:.5}
+.q-inner{display:flex;align-items:center;gap:20px;padding:16px 20px 15px 22px}
+.q-main{flex:1 1 auto;min-width:0}
+.q-text{font-size:14px;font-weight:500;line-height:1.95;letter-spacing:.15px;color:var(--txt);
+  min-height:2.05em;transition:opacity .3s ease,transform .3s ease;word-break:break-word}
+.q-text.fade{opacity:0;transform:translateY(5px)}
+.q-foot{display:flex;align-items:center;gap:11px;margin-top:10px}
+.q-dots{display:inline-flex;gap:5px;align-items:center}
+.q-dot{width:5px;height:5px;border-radius:50%;background:var(--line2);cursor:pointer;
+  transition:width .28s cubic-bezier(.32,.72,0,1),background .28s ease}
+.q-dot:hover{background:var(--mut)}
+.q-dot.on{width:15px;border-radius:3px;background:var(--accent)}
+.q-hint{font-size:10px;color:var(--mut2);letter-spacing:.2px}
+.q-like{position:relative;flex:0 0 auto;display:inline-flex;flex-direction:column;align-items:center;gap:4px;
+  padding:5px 6px;border:0;background:none;cursor:pointer;border-radius:12px}
+/* 撒花：点一次赞，在按钮上方炸开一小把彩纸（canvas 贴在按钮上，纯装饰） */
+.q-confetti{position:fixed;pointer-events:none;z-index:150;display:none}
+/* 点下去时从心形旁边飘一个 +1 上去 */
+.q-plus{position:absolute;left:50%;top:-2px;transform:translateX(-50%);font-size:11px;font-weight:800;
+  color:var(--like);opacity:0;pointer-events:none;letter-spacing:-.2px}
+.q-like.plus .q-plus{animation:qPlus .95s cubic-bezier(.32,.72,0,1)}
+@keyframes qPlus{0%{opacity:0;transform:translateX(-50%) translateY(3px) scale(.85)}
+  22%{opacity:1;transform:translateX(-50%) translateY(-5px) scale(1.08)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-26px) scale(1)}}
+.q-like-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;
+  border:1px solid var(--line2);background:var(--panel2);color:var(--txt);
+  font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.2px;
+  transition:border-color .22s ease,color .22s ease,background .22s ease}
+.q-like-btn svg{width:14px;height:14px;display:block;overflow:visible}
+.q-like-btn svg path{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;
+  transition:fill .22s ease}
+.q-like:hover .q-like-btn{border-color:var(--like);color:var(--like)}
+.q-like.on .q-like-btn{border-color:color-mix(in srgb,var(--like) 55%,var(--line2));color:var(--like);
+  background:color-mix(in srgb,var(--like) 13%,transparent)}
+.q-like.on .q-like-btn svg path,
+.q-like.hit .q-like-btn svg path{fill:var(--like)}
+.q-like.hit .q-like-btn{border-color:color-mix(in srgb,var(--like) 55%,var(--line2));color:var(--like)}
+.q-like-cap{font-size:10px;color:var(--mut2);letter-spacing:.3px;white-space:nowrap}
+.q-like.on .q-like-cap{color:var(--like)}
+@keyframes qPop{0%{transform:scale(1)}32%{transform:scale(1.42)}62%{transform:scale(.9)}100%{transform:scale(1)}}
+.q-like.pop .q-like-btn svg,
+.q-like.pop .q-like-btn b{display:inline-block;animation:qPop .46s cubic-bezier(.32,.72,0,1)}
+@media (prefers-reduced-motion:reduce){
+  .q-text{transition:none}
+  .q-like.pop .q-like-btn svg,.q-like.pop .q-like-btn b{animation:none}
+  .q-like.plus .q-plus{animation:none}
+}
+@media(max-width:640px){
+  .q-inner{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:15px 16px 13px 18px}
+  .q-main{flex:1 1 100%}
+  .q-text{font-size:13.5px;line-height:1.9;min-height:4.05em}
+  .q-foot{margin-top:11px}
+  .q-like{margin-left:auto;flex-direction:row;align-items:center;gap:8px;padding:0}
+  .q-hint{display:none}
+}
+'''
+
+QUOTE_HTML = (
+    '  <div class="sec-title" id="stQuote">共勉</div>\n'
+    '  <div class="quote" id="quote">\n'
+    '    <div class="q-inner">\n'
+    '      <div class="q-main">\n'
+    '        <div class="q-text" id="qText"></div>\n'
+    '        <div class="q-foot"><span class="q-dots" id="qDots"></span><span class="q-hint" id="qHint"></span></div>\n'
+    '      </div>\n'
+    '      <button class="q-like" id="qLike" type="button" onclick="qLike()" aria-pressed="false">\n'
+    '        <span class="q-like-btn"><svg viewBox="0 0 24 24" aria-hidden="true">'
+    '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>'
+    '</svg><b id="qN">—</b></span>\n'
+    '        <span class="q-plus" id="qPlus">+1</span>\n'
+    '        <span class="q-like-cap" id="qCap"></span>\n'
+    '      </button>\n'
+    '    </div>\n'
+    '  </div>\n'
+)
+
+QUOTE_JS = r'''
+/* ==================== 共勉：六句话轮播 + 累计点赞 ====================
+   六句话每 8 秒换一句（只淡换文字，卡片和点赞按钮不动）；
+   点赞按钮固定在右侧，不随句子变化消失；六个句子共用同一个累计数（服务端 /api/likes）。
+   点赞只加不减、可以连点：连点先在本地累加，再攒批发给服务器，点完还有一把撒花。
+   文案在 template.base.html 的 i18n（secQuote / quotes / qLike…），中英各一份。
+   ================================================== */
+const Q_MS = 8000;
+let QI = 0, QTimer = null, QN = null;              /* QN = 服务器上的赞数 */
+let QPend = 0, QFlush = false, QThanksT = null, QHitT = null;  /* QPend = 还没提交的连点 */
+let QPaused = false;
+
+function qList(){ var a = t('quotes'); return (a && a.length) ? a : []; }
+
+function qPaint(){
+  var box = document.getElementById('quote'); if(!box) return;
+  var list = qList();
+  if(!list.length){ box.style.display = 'none'; return; }
+  var i = QI % list.length;
+  var el = document.getElementById('qText');
+  if(el && el.textContent !== list[i]) el.textContent = list[i];
+  var st = document.getElementById('stQuote'); if(st) st.textContent = t('secQuote');
+  var dots = document.getElementById('qDots');
+  if(dots) dots.innerHTML = list.map(function(_, k){
+    return '<i class="q-dot' + (k===i?' on':'') + '" onclick="qGo(' + k + ')"></i>';
+  }).join('');
+  var hint = document.getElementById('qHint'); if(hint) hint.textContent = t('qRotTip');
+  var cap = document.getElementById('qCap'); if(cap) cap.textContent = QThanksT? t('qThanks') : t('qLikes');
+  var n = document.getElementById('qN'); if(n) n.textContent = fmtN((QN===null? 0 : QN) + QPend, 0);
+  var btn = document.getElementById('qLike');
+  if(btn){ btn.title = t('qLikeTip'); btn.setAttribute('aria-label', t('qLikeTip')); }
+}
+
+function qSwap(){
+  var list = qList(); if(list.length < 2) return;
+  var el = document.getElementById('qText'); if(!el) return;
+  el.classList.add('fade');
+  setTimeout(function(){
+    QI = (QI + 1) % list.length;
+    el.textContent = qList()[QI];
+    el.classList.remove('fade');
+    qPaint();
+  }, 300);
+}
+function qStart(){ qStop(); if(qList().length > 1) QTimer = setInterval(function(){ if(!QPaused) qSwap(); }, Q_MS); }
+function qStop(){ if(QTimer){ clearInterval(QTimer); QTimer = null; } }
+function qGo(k){
+  qStop();
+  QI = k;
+  var el = document.getElementById('qText');
+  if(el){
+    el.classList.add('fade');
+    setTimeout(function(){ el.textContent = qList()[QI] || ''; el.classList.remove('fade'); qPaint(); }, 170);
+  }
+  qStart();
+}
+/* 切语言：整块重画（句子换成另一种语言，点赞数不变） */
+function qRedraw(){
+  var el = document.getElementById('qText');
+  if(el) el.textContent = qList()[QI % Math.max(1, qList().length)] || '';
+  qPaint();
+}
+
+function qLikeApply(n){
+  if(typeof n === 'number'){ QN = n; qPaint(); }
+}
+
+/* 撒花粒子：点一次赞，从心形那里炸开一小把彩纸（纯 canvas，零依赖） */
+var qCv = null, qCtx = null, qParts = [], qRAF = 0;
+function qConfetti(btn){
+  try{
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+    if(!btn) return;
+    var r = btn.getBoundingClientRect();
+    var W = 320, H = 260, dpr = Math.min(2, window.devicePixelRatio || 1);
+    if(!qCv){
+      qCv = document.createElement('canvas');
+      qCv.className = 'q-confetti';
+      document.body.appendChild(qCv);
+    }
+    qCv.width = Math.round(W*dpr); qCv.height = Math.round(H*dpr);
+    qCv.style.width = W + 'px'; qCv.style.height = H + 'px';
+    qCv.style.left = Math.round(r.left + r.width/2 - W/2) + 'px';
+    qCv.style.top  = Math.round(r.top + r.height/2 - H/2 - 14) + 'px';
+    qCv.style.display = 'block';
+    qCtx = qCv.getContext('2d');
+    qCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    qCtx.clearRect(0, 0, W, H);
+    var COLORS = ['#ff6b8a','#8b7cff','#2ee6a8','#ffb020','#ff9aa8','#7ff0c6','#ffffff'];
+    var cx = W/2, cy = H*0.66;
+    for(var i = 0; i < 34; i++){
+      var ang = (-90 + (Math.random()*160 - 80)) * Math.PI/180;   /* 往上开的扇形 */
+      var sp  = 2.3 + Math.random()*4.4;
+      qParts.push({
+        x: cx + (Math.random()*22 - 11), y: cy + (Math.random()*12 - 6),
+        vx: Math.cos(ang)*sp - 0.35, vy: Math.sin(ang)*sp - 1.6,   /* 略微往左偏：按钮在右下角，别被屏幕边裁掉 */
+        g: 0.12 + Math.random()*0.055,
+        w: 3.2 + Math.random()*3.8, h: 5 + Math.random()*5.4,
+        rot: Math.random()*Math.PI, vr: (Math.random() - 0.5)*0.36,
+        c: COLORS[(Math.random()*COLORS.length)|0],
+        life: 1, dec: 0.011 + Math.random()*0.009,
+        round: Math.random() < 0.3
+      });
+    }
+    if(!qRAF) qRAF = requestAnimationFrame(qTick);
+  }catch(e){}
+}
+function qTick(){
+  qRAF = 0;
+  if(!qCtx || !qCv) return;
+  qCtx.clearRect(0, 0, qCv.width, qCv.height);
+  var alive = 0;
+  for(var i = 0; i < qParts.length; i++){
+    var p = qParts[i];
+    p.vy += p.g; p.vx *= 0.994; p.x += p.vx; p.y += p.vy;
+    p.rot += p.vr; p.life -= p.dec;
+    if(p.life <= 0) continue;
+    alive++;
+    qCtx.save();
+    qCtx.globalAlpha = Math.min(1, p.life*1.25);
+    qCtx.translate(p.x, p.y);
+    qCtx.rotate(p.rot);
+    qCtx.fillStyle = p.c;
+    if(p.round){ qCtx.beginPath(); qCtx.arc(0, 0, p.w/2, 0, Math.PI*2); qCtx.fill(); }
+    else qCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    qCtx.restore();
+  }
+  qParts = qParts.filter(function(p){ return p.life > 0; });
+  if(alive > 0) qRAF = requestAnimationFrame(qTick);
+  else { qParts = []; qCtx.clearRect(0, 0, qCv.width, qCv.height); qCv.style.display = 'none'; }
+}
+
+/* 连点先攒着，攒成一批发给服务器（一次点击一个请求太浪费）；服务器只加不减、单次最多 20 */
+function qFlush(){
+  if(QFlush || QPend <= 0) return;
+  var n = Math.min(QPend, 20);
+  QFlush = true;
+  fetch('/api/likes?d=' + n + '&t=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      QPend = Math.max(0, QPend - n);                 /* 这一批已经落到服务器上 */
+      if(d && typeof d.likes === 'number') QN = d.likes;
+      qPaint();
+    })
+    .catch(function(){ QPend = Math.max(0, QPend - n); qPaint(); })
+    .then(function(){ QFlush = false; if(QPend > 0) qFlush(); });
+}
+
+function qLike(){
+  QPend++;                                            /* 乐观 +1：立刻上屏，连点也不卡 */
+  var btn = document.getElementById('qLike');
+  if(btn){
+    btn.classList.remove('pop','plus','hit');
+    void btn.offsetWidth;
+    btn.classList.add('pop','plus','hit');
+    qConfetti(btn);
+    if(QHitT) clearTimeout(QHitT);
+    QHitT = setTimeout(function(){ QHitT = null; btn.classList.remove('hit'); }, 900);
+  }
+  var cap = document.getElementById('qCap');
+  if(cap) cap.textContent = t('qThanks');
+  if(QThanksT) clearTimeout(QThanksT);
+  QThanksT = setTimeout(function(){ QThanksT = null; qPaint(); }, 1500);
+  qPaint();
+  qFlush();
+}
+
+function qLoadLikes(){
+  if(location.protocol !== 'http:' && location.protocol !== 'https:') return;
+  fetch('/api/likes?t=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if(d && typeof d.likes === 'number') qLikeApply(d.likes); })
+    .catch(function(){});
+}
+
+function qInit(){
+  qPaint();
+  qStart();
+  qLoadLikes();
+  var box = document.getElementById('quote');
+  if(box){
+    box.addEventListener('mouseenter', function(){ QPaused = true; });
+    box.addEventListener('mouseleave', function(){ QPaused = false; });
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden) qStop(); else qStart();
+  });
+}
+'''
+
 BGM_JS = r'''
 /* ==================== 行情 BGM ====================
    涨 →《逍遥仙》　跌 →《梦的翅膀受了伤》→《兄弟抱一下》→ 两首来回轮着放
@@ -1497,7 +1773,7 @@ assert "const BUNDLE = /*__DATA__*/;" in src
 
 # 1) 换掉整段样式
 st = src.index("<style>"); en = src.index("</style>") + len("</style>")
-src = src[:st] + "<style>\n" + TOKENS + CSS_BODY + BGM_CSS + "</style>" + src[en:]
+src = src[:st] + "<style>\n" + TOKENS + CSS_BODY + BGM_CSS + QUOTE_CSS + "</style>" + src[en:]
 
 # 2) 防闪屏脚本
 old_meta = '<meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -1510,7 +1786,7 @@ src = src.replace('<div class="wrap">\n', '<div class="wrap">\n' + AUTHOR_HTML +
 # 4b) 行情 BGM 悬浮播放器（固定在右下角，不占正文）
 anchor_bgm = '  <div class="foot" id="foot"></div>\n</div>'
 assert anchor_bgm in src, "找不到页脚锚点"
-src = src.replace(anchor_bgm, '  <div class="foot" id="foot"></div>\n' + BGM_HTML + '</div>', 1)
+src = src.replace(anchor_bgm, QUOTE_HTML + '  <div class="foot" id="foot"></div>\n' + BGM_HTML + '</div>', 1)
 
 # 4) 主题按钮
 old_btn = '      <span class="badge" id="src">加载中…</span>\n'
@@ -1526,7 +1802,7 @@ src = src.replace("const FOOT_AUTHOR = /*__FOOT_AUTHOR__*/ {zh:'', en:''};", FOO
 # 6) 主题脚本（放到最后初始化之前）
 anchor = "renderStatic();\nrenderAll();\nloadViews();\nloadLive();"
 assert anchor in src
-src = src.replace(anchor, THEME_JS + TIP_JS + BGM_JS + "\nrenderTip();\nrenderStatic();\nrenderAll();\nloadViews();\nloadLive();", 1)
+src = src.replace(anchor, THEME_JS + TIP_JS + BGM_JS + QUOTE_JS + "\nrenderTip();\nrenderStatic();\nrenderAll();\nloadViews();\nloadLive();\nqInit();", 1)
 
 # 7) 把 JS 里写死的颜色换成主题变量
 js_fix = [

@@ -1243,7 +1243,9 @@ const BGM_TRACKS = {
   up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   }],
   down: [{ src:'audio/down-meng.mp3', lrc:'audio/down-meng.lrc', name:'bgmDownName2' },
          /* down-v2 = 跟《美好》专辑版 mp3 对齐的时间轴（旧的 down.lrc 是网易云「2021 版」，两版编曲不同、对不上） */
-         { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 }]
+         { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 },
+         /* 无人之岛：手头只有 m4a（AAC），没配 lrc —— 没歌词时歌词块整块收起、共勉顶上，这是设计好的行为 */
+         { src:'audio/down-wuren.m4a', lrc:'',                   name:'bgmDownName3' }]
 };
 /* 歌词与音频同目录同名（.lrc）。新增歌曲：mp3 + lrc 一起放进 audio/，这里补一条。 */
 const BGM_TH = 3.0, BGM_EXIT = 1.5, BGM_MIN_MS = 90000, BGM_FADE_MS = 1200;

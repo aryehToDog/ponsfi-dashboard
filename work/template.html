@@ -1054,13 +1054,14 @@ zh:{
   bgmUpName:'逍遥仙',
   bgmDownName:'兄弟抱一下',
   bgmDownName2:'梦的翅膀受了伤',
+  bgmDownName3:'无人之岛',
   bgmTrackNo:(i,n)=>'第 '+i+' 首（共 '+n+' 首）',
   bgmBandUp:'涨了',
   bgmBandDown:'跌了',
   bgmBandFlat:'不涨不跌',
   bgmLab:'两家平均涨跌',
-  bgmRule:'涨 3% 以上放《逍遥仙》；跌 3% 以上两首疗伤歌轮着放；中间不换歌',
-  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了放《逍遥仙》，跌了放《梦的翅膀受了伤》《兄弟抱一下》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
+  bgmRule:'涨 3% 以上放《逍遥仙》；跌 3% 以上三首疗伤歌轮着放；中间不换歌',
+  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了放《逍遥仙》，跌了放《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
   bgmNoData:'价格还没到，先不播',
   bgmHold:'不涨不跌，继续放这首',
   bgmPlaceholder:'占位旋律（没读到歌曲文件，先用原创旋律垫着）',
@@ -1239,13 +1240,14 @@ en:{
   bgmUpName:'Xiao Yao Xian',
   bgmDownName:'Brothers Hug',
   bgmDownName2:'Dream Wings Hurt',
+  bgmDownName3:'Nobody\u2019s Island',
   bgmTrackNo:(i,n)=>'track '+i+' of '+n,
   bgmBandUp:'UP',
   bgmBandDown:'DOWN',
   bgmBandFlat:'FLAT',
   bgmLab:'Avg move',
-  bgmRule:'Up 3%+ plays "Xiao Yao Xian"; down 3%+ alternates the two sad songs; in between keeps the current one',
-  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → "Xiao Yao Xian". Down → "Dream Wings Hurt" / "Brothers Hug"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
+  bgmRule:'Up 3%+ plays "Xiao Yao Xian"; down 3%+ alternates the three sad songs; in between keeps the current one',
+  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → "Xiao Yao Xian". Down → "Dream Wings Hurt" / "Brothers Hug" / "Nobody\u2019s Island"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
   bgmNoData:'No price data yet — nothing to play',
   bgmHold:'Flat both ways — keeping this track',
   bgmPlaceholder:'Placeholder melody (song files not found)',
@@ -2401,7 +2403,9 @@ const BGM_TRACKS = {
   up:   [{ src:'audio/up.mp3',        lrc:'audio/up.lrc',        name:'bgmUpName'   }],
   down: [{ src:'audio/down-meng.mp3', lrc:'audio/down-meng.lrc', name:'bgmDownName2' },
          /* down-v2 = 跟《美好》专辑版 mp3 对齐的时间轴（旧的 down.lrc 是网易云「2021 版」，两版编曲不同、对不上） */
-         { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 }]
+         { src:'audio/down.mp3',      lrc:'audio/down-v2.lrc',   name:'bgmDownName', lrcOffset:0 },
+         /* 无人之岛：手头只有 m4a（AAC），没配 lrc —— 没歌词时歌词块整块收起、共勉顶上，这是设计好的行为 */
+         { src:'audio/down-wuren.m4a', lrc:'',                   name:'bgmDownName3' }]
 };
 /* 歌词与音频同目录同名（.lrc）。新增歌曲：mp3 + lrc 一起放进 audio/，这里补一条。 */
 const BGM_TH = 3.0, BGM_EXIT = 1.5, BGM_MIN_MS = 90000, BGM_FADE_MS = 1200;

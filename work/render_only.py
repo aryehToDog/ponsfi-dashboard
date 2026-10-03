@@ -9,7 +9,13 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v2.0.1「共勉搬进作者名片」 · 2026-10-03
+     ponsfi.xyz 看板 · 版本 v2.1「跌幅档三首」 · 2026-10-03
+     v2.1 新增：《无人之岛》进跌幅歌单（跌档现在三首轮换：梦的翅膀受了伤 → 兄弟抱一下 → 无人之岛）
+       · 音频 audio/down-wuren.m4a（原始文件是 .aac 后缀，其实是 M4A/AAC 容器，实测浏览器能直接播：
+         readyState=4、duration=285.3s、无 decode 错误；服务器 MIME 是 audio/x-m4a，Chrome/Safari/Firefox 都吃）
+       · 这首没配 .lrc —— 没歌词时歌词块整块收起、共勉顶上，是 v1.7 就设计好的行为，不是 bug
+       · 轮换逻辑是通用的（bgmRot + list.length），加歌只改 BGM_TRACKS 一处 + 补 i18n 歌名
+       · 文案同步：BGM 面板「第 3 首（共 3 首）」自动算；bgmRule / bgmLegend 里的"两首"改成"三首"并补歌名
      v2.0.1 紧急修的两个问题（v2.0 只上线了十几分钟）：
        ① 共勉被挤成半宽、右边一大片空白、句子被迫折成两行 —— 根因是 QUOTE_JS 里的状态量
           用了 let：函数声明会提升而 let 不会，BGM_JS 结尾的初始化（lyricPaintIdle）比
@@ -66,10 +72,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v2.0.1-2026-10-03">
+<meta name="dashboard-version" content="v2.1-2026-10-03">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v2.0.1 · 2026-10-03"
+VER = "v2.1 · 2026-10-03"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

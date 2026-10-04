@@ -1167,10 +1167,10 @@ zh:{
   hourLive:'● 实时刷新', hourLiveOff:'● 页面快照（实时刷新失败）',
   hourNow:'当前小时', hourOngoing:'进行中',
   hourNoData:'还没攒到',
-  hourEst:'推算', hourChain:'链上', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
-  hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 这两个主流池的每小时成交额（GeckoTerminal 小时线）。<b>这是唯一能拿到的真·小时级数据</b>——成交额放大，说明短线资金在进场；缩下去，说明热度在退。',
-  hourNoteRev:'<b>收入</b>：市面上没有任何公开的小时级收入源（DefiLlama 只到日级，官方看板走 Dune 不对外开放）。Pons 这一列是<b>链上推算</b>：每小时回购花掉的钱 ÷ 80%（Pons 公开口径是 80% 收入拿去回购）；StonkFun 的小时级从今天起用我们自己的快照往后累积。',
-  hourNoteBurn:'<b>销毁</b>：Pons 是 Robinhood 链上按小时统计打进死地址的 PONS，<b>真实、可对账</b>（约每 15 分钟一笔）；StonkFun 在 Solana 上公共 RPC 不给历史，只能靠我们每小时攒的供应量快照，攒满后自动出现。',
+  hourEst:'推算', hourChain:'链上', hourOfficial:'官方', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
+  hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 两个主流池的每小时成交额（GeckoTerminal 小时线）。成交量放大说明短线资金在进场，缩下去说明热度在退——这是判断"有没有人在玩"的最快指标。',
+  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）；StonkFun 是<b>官方接口真值</b>——直接读 stonkfun.xyz 官方累计收入，逐小时做差，不再靠猜。',
+  hourNoteBurn:'<b>销毁</b>：Pons 按小时统计打进死地址的 PONS，<b>链上可对账</b>（约每 15 分钟一笔）；StonkFun 用<b>官方累计销毁量</b>逐小时做差，和平台自己页面同一个数据源。',
   secChart:'趋势图',
   secTable:'每天的明细（最近 20 天）',
   secGuide:'指标说明 · 每个数字怎么读',
@@ -1402,10 +1402,10 @@ en:{
   hourLive:'● live', hourLiveOff:'● page snapshot (live refresh failed)',
   hourNow:'Current hour', hourOngoing:'in progress',
   hourNoData:'no data yet',
-  hourEst:'estimate', hourChain:'on-chain', hourEach:'One bar per hour: PONS left · StonkFun right',
-  hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. <b>This is the only true hourly series that exists publicly.</b>',
-  hourNoteRev:'<b>Revenue</b>: no public hourly revenue exists (DefiLlama is daily-only, the official dashboards sit on Dune). The Pons column is an <b>on-chain estimate</b>: hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun accumulates from our own snapshots starting today.',
-  hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one buy every 15 min). StonkFun’s public RPC has no history, so those hourly bars fill in from our supply snapshots.',
+  hourEst:'estimate', hourChain:'on-chain', hourOfficial:'official', hourEach:'One bar per hour: PONS left · StonkFun right',
+  hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. Rising volume means short-term money is coming in; fading volume means interest is cooling off — the fastest read on whether anyone is trading.',
+  hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is <b>official truth</b>: we read stonkfun.xyz’s official cumulative revenue and difference it hour by hour.',
+  hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one buy every 15 min). StonkFun uses the <b>official cumulative burn figure</b>, differenced per hour — the same source as the platform’s own page.',
   secChart:'Trends',
   secTable:'Day-by-day detail (last 20 days)',
   secGuide:'How to read every number',
@@ -2328,10 +2328,10 @@ function renderHourly(){
   }
 
   if(hl){
-    const srcName=(HOUR_TAB==='vol')? '' : (HOUR_TAB==='rev'? t('hourEst') : t('hourChain'));
-    hl.innerHTML='<span class="lg"><i style="background:var(--pons)"></i>Pons <b>'+hourTxt(hourSum(s.pons,72))+'</b><em>72h</em></span>'
-      +'<span class="lg"><i style="background:var(--stonk)"></i>StonkFun <b>'+hourTxt(hourSum(s.stonk,72))+'</b><em>72h</em></span>'
-      + (srcName? '<span class="lg"><em>'+srcName+'</em></span>' : '')
+    const srcP=(HOUR_TAB==='vol')? '' : (HOUR_TAB==='rev'? t('hourEst') : t('hourChain'));
+    const srcS=(HOUR_TAB==='vol')? '' : t('hourOfficial');
+    hl.innerHTML='<span class="lg"><i style="background:var(--pons)"></i>Pons <b>'+hourTxt(hourSum(s.pons,72))+'</b><em>72h'+(srcP?' · '+esc(srcP):'')+'</em></span>'
+      +'<span class="lg"><i style="background:var(--stonk)"></i>StonkFun <b>'+hourTxt(hourSum(s.stonk,72))+'</b><em>72h'+(srcS?' · '+esc(srcS):'')+'</em></span>'
       + '<span class="lg"><em>'+esc(t('hourEach'))+'</em></span>';
   }
   if(sm){

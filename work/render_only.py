@@ -9,6 +9,15 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.4「StonkFun 官方小时数据接入」 · 2026-10-04
+     【这一版改了什么】
+       ① StonkFun 的小时级「收入 / 销毁」不再靠推算和快照，改为直接读官方接口
+          stonkfun.xyz/api/revenue 的累计值，逐小时做差 = 真值（国内直连会被墙，
+          采集脚本走海外中转，每小时自动抓一次）。
+       ② 小时图的来源标签从"两币共用一个"改为"每个币各自标注"：
+          PONS 收入=推算 / 销毁=链上；STONK 收入与销毁均=官方。
+       ③ 小时图下方的说明文案同步改写（中英双语）。
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.3.2「小时汇总卡：PONS / STONK 分两行」 · 2026-10-04
      【这一版改了什么】
        1h / 6h / 24h / 72h 汇总卡里，PONS 与 STONK 从「一行并排」改为「上下两行」——
@@ -219,10 +228,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.3.2-2026-10-04">
+<meta name="dashboard-version" content="v3.4-2026-10-04">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.3.2 · 2026-10-04"
+VER = "v3.4 · 2026-10-04"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

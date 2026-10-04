@@ -6,12 +6,11 @@
        PONS  → robinhood / 0xed50bdee… (PONS/WETH)
        STONK → solana    / zxTpi4Bt…   (STONK/SOL)
   2. 销毁（每小时）→ Robinhood Chain eth_getLogs 筛 Transfer→0x…dEaD，按小时分桶（真链上）
-       STONK 没有公开的小时级销毁（公共 RPC 限流、只能读当前供应量）→ 靠 burn-history 快照累积
-  3. 收入（每小时）→ 没有任何公开小时级收入源（DefiLlama 只有日级）。
-       Pons 给一列「链上推算」＝ 小时回购支出 ÷ 80%（回购占比），明确标注为推算；
-       真实小时级收入靠本脚本每小时跑一次、往 hourly.json 里累积。
+       STONK → StonkFun 官方接口的累计销毁量每小时差值（真值）；拿不到时退回 burn-history 快照累积
+  3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 ÷ 80%（回购占比），明确标注为推算；
+       StonkFun → 官方接口 stonkfun.xyz/api/revenue 的累计收入每小时差值（真值，国内直连被墙、走海外中转）
 """
-import json, os, sys, time, urllib.request
+import json, os, sys, time, urllib.request, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "hourly.json")
@@ -25,6 +24,8 @@ POOLS = {"pons": ("robinhood", "0xed50bdeea8adc232f159486192a4157281d722ff"),
          "stonk": ("solana", "zxTpi4BtaWX3mgdAPoezkMD1hxx8CdeCfrqXMWvSCLX")}
 HOURS = 72
 BUYBACK_SHARE = 0.8          # Pons 公开口径：80% 收入用于回购
+SF_API = "https://www.stonkfun.xyz/api/revenue"   # StonkFun 官方收入/回购/销毁（国内被墙，走海外中转）
+SF_HIST = os.path.join(HERE, "sf-history.json")    # 官方累计值快照（每小时一条）
 
 
 def get(url, tries=3):
@@ -140,6 +141,75 @@ def stonk_burn_hourly(buckets):
     return [out[b] for b in buckets]
 
 
+# ---- StonkFun 官方接口（stonkfun.xyz/api/revenue）：国内被墙，走海外中转 ----
+def sf_load_hist():
+    try:
+        h = json.load(open(SF_HIST, encoding="utf-8"))
+        return h if isinstance(h, list) else []
+    except Exception:
+        return []
+
+
+def sf_fetch():
+    """返回官方 totals 快照 dict；失败返回 None（下一小时再试）。"""
+    relays = [
+        "https://api.allorigins.win/raw?url=" + urllib.parse.quote(SF_API, safe=""),
+        "https://api.codetabs.com/v1/proxy?quest=" + urllib.parse.quote(SF_API, safe=""),
+    ]
+    last = None
+    for url in relays:
+        for i in range(2):
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"})
+                j = json.load(urllib.request.urlopen(req, timeout=75))
+                t = j.get("totals") or {}
+                if t.get("totalRevenueUsd") is None:
+                    raise RuntimeError("totals missing")
+                return {"ts": int(time.time()),
+                        "revUsd": float(t["totalRevenueUsd"]),
+                        "buybackUsd": float(t.get("totalBuybackUsd") or 0),
+                        "buybackCount": int(t.get("buybackCount") or 0),
+                        "burnTokens": float(t.get("stonkBurnedTokens") or 0),
+                        "burnUsd": float(t.get("stonkBurnedUsd") or 0),
+                        "priceUsd": float(t.get("platformTokenPriceUsd") or 0)}
+            except Exception as exc:
+                last = exc; time.sleep(1.5 + i)
+    print("warn: sf api: %s" % last, file=sys.stderr)
+    return None
+
+
+def sf_record(cur):
+    """存快照：同一小时内更新末条，跨小时追加；只留最近 400 条。"""
+    hist = sf_load_hist()
+    if not hist or int(cur["ts"] // 3600) != int(int(hist[-1].get("ts") or 0) // 3600):
+        hist.append(cur)
+    else:
+        hist[-1] = cur
+    json.dump(hist[-400:], open(SF_HIST, "w", encoding="utf-8"), ensure_ascii=False)
+
+
+def sf_series(buckets):
+    """官方累计值 → 每小时差值：(收入USD[], 销毁STONK[])；间隔 >2.5h 的那一跳不落桶（会误导）。"""
+    hist = [h for h in sf_load_hist() if isinstance(h, dict) and h.get("ts")]
+    hist.sort(key=lambda h: h["ts"])
+    rev = {b: None for b in buckets}
+    burn = {b: None for b in buckets}
+    for a, b in zip(hist, hist[1:]):
+        gap = b["ts"] - a["ts"]
+        if gap <= 0 or gap > 2.5 * 3600:
+            continue
+        bucket = int(b["ts"] // 3600 * 3600)
+        if bucket not in rev:
+            continue
+        dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
+        db = (b.get("burnTokens") or 0) - (a.get("burnTokens") or 0)
+        if dr >= 0:
+            rev[bucket] = round((rev[bucket] or 0) + dr, 2)
+        if db >= 0:
+            burn[bucket] = round((burn[bucket] or 0) + db, 2)
+    return [rev[b] for b in buckets], [burn[b] for b in buckets]
+
+
 def main():
     now = time.time()
     h_now = int(now // 3600 * 3600)
@@ -171,20 +241,29 @@ def main():
         out["pons"]["burnTx"] = (old.get("pons") or {}).get("burnTx", [None] * HOURS)
         out["pons"]["burnSrc"] = "stale"
 
-    try:
-        out["stonk"]["burn"] = stonk_burn_hourly(buckets)
-        out["stonk"]["burnSrc"] = "snapshot"
-    except Exception as exc:
-        print("warn: stonk burn: %s" % exc, file=sys.stderr)
-        out["stonk"]["burn"] = [None] * HOURS
-        out["stonk"]["burnSrc"] = "none"
+    # StonkFun 官方接口（经海外中转）：累计值 → 每小时差值 = 真实收入 / 真实销毁
+    sf_cur = sf_fetch()
+    if sf_cur:
+        sf_record(sf_cur)
+    srev, sburn = sf_series(buckets)
+    if any(v is not None for v in sburn):
+        out["stonk"]["burn"], out["stonk"]["burnSrc"] = sburn, "official"
+    else:
+        try:  # 官方两点还没攒够 → 退回旧的 Solana 供应量快照差值
+            out["stonk"]["burn"] = stonk_burn_hourly(buckets)
+            out["stonk"]["burnSrc"] = "snapshot"
+        except Exception as exc:
+            print("warn: stonk burn: %s" % exc, file=sys.stderr)
+            out["stonk"]["burn"] = [None] * HOURS
+            out["stonk"]["burnSrc"] = "none"
 
-    # 收入：Pons 用「小时回购支出 ÷ 80%」推算；StonkFun 暂缺（没有小时级销毁 → 无法推算）
+    # 收入：Pons 用「小时回购支出 ÷ 80%」推算；StonkFun 用官方累计值的每小时差值（真值）
     pv = []
     for b, c in zip(out["pons"]["burn"], out["pons"]["close"]):
         pv.append(round(b * c / BUYBACK_SHARE, 2) if (b and c) else None)
     out["pons"]["rev"], out["pons"]["revEst"] = pv, True
-    out["stonk"]["rev"], out["stonk"]["revEst"] = [None] * HOURS, True
+    out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
+    out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
 
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     pb = [x for x in out["pons"]["burn"] if x]

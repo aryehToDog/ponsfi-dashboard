@@ -41,3 +41,17 @@ work/身份证*
 
 # 运行日志（每小时都在增长，没有版本价值）
 *.log
+
+# ============================================================
+#  开源公开版（2026-10-04）：私人部署材料，绝不进版本库
+# ============================================================
+backups/
+deploy/audio/
+deploy/push.sh
+deploy/网址.txt
+deploy/上传音乐到服务器.command
+deploy/更新看板（双击我）.command
+work/SHARE-LINKS.txt
+work/tunnel-config.yml
+work/get_share_link.sh
+work/网址-备份-旧.txt

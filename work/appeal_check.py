@@ -5,9 +5,10 @@
 1. MetaMask 官方黑名单里是否还有 ponsfi.xyz（只剩 ponsfi.top 即成功）
 2. PR MetaMask/eth-phishing-detect#299334 状态（merged / closed / open）
 3. ScamSniffer issue scam-database#827 的 state 与评论数（有新评论即提醒）
-4. GoPlus 判定（应始终保持未标记）
+4. GoPlus 判定（2026-10-04 起被误标 phishing_site=1，已提交申诉，期望恢复）
+5. GoPlus 超 3 个工作日无变化 -> 提醒一次催办（service@gopluslabs.io）
 
-规则：一切照旧则静默；「成功 / 需要处理 / 连续 10 天无进展」才弹系统通知。
+规则：一切照旧则静默；「成功（含 GoPlus 清除） / 需要处理 / GoPlus 催办 / 连续 10 天无进展」才弹系统通知。
 用法: python3 appeal_check.py [--test]
 """
 import datetime
@@ -25,6 +26,7 @@ MM_URL = "https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/sr
 PR_URL = "https://api.github.com/repos/MetaMask/eth-phishing-detect/pulls/299334"
 SS_ISSUE_URL = "https://api.github.com/repos/scamsniffer/scam-database/issues/827"
 GP_URL = "https://api.gopluslabs.io/api/v1/phishing_site?url=ponsfi.xyz"
+GP_ESCALATE_DATE = datetime.date(2026, 10, 9)  # 申诉提交（10-04）后超 3 个工作日仍无变化则提醒催办
 
 UA = {"User-Agent": "ponspulse-appeal-check/1.0"}
 
@@ -125,6 +127,15 @@ def main():
         alerts.append(f"ScamSniffer issue #827 有新回复（评论 {old.get('ss_comments')}→{new.get('ss_comments')}），建议查看")
     if new.get("goplus_ok") and new.get("goplus_flag") and not old.get("goplus_flag"):
         alerts.append("GoPlus 开始把 ponsfi.xyz 标记为钓鱼（意外情况，需尽快处理）")
+    if new.get("goplus_ok") and old.get("goplus_ok") and old.get("goplus_flag") and not new.get("goplus_flag"):
+        alerts.append("GoPlus 误报已清除！币安/OKX 钱包的拦截预计 1~3 天内陆续解除，可以放心分享（只认 ponsfi.xyz）")
+        success = True
+    notified_gp_escalate = bool(old.get("notified_gp_escalate"))
+    if (new.get("goplus_ok") and new.get("goplus_flag")
+            and datetime.date.today() >= GP_ESCALATE_DATE and not notified_gp_escalate):
+        alerts.append("GoPlus 误报仍未清除（已超过 3 个工作日）：建议发催办邮件到 service@gopluslabs.io（或 X 私信 @GoPlusSecurity），说明这是已提交的误报申诉，附上 goPlus 反馈表单提交成功记录")
+        notified_gp_escalate = True
+    new["notified_gp_escalate"] = notified_gp_escalate
 
     watch_keys = ("metamask_has_xyz", "pr_state", "pr_merged", "ss_state", "ss_comments", "goplus_flag")
     changed = [k for k in watch_keys if k in new and old.get(k) != new.get(k)]

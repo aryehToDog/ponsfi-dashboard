@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # 只用现有快照重新渲染面板（不联网）
-import json, os
+import json, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
 data = open(os.path.join(HERE, "dashboard-data.json"), encoding="utf-8").read()
@@ -9,6 +9,15 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.6「稳定性与性能修复」 · 2026-10-04
+     【这一版改了什么】（代码审查后的修复，页面表现与数据口径不变）
+       ① 自动刷新与音乐开关解耦：以前关掉音乐页面就不再自动更新数据，现在每 5 分钟照常
+          刷新；切到后台暂停、切回前台立刻补一次。
+       ② 所有外部接口加 15 秒超时：DefiLlama / GeckoTerminal / CoinGecko 偶尔挂起时，
+          不会再让「刷新中」卡住整个页面（顺带修掉按钮可能永久禁用的隐患）。
+       ③ 接口返回空数据时不再覆盖内嵌快照（避免图表整段空掉）。
+       ④ 采集端写入全部改为「先写临时文件再原子替换」：脚本中途被杀不会留下半个 JSON。
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.5「小时守护常驻 + GitHub 自动发版 + 当前小时卡让位」 · 2026-10-04
      【这一版改了什么】
        ① 小时刷新任务改成常驻守护进程（不再每小时开一个新终端窗口），夜里也不断档。
@@ -237,12 +246,22 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.5-2026-10-04">
+<meta name="dashboard-version" content="v3.6-2026-10-04">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.5 · 2026-10-04"
+VER = "v3.6 · 2026-10-04"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")
-open(out, "w", encoding="utf-8").write(out_html)
+fd, tmp = tempfile.mkstemp(dir=os.path.dirname(out), prefix=".tmp-render-")
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(out_html)
+    os.replace(tmp, out)
+except Exception:
+    try:
+        os.unlink(tmp)
+    except OSError:
+        pass
+    raise
 print("rendered", out, os.path.getsize(out))

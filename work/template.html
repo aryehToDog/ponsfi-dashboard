@@ -2935,7 +2935,16 @@ function renderGuide(){
 }
 
 /* ---------- live ---------- */
-async function fetchJSON(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return r.json(); }
+async function fetchJSON(u, ms){
+  /* 统一超时：第三方接口偶尔挂起，没有超时会把「刷新中」状态卡死 */
+  const ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const tm = ac ? setTimeout(function(){ try{ ac.abort(); }catch(e){} }, ms || 15000) : null;
+  try{
+    const r = await fetch(u, {cache:'no-store', signal: ac ? ac.signal : undefined});
+    if(!r.ok) throw new Error(r.status);
+    return await r.json();
+  } finally { if(tm) clearTimeout(tm); }
+}
 
 async function loadFees(){
   const reqs=[];
@@ -2947,7 +2956,11 @@ async function loadFees(){
   res.forEach(({k,j})=>{
     if(k.startsWith('meta.')){ const id=k.slice(5);
       DATA.meta[id] = Object.assign({}, DATA.meta[id], {name:j.name, symbol:j.symbol, mcap:j.mcap || DATA.meta[id]?.mcap}); }
-    else { DATA.series[k] = (j.totalDataChart||[]).map(([ts,v])=>[ts, v]); }
+    else {
+      const arr = (j.totalDataChart||[]).map(([ts,v])=>[ts, v]);
+      /* 接口偶尔返回空数组：不要用它覆盖内嵌快照，否则图表会整段空掉 */
+      if(arr.length) DATA.series[k] = arr;
+    }
   });
 }
 
@@ -3015,11 +3028,15 @@ async function loadLive(){
   /* 小时监控：交易量 / 链上销毁 的小时级实时刷新（不阻塞首屏） */
   try{ refreshHourlyLive(); }catch(e){}
   DATA.generated = new Date().toISOString();
-  BUSY = false;
-  if(btn){ btn.disabled = false; btn.classList.remove('busy'); }
-  setSrc(ok, priceOk);
-  renderAll();
-  if(priceOk) flashPrices();
+  try{
+    setSrc(ok, priceOk);
+    renderAll();
+    if(priceOk) flashPrices();
+  } finally {
+    /* 任何一步出错也要放掉「刷新中」，否则按钮会一直禁用 */
+    BUSY = false;
+    if(btn){ btn.disabled = false; btn.classList.remove('busy'); }
+  }
 }
 function setSrc(ok, priceOk){
   const b=document.getElementById('src');
@@ -3545,11 +3562,13 @@ function bgmToggle(){
   if(bgmOn) bgmDetShow(); else bgmDetHide();
 }
 
-/* 开着 BGM 时，每 5 分钟顺手刷一次数据，让曲子跟着最新价格走 */
+/* 每 5 分钟刷一次数据（与 BGM 开关无关：静音的用户同样要看到新数据）；
+   页面切到后台时跳过，切回来立刻补一次，既省流量又不影响新鲜度 */
 var bgmRefreshTimer = null;
 function bgmKeepFresh(){
   if(bgmRefreshTimer) return;
-  bgmRefreshTimer = setInterval(function(){ if(bgmOn) loadLive(); }, 300000);
+  bgmRefreshTimer = setInterval(function(){ if(!document.hidden) loadLive(); }, 300000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) loadLive(); });
 }
 
 /* ==================== 横幅歌词（跟着 BGM 走） ====================
@@ -3899,6 +3918,7 @@ renderTip();
 renderStatic();
 renderAll();
 loadViews();
+bgmKeepFresh();          /* 数据每 5 分钟自动刷新，不受音乐开关影响 */
 loadLive();
 qInit();
 </script>

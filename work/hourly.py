@@ -10,7 +10,7 @@
   3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 ÷ 80%（回购占比），明确标注为推算；
        StonkFun → 官方接口 stonkfun.xyz/api/revenue 的累计收入每小时差值（真值，国内直连被墙、走海外中转）
 """
-import json, os, sys, time, urllib.request, urllib.parse
+import json, os, sys, tempfile, time, urllib.request, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "hourly.json")
@@ -26,6 +26,21 @@ HOURS = 72
 BUYBACK_SHARE = 0.8          # Pons 公开口径：80% 收入用于回购
 SF_API = "https://www.stonkfun.xyz/api/revenue"   # StonkFun 官方收入/回购/销毁（国内被墙，走海外中转）
 SF_HIST = os.path.join(HERE, "sf-history.json")    # 官方累计值快照（每小时一条）
+
+
+def atomic_dump(obj, path):
+    """先写同目录临时文件再 os.replace：中途被杀不会留下半个 JSON"""
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), prefix=".tmp-")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False, separators=(",", ":"))
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def get(url, tries=3):
@@ -208,7 +223,7 @@ def sf_record(cur):
         hist.append(cur)
     else:
         hist[-1] = cur
-    json.dump(hist[-400:], open(SF_HIST, "w", encoding="utf-8"), ensure_ascii=False)
+    atomic_dump(hist[-400:], SF_HIST)
 
 
 def sf_series(buckets):
@@ -292,7 +307,7 @@ def main():
     out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
     out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
 
-    json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    atomic_dump(out, OUT)
     pb = [x for x in out["pons"]["burn"] if x]
     print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s"
           % (HOURS, round(sum(pb), 1),

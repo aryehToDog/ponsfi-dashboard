@@ -4,7 +4,7 @@
 由 LaunchAgent com.ponspulse.hourly 每小时第 5 分钟调用。
 日志：work/hourly-check.log
 """
-import json, os, subprocess, sys, time
+import json, os, subprocess, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -35,7 +35,10 @@ def main():
         data_p = os.path.join(HERE, "dashboard-data.json")
         d = json.load(open(data_p, encoding="utf-8"))
         d["hourly"] = json.load(open(os.path.join(HERE, "hourly.json"), encoding="utf-8"))
-        json.dump(d, open(data_p, "w", encoding="utf-8"), ensure_ascii=False)
+        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(data_p), prefix=".tmp-data-")
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(d, fh, ensure_ascii=False)
+        os.replace(tmp, data_p)
     except Exception as exc:
         log("合并 hourly.json 失败：%s" % exc)
         return 1

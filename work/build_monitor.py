@@ -8,6 +8,7 @@
 import datetime
 import json
 import os
+import runpy
 import subprocess
 import sys
 import urllib.request
@@ -121,6 +122,16 @@ def fetch_bundle():
             errors.append(f"buyback: {exc}")
     if not bundle.get("burn") and old_burn:
         bundle["burn"] = old_burn
+    # 小时级监控（最近 72 小时：交易量 / 收入推算 / 链上销毁，见 hourly.py）
+    try:
+        runpy.run_path(os.path.join(HERE, "hourly.py"), run_name="__main__")
+        bundle["hourly"] = json.load(open(os.path.join(HERE, "hourly.json"), encoding="utf-8"))
+    except Exception as exc:
+        errors.append(f"hourly: {exc}")
+        try:
+            bundle["hourly"] = json.load(open(os.path.join(HERE, "hourly.json"), encoding="utf-8"))
+        except Exception:
+            pass
     return bundle, errors
 
 

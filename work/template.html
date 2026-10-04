@@ -953,6 +953,40 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   .q-like.pop svg,.q-like.pop b{animation:none}
   .q-like.plus .q-plus{animation:none}
 }
+
+/* ---------- 小时监控（最近 72 小时） ---------- */
+.hourly-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:14px 16px 10px;box-shadow:var(--card-shadow)}
+.hourly-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+  font-size:11.5px;color:var(--mut);margin-bottom:10px}
+.hourly-legend .lg{display:inline-flex;align-items:center;gap:6px}
+.hourly-legend .lg i{width:9px;height:9px;border-radius:2px;display:inline-block;font-style:normal}
+.hourly-legend b{color:var(--txt);font-family:var(--font-num)}
+.hourly-legend .lg em{font-style:normal;color:var(--mut2);font-size:10.5px}
+#hourlyChart{width:100%;height:270px;display:block}
+.hourly-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 5;opacity:.8}
+.hourly-axis{fill:var(--mut2);font-size:10px;font-family:var(--font-num)}
+.hourly-bar{cursor:default;transition:opacity .15s ease}
+.hourly-bar:hover{opacity:.66}
+.hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:13px}
+.hourly-sum>div{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 11px}
+.hourly-sum .k{font-size:10.5px;color:var(--mut);margin-bottom:5px;letter-spacing:.2px}
+.hourly-sum .v{font-size:14px;font-weight:700;font-family:var(--font-num);letter-spacing:-.2px;line-height:1.45}
+.hourly-sum .v .pv{color:var(--pons)}
+.hourly-sum .v .sv{color:var(--stonk)}
+.hourly-sum .v em{font-style:normal;font-family:inherit;font-size:10.5px;font-weight:600;color:var(--mut2);
+  margin-left:4px;letter-spacing:0}
+.hourly-note{font-size:11.5px;color:var(--mut);line-height:1.8;margin-top:12px;
+  background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.hourly-note b{color:var(--txt)}
+.sec-live{font-size:10.5px;font-weight:600;color:var(--ok-txt);margin-left:8px;letter-spacing:0}
+.sec-live.off{color:var(--mut2)}
+.sec-live.est{color:var(--warn)}
+@media(max-width:680px){
+  #hourlyChart{height:200px}
+  .hourly-sum{grid-template-columns:repeat(2,1fr)}
+  .hourly-box{padding:12px 12px 8px}
+}
 </style>
 </head>
 <body>
@@ -1027,20 +1061,19 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 
   <div class="grid2" id="cards"></div>
 
+  <div class="sec-title" id="st-hourly">小时监控 · 最近 72 小时<span class="sec-live" id="hourlyLive"></span></div>
+  <div class="rank-sub" id="hourlySub"></div>
+  <div class="tabs" id="hourlyTabs"></div>
+  <div class="hourly-box">
+    <div class="hourly-legend" id="hourlyLegend"></div>
+    <svg id="hourlyChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="hourly-sum" id="hourlySum"></div>
+  <div class="hourly-note" id="hourlyNote"></div>
+
   <div class="sec-title" id="st-rules">规则引擎 · 加仓与止损信号</div>
   <div class="rule-legend" id="rule-legend"></div>
   <div class="rules" id="rules"></div>
-
-  <div class="sec-title" id="st-rank">收入排行 · 在整个行业里的位置</div>
-  <div class="rank-sub" id="rankSub"></div>
-  <div class="rank-insight" id="rankInsight"></div>
-  <div class="tabs" id="rankTabs"></div>
-  <div class="grid2" id="rankCards"></div>
-  <div class="rank-block">
-    <div class="rank-h" id="rankTopH"></div>
-    <div class="rank-list" id="rankTop"></div>
-  </div>
-  <div class="grid2 rank-near" id="rankNear"></div>
 
   <div class="sec-title" id="st-burn">回购与销毁 · 真金白银烧掉多少</div>
   <div class="rank-sub" id="burnSub"></div>
@@ -1053,6 +1086,17 @@ h1 span{font-size:var(--fs-11);font-weight:500}
     <div class="bb-lag" id="burnPeersNote"></div>
   </div>
   <div class="bb-note" id="burnNote"></div>
+
+  <div class="sec-title" id="st-rank">收入排行 · 在整个行业里的位置</div>
+  <div class="rank-sub" id="rankSub"></div>
+  <div class="rank-insight" id="rankInsight"></div>
+  <div class="tabs" id="rankTabs"></div>
+  <div class="grid2" id="rankCards"></div>
+  <div class="rank-block">
+    <div class="rank-h" id="rankTopH"></div>
+    <div class="rank-list" id="rankTop"></div>
+  </div>
+  <div class="grid2 rank-near" id="rankNear"></div>
 
   <div class="sec-title" id="st-chart">趋势图</div>
   <div class="tabs" id="tabs"></div>
@@ -1084,6 +1128,15 @@ zh:{
   docTitle:'Pons · StonkFun 收入与回购监控面板',
   h1:'Pons · StonkFun 收入与回购监控面板',
   secRules:'现在该做什么 · 五个关键指标对照',
+  secHourly:'小时监控 · 最近 72 小时',
+  hourSub:'每小时一格：交易量 / 收入 / 销毁，看得出现在是热还是冷。',
+  hourTabVol:'交易量', hourTabRev:'收入', hourTabBurn:'销毁',
+  hourH1:'最近 1 小时', hourH6:'最近 6 小时', hourH24:'最近 24 小时', hourH72:'最近 72 小时',
+  hourLive:'● 实时刷新', hourLiveOff:'● 页面快照（实时刷新失败）',
+  hourEst:'推算', hourChain:'链上', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
+  hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 这两个主流池的每小时成交额（GeckoTerminal 小时线）。<b>这是唯一能拿到的真·小时级数据</b>——成交额放大，说明短线资金在进场；缩下去，说明热度在退。',
+  hourNoteRev:'<b>收入</b>：市面上没有任何公开的小时级收入源（DefiLlama 只到日级，官方看板走 Dune 不对外开放）。Pons 这一列是<b>链上推算</b>：每小时回购花掉的钱 ÷ 80%（Pons 公开口径是 80% 收入拿去回购）；StonkFun 的小时级从今天起用我们自己的快照往后累积。',
+  hourNoteBurn:'<b>销毁</b>：Pons 是 Robinhood 链上按小时统计打进死地址的 PONS，<b>真实、可对账</b>（约每 15 分钟一笔）；StonkFun 在 Solana 上公共 RPC 不给历史，只能靠我们每小时攒的供应量快照，攒满后自动出现。',
   secChart:'趋势图',
   secTable:'每天的明细（最近 20 天）',
   secGuide:'指标说明 · 每个数字怎么读',
@@ -1308,6 +1361,15 @@ en:{
   docTitle:'Pons · StonkFun Revenue & Buyback Monitor',
   h1:'Pons · StonkFun Revenue & Buyback Monitor',
   secRules:'What to do now · the five numbers that matter',
+  secHourly:'Hourly monitor · last 72 hours',
+  hourSub:'One bar per hour — volume / revenue / burns. Is it heating up or cooling down?',
+  hourTabVol:'Volume', hourTabRev:'Revenue', hourTabBurn:'Burns',
+  hourH1:'Last 1 hour', hourH6:'Last 6 hours', hourH24:'Last 24 hours', hourH72:'Last 72 hours',
+  hourLive:'● live', hourLiveOff:'● page snapshot (live refresh failed)',
+  hourEst:'estimate', hourChain:'on-chain', hourEach:'One bar per hour: PONS left · StonkFun right',
+  hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. <b>This is the only true hourly series that exists publicly.</b>',
+  hourNoteRev:'<b>Revenue</b>: no public hourly revenue exists (DefiLlama is daily-only, the official dashboards sit on Dune). The Pons column is an <b>on-chain estimate</b>: hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun accumulates from our own snapshots starting today.',
+  hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one buy every 15 min). StonkFun’s public RPC has no history, so those hourly bars fill in from our supply snapshots.',
   secChart:'Trends',
   secTable:'Day-by-day detail (last 20 days)',
   secGuide:'How to read every number',
@@ -1683,6 +1745,8 @@ function renderStatic(){
   document.getElementById('h1t').textContent = t('h1');
   var _sl = document.getElementById('safeTxt'); if(_sl) _sl.innerHTML = t('safeLine');
   document.getElementById('st-rules').textContent = t('secRules');
+  var _sh = document.getElementById('st-hourly');
+  if(_sh) _sh.innerHTML = esc(t('secHourly')) + '<span class="sec-live" id="hourlyLive"></span>';
   document.getElementById('st-rank').textContent = t('secRank');
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.textContent = t('secBurn');
   document.getElementById('st-chart').textContent = t('secChart');
@@ -1877,6 +1941,11 @@ let BURN_BY='h24';                    /* 榜单口径：默认 24 小时（「�
 let CHAIN_STATE='', CHAIN_TRIED=false; /* 链上实时读数的状态（成功时刻 / 是否试过） */
 
 function burnBundle(){ return DATA.burn || BUNDLE.burn || null; }
+/* 链上/快照读回来的 24h 回购是「代币数量」，这里统一折成美元（拿不到币价就返回 null，宁可显示 — 也不要报个数骗人） */
+function b24usd(pid, tok){
+  const px=((DATA.market||{})[pid]||{}).price || 0;
+  return (px>0 && tok!=null && isFinite(tok))? tok*px : null;
+}
 function burnOf(p){
   const c=(burnBundle()&&burnBundle().chain)||{};
   const d=c[p.id]||{};
@@ -1884,14 +1953,15 @@ function burnOf(p){
   const supply=(d.supply!=null)? d.supply : p.maxSupply;
   return {burned:burned, supply:supply, pct:(supply>0)? burned/supply*100 : 0,
           addr:d.addr||null, explorer:d.explorer||null,
-          b24:(d.burn24h!=null)? d.burn24h : null, b24src:d.burn24hSrc||null,
+          b24:(d.burn24h!=null)? b24usd(p.id, d.burn24h) : null, b24src:d.burn24hSrc||null,
           b24live:!!d.burn24hLive, b24txs:(d.burn24hTxs!=null)? d.burn24hTxs : null};
 }
 /* 24 小时回购的取数优先级：链上现读 / 链上快照  >  数据源里最近的一天（会滞后） */
 function b24Of(pid, st){
   const d=((burnBundle()||{}).chain||{})[pid]||{}, x=(st||{})[pid]||{};
   if(d.burn24h!=null){
-    return {v:d.burn24h, wait:false, live:!!d.burn24hLive, txs:(d.burn24hTxs||null),
+    const usd=b24usd(pid, d.burn24h);
+    if(usd!=null) return {v:usd, wait:false, live:!!d.burn24hLive, txs:(d.burn24hTxs||null),
             tag:(d.burn24hLive? t('burn24Chain') : t('burn24Snap'))};
   }
   if(x.d1!=null){
@@ -2101,6 +2171,161 @@ async function loadChainBurn(){
 }
 
 /* ---------- render cards ---------- */
+/* ---------- 小时监控（最近 72 小时）：交易量 / 收入 / 销毁 ---------- */
+let HOUR_TAB='vol', HOUR_LIVE=0;
+const HOUR_POOLS={pons:['robinhood','0xed50bdeea8adc232f159486192a4157281d722ff'],
+                  stonk:['solana','zxTpi4BtaWX3mgdAPoezkMD1hxx8CdeCfrqXMWvSCLX']};
+function hourlyBundle(){ return ((typeof DATA!=='undefined' && DATA.hourly) || (typeof BUNDLE!=='undefined' && BUNDLE.hourly) || null); }
+function hourSeries(){
+  const h=hourlyBundle(); if(!h||!h.hours) return null;
+  const out={hours:h.hours.slice(), pons:[], stonk:[], rawPons:[], rawStonk:[], px:{}, by:0.8};
+  out.by=(h.buybackShare||0.8);
+  ['pons','stonk'].forEach(function(k){
+    const n=h[k]||{};
+    const src = (HOUR_TAB==='vol')? (n.vol||[]) : (HOUR_TAB==='rev')? (n.rev||[]) : (n.burn||[]);
+    out.px[k]=n.close||[];
+    if(k==='pons') out.rawPons=src.slice(); else out.rawStonk=src.slice();
+    out[k]=(HOUR_TAB==='burn')? src.map(function(v,i){ const c=(n.close||[])[i]; return (v==null||!c)? null : v*c; }) : src.slice();
+  });
+  out.burnSrc={pons:((h.pons||{}).burnSrc||''), stonk:((h.stonk||{}).burnSrc||'')};
+  out.gen=h.generated;
+  return out;
+}
+function hourSum(a,n){ let s=0, any=false; (a||[]).slice(-n).forEach(function(x){ if(x!=null&&isFinite(x)){ s+=x; any=true; } }); return any? s : null; }
+function hourTip(s,i){
+  const d=new Date(s.hours[i]*1000), hm=fmtDay(d);
+  const pv=s.pons[i], sv=s.stonk[i], pu=s.rawPons[i], su=s.rawStonk[i];
+  let out=hm;
+  out+='\nPons  '+(pv==null?'—':fmtU(pv))+(HOUR_TAB==='burn'&&pu!=null? '（'+fmtN(pu,0)+' PONS）':'');
+  out+='\nStonkFun  '+(sv==null?'— 还没攒到':fmtU(sv))+(HOUR_TAB==='burn'&&su!=null? '（'+fmtN(su,0)+' STONK）':'');
+  return out;
+}
+function fmtDay(d){
+  const p=function(n){ return (n<10?'0':'')+n; };
+  return (d.getMonth()+1)+'/'+d.getDate()+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+function renderHourly(){
+  const sec=document.getElementById('st-hourly'); if(!sec) return;
+  const hb=document.getElementById('hourlySub'), ht=document.getElementById('hourlyTabs'),
+        hl=document.getElementById('hourlyLegend'), svg=document.getElementById('hourlyChart'),
+        sm=document.getElementById('hourlySum'), nt=document.getElementById('hourlyNote'),
+        lv=document.getElementById('hourlyLive');
+  const s=hourSeries();
+  const ALL=[sec,hb,ht,hl,svg,sm,nt];
+  if(!s||!s.hours.length){ ALL.forEach(function(e){ if(e) e.style.display='none'; }); return; }
+  ALL.forEach(function(e){ if(e) e.style.display=''; });
+  if(lv){ lv.textContent=(HOUR_LIVE? t('hourLive') : t('hourLiveOff'));
+          lv.className='sec-live'+(HOUR_LIVE?'':' off'); }
+  if(hb) hb.textContent=t('hourSub');
+  if(ht) ht.innerHTML=[['vol','hourTabVol'],['rev','hourTabRev'],['burn','hourTabBurn']].map(function(p){
+      return '<button class="tab'+(HOUR_TAB===p[0]?' on':'')+'" onclick="HOUR_TAB=\''+p[0]+'\';renderHourly();">'+t(p[1])+'</button>';
+    }).join('');
+
+  const W=1200,CH=300,padT=18,padB=30,padL=2,padR=2;
+  const n=s.hours.length;
+  const vals=[];
+  s.pons.forEach(function(v){ if(v!=null&&isFinite(v)) vals.push(v); });
+  s.stonk.forEach(function(v){ if(v!=null&&isFinite(v)) vals.push(v); });
+  const max=Math.max.apply(null, vals.concat([1]));
+  const yv=function(v){ return padT+(1-v/max)*(CH-padT-padB); };
+  const step=(W-padL-padR)/n, bw=Math.max(2.2, step*0.42);
+  let body='';
+  [1,0.5].forEach(function(f){
+    const yy=yv(max*f).toFixed(1);
+    body+='<line class="hourly-grid" x1="0" y1="'+yy+'" x2="'+W+'" y2="'+yy+'"/>'
+       +  '<text class="hourly-axis" x="3" y="'+(Number(yy)-4).toFixed(1)+'">'+fmtU(max*f)+'</text>';
+  });
+  s.hours.forEach(function(ts,i){
+    const x=padL+i*step;
+    const pv=s.pons[i], sv=s.stonk[i];
+    const h1=(pv!=null)? (CH-padB-yv(pv)) : 0, h2=(sv!=null)? (CH-padB-yv(sv)) : 0;
+    let g='<g class="hourly-bar"><title>'+esc(hourTip(s,i))+'</title>';
+    g+='<rect x="'+x.toFixed(1)+'" y="'+padT+'" width="'+step.toFixed(2)+'" height="'+(CH-padT-padB)+'" fill="transparent"/>';
+    if(pv!=null) g+='<rect x="'+x.toFixed(1)+'" y="'+(CH-padB-h1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h1).toFixed(1)+'" rx="1.5" fill="var(--pons)" opacity=".92"/>';
+    if(sv!=null) g+='<rect x="'+(x+step-bw).toFixed(1)+'" y="'+(CH-padB-h2).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h2).toFixed(1)+'" rx="1.5" fill="var(--stonk)" opacity=".92"/>';
+    body+=g+'</g>';
+  });
+  s.hours.forEach(function(ts,i){
+    if(i%12===0 || i===n-1){
+      const x=Math.min(W-58, padL+i*step);
+      body+='<text class="hourly-axis" x="'+x.toFixed(1)+'" y="'+(CH-8)+'">'+fmtDay(new Date(ts*1000))+'</text>';
+    }
+  });
+  if(svg) svg.innerHTML=body;
+
+  if(hl){
+    const srcName=(HOUR_TAB==='vol')? '' : (HOUR_TAB==='rev'? t('hourEst') : t('hourChain'));
+    hl.innerHTML='<span class="lg"><i style="background:var(--pons)"></i>Pons <b>'+hourTxt(hourSum(s.pons,72))+'</b><em>72h</em></span>'
+      +'<span class="lg"><i style="background:var(--stonk)"></i>StonkFun <b>'+hourTxt(hourSum(s.stonk,72))+'</b><em>72h</em></span>'
+      + (srcName? '<span class="lg"><em>'+srcName+'</em></span>' : '')
+      + '<span class="lg"><em>'+esc(t('hourEach'))+'</em></span>';
+  }
+  if(sm){
+    sm.innerHTML=[[1,'hourH1'],[6,'hourH6'],[24,'hourH24'],[72,'hourH72']].map(function(w){
+      const a=hourSum(s.pons,w[0]), b=hourSum(s.stonk,w[0]);
+      return '<div><div class="k">'+t(w[1])+'</div><div class="v">'
+        +'<span class="pv">'+hourTxt(a)+'</span><em>PONS</em><br>'
+        +'<span class="sv">'+hourTxt(b)+'</span><em>STONK</em></div></div>';
+    }).join('');
+  }
+  if(nt) nt.innerHTML=t(HOUR_TAB==='vol'? 'hourNoteVol' : HOUR_TAB==='rev'? 'hourNoteRev' : 'hourNoteBurn');
+}
+function hourTxt(v){ return (v==null)? '—' : fmtU(v); }
+
+/* 打开页面 / 点刷新时：把最近 24h 交易量 + 最近 3h 链上销毁拉成新的（实时） */
+async function refreshHourlyLive(){
+  const h=hourlyBundle(); if(!h||!h.hours) return;
+  let ok=false;
+  for(const k in HOUR_POOLS){
+    try{
+      const net=HOUR_POOLS[k][0], pool=HOUR_POOLS[k][1];
+      const j=await fetchJSON('https://api.geckoterminal.com/api/v2/networks/'+net+'/pools/'+pool+'/ohlcv/hour?limit=26&aggregate=1');
+      const rows=(((j||{}).data||{}).attributes||{}).ohlcv_list||[];
+      const node=h[k]||(h[k]={});
+      rows.forEach(function(r){
+        const b=Math.floor(r[0]/3600)*3600, i=h.hours.indexOf(b);
+        if(i<0) return;
+        node.vol[i]=parseFloat(r[5]); node.close[i]=parseFloat(r[4]);
+        if(k==='pons' && (h.pons.burn||[])[i]!=null)
+          h.pons.rev[i]=Math.round(h.pons.burn[i]*parseFloat(r[4])/(h.buybackShare||0.8)*100)/100;
+      });
+      ok=true;
+    }catch(e){}
+  }
+  try{
+    const hexBn=await rhRpc('eth_blockNumber',[]); const bn=parseInt(hexBn,16);
+    const b1=await rhRpc('eth_getBlockByNumber',[hexBn,false]);
+    const b2=await rhRpc('eth_getBlockByNumber',['0x'+(bn-100000).toString(16),false]);
+    const tsNow=parseInt(b1.timestamp,16);
+    const bps=100000/Math.max(1, tsNow-parseInt(b2.timestamp,16));
+    const hNow=Math.floor(tsNow/3600)*3600;
+    for(let k=2;k>=0;k--){
+      const t0=hNow-k*3600;
+      let f=Math.round(bn-(tsNow-t0)*bps);
+      for(let it=0;it<2;it++){
+        const bb=await rhRpc('eth_getBlockByNumber',['0x'+Math.max(0,f).toString(16),false]);
+        const d=parseInt(bb.timestamp,16)-t0;
+        if(Math.abs(d)<=60) break;
+        f=Math.round(f-d*bps);
+      }
+      const to=Math.min(bn, Math.round(f+3600*bps));
+      const logs=await rhRpc('eth_getLogs',[{fromBlock:'0x'+Math.max(0,f).toString(16), toBlock:'0x'+to.toString(16),
+        address:PONS_TOKEN, topics:[XFER,null,pad32(PONS_DEAD)]}]);
+      let amt=0, cnt=0;
+      (logs||[]).forEach(function(l){ amt+=Number(BigInt(l.data||'0x0'))/1e18; cnt++; });
+      const i=h.hours.indexOf(t0);
+      if(i>=0){
+        h.pons.burn[i]=Math.round(amt*100)/100; h.pons.burnTx[i]=cnt;
+        const c=(h.pons.close||[])[i];
+        if(c) h.pons.rev[i]=Math.round(amt*c/(h.buybackShare||0.8)*100)/100;
+      }
+    }
+    ok=true;
+  }catch(e){}
+  HOUR_LIVE=ok?1:0;
+  renderHourly();
+}
+
 function renderCards(){
   const rows = build();
   const el = document.getElementById('cards');
@@ -2688,6 +2913,8 @@ async function loadLive(){
     if(r) renderAll(); else renderBurn();
     return r;
   }).catch(function(){ CHAIN_TRIED = true; return false; });
+  /* 小时监控：交易量 / 链上销毁 的小时级实时刷新（不阻塞首屏） */
+  try{ refreshHourlyLive(); }catch(e){}
   DATA.generated = new Date().toISOString();
   BUSY = false;
   if(btn){ btn.disabled = false; btn.classList.remove('busy'); }
@@ -2733,7 +2960,7 @@ function loadViews(){
 }
 
 function renderAll(){
-  [renderCards, renderRules, renderRank, renderBurn, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
+  [renderCards, renderHourly, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

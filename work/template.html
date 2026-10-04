@@ -956,7 +956,30 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 
 /* ---------- 小时监控（最近 72 小时） ---------- */
 .hourly-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  padding:14px 16px 10px;box-shadow:var(--card-shadow)}
+  padding:14px 16px 10px;box-shadow:var(--card-shadow);position:relative}
+/* 当前小时：默认就摆着，不用悬停也能看到 */
+.hourly-now{position:absolute;right:14px;top:12px;z-index:3;pointer-events:none;
+  background:color-mix(in srgb,var(--panel2) 86%,transparent);border:1px solid var(--line2);
+  border-radius:11px;padding:8px 11px;min-width:172px;box-shadow:var(--card-shadow);
+  backdrop-filter:blur(6px)}
+.hourly-now .h{font-size:10.5px;color:var(--mut2);margin-bottom:5px;letter-spacing:.3px}
+.hourly-now .r{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--mut)}
+.hourly-now .r b{font-family:var(--font-num);font-size:12.5px;color:var(--txt)}
+.hourly-now .r.p b{color:var(--pons)}
+.hourly-now .r.s b{color:var(--stonk)}
+.hourly-now .r em{font-style:normal;font-size:10px;color:var(--mut2);font-family:inherit}
+/* 鼠标划过任意一根柱子：自绘提示框（原生 title 太慢/在手机上不出现） */
+.hourly-tipbox{position:absolute;z-index:6;display:none;pointer-events:none;
+  background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:8px 10px;
+  box-shadow:0 12px 28px rgba(0,0,0,.24);white-space:nowrap;transform:translate(-50%,-112%)}
+.hourly-tipbox .t{font-size:10.5px;color:var(--mut2);margin-bottom:5px}
+.hourly-tipbox .r{font-size:11.5px;color:var(--mut);display:flex;justify-content:space-between;gap:12px}
+.hourly-tipbox .r b{font-family:var(--font-num);font-size:12.5px;color:var(--txt);margin-left:6px}
+.hourly-tipbox .r.p b{color:var(--pons)}
+.hourly-tipbox .r.s b{color:var(--stonk)}
+.hourly-tipbox .r em{font-style:normal;font-size:10px;color:var(--mut2);font-family:inherit}
+.hourly-hl{fill:var(--accent);opacity:0;transition:opacity .12s ease}
+.hourly-hl.on{opacity:.09}
 .hourly-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;
   font-size:11.5px;color:var(--mut);margin-bottom:10px}
 .hourly-legend .lg{display:inline-flex;align-items:center;gap:6px}
@@ -971,11 +994,13 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:13px}
 .hourly-sum>div{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 11px}
 .hourly-sum .k{font-size:10.5px;color:var(--mut);margin-bottom:5px;letter-spacing:.2px}
-.hourly-sum .v{font-size:14px;font-weight:700;font-family:var(--font-num);letter-spacing:-.2px;line-height:1.45}
-.hourly-sum .v .pv{color:var(--pons)}
-.hourly-sum .v .sv{color:var(--stonk)}
-.hourly-sum .v em{font-style:normal;font-family:inherit;font-size:10.5px;font-weight:600;color:var(--mut2);
-  margin-left:4px;letter-spacing:0}
+/* 汇总卡：两家并列一行、不要椭圆框；数字与代币名字号一致，仅靠颜色区分 */
+.hourly-sum .v{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:1px;
+  font-size:13.5px;font-weight:700;font-family:var(--font-num);letter-spacing:-.2px;line-height:1.55}
+.hourly-sum .v .pair{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}
+.hourly-sum .v .pair i{font-style:normal;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--mut2)}
+.hourly-sum .v .pair.p b{color:var(--pons)}
+.hourly-sum .v .pair.s b{color:var(--stonk)}
 .hourly-note{font-size:11.5px;color:var(--mut);line-height:1.8;margin-top:12px;
   background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
 .hourly-note b{color:var(--txt)}
@@ -986,6 +1011,11 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   #hourlyChart{height:200px}
   .hourly-sum{grid-template-columns:repeat(2,1fr)}
   .hourly-box{padding:12px 12px 8px}
+  /* 手机端：当前小时卡片改成图下通栏，不再压住最新的柱子 */
+  .hourly-now{position:static;margin:8px 0 2px;min-width:0;display:flex;align-items:center;
+    gap:10px;flex-wrap:wrap;padding:7px 10px}
+  .hourly-now .h{margin:0}
+  .hourly-tipbox{max-width:200px}
 }
 </style>
 </head>
@@ -1067,6 +1097,8 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   <div class="hourly-box">
     <div class="hourly-legend" id="hourlyLegend"></div>
     <svg id="hourlyChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>
+    <div class="hourly-now" id="hourlyNow"></div>
+    <div class="hourly-tipbox" id="hourlyTipBox"></div>
   </div>
   <div class="hourly-sum" id="hourlySum"></div>
   <div class="hourly-note" id="hourlyNote"></div>
@@ -1133,6 +1165,8 @@ zh:{
   hourTabVol:'交易量', hourTabRev:'收入', hourTabBurn:'销毁',
   hourH1:'最近 1 小时', hourH6:'最近 6 小时', hourH24:'最近 24 小时', hourH72:'最近 72 小时',
   hourLive:'● 实时刷新', hourLiveOff:'● 页面快照（实时刷新失败）',
+  hourNow:'当前小时', hourOngoing:'进行中',
+  hourNoData:'还没攒到',
   hourEst:'推算', hourChain:'链上', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
   hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 这两个主流池的每小时成交额（GeckoTerminal 小时线）。<b>这是唯一能拿到的真·小时级数据</b>——成交额放大，说明短线资金在进场；缩下去，说明热度在退。',
   hourNoteRev:'<b>收入</b>：市面上没有任何公开的小时级收入源（DefiLlama 只到日级，官方看板走 Dune 不对外开放）。Pons 这一列是<b>链上推算</b>：每小时回购花掉的钱 ÷ 80%（Pons 公开口径是 80% 收入拿去回购）；StonkFun 的小时级从今天起用我们自己的快照往后累积。',
@@ -1366,6 +1400,8 @@ en:{
   hourTabVol:'Volume', hourTabRev:'Revenue', hourTabBurn:'Burns',
   hourH1:'Last 1 hour', hourH6:'Last 6 hours', hourH24:'Last 24 hours', hourH72:'Last 72 hours',
   hourLive:'● live', hourLiveOff:'● page snapshot (live refresh failed)',
+  hourNow:'Current hour', hourOngoing:'in progress',
+  hourNoData:'no data yet',
   hourEst:'estimate', hourChain:'on-chain', hourEach:'One bar per hour: PONS left · StonkFun right',
   hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. <b>This is the only true hourly series that exists publicly.</b>',
   hourNoteRev:'<b>Revenue</b>: no public hourly revenue exists (DefiLlama is daily-only, the official dashboards sit on Dune). The Pons column is an <b>on-chain estimate</b>: hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun accumulates from our own snapshots starting today.',
@@ -2239,12 +2275,13 @@ function renderHourly(){
     const x=padL+i*step;
     const pv=s.pons[i], sv=s.stonk[i];
     const h1=(pv!=null)? (CH-padB-yv(pv)) : 0, h2=(sv!=null)? (CH-padB-yv(sv)) : 0;
-    let g='<g class="hourly-bar"><title>'+esc(hourTip(s,i))+'</title>';
+    let g='<g class="hourly-bar">';
     g+='<rect x="'+x.toFixed(1)+'" y="'+padT+'" width="'+step.toFixed(2)+'" height="'+(CH-padT-padB)+'" fill="transparent"/>';
     if(pv!=null) g+='<rect x="'+x.toFixed(1)+'" y="'+(CH-padB-h1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h1).toFixed(1)+'" rx="1.5" fill="var(--pons)" opacity=".92"/>';
     if(sv!=null) g+='<rect x="'+(x+step-bw).toFixed(1)+'" y="'+(CH-padB-h2).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h2).toFixed(1)+'" rx="1.5" fill="var(--stonk)" opacity=".92"/>';
     body+=g+'</g>';
   });
+  body+='<rect id="hourHl" class="hourly-hl" x="0" y="'+padT+'" width="0" height="'+(CH-padT-padB)+'" rx="3" pointer-events="none"/>';
   s.hours.forEach(function(ts,i){
     if(i%12===0 || i===n-1){
       const x=Math.min(W-58, padL+i*step);
@@ -2252,6 +2289,43 @@ function renderHourly(){
     }
   });
   if(svg) svg.innerHTML=body;
+
+  /* 当前小时：默认摆在图右上角，不悬停也能看到 */
+  const nowBox=document.getElementById('hourlyNow');
+  if(nowBox){
+    const li=s.hours.length-1, dl=new Date(s.hours[li]*1000);
+    const ongoing=(Date.now()/1000) < (s.hours[li]+3600);
+    nowBox.innerHTML='<div class="h">'+esc(t('hourNow'))+' · '+fmtDay(dl)+(ongoing? ' · '+esc(t('hourOngoing')) : '')+'</div>'
+      +'<div class="r p"><span>PONS</span><b>'+hourTxt(s.pons[li])+'</b></div>'
+      +'<div class="r s"><span>STONK</span><b>'+hourTxt(s.stonk[li])+'</b></div>';
+  }
+  /* 鼠标划过任意一根柱子：自绘提示框 + 高亮整列 */
+  const tipBox=document.getElementById('hourlyTipBox');
+  const hlEl=svg? svg.querySelector('#hourHl') : null;
+  if(svg && tipBox){
+    const box=svg.parentElement;
+    const label=function(raw){ return (HOUR_TAB==='burn'&&raw!=null)? ' <em>'+fmtN(raw,0)+'</em>' : ''; };
+    const hoverAt=function(ev){
+      const r=svg.getBoundingClientRect();
+      let i=Math.floor((ev.clientX-r.left)/r.width*s.hours.length);
+      i=Math.max(0, Math.min(s.hours.length-1, i));
+      if(hlEl){ hlEl.setAttribute('x', (padL+i*step).toFixed(1));
+                hlEl.setAttribute('width', step.toFixed(2)); hlEl.classList.add('on'); }
+      const pv=s.pons[i], sv2=s.stonk[i];
+      tipBox.innerHTML='<div class="t">'+fmtDay(new Date(s.hours[i]*1000))+(i===s.hours.length-1?' · '+esc(t('hourOngoing')):'')+'</div>'
+        +'<div class="r p"><span>PONS</span><b>'+hourTxt(pv)+label(s.rawPons[i])+'</b></div>'
+        +'<div class="r s"><span>STONK</span><b>'+(sv2==null? esc(t('hourNoData')) : hourTxt(sv2)+label(s.rawStonk[i]))+'</b></div>';
+      tipBox.style.display='block';
+      const br=box.getBoundingClientRect();
+      tipBox.style.left=Math.max(86, Math.min(br.width-86, ev.clientX-br.left))+'px';
+      tipBox.style.top=Math.max(52, ev.clientY-br.top)+'px';
+    };
+    svg.onmousemove=hoverAt;
+    /* 手机：点一下柱子也能看那一小时的数值（触屏没有 hover） */
+    svg.onclick=hoverAt;
+    svg.ontouchstart=function(ev){ if(ev.touches && ev.touches[0]) hoverAt({clientX:ev.touches[0].clientX, clientY:ev.touches[0].clientY}); };
+    svg.onmouseleave=function(){ tipBox.style.display='none'; if(hlEl) hlEl.classList.remove('on'); };
+  }
 
   if(hl){
     const srcName=(HOUR_TAB==='vol')? '' : (HOUR_TAB==='rev'? t('hourEst') : t('hourChain'));
@@ -2264,8 +2338,8 @@ function renderHourly(){
     sm.innerHTML=[[1,'hourH1'],[6,'hourH6'],[24,'hourH24'],[72,'hourH72']].map(function(w){
       const a=hourSum(s.pons,w[0]), b=hourSum(s.stonk,w[0]);
       return '<div><div class="k">'+t(w[1])+'</div><div class="v">'
-        +'<span class="pv">'+hourTxt(a)+'</span><em>PONS</em><br>'
-        +'<span class="sv">'+hourTxt(b)+'</span><em>STONK</em></div></div>';
+        +'<span class="pair p"><b>'+hourTxt(a)+'</b><i>PONS</i></span>'
+        +'<span class="pair s"><b>'+hourTxt(b)+'</b><i>STONK</i></span></div></div>';
     }).join('');
   }
   if(nt) nt.innerHTML=t(HOUR_TAB==='vol'? 'hourNoteVol' : HOUR_TAB==='rev'? 'hourNoteRev' : 'hourNoteBurn');

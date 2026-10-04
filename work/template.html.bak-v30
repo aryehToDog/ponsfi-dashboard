@@ -779,31 +779,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   padding:0 4px;font-weight:800;font-variant-numeric:tabular-nums}
 .bb-note .bb-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
   font-size:var(--fs-11);color:var(--mut2);line-height:1.7}
-/* ---- v3.0：24h 口径主位（用户最关心「今天烧了多少」）---- */
-.burn-tabs{margin:0 0 9px}
-.burn-tabs .tab{padding:5px 13px}
-.bb-lag{margin:8px 2px 0;font-size:var(--fs-11);color:var(--mut2);line-height:1.75}
-.bb-lag b{color:var(--txt);font-weight:700}
-.bb-lag .lk{color:var(--accent);font-weight:700}
-.burn-kv span.live{background:color-mix(in srgb,var(--accent) 13%,var(--panel2));
-  border-color:color-mix(in srgb,var(--accent) 34%,var(--line))}
-.burn-kv span.live b{color:color-mix(in srgb,var(--accent) 62%,var(--mut2))}
-.burn-kv span.live i{color:color-mix(in srgb,var(--accent) 74%,var(--txt));font-weight:800}
-.burn-kv span.live em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.3px;
-  color:var(--accent);background:color-mix(in srgb,var(--accent) 17%,transparent);border-radius:5px;padding:1px 5px}
-.burn-kv span.wait i{color:var(--mut2);font-weight:700}
-.bb-row .bb-val.hl{color:color-mix(in srgb,var(--accent) 66%,var(--txt))}
-.bb-row.me .bb-val.hl{color:var(--accent)}
-.bb-tbl th.c24{color:color-mix(in srgb,var(--accent) 78%,var(--txt))}
-.bb-tbl td.c24{color:color-mix(in srgb,var(--accent) 66%,var(--txt))}
-.bb-tbl tr.me td.c24{color:var(--accent)}
-.bb-row .bb-live{font-style:normal;font-size:10px;font-weight:800;color:var(--accent);
-  background:color-mix(in srgb,var(--accent) 16%,transparent);border-radius:5px;padding:1px 5px;
-  margin-left:6px;vertical-align:1px;white-space:nowrap}
-.bb-tbl .bb-tag{font-style:normal;font-size:10px;font-weight:700;color:var(--mut2);margin-left:4px}
-.rank-sub .lk{color:var(--accent);font-weight:700}
-.rank-sub .lk.mut{color:var(--mut2);font-weight:600}
-.burn-kv .h24tx{font-style:normal;font-family:var(--font-num);font-size:10px;color:var(--mut2)}
 @media(max-width:680px){
   .burn-big{font-size:26px}
   .bb-row{grid-template-columns:38px minmax(0,1fr) 88px;gap:8px;padding:8px 11px}
@@ -811,18 +786,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   .bb-tbl{font-size:10.5px}
   .bb-tbl th,.bb-tbl td{padding:5px 5px}
   .bb-note{padding:12px 13px}
-  .burn-tabs .tab{padding:5px 11px;font-size:10.5px}
-  .burn-tabs{margin-bottom:8px}
-  .bb-lag{font-size:10.5px}
-  /* 24h 小卡里塞了「金额 + 笔数 + 来源」，手机上允许它在胶囊内部换行，避免把卡片撑破 */
-  .burn-kv span.live{white-space:normal;flex-wrap:wrap;max-width:100%;row-gap:2px}
-  .burn-kv{flex-wrap:wrap}
-  .burn-kv span{max-width:100%}
-  .bb-tbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  /* 手机上让表头折两行，5 列就不用横向滚了 */
-  .bb-tbl th{white-space:normal;line-height:1.25;font-size:10px;padding:5px 4px}
-  .bb-tbl td{padding:5px 4px}
-  .bb-tbl td:first-child{padding-left:2px}
 }
 
 /* ---------- 行情 BGM：涨听《逍遥仙》· 跌听《兄弟抱一下》 ---------- */
@@ -1026,9 +989,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   <div class="grid2" id="burnCards"></div>
   <div class="rank-block">
     <div class="rank-h" id="burnPeersH"></div>
-    <div class="tabs burn-tabs" id="burnTabs"></div>
     <div class="rank-list" id="burnPeers"></div>
-    <div class="bb-lag" id="burnPeersNote"></div>
   </div>
   <div class="bb-note" id="burnNote"></div>
 
@@ -1248,7 +1209,7 @@ zh:{
   bgmWait:'还没开始 · 碰一下页面就响',
   bgmSev24:'近 24 小时',
   secBurn:'回购与销毁 · 真金白银烧掉多少',
-  burnSub:u=>'⚡ 链上现读（PONS 一直算到最新区块）· 数据源：Robinhood Chain / Solana 链上接口 + DefiLlama 全站回购榜'+(u?' · 快照 '+u:''),
+  burnSub:u=>'链上现读 · 数据源：Robinhood Chain / Solana 链上接口 + DefiLlama 全站回购榜'+(u?' · 快照 '+u:''),
   burnLink:'链上记录 ↗',
   burnBurned:'已销毁',
   burnPctOf:'占总量',
@@ -1258,20 +1219,12 @@ zh:{
   burnVolShare:'回购占成交 (7日)',
   burnSrcPons:'链上现读：Robinhood Chain RPC · 死地址 balanceOf',
   burnSrcStonk:'链上现读：Solana RPC · 初始 10 亿 − 当前总供应',
-  burnTab24:'近 24 小时', burnTab30:'近 30 天',
-  burnPeersH24:n=>'回购强度榜 · 全行业近 24 小时回购金额（共 '+n+' 个协议，已剔除「烧 gas」的公链）',
-  burnPeersH30:n=>'回购强度榜 · 全行业近 30 天回购金额（共 '+n+' 个协议，已剔除「烧 gas」的公链）',
-  burnPeersNote24:'⚡ Pons / StonkFun 这一行按链上现读：PONS 一直算到最新区块（真·24 小时），STONK 用供应量差值；其余协议来自 DefiLlama 最近 24 小时 —— 它有时晚 1~2 天出数，所以只有自家两家是实时的。',
-  burnPeersNote30:'口径：DefiLlama holders-revenue 的 30 天累计，已剔除把「烧 gas」当销毁的公链。',
-  burn24:'近 24 小时回购', burn24Wait:'积累中', burn24Chain:'⚡ 链上现读', burn24Snap:'链上快照',
-  burnCmpCol1:'24 小时回购', burnCmpCol2:'30 天回购', burnCmpCol3:'回购 ÷ 成交额', burnCmpCol4:'回购 ÷ 市值（年化）',
-  burnLiveOk:s=>'⚡ 链上实时已同步（'+s+'）· 收入与全站榜单来自 DefiLlama，可能晚 1~2 天',
-  burnLiveFail:'⚡ 链上接口这次没读通 · 显示的是最近一次快照值',
-  burn24DayTip:'这是数据源里最近的一天（可能滞后 1~2 天）；链上实时值要等快照攒满 24 小时。',
+  burnPeersH:n=>'回购强度榜 · 全行业近 30 天回购金额（共 '+n+' 个协议，已剔除「烧 gas」的公链）',
+  burnPeers24:'24h ',
+  burnCmpCol2:'30 天回购', burnCmpCol3:'回购 ÷ 成交额', burnCmpCol4:'回购 ÷ 市值（年化）',
   burnNoteH:'回购到底能不能托住价格？把三个项目放到同一把尺子上',
   burnFoot:'口径：链上余额/供应量为 RPC 现读，回购金额来自 DefiLlama holders-revenue；「年化」是按最近 30 天速度的线性外推，不是承诺。一家一周的数据说明不了趋势，请连着看。',
   burnBody:o=>'<ul>'
-   +'<li><b>先看「今天」的钱：</b>过去 24 小时，Pons 打进死地址 <b class="hl">'+o.pons24+'</b>'+(o.pons24tx?'（'+o.pons24tx+' 笔）':'')+'，StonkFun 销毁 <b class="hl">'+o.stonk24+'</b>。这一栏不用等公告，链上每天都能对账 —— 回购一停，数字立刻变 0。</li>'
    +'<li><b>论托底力度（回购 ÷ 成交额，近 7 日）：</b>StonkFun <b class="hl">'+o.stonkVs+'</b> &gt; Pons <b class="hl">'+o.ponsVs+'</b> &gt; pump.fun <b class="hl">'+o.pfVs+'</b>。StonkFun 的回购力度是 pump.fun 的 <b>'+o.timesVs+'</b>，可它这一周在跌；pump.fun 的比值最低，价格反而在高位。<b>回购不是价格的开关。</b></li>'
    +'<li><b>论供给收缩（回购 ÷ 市值，年化）：</b>StonkFun <b class="hl">'+o.stonkYd+'</b>、Pons <b class="hl">'+o.ponsYd+'</b>、pump.fun <b class="hl">'+o.pfYd+'</b>。按最近 30 天的速度外推，这两家一年买回的筹码相当于市值的很大一块 —— 这才是回购真正的价值：<b>慢变量，但会累积</b>。</li>'
    +'<li><b>那 pump.fun 凭什么涨？</b>它一天成交 <b>'+o.pfVol+'</b>，是 Pons 的 <b>'+o.pfVolX+'</b>，涨在<b>需求、注意力和流动性</b>，不在回购。同一个道理反过来看：StonkFun 跌，不是回购停了（近 7 日回购 <b>'+o.stonk7+'</b>，一天没落），而是<b>卖盘比买盘急</b>。</li>'
@@ -1471,7 +1424,7 @@ en:{
   bgmWait:'Not started · tap the page to start',
   bgmSev24:'last 24h',
   secBurn:'Buybacks & burns · how much was really retired',
-  burnSub:u=>'⚡ Read live from chain (PONS: up to the latest block) · Sources: Robinhood Chain / Solana RPC + DefiLlama industry buyback ranking'+(u?' · snapshot '+u:''),
+  burnSub:u=>'Read live from chain · Sources: Robinhood Chain / Solana RPC + DefiLlama industry buyback ranking'+(u?' · snapshot '+u:''),
   burnLink:'On-chain ↗',
   burnBurned:'burned',
   burnPctOf:'of total supply',
@@ -1481,20 +1434,12 @@ en:{
   burnVolShare:'buyback ÷ volume (7d)',
   burnSrcPons:'Read live: Robinhood Chain RPC · dead-address balanceOf',
   burnSrcStonk:'Read live: Solana RPC · 1B initial − current supply',
-  burnTab24:'Last 24h', burnTab30:'Last 30d',
-  burnPeersH24:n=>'Buyback intensity · last 24 hours across all protocols ('+n+' included; gas-burning chains excluded)',
-  burnPeersH30:n=>'Buyback intensity · last 30 days across all protocols ('+n+' included; gas-burning chains excluded)',
-  burnPeersNote24:'⚡ Pons / StonkFun are read live from chain (PONS up to the latest block, STONK from supply deltas); every other protocol comes from DefiLlama\'s latest 24h, which can lag 1-2 days.',
-  burnPeersNote30:'Method: DefiLlama holders-revenue, 30-day cumulative; gas-burning chains excluded.',
-  burn24:'buyback, last 24h', burn24Wait:'accumulating', burn24Chain:'⚡ on-chain', burn24Snap:'on-chain snapshot',
-  burnCmpCol1:'24h buyback', burnCmpCol2:'30d buyback', burnCmpCol3:'buyback ÷ volume', burnCmpCol4:'buyback ÷ mcap (ann.)',
-  burnLiveOk:s=>'⚡ On-chain data synced ('+s+') · revenue & industry ranking come from DefiLlama, which can lag 1-2 days',
-  burnLiveFail:'⚡ Chain RPC unreachable right now · showing the last snapshot',
-  burn24DayTip:'This is the latest full day in the source (may lag 1-2 days); the live on-chain read needs a full 24h of snapshots.',
+  burnPeersH:n=>'Buyback intensity · last 30 days across all protocols ('+n+' included; gas-burning chains excluded)',
+  burnPeers24:'24h ',
+  burnCmpCol2:'30d buyback', burnCmpCol3:'buyback ÷ volume', burnCmpCol4:'buyback ÷ mcap (ann.)',
   burnNoteH:'Can buybacks actually hold the price? All three on one ruler',
   burnFoot:'Method: on-chain balances/supply read live from RPC, buyback amounts from DefiLlama holders-revenue. "Annualised" is a linear extrapolation of the last 30 days — not a promise. One week of data is not a trend; watch it over time.',
   burnBody:o=>'<ul>'
-   +'<li><b>Start with today\'s money:</b> in the last 24 hours Pons sent <b class="hl">'+o.pons24+'</b> to the dead address'+(o.pons24tx?' ('+o.pons24tx+' transfers)':'')+' and StonkFun burned <b class="hl">'+o.stonk24+'</b>. No announcement needed — the chain reconciles every day, and the moment buybacks stop, this number goes to zero.</li>'
    +'<li><b>Support strength (buyback ÷ volume, last 7 days):</b> StonkFun <b class="hl">'+o.stonkVs+'</b> &gt; Pons <b class="hl">'+o.ponsVs+'</b> &gt; pump.fun <b class="hl">'+o.pfVs+'</b>. StonkFun is buying back <b>'+o.timesVs+'</b> as hard as pump.fun, yet it fell this week; pump.fun has the weakest ratio and still trades near highs. <b>A buyback is not the price switch.</b></li>'
    +'<li><b>Supply shrink (buyback ÷ market cap, annualised):</b> StonkFun <b class="hl">'+o.stonkYd+'</b>, Pons <b class="hl">'+o.ponsYd+'</b>, pump.fun <b class="hl">'+o.pfYd+'</b>. Extrapolated from the last 30 days, these two repurchase a large slice of their market cap every year — that is what a buyback is really worth: <b>a slow variable that compounds</b>.</li>'
    +'<li><b>So why does pump.fun climb?</b> Its daily volume is <b>'+o.pfVol+'</b>, or <b>'+o.pfVolX+'</b> Pons. It climbs on <b>demand, attention and liquidity</b>, not on buybacks. The same logic runs in reverse: StonkFun falls not because buybacks stopped (7-day buyback <b>'+o.stonk7+'</b>, unbroken) but because <b>sellers are in more of a hurry than buyers</b>.</li>'
@@ -1848,10 +1793,7 @@ function renderRank(){
   }
 }
 
-/* ---------- 回购与销毁：链上真实烧毁量 + 24h 链上现读 + 全行业回购强度（work/buyback.py） ---------- */
-let BURN_BY='h24';                    /* 榜单口径：默认 24 小时（「今天烧了多少」），可切 30 天 */
-let CHAIN_STATE='', CHAIN_TRIED=false; /* 链上实时读数的状态（成功时刻 / 是否试过） */
-
+/* ---------- 回购与销毁：链上真实烧毁量 + 全行业回购强度（work/buyback.py 现读） ---------- */
 function burnBundle(){ return DATA.burn || BUNDLE.burn || null; }
 function burnOf(p){
   const c=(burnBundle()&&burnBundle().chain)||{};
@@ -1859,21 +1801,7 @@ function burnOf(p){
   const burned=(d.burned!=null)? d.burned : p.burned;
   const supply=(d.supply!=null)? d.supply : p.maxSupply;
   return {burned:burned, supply:supply, pct:(supply>0)? burned/supply*100 : 0,
-          addr:d.addr||null, explorer:d.explorer||null,
-          b24:(d.burn24h!=null)? d.burn24h : null, b24src:d.burn24hSrc||null,
-          b24live:!!d.burn24hLive, b24txs:(d.burn24hTxs!=null)? d.burn24hTxs : null};
-}
-/* 24 小时回购的取数优先级：链上现读 / 链上快照  >  数据源里最近的一天（会滞后） */
-function b24Of(pid, st){
-  const d=((burnBundle()||{}).chain||{})[pid]||{}, x=(st||{})[pid]||{};
-  if(d.burn24h!=null){
-    return {v:d.burn24h, wait:false, live:!!d.burn24hLive, txs:(d.burn24hTxs||null),
-            tag:(d.burn24hLive? t('burn24Chain') : t('burn24Snap'))};
-  }
-  if(x.d1!=null){
-    return {v:x.d1, wait:false, live:false, txs:null, tag:((x.d1date||'').slice(5)), tip:t('burn24DayTip')};
-  }
-  return {v:null, wait:true, live:false, txs:null, tag:''};
+          addr:d.addr||null, explorer:d.explorer||null};
 }
 function burnStats(){
   const out={}, rows=build();
@@ -1890,7 +1818,6 @@ function burnStats(){
     const mcap=mk.mcap || (DATA.meta[p.id]||{}).mcap || p.mcapFallback || 0;
     const price=(DATA.price&&DATA.price[p.id])||mk.price||(b.supply? mcap/b.supply : 0);
     out[p.id]={s7:s7, s30:s30, mcap:mcap, price:price, vol:mk.vol24h||0,
-      d1:(hold[last]!=null? hold[last] : null), d1date:(rows[last]? rows[last].date : null),
       volShare:(mk.vol24h>0)? s7/(mk.vol24h*7) : null,
       yield30:(mcap>0&&n30)? (s30/n30*365)/mcap : null};
   });
@@ -1898,33 +1825,18 @@ function burnStats(){
 }
 function pctS(v){ return (v===null||v===undefined||isNaN(v))?'—':(v*100).toFixed(2)+'%'; }
 
-/* 榜单里自家两家用链上口径覆盖（DefiLlama 会晚 1~2 天出数），其余协议走 DefiLlama */
-function burnPeerVal(x, by){
-  if(by!=='h24') return {v:x.d30, live:false};
-  let b=null;
-  if(x.slug==='pons-v1')  b=burnOf(PROJECTS[0]);
-  if(x.slug==='stonkfun') b=burnOf(PROJECTS[1]);
-  if(b && b.b24!=null) return {v:b.b24, live:b.b24live};
-  return {v:x.h24, live:false};
-}
-
 function renderBurn(){
   const sec=document.getElementById('st-burn'); if(!sec) return;
   const bd=burnBundle(), sub=document.getElementById('burnSub'), cards=document.getElementById('burnCards');
   const ph=document.getElementById('burnPeersH'), pl=document.getElementById('burnPeers'), note=document.getElementById('burnNote');
-  const bt=document.getElementById('burnTabs'), bn=document.getElementById('burnPeersNote');
-  const ALL=[sec,sub,cards,ph,pl,note,bt,bn];
-  if(!bd || !bd.chain){ ALL.forEach(function(el){ if(el) el.style.display='none'; }); return; }
-  ALL.forEach(function(el){ if(el) el.style.display=''; });
+  if(!bd || !bd.chain){
+    [sec,sub,cards,ph,pl,note].forEach(function(el){ if(el) el.style.display='none'; });
+    return;
+  }
+  [sec,sub,cards,ph,pl,note].forEach(function(el){ if(el) el.style.display=''; });
   const st=burnStats(), peers=(bd.peers&&bd.peers.rows)||[], total=(bd.peers&&bd.peers.total)||0;
   const bmk=bd.market||{};
-
-  if(sub){
-    const stamp=esc(new Date(DATA.generated||BUNDLE.generated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'));
-    sub.innerHTML = esc(t('burnSub')(stamp))
-      + (CHAIN_STATE? ' <b class="lk">'+esc(t('burnLiveOk')(CHAIN_STATE))+'</b>'
-                    : (CHAIN_TRIED? ' <b class="lk mut">'+esc(t('burnLiveFail'))+'</b>' : ''));
-  }
+  if(sub) sub.textContent=t('burnSub')(new Date(DATA.generated||BUNDLE.generated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'));
 
   if(cards) cards.innerHTML=PROJECTS.map(function(p){
     const b=burnOf(p), s=st[p.id]||{}, d=(bd.chain||{})[p.id]||{};
@@ -1932,13 +1844,6 @@ function renderBurn(){
     const fill=Math.max(0,Math.min(100,b.pct));
     const link=d.explorer? '<a class="bn-link" href="'+d.explorer+'" target="_blank" rel="noopener">'+t('burnLink')+'</a>' : '';
     const addr=b.addr? (b.addr.length>20? b.addr.slice(0,10)+'…'+b.addr.slice(-6) : b.addr) : '';
-    const h24=b24Of(p.id, st);
-    const chip = h24.wait
-      ? '<span class="wait"><b>'+t('burn24')+'</b><i>'+t('burn24Wait')+'</i></span>'
-      : '<span class="live"'+(h24.tip?' title="'+esc(h24.tip)+'"':'')+'>'
-        + '<b>'+t('burn24')+'</b><i>'+fmtU(h24.v)+'</i>'
-        + (h24.txs? '<em class="h24tx">'+h24.txs+' tx</em>':'')
-        + '<em>'+esc(h24.tag)+'</em></span>';
     return '<div class="burn-card" style="--bc:'+p.color+'">'
       + '<div class="burn-head">'
       +   '<span class="proj-name"><span class="dot" style="background:'+p.color+';color:'+p.color+'"></span>'+p.ticker+'</span>'
@@ -1948,7 +1853,7 @@ function renderBurn(){
       + '<div class="burn-bar"><i style="width:'+fill.toFixed(2)+'%"></i></div>'
       + '<div class="burn-barcap"><span>'+t('burnPctOf')+' <b>'+b.pct.toFixed(2)+'%</b></span>'
       +   '<span>'+t('burnValue')+' <b>'+fmtU(usd)+'</b></span></div>'
-      + '<div class="burn-kv">'+ chip
+      + '<div class="burn-kv">'
       +   '<span><b>'+t('burn30d')+'</b><i>'+fmtU(s.s30)+'</i></span>'
       +   '<span><b>'+t('burnYield')+'</b><i>'+pctS(s.yield30)+'</i></span>'
       +   '<span><b>'+t('burnVolShare')+'</b><i>'+pctS(s.volShare)+'</i></span>'
@@ -1957,116 +1862,43 @@ function renderBurn(){
       + '</div>';
   }).join('');
 
-  const byK=(BURN_BY==='h24')?'r24':'r30';
-  if(bt) bt.innerHTML=['h24','d30'].map(function(k){
-    return '<button class="tab'+(k===BURN_BY?' on':'')+'" onclick="BURN_BY=\''+k+'\';renderBurn();">'
-      + t(k==='h24'?'burnTab24':'burnTab30')+'</button>';
+  if(ph) ph.innerHTML='<span class="rh-t">'+t('burnPeersH')(fmtN(total,0))+'</span>';
+  if(pl) pl.innerHTML=peers.map(function(x){
+    return '<div class="bb-row'+(x.me?' me':'')+'">'
+      + '<span class="bb-rank">#'+x.r30+'</span>'
+      + '<span class="bb-name">'+esc(x.n)+(x.me?' <em class="rr-me">'+t('rankMe')+'</em>':'')+'</span>'
+      + '<span class="bb-sub">'+esc(x.c)+' · '+t('burnPeers24')+fmtU(x.h24)+'</span>'
+      + '<span class="bb-val mono">'+fmtU(x.d30)+'</span></div>';
   }).join('');
-  if(ph) ph.innerHTML='<span class="rh-t">'+esc(t(BURN_BY==='h24'?'burnPeersH24':'burnPeersH30')(fmtN(total,0)))+'</span>';
-  if(bn) bn.innerHTML=esc(t(BURN_BY==='h24'?'burnPeersNote24':'burnPeersNote30'));
-  if(pl) pl.innerHTML=peers.slice().sort(function(a,b){
-      return (a[byK]||9999)-(b[byK]||9999);
-    }).map(function(x){
-      const v=burnPeerVal(x, BURN_BY);
-      const otherK=(BURN_BY==='h24'? t('burnTab30')+' '+fmtU(x.d30) : t('burnTab24')+' '+fmtU(x.h24));
-      return '<div class="bb-row'+(x.me?' me':'')+'">'
-        + '<span class="bb-rank">#'+x[byK]+'</span>'
-        + '<span class="bb-name">'+esc(x.n)+(x.me?' <em class="rr-me">'+t('rankMe')+'</em>':'')+'</span>'
-        + '<span class="bb-sub">'+esc(x.c)+' · '+otherK+'</span>'
-        + '<span class="bb-val mono'+(BURN_BY==='h24'?' hl':'')+'">'+fmtU(v.v)
-        +   (v.live? ' <em class="bb-live">⚡</em>':'')+'</span></div>';
-    }).join('');
 
   if(note){
     const bySlug={}; peers.forEach(function(x){ bySlug[x.slug]=x; });
-    const pf=bySlug['pump.fun']||{d30:0,h24:null};
+    const pf=bySlug['pump.fun']||{d30:0,h24:0};
     const pfk=bmk.pumpfun||{};
     const po=st.pons||{}, sk=st.stonkfun||{};
-    const po24=b24Of('pons', st), sk24=b24Of('stonkfun', st);
-    const pf24=(pf.h24!=null && pf.h24>0)? {v:pf.h24, wait:false, tag:t('burn24Snap')}
-              : ((pfk.s7)? {v:pfk.s7/7, wait:false, tag:'≈'} : {v:null, wait:true, tag:''});
     const pfVs=(pfk.vol24h>0 && pfk.s7)? pfk.s7/(pfk.vol24h*7) : null;
     const pfYd=(pfk.mcap>0 && pfk.s30)? (pfk.s30/30*365)/pfk.mcap : null;
     const times=(pfVs>0 && sk.volShare)? (sk.volShare/pfVs).toFixed(0)+'×' : '—';
-    const cell=function(h){
-      if(h.wait) return '<b style="opacity:.55">'+t('burn24Wait')+'</b>';
-      return '<b>'+fmtU(h.v)+'</b>'+(h.tag? '<em class="bb-tag">'+esc(h.tag)+'</em>' : '');
-    };
     const rowsCmp=[
-      {n:'StonkFun', c:'var(--stonk)', h:sk24, s30:sk.s30, vs:sk.volShare, yd:sk.yield30, me:1},
-      {n:'Pons',     c:'var(--pons)',  h:po24, s30:po.s30, vs:po.volShare, yd:po.yield30, me:1},
-      {n:'pump.fun', c:'var(--mut)',   h:pf24, s30:pf.d30, vs:pfVs,         yd:pfYd,       me:0}
+      {n:'StonkFun', c:'var(--stonk)', s30:sk.s30, vs:sk.volShare, yd:sk.yield30, me:1},
+      {n:'Pons',     c:'var(--pons)',  s30:po.s30, vs:po.volShare, yd:po.yield30, me:1},
+      {n:'pump.fun', c:'var(--mut)',   s30:pf.d30, vs:pfVs,         yd:pfYd,       me:0}
     ];
-    const tbl='<table class="bb-tbl"><thead><tr><th></th><th class="c24">'+t('burnCmpCol1')+'</th><th>'+t('burnCmpCol2')
-      +'</th><th>'+t('burnCmpCol3')+'</th><th>'+t('burnCmpCol4')+'</th></tr></thead><tbody>'
+    const tbl='<table class="bb-tbl"><thead><tr><th></th><th>'+t('burnCmpCol2')+'</th><th>'+t('burnCmpCol3')
+      +'</th><th>'+t('burnCmpCol4')+'</th></tr></thead><tbody>'
       + rowsCmp.map(function(r){
           return '<tr'+(r.me?' class="me"':'')+'><td><span class="dot" style="background:'+r.c+';color:'+r.c
             +';display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px"></span>'+r.n+'</td>'
-            +'<td class="c24">'+cell(r.h)+'</td><td>'+fmtU(r.s30)+'</td><td>'+pctS(r.vs)+'</td><td>'+pctS(r.yd)+'</td></tr>';
+            +'<td>'+fmtU(r.s30)+'</td><td>'+pctS(r.vs)+'</td><td>'+pctS(r.yd)+'</td></tr>';
         }).join('')
       +'</tbody></table>';
     const o={stonkVs:pctS(sk.volShare), ponsVs:pctS(po.volShare), pfVs:pctS(pfVs), timesVs:times,
       stonkYd:pctS(sk.yield30), ponsYd:pctS(po.yield30), pfYd:pctS(pfYd),
       pfVol:fmtU(pfk.vol24h), pfVolX:(pfk.vol24h&&po.vol)? (pfk.vol24h/po.vol).toFixed(0)+'×' : '—',
       stonk7:fmtU(sk.s7), ponsPct:burnOf(PROJECTS[0]).pct.toFixed(2)+'%', stonkPct:burnOf(PROJECTS[1]).pct.toFixed(2)+'%',
-      pons24:(po24.wait? '—' : fmtU(po24.v)), pons24tx:(po24.txs||null), stonk24:(sk24.wait? t('burn24Wait') : fmtU(sk24.v)),
       foot:t('burnFoot')};
     note.innerHTML='<div class="bb-h">'+t('burnNoteH')+'</div>'+tbl+t('burnBody')(o);
   }
-}
-
-/* ---------- PONS 近 24h：浏览器直连 Robinhood Chain RPC 现读（CORS 已验证开放） ----------
-   之所以在前端再读一遍：DefiLlama 的收入/回购数据会晚 1~2 天，而链上一直算到最新区块，
-   所以「回购与销毁」这一块每次打开页面 / 点刷新，都是当下的数字。 */
-const RH_RPC='https://rpc.mainnet.chain.robinhood.com';
-const PONS_TOKEN='0x39dBED3a2bd333467115dE45665cC57F813C4571';
-const PONS_DEAD='0x000000000000000000000000000000000000dEaD';
-const XFER='0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-const pad32=a=>'0x'+'0'.repeat(24)+a.slice(2);
-async function rhRpc(method, params){
-  const r=await fetch(RH_RPC,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
-    body:JSON.stringify({jsonrpc:'2.0',id:1,method:method,params:params})});
-  if(!r.ok) throw new Error('rpc '+r.status);
-  const j=await r.json(); if(j.error) throw new Error(j.error.message||'rpc');
-  return j.result;
-}
-async function loadChainBurn(){
-  try{
-    const hexBn=await rhRpc('eth_blockNumber',[]);
-    const bn=parseInt(hexBn,16);
-    const blks=await Promise.all([rhRpc('eth_getBlockByNumber',[hexBn,false]),
-                                  rhRpc('eth_getBlockByNumber',['0x'+(bn-60000).toString(16),false])]);
-    const tsNow=parseInt(blks[0].timestamp,16);
-    const bps=60000/Math.max(1, tsNow-parseInt(blks[1].timestamp,16));
-    const target=tsNow-24*3600;
-    let est=Math.round(bn-(tsNow-target)*bps);
-    for(let i=0;i<3;i++){
-      est=Math.max(0,Math.min(bn-1,est));
-      const b=await rhRpc('eth_getBlockByNumber',['0x'+est.toString(16),false]);
-      const d=parseInt(b.timestamp,16)-target;
-      if(Math.abs(d)<=45) break;
-      est=Math.round(est-d*bps);
-    }
-    const fromBlock=Math.max(0,Math.min(bn-1,est));
-    const logs=await rhRpc('eth_getLogs',[{fromBlock:'0x'+fromBlock.toString(16), toBlock:hexBn,
-      address:PONS_TOKEN, topics:[XFER,null,pad32(PONS_DEAD)]}]);
-    let amt=0; (logs||[]).forEach(function(l){ amt+=Number(BigInt(l.data||'0x0'))/1e18; });
-    const node=(((DATA.burn||{}).chain||{}).pons)||null;
-    if(node){
-      node.burn24h=Math.round(amt*100)/100; node.burn24hSrc='chain';
-      node.burn24hTxs=(logs||[]).length; node.burn24hHours=24;
-      node.burn24hTs=tsNow; node.burn24hBlock=bn; node.burn24hLive=true;
-    }
-    try{
-      const res=await Promise.all([
-        rhRpc('eth_call',[{to:PONS_TOKEN,data:'0x70a08231'+pad32(PONS_DEAD).slice(2)},'latest']),
-        rhRpc('eth_call',[{to:PONS_TOKEN,data:'0x18160ddd'},'latest'])]);
-      const dead=parseInt(res[0],16)/1e18, sup=parseInt(res[1],16)/1e18;
-      if(node && sup>0){ node.burned=Math.round(dead*100)/100; node.supply=sup; node.pct=Math.round(dead/sup*10000)/100; }
-    }catch(e){}
-    CHAIN_STATE=new Date().toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    return true;
-  }catch(e){ return false; }
 }
 
 /* ---------- render cards ---------- */
@@ -2651,12 +2483,6 @@ async function loadLive(){
   try{ priceOk = await loadPrices(); }catch(e){}
   try{ ok = ok && true; await loadMarket(); }catch(e){}
   try{ await loadLeaderboard(); }catch(e){}
-  /* 链上 24h 回购：不阻塞其它数据渲染，读回来再补一次渲染 */
-  const chainP = loadChainBurn().then(function(r){
-    CHAIN_TRIED = true;
-    if(r) renderAll(); else renderBurn();
-    return r;
-  }).catch(function(){ CHAIN_TRIED = true; return false; });
   DATA.generated = new Date().toISOString();
   BUSY = false;
   if(btn){ btn.disabled = false; btn.classList.remove('busy'); }

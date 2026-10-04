@@ -112,7 +112,16 @@ button:active{transform:translateY(1px)}
 
 .proj-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px}
 .proj-name{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;letter-spacing:-.1px}
-.dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 10px currentColor}
+/* 小圆点 = 实时状态灯（v3.7）：呼吸微缩放 + 双层雷达扩散圈，颜色跟随代币主色 currentColor */
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;position:relative;display:inline-block;
+  box-shadow:0 0 10px currentColor;animation:dotBreath 2.8s ease-in-out infinite}
+.dot::before,.dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:currentColor;
+  pointer-events:none;will-change:transform,opacity}
+.dot::before{animation:dotPing 2.8s cubic-bezier(.25,.55,.35,1) infinite}
+.dot::after{animation:dotPing 2.8s cubic-bezier(.25,.55,.35,1) infinite;animation-delay:1.4s}
+@keyframes dotBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes dotPing{0%{transform:scale(1);opacity:.5}70%{opacity:.12}100%{transform:scale(2.7);opacity:0}}
+@media (prefers-reduced-motion:reduce){.dot,.dot::before,.dot::after{animation:none}}
 .tick{font-size:11px;color:var(--mut);background:var(--panel2);border:1px solid var(--line2);
   padding:2px 7px;border-radius:6px}
 .price{text-align:right}
@@ -148,6 +157,18 @@ button:active{transform:translateY(1px)}
 .sec-title{display:flex;align-items:center;gap:11px;font-size:11.5px;color:var(--mut);
   margin:26px 0 12px;letter-spacing:.6px;font-weight:600;text-transform:uppercase}
 .sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ---------- 指标说明：标题行即折叠开关（v3.7） ---------- */
+.guide-head{cursor:pointer;user-select:none;transition:color .18s ease}
+.guide-head:hover{color:var(--txt)}
+.guide-head .gt-hint{font-size:10px;letter-spacing:.3px;color:var(--mut2);background:var(--panel2);
+  border:1px solid var(--line2);padding:1px 8px;border-radius:999px;font-weight:500;
+  text-transform:none;white-space:nowrap}
+.guide-head .gt-chev{width:7px;height:7px;flex:0 0 auto;border-right:1.6px solid currentColor;
+  border-bottom:1.6px solid currentColor;transform:rotate(45deg);margin-top:-3px;
+  transition:transform .3s cubic-bezier(.25,.55,.35,1)}
+.guide-head.open .gt-chev{transform:rotate(-135deg);margin-top:3px}
+.guide-wrap{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.22,.61,.36,1)}
 
 /* ---------- 标签页 ---------- */
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
@@ -284,6 +305,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 @keyframes gflash{
   0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 45%,transparent),var(--card-shadow)}
   100%{box-shadow:0 0 0 0 transparent,var(--card-shadow)}}
+.gitem.gflash{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));animation:gflash 1.9s ease-out 1}
 .gitem h3{margin:0 0 5px;font-size:13px;font-weight:600;letter-spacing:-.1px}
 .gitem .f{font-size:10.5px;color:var(--mut2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   margin-bottom:10px;word-break:break-all}
@@ -1144,9 +1166,16 @@ h1 span{font-size:var(--fs-11);font-weight:500}
     <table id="tbl"><thead></thead><tbody></tbody></table>
   </div>
 
-  <div class="sec-title" id="st-guide">指标说明 · 每个数字怎么读</div>
-  <div class="glegend" id="glegend"></div>
-  <div class="guide" id="guide"></div>
+  <div class="sec-title guide-head" id="st-guide" role="button" tabindex="0" aria-expanded="false" aria-controls="guideWrap"
+       onclick="guideToggle()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();guideToggle();}">
+    <span id="st-guideTxt">指标说明 · 每个数字怎么读</span>
+    <span class="gt-hint" id="guideHint"></span>
+    <span class="gt-chev" aria-hidden="true"></span>
+  </div>
+  <div class="guide-wrap" id="guideWrap">
+    <div class="glegend" id="glegend"></div>
+    <div class="guide" id="guide"></div>
+  </div>
 
   <div class="foot" id="foot"></div>
   <!-- ===== 行情BGM：涨 →《逍遥仙》/《不凡》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》/《无人之岛》轮换（音源、阈值改这里）===== -->  <div class="bgm" id="bgm">    <div class="bgm-det" id="bgmDet">      <div class="bgm-head" id="bgmScore"></div>      <div class="bgm-legend" id="bgmLegend"></div>      <div class="bgm-parts" id="bgmParts"></div>      <div class="bgm-src" id="bgmSrc"></div>    </div>    <button class="bgm-card" id="bgmCard" type="button" onclick="bgmToggle()" onmouseenter="bgmDetShow()">      <span class="bgm-eq" id="bgmEq"><i></i><i></i><i></i></span>      <span class="bgm-txt"><span class="bgm-t" id="bgmT">行情BGM</span><span class="bgm-s" id="bgmS">点一下开启</span></span>      <span class="bgm-cv" id="bgmCv" onclick="event.stopPropagation();bgmDetToggle()">▴</span>    </button>  </div></div>
@@ -1175,6 +1204,7 @@ zh:{
   secChart:'趋势图',
   secTable:'每天的明细（最近 20 天）',
   secGuide:'指标说明 · 每个数字怎么读',
+  guideExpand:'点击展开', guideCollapse:'收起',
   gLegend:'图例：<b class="hl">加底色</b> ＝ 一句话结论　·　<b class="hi">等宽亮色数字</b> ＝ 当前真实数值',
   refresh:'刷新数据',
   loading:'加载中…', fetching:'拉取中…',
@@ -1410,6 +1440,7 @@ en:{
   secChart:'Trends',
   secTable:'Day-by-day detail (last 20 days)',
   secGuide:'How to read every number',
+  guideExpand:'tap to expand', guideCollapse:'collapse',
   gLegend:'Legend: <b class="hl">highlighted</b> = the takeaway　·　<b class="hi">mono numbers</b> = live values',
   refresh:'Refresh',
   loading:'Loading…', fetching:'Fetching…',
@@ -1788,7 +1819,9 @@ function renderStatic(){
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.textContent = t('secBurn');
   document.getElementById('st-chart').textContent = t('secChart');
   document.getElementById('st-table').textContent = t('secTable');
-  document.getElementById('st-guide').textContent = t('secGuide');
+  document.getElementById('st-guideTxt').textContent = t('secGuide');
+  var _gh = document.getElementById('guideHint');
+  if(_gh) _gh.textContent = (document.getElementById('guideWrap').classList.contains('open') ? t('guideCollapse') : t('guideExpand'));
   var gl = document.getElementById('glegend');
   if(gl) gl.innerHTML = t('gLegend');
   document.getElementById('btnRefresh').textContent = t('refresh');
@@ -2934,6 +2967,68 @@ function renderGuide(){
   + item(t('gMomT'), t('gMomF'), t('gMomL'), ex5, t('gMomBands'), null, 'gloss-mom');
 }
 
+/* ---------- 指标说明：默认折叠 + 「?」直达（v3.7） ----------
+   · 默认收起；点标题行（或回车 / 空格）展开、收起
+   · 点指标旁的「?」→ 自动展开 + 平滑滚动到对应说明 + 闪一下高亮
+   · 带 #gloss-xx 锚点打开页面时，同样自动展开并定位 */
+function guideSetOpen(open){
+  var w = document.getElementById('guideWrap'), h = document.getElementById('st-guide');
+  if(!w || !h) return;
+  h.classList.toggle('open', !!open);
+  h.setAttribute('aria-expanded', open ? 'true' : 'false');
+  var hint = document.getElementById('guideHint');
+  if(hint) hint.textContent = open ? t('guideCollapse') : t('guideExpand');
+  if(open){
+    w.style.overflow = 'hidden';
+    w.classList.add('open');
+    w.style.maxHeight = w.scrollHeight + 'px';       /* 量出实际高度，动画才顺 */
+  }else{
+    if(!w.classList.contains('open')){ w.style.maxHeight = '0px'; return; }
+    w.style.maxHeight = w.scrollHeight + 'px';       /* 从当前高度往 0 收 */
+    requestAnimationFrame(function(){ w.classList.remove('open'); w.style.maxHeight = '0px'; });
+  }
+}
+function guideToggle(force){
+  var w = document.getElementById('guideWrap');
+  if(!w) return;
+  guideSetOpen(force === undefined ? !w.classList.contains('open') : !!force);
+}
+(function(){
+  var w = document.getElementById('guideWrap');
+  if(!w) return;
+  w.addEventListener('transitionend', function(ev){
+    if(ev.propertyName !== 'max-height') return;
+    if(w.classList.contains('open')){ w.style.maxHeight = 'none'; w.style.overflow = 'visible'; }
+    /* 展开后解除高度上限，语言切换 / 数据刷新导致内容变高也不会被裁 */
+  });
+  document.addEventListener('click', function(ev){
+    var a = ev.target && ev.target.closest ? ev.target.closest('a.qi') : null;
+    if(!a) return;
+    var id = (a.getAttribute('href') || '').slice(1);
+    if(!id) return;
+    ev.preventDefault();
+    var wasOpen = w.classList.contains('open');
+    guideSetOpen(true);
+    /* 折叠时页面比展开后矮一截，立即滚会被文档底截断 → 等展开动画把页面撑高再滚 */
+    guideScrollTo(id, wasOpen ? 0 : 580);
+  });
+})();
+function guideScrollTo(id, delay){
+  var el = document.getElementById(id);
+  if(!el) return;
+  var go = function(){
+    try{ el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ el.scrollIntoView(); }
+    el.classList.remove('gflash'); void el.offsetWidth; el.classList.add('gflash');
+    setTimeout(function(){ el.classList.remove('gflash'); }, 2100);
+  };
+  if(delay) setTimeout(go, delay); else go();
+}
+function guideHashInit(){
+  if(!/^#gloss-/.test(location.hash || '')) return;
+  guideSetOpen(true);
+  guideScrollTo(location.hash.slice(1), 580);
+}
+
 /* ---------- live ---------- */
 async function fetchJSON(u, ms){
   /* 统一超时：第三方接口偶尔挂起，没有超时会把「刷新中」状态卡死 */
@@ -3917,6 +4012,7 @@ function qInit(){
 renderTip();
 renderStatic();
 renderAll();
+guideHashInit();
 loadViews();
 bgmKeepFresh();          /* 数据每 5 分钟自动刷新，不受音乐开关影响 */
 loadLive();

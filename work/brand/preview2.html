@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+body{margin:0;background:#0b0e14;color:#e9ecf3;font:13px/1.5 -apple-system,"PingFang SC",sans-serif;padding:18px}
+h2{font-size:12px;margin:14px 0 6px;color:#858ea1;font-weight:600;letter-spacing:.06em}
+.row{display:flex;gap:14px;align-items:flex-end;margin-bottom:8px}
+.cell{background:#11141c;border:1px solid #212736;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.cell.light{background:#fff;border-color:#e6eaf2}
+.sizes{display:flex;gap:12px;align-items:flex-end}
+.name{font-size:11px;color:#858ea1}
+.lt{color:#5d6779}
+</style></head><body><div id="app"></div>
+<script>
+const BG = `<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#171d2b"/><stop offset="1" stop-color="#0a0c11"/></linearGradient>
+<linearGradient id="g" x1=".1" y1="1" x2=".9" y2="0"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#2ee6a8"/></linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff" stop-opacity=".6"/><stop offset="1" stop-color="#2ee6a8" stop-opacity=".4"/></linearGradient>
+</defs>
+<rect x="1.25" y="1.25" width="61.5" height="61.5" rx="15" fill="url(#bg)" stroke="url(#edge)" stroke-width="1.5"/>`;
+const C1 = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}<path d="M23 48V17.5h9.6a10.2 10.2 0 0 1 0 20.4H23" fill="none" stroke="url(#g)" stroke-width="7.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const C2 = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}<path d="M22.4 48.4V16.6h10.4a10.8 10.8 0 0 1 0 21.6H22.4" fill="none" stroke="url(#g)" stroke-width="7.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const C3 = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}<path d="M22.4 48.4V16.6h10.4a10.8 10.8 0 0 1 0 21.6H22.4" fill="none" stroke="url(#g)" stroke-width="7.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49.5" cy="45.5" r="4.6" fill="#2ee6a8"/></svg>`;
+const items=[["C1 原版",C1],["C2 更大字腔",C2],["C3 C2+绿点",C3]];
+const app=document.getElementById('app');
+for(const [n,svg] of items){
+  app.insertAdjacentHTML('beforeend',`<h2>${n}</h2>`);
+  for(const theme of ['dark','light']){
+    let h=`<div class="row ${theme}"><div class="cell ${theme}"><div class="sizes">`;
+    for(const s of [16,20,24,32,48]) h+=`<div style="width:${s}px;height:${s}px">${svg.replace('<svg ',`<svg width="${s}" height="${s}" `)}</div>`;
+    h+=`</div><div class="name ${theme==='light'?'lt':''}">16 / 20 / 24 / 32 / 48</div></div>`;
+    h+=`<div class="cell ${theme}"><div style="width:120px;height:120px">${svg.replace('<svg ','<svg width="120" height="120" ')}</div></div></div>`;
+    app.insertAdjacentHTML('beforeend',h);
+  }
+}
+</script></body></html>

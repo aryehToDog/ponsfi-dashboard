@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+body{margin:0;background:#0b0e14;color:#e9ecf3;font:13px/1.5 -apple-system,"PingFang SC",sans-serif;padding:20px}
+h2{font-size:13px;margin:18px 0 8px;color:#858ea1;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.row{display:flex;gap:18px;align-items:flex-end;margin-bottom:10px}
+.cell{background:#11141c;border:1px solid #212736;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.cell.light{background:#fff;border-color:#e6eaf2}
+.sizes{display:flex;gap:14px;align-items:flex-end}
+.mag{image-rendering:pixelated}
+.name{font-size:12px;color:#858ea1}
+.lt{color:#5d6779}
+</style></head><body>
+<div id="app"></div>
+<script>
+const BG = `<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#171d2b"/><stop offset="1" stop-color="#0a0c11"/></linearGradient>
+<linearGradient id="g" x1=".1" y1="1" x2=".9" y2="0"><stop offset="0" stop-color="#8b7cff"/><stop offset="1" stop-color="#2ee6a8"/></linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b7cff" stop-opacity=".6"/><stop offset="1" stop-color="#2ee6a8" stop-opacity=".4"/></linearGradient>
+</defs>
+<rect x="1.25" y="1.25" width="61.5" height="61.5" rx="15" fill="url(#bg)" stroke="url(#edge)" stroke-width="1.5"/>`;
+
+// A: 粗体 P + 上扬折线
+const A = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}
+<path d="M21.5 45V20.5h8.6a8.9 8.9 0 0 1 0 17.8h-8.6" fill="none" stroke="url(#g)" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36 50.5l6-6 3.2 3.2 7.3-7.3" fill="none" stroke="#2ee6a8" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+// B: 纯上扬箭头（折线 + 箭头）
+const B = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}
+<path d="M15 47.5l11.5-11.5 7.5 7 14.5-14.5" fill="none" stroke="url(#g)" stroke-width="6.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40.5 22.5h14v14" fill="none" stroke="#2ee6a8" stroke-width="6.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+// C: 纯 P 字标
+const C = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}
+<path d="M23 48V17.5h9.6a10.2 10.2 0 0 1 0 20.4H23" fill="none" stroke="url(#g)" stroke-width="7.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+const D = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">${BG}
+<path d="M20.5 45.5V19h9.3a9.6 9.6 0 0 1 0 19.2h-9.3" fill="none" stroke="url(#g)" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="34" width="6.6" height="11.5" rx="3.3" fill="#8b7cff"/>
+<rect x="49.4" y="25" width="6.6" height="20.5" rx="3.3" fill="#2ee6a8"/>
+</svg>`;
+
+const variants = [["A · P + 上扬线", A], ["B · 纯上扬箭头", B], ["C · 纯 P 字标", C], ["D · P + 双柱", D]];
+const app = document.getElementById('app');
+for (const [name, svg] of variants) {
+  app.insertAdjacentHTML('beforeend', `<h2>${name}</h2>`);
+  for (const theme of ['dark','light']) {
+    let html = `<div class="row ${theme}">`;
+    html += `<div class="cell ${theme}"><div class="sizes">`;
+    for (const s of [16,24,32,48]) html += `<div class="mag" style="width:${s}px;height:${s}px">${svg.replace('<svg ', `<svg width="${s}" height="${s}" `)}</div>`;
+    html += `</div><div class="name ${theme==='light'?'lt':''}">实尺寸 16 / 24 / 32 / 48</div></div>`;
+    html += `<div class="cell ${theme}"><div style="width:128px;height:128px">${svg.replace('<svg ', '<svg width="128" height="128" ')}</div><div class="name ${theme==='light'?'lt':''}">放大 128</div></div>`;
+    html += `</div>`;
+    app.insertAdjacentHTML('beforeend', html);
+  }
+}
+</script></body></html>

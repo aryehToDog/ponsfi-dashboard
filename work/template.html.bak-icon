@@ -1,151 +1,4 @@
 <!DOCTYPE html>
-<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v2.9「回购与销毁」 · 2026-10-04
-     【这一版改了什么】把 hyperleaf.finance/app/buybacks 的那套「回购 / 销毁」数据搬了进来，
-       而且比它更准（它 PONS 那栏的销毁量是空的，我们是链上现读）：
-       · 新板块「回购与销毁 · 真金白银烧掉多少」，位置在「收入排行」和「趋势图」之间
-         ① 两张销毁卡：PONS 死地址余额 319.55M（占总量 31.96%）、
-            STONK 初始 10 亿 − 当前供应 = 196.73M（19.67%）—— 都是 RPC 现读，带区块浏览器链接
-         ② 回购强度榜：DefiLlama 全站 1087 个协议里，Pons 30 天回购 $16.96M 排第 3、
-            StonkFun $14.43M 排第 5（已剔除把「烧 gas」当销毁的公链）
-         ③ 把「回购能不能托住价格」做成数据对比，不再是一句「杯水车薪」：
-            同一把尺子量三个项目（30 天回购 / 回购÷成交额 / 回购÷市值年化），
-            数据来自 work/buyback.py；结论：回购是慢变量，决定底部不决定短期涨跌
-       · 数据管道：buyback.py 新增 CoinGecko 市值/成交额 + pump.fun 的 7 日/30 日回购序列，
-         每日心跳跑 build_monitor.py 时会自动带上 burn 字段（失败则沿用上一份快照）
-       · 卡片上的「已销毁 %」也从写死的数字改成读链上实时值
-     ---------------------------------------------------------------------------
-     ponsfi.xyz 看板 · 版本 v2.8「品牌图标」 · 2026-10-04
-     【这一版改了什么】换掉了浏览器标签页上的「地球」占位图标 —— 之前 <link rel="icon" href="data:,">
-       是空图标，所以浏览器只能显示地球。现在换成正式 logo：深色圆角方块 + 紫(#8b7cff)→绿(#2ee6a8)
-       渐变的「P」字标（紫=Pons，绿=StonkFun，正好对上站内两个协议的主色）。
-       · 全部内嵌为 data URI（SVG 主图标 + 32px PNG 兜底 + 180px 苹果触屏图标），不新增任何文件
-       · 同时补了 <meta name="theme-color" content="#0a0c11">，手机浏览器地址栏跟着变深色
-       · 源文件：work/brand/logo.svg、logo-16/32/180/512.png（改完跑 work/brand/embed_icon.py 重新内嵌）
-     ---------------------------------------------------------------------------
-     ponsfi.xyz 看板 · 版本 v2.5「只读声明」 · 2026-10-03
-     【为什么做这一版】用户在 X / 钱包内置浏览器里打开 ponsfi.xyz，被拦了两次：
-       ① MetaMask Phishing Protection：「This website might be harmful」
-       ② OKX Wallet：「你访问的网站存在钓鱼风险」
-     【查证结论】误报，不是站点有问题：
-       · MetaMask 的官方黑名单（github.com/MetaMask/eth-phishing-detect 的 src/config.json，
-         blacklist 共 10 万条）里确实有 ponsfi.xyz 这一条 —— 就是它在弹警告
-       · urlscan.io 查历史：ponsfi.xyz 只有 2026-10-03 当天 2 次扫描（都是这个站自己），
-         没有前持有者的钓鱼历史 → 属于「新注册 + 加密关键词 + .xyz」被自动收录，典型的误伤
-       · 本站不连接钱包、不请求签名、不发起交易，只是一个读公开数据的静态页面
-     【这一版改了什么】标题下面加了一行「只读声明」（中英各一份）：
-       🔒 只读数据面板 · 不连接钱包 · 不请求签名 · 不发起任何交易 ｜ 数据全部来自公开接口
-       —— 对真人用户是安心提示，对申诉审核和自动扫描是明确的「不是 dApp」信号。
-     【误报怎么申诉（每一步都是官方入口）】
-       ① MetaMask（真正管用的那条）：它的黑名单来自 ChainPatrol → 去 chainpatrol.io/report 提交复核，
-          或到 github.com/MetaMask/eth-phishing-detect 提 PR 把 ponsfi.xyz 从 blacklist 里删掉
-          （官方 README 写明：git log -S 查这条是什么时候加的；移除用 yarn remove:blocklist）
-       ② OKX Wallet：拦截页上那个「误报快捷反馈」，或 okx.com/web3/security
-       ③ 顺手交一份 Google Safe Browsing 误报申诉：safebrowsing.google.com/safebrowsing/report_error/
-     【给用户的临时办法】在钱包浏览器里点「继续访问 / Proceed anyway」即可；
-       发给朋友的链接建议让对方用系统浏览器（Safari / Chrome）打开，那边不会有这个拦截。
-     v2.4 新增：涨档加第二首《不凡》（王铮亮）
-       · audio/up-bufan.mp3（3:31.85）+ audio/up-bufan.lrc（30 句，毫秒级时间轴）
-       · 时间轴来源：网易云官方 lrc（同一版，211,802 ms 与本地 mp3 的 211.85 s 对上），
-         丢掉全部署名行与空文本行后逐句核对，与用户下载的那份只差 ±0.5 秒
-       · 官方歌词里 1:31~2:19 与 2:32~3:05 本来就没有词（纯音乐段），不是漏抓
-       · 顺带把解析器的署名过滤正则补全：+ 制作助理 / 出品公司 / 混音师 / 录音棚 / 录音师 / 母带师 / 封面 / 视觉
-       · 涨档现在两首轮换（bgmRot.up 通用逻辑），面板会显示「第 1 首（共 2 首）」；中英文案同步
-     ponsfi.xyz 看板 · 版本 v2.3「数据滞后讲明白」 · 2026-10-03
-     【为什么会做这一版】
-       用户截图问：STONK 的 10-02 / 10-03 怎么没数据，是不是 bug？
-       实测 curl DefiLlama：stonkfun 最新只到 10-01（909,663），10-02、10-03 源站压根还没出；
-       同一时刻 pons 已经出到 10-03（194,596）。也就是说 —— 看板没坏，是上游数据源滞后。
-       （DefiLlama 对中小协议的日收入普遍滞后 1~2 天，两家不同步是常态。
-         overview/fees 里 StonkFun 仍在榜、total24h 就是 10-01 那条，slug 没变、没掉榜。）
-     【这一版改了什么】把「没数的那天」从一根光秃秃的「—」变成三处一眼就懂的提示：
-       ① 表格单元格：源站还没出的那天，显示灰色小字「待更新」（英文 pending），
-          鼠标悬停有解释：「DefiLlama 还没出这天的数字（不是看板坏了）…」→ 不再是莫名其妙的空白
-       ② 表头徽章：PONS / STONK 后面挂橙色小胶囊「数据源最新 10-01」→ 一眼知道数据截止到哪天
-       ③ 卡片 + 7 日均行：卡片名字后挂「数据滞后 N 天」；「近 7 日均」那行的日收入格里
-          补一行小字「09-25 ~ 10-01」→ 明确告诉用户这个均值是用哪 7 天算出来的，
-          避免"今天的数没进来，均值是不是也一起坏了"的误会
-     【实现要点】stats() 里新增 lag / lastDate / winFrom / winTo 四个派生值：
-       lag = rows.length - 1 - last（最后一个有数的那天距今天的自然天数）
-       表头徽章用 lastDate 的 MM-DD；7 日均窗口用 winFrom ~ winTo 的 MM-DD
-       文案全部走 i18n（pendingCell / pendingTip / srcLatest / lagBadge / lagTip，中英各一份）
-     【注意】lagtag 用的是第 917 行 renderCards 的模板串 —— 这里是母版里的 JS 模板字符串，
-       改动要落在 template.base.html，然后 python3 work/rebuild_template.py 重新注入。
-       【以后遇到"某天没数"的排查顺序】先 curl 源站，别急着改代码：
-       curl -s "https://api.llama.fi/summary/fees/stonkfun?dataType=dailyRevenue" | tail -c 400
-       —— 源站没出 = 等；源站有、看板没有 = 才是真 bug。
-     v2.2 新增：《无人之岛》配上官方歌词时间轴（audio/down-wuren.lrc，42 句）
-       · 原始 lrc 前 16 秒是制作人员名单（词/曲/编曲/缩混/录音室…），显示出来很怪 → 已从文件里删掉，
-         歌词从 [00:16]「黑色的背后是黎明」开始；顺便把解析器的过滤正则补全（缩混/配唱/录音室/混音室/企划/母带/宣发）
-       · 时间轴核对：把 m4a 解码成 WAV 算了每秒能量包络 —— 副歌「如果云层是天空的一封信」正好踩在
-         01:12 的能量大跳点（2037 → 11151），其它乐句也一一对上 → 不需要 lrcOffset
-       · 别再把 fetch 放到 file:// 里测：file:// 下 fetch 会被拦，本地页面永远读不到 lrc（要起本地 http 服务器）
-         ｜ 线上是同源 https，走的就是普通静态文件，和 up.lrc / down-v2.lrc 一模一样
-     v2.1 新增：《无人之岛》进跌幅歌单（跌档现在三首轮换：梦的翅膀受了伤 → 兄弟抱一下 → 无人之岛）
-       · 音频 audio/down-wuren.m4a（原始文件是 .aac 后缀，其实是 M4A/AAC 容器，实测浏览器能直接播：
-         readyState=4、duration=285.3s、无 decode 错误；服务器 MIME 是 audio/x-m4a，Chrome/Safari/Firefox 都吃）
-       · 这首没配 .lrc —— 没歌词时歌词块整块收起、共勉顶上，是 v1.7 就设计好的行为，不是 bug
-       · 轮换逻辑是通用的（bgmRot + list.length），加歌只改 BGM_TRACKS 一处 + 补 i18n 歌名
-       · 文案同步：BGM 面板「第 3 首（共 3 首）」自动算；bgmRule / bgmLegend 里的"两首"改成"三首"并补歌名
-     v2.0.1 紧急修的两个问题（v2.0 只上线了十几分钟）：
-       ① 共勉被挤成半宽、右边一大片空白、句子被迫折成两行 —— 根因是 QUOTE_JS 里的状态量
-          用了 let：函数声明会提升而 let 不会，BGM_JS 结尾的初始化（lyricPaintIdle）比
-          QUOTE_JS 先跑，回调进 qBoxShowSoon 时撞上「暂时性死区」（Cannot access 'QBoxT'
-          before initialization），异常被外层 try/catch 静默吞掉，于是歌词块永远不收起、
-          一半宽度被它占着。改成 var 后恢复正常（初始化也能正常收起来了）。
-       ② 顺手做的设计调整：共勉正文 12.5px → 13px；点赞胶囊常驻粉色心形 + 淡粉底，
-          靠右贴齐（不再吊在半空），和右边的「关注 / 打赏」连成一组。
-     历史备份（每个都含同名 zip，都在 backups/ 下）：
-       v1 / v1.1 / v1.2 / v1.3 / v1.4 / v1.5 / v1.6 / v1.7 / v1.8-2026-10-02 / v1.9-2026-10-03 /
-       v2.0-2026-10-03 / v2.0.1-2026-10-03 / v2.1-2026-10-03 / v2.2-2026-10-03 / v2.3-2026-10-03 /
-       v2.4-2026-10-03 /（本版）v2.5-2026-10-03
-     v2.0 改动（这一版只动「共勉 / 点赞」的位置和默认口径，数据与规则逻辑没碰）：
-       ① 「共勉」从独立板块搬进作者名片中间那块空白 —— 每次刷新随机显示一句，不轮播，
-          换页也不重复上一句（localStorage 记着上一条）。名片不再空一块。
-       ② 共勉和歌词互斥，同一个位置同一时间只站一个人：
-            放歌 → 共勉立刻收起，歌词顶上（歌词里那一行高亮 + 底部进度条）
-            暂停 → 歌词停在原地不动，共勉不抢回来
-            关掉音乐 / 这首没有歌词（试听片段、纯音乐）→ 歌词收起，共勉自动回来
-          切歌会先清歌词再挂新词，所以「共勉回来」延后 350ms，中间不闪。
-       ③ 点赞按钮跟着搬进名片：心形胶囊 + 数字，只加不减、可以一直连点，六句话共用一个数。
-          点下去：心形变实心 + 数字蹦一下 + 冒「+1」+ 一把撒花粒子；服务器没接住时数字不掉，
-          6 秒后自动再试一次（不会出现"点了又缩回去"）。
-       ④ 默认口径改成"先看最近的"：收入排行默认「24 小时」，趋势图默认「日收入」。
-          （P/S 卡片仍是 7 日 / 30 日两档，属于估值口径，跟这两个默认值不冲突）
-     v1.9 新增：指标说明下方多了一块「共勉」——
-       · 六句话每 8 秒轮换一句（只淡换文字，卡片和按钮都不动；鼠标移上去暂停）
-       · 右侧一个固定的点赞按钮：不随句子变化消失，只加不减、可以一直连点
-         点下去：心形短暂变实心 + 数字蹦一下 + 冒出「+1」+ 一把撒花粒子（canvas，零依赖）
-       · 六个句子共用同一个累计数（服务端 /api/likes 计数，不是本地假数）
-         ｜ 计数服务：deploy/counter/counter.py（新增 /likes；?d=N 只认正数，单次≤20）
-         ｜ 连点先在本地累加，攒成一批再发（5 连点 = d=1 + d=4 两个请求）
-         ｜ nginx：/etc/nginx/conf.d/pons-dashboard.conf 里的 location = /api/likes
-         ｜ 文案：template.base.html 的 i18n（secQuote / quotes / qLike / qThanks…），中英各一份
-     v1.8 改动（只动 BGM 面板的文案与排版，逻辑一行没变）：
-       ① 右上角徽章「涨档 / 跌档 / 横盘」→ 大白话「涨了 / 跌了 / 不涨不跌」
-       ② 大号百分比旁边加小标题「两家平均涨跌」，一眼知道这数是什么
-       ③ 图例改成三行大白话（谁说了算 / 涨跌放什么歌 / 什么时候才换歌），
-          删掉「综合情绪 = 按市值加权（7 日涨跌 × 0.65 + 24h 涨跌 × 0.35）」这种黑话
-       ④ 逐币明细：「近 7 天 / 近 24 小时」小字放不下时自动换行右对齐，手机不溢出
-       ⑤ 面板底部说明同样去掉公式，只留「第几首 / 真歌还是占位 / 最短播放时长」
-     v1.7 修复：
-       ① 歌词校对 —— 线上原来用的 down.lrc 来自网易云「兄弟抱一下 2021 版」，跟本站这首
-          mp3（庞龙《美好》专辑版，ID3 可查）完全是两版编曲：2021 版 2:40 就唱完、还多一段
-          原版没有的段落。改用 audio/down-v2.lrc（与专辑版逐句对齐，已用音频能量包络核对
-          副歌/主歌切点）。曲目表里可加 lrcOffset（秒）微调：正数＝歌词提前。
-       ② 没有歌词可显示时（待命 / 加载中 / 纯音乐 / 试听片段）整块收起，不再显示无意义的
-          提示文字，作者名片自动变回紧凑布局（手机上省一行高度）
-       ③ 展开的 BGM 详情面板：点屏幕其它地方 / 滑动 / 滚轮 → 立刻收起（PC 与手机同一套行为）
-          · 注意 scroll/wheel 的事件目标是 window 不是 Node，判断要用 ev.target.nodeType 兜住
-     v1.6 新增：作者名片中间空白处跟着 BGM 滚动显示当前歌词（当前行高亮 + 进度条）
-     v1.5 新增：跌幅档双曲轮换（《梦的翅膀受了伤》→《兄弟抱一下》→ …）
-     v1.4 新增：页脚浏览量统计（自建计数 /api/hits，见 deploy/counter/）
-     v1.3 新增：收入排行板块（DefiLlama 全站榜单裁剪，见 work/leaderboard.py）
-     回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
-     注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
-     ========================================================================== -->
-<meta name="dashboard-version" content="v2.9-2026-10-04">
-
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -155,10 +8,7 @@
 if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
 </script>
 <title>Pons / StonkFun 收入与回购监控面板</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMxNzFkMmIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwYTBjMTEiLz48L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIuMSIgeTE9IjEiIHgyPSIuOSIgeTI9IjAiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzhiN2NmZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzJlZTZhOCIvPjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0iZWRnZSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzhiN2NmZiIgc3RvcC1vcGFjaXR5PSIuNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzJlZTZhOCIgc3RvcC1vcGFjaXR5PSIuNCIvPjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPHJlY3QgeD0iMS4yNSIgeT0iMS4yNSIgd2lkdGg9IjYxLjUiIGhlaWdodD0iNjEuNSIgcng9IjE1IiBmaWxsPSJ1cmwoI2JnKSIgc3Ryb2tlPSJ1cmwoI2VkZ2UpIiBzdHJva2Utd2lkdGg9IjEuNSIvPgo8cGF0aCBkPSJNMjIuNCA0OC40VjE2LjZoMTAuNGExMC44IDEwLjggMCAwIDEgMCAyMS42SDIyLjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNnKSIgc3Ryb2tlLXdpZHRoPSI3LjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K">
-<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
-<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
-<meta name="theme-color" content="#0a0c11">
+<link rel="icon" href="data:,">
 <style>
 :root{
   color-scheme:dark;
@@ -851,7 +701,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .rank-row.me{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
 .rank-row.me .rr-name{font-weight:800;color:var(--txt)}
 .rank-row.me .rr-rank,.rank-row.me .rr-val{color:var(--accent)}
-.bb-row .rr-me,.rank-row .rr-me{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.4px;color:var(--accent);
+.rank-row .rr-me{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.4px;color:var(--accent);
   background:color-mix(in srgb,var(--accent) 16%,transparent);
   border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:5px;
   padding:1px 6px;margin-left:7px;vertical-align:1px;white-space:nowrap}
@@ -863,76 +713,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   .rank-row .rr-cat{display:none}
   .rs-ticks .rt-1000{display:none}
   .rank-updated{margin-left:0;flex-basis:100%}
-}
-
-/* ---------- 回购与销毁：链上真实烧毁量 + 全行业回购强度 ---------- */
-.burn-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  padding:14px 16px 13px 19px;box-shadow:var(--card-shadow);overflow:hidden}
-.burn-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bc,var(--accent))}
-.burn-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.burn-head .proj-name{font-size:var(--fs-13);font-weight:800}
-.burn-head .bn-chain{font-size:var(--fs-11);font-weight:600;color:var(--mut2);background:var(--panel2);
-  border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:nowrap}
-.burn-head .bn-link{margin-left:auto;font-size:var(--fs-11);font-weight:700;color:var(--accent);
-  text-decoration:none;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));
-  border-radius:7px;padding:3px 9px;white-space:nowrap;transition:background .15s ease}
-.burn-head .bn-link:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
-.burn-big{font-family:var(--font-num);font-size:30px;font-weight:800;letter-spacing:-1.3px;line-height:1.14;
-  margin:11px 0 0;font-variant-numeric:tabular-nums}
-.burn-big small{font-family:var(--font-ui);font-size:var(--fs-12);font-weight:600;letter-spacing:0;
-  color:var(--mut);margin-left:7px}
-.burn-bar{height:9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);
-  overflow:hidden;margin:12px 0 7px}
-.burn-bar i{display:block;height:100%;border-radius:99px;background:var(--bc,var(--accent));
-  box-shadow:0 0 12px -3px var(--bc,var(--accent))}
-.burn-barcap{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-11);color:var(--mut2)}
-.burn-barcap b{color:var(--txt);font-family:var(--font-num);font-weight:800}
-.burn-kv{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
-.burn-kv span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:var(--fs-11);
-  background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px 9px}
-.burn-kv span b{color:var(--mut2);font-weight:600}
-.burn-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
-.burn-src{margin-top:10px;font-size:var(--fs-11);color:var(--mut2);line-height:1.6}
-.burn-src code{font-family:var(--font-num);font-size:10.5px;color:var(--mut)}
-.bb-row{display:grid;grid-template-columns:46px minmax(0,1fr) minmax(0,214px) 96px;align-items:center;gap:10px;
-  padding:9px 14px;border-bottom:1px solid var(--line);font-size:var(--fs-12);transition:background .15s ease}
-.bb-row:last-child{border-bottom:0}
-.bb-row:hover{background:var(--panel2)}
-.bb-row .bb-rank{font-family:var(--font-num);font-size:var(--fs-11);font-weight:700;color:var(--mut2)}
-.bb-row .bb-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-.bb-row .bb-sub{font-size:var(--fs-11);color:var(--mut2);white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;text-align:right}
-.bb-row .bb-val{font-family:var(--font-num);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
-.bb-row.me{background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
-.bb-row.me .bb-name{font-weight:800;color:var(--txt)}
-.bb-row.me .bb-rank,.bb-row.me .bb-val{color:var(--accent)}
-.bb-note{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  padding:14px 16px;box-shadow:var(--card-shadow);font-size:var(--fs-12);line-height:1.9}
-.bb-note .bb-h{font-size:var(--fs-13);font-weight:800;margin-bottom:9px}
-.bb-tbl{width:100%;border-collapse:collapse;margin:0 0 10px;font-size:var(--fs-11);
-  font-variant-numeric:tabular-nums}
-.bb-tbl th{font-weight:600;color:var(--mut2);text-align:right;padding:5px 8px;border-bottom:1px solid var(--line2);
-  white-space:nowrap}
-.bb-tbl th:first-child{text-align:left}
-.bb-tbl td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--font-num);
-  font-weight:700;white-space:nowrap}
-.bb-tbl td:first-child{text-align:left;font-family:var(--font-ui);font-weight:700}
-.bb-tbl tr.me td{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--txt)}
-.bb-tbl tr.me td:first-child{color:var(--accent)}
-.bb-tbl tr:last-child td{border-bottom:0}
-.bb-note ul{margin:0;padding-left:17px}
-.bb-note li{margin:5px 0}
-.bb-note .hl{background:color-mix(in srgb,var(--accent) 20%,transparent);border-radius:4px;
-  padding:0 4px;font-weight:800;font-variant-numeric:tabular-nums}
-.bb-note .bb-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
-  font-size:var(--fs-11);color:var(--mut2);line-height:1.7}
-@media(max-width:680px){
-  .burn-big{font-size:26px}
-  .bb-row{grid-template-columns:38px minmax(0,1fr) 88px;gap:8px;padding:8px 11px}
-  .bb-row .bb-sub{display:none}
-  .bb-tbl{font-size:10.5px}
-  .bb-tbl th,.bb-tbl td{padding:5px 5px}
-  .bb-note{padding:12px 13px}
 }
 
 /* ---------- 行情 BGM：涨听《逍遥仙》· 跌听《兄弟抱一下》 ---------- */
@@ -1131,15 +911,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   </div>
   <div class="grid2 rank-near" id="rankNear"></div>
 
-  <div class="sec-title" id="st-burn">回购与销毁 · 真金白银烧掉多少</div>
-  <div class="rank-sub" id="burnSub"></div>
-  <div class="grid2" id="burnCards"></div>
-  <div class="rank-block">
-    <div class="rank-h" id="burnPeersH"></div>
-    <div class="rank-list" id="burnPeers"></div>
-  </div>
-  <div class="bb-note" id="burnNote"></div>
-
   <div class="sec-title" id="st-chart">趋势图</div>
   <div class="tabs" id="tabs"></div>
   <div class="chartbox">
@@ -1161,8 +932,8 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   <!-- ===== 行情BGM：涨 →《逍遥仙》/《不凡》· 跌 →《梦的翅膀受了伤》/《兄弟抱一下》/《无人之岛》轮换（音源、阈值改这里）===== -->  <div class="bgm" id="bgm">    <div class="bgm-det" id="bgmDet">      <div class="bgm-head" id="bgmScore"></div>      <div class="bgm-legend" id="bgmLegend"></div>      <div class="bgm-parts" id="bgmParts"></div>      <div class="bgm-src" id="bgmSrc"></div>    </div>    <button class="bgm-card" id="bgmCard" type="button" onclick="bgmToggle()" onmouseenter="bgmDetShow()">      <span class="bgm-eq" id="bgmEq"><i></i><i></i><i></i></span>      <span class="bgm-txt"><span class="bgm-t" id="bgmT">行情BGM</span><span class="bgm-s" id="bgmS">点一下开启</span></span>      <span class="bgm-cv" id="bgmCv" onclick="event.stopPropagation();bgmDetToggle()">▴</span>    </button>  </div></div>
 
 <script>
-const BUNDLE = {"generated": "2026-10-04T03:22:39.724812Z", "series": {"pons.dailyRevenue": [[1783987200, 16347.0], [1784073600, 81828.0], [1784160000, 143906.0], [1784246400, 108006.0], [1784332800, 129313.0], [1784419200, 156398.0], [1784505600, 296207.0], [1784592000, 450179.0], [1784678400, 387059.0], [1784764800, 367003.0], [1784851200, 331836.0], [1784937600, 272228.0], [1785024000, 387747.0], [1785110400, 270835.0], [1785196800, 219498.0], [1785283200, 186313.0], [1785369600, 119636.0], [1785456000, 125031.0], [1785542400, 94607.0], [1785628800, 89137.0], [1785715200, 85713.0], [1785801600, 101205.0], [1785888000, 93228.0], [1785974400, 103715.0], [1786060800, 130763.0], [1786147200, 132692.0], [1786233600, 112721.0], [1786320000, 145832.0], [1786406400, 110053.0], [1786492800, 117763.0], [1786579200, 95497.0], [1786665600, 148438.0], [1786752000, 86982.0], [1786838400, 59365.0], [1786924800, 60626.0], [1787011200, 70316.0], [1787097600, 65936.0], [1787184000, 54986.0], [1787270400, 85579.0], [1787356800, 88573.0], [1787443200, 84587.0], [1787529600, 135537.0], [1787616000, 202748.0], [1787702400, 289161.0], [1787788800, 394735.0], [1787875200, 331689.0], [1787961600, 632466.0], [1788048000, 1010787.0], [1788134400, 974552.0], [1788220800, 910518.0], [1788307200, 1116674.0], [1788393600, 1257996.0], [1788480000, 1845765.0], [1788566400, 2056973.0], [1788652800, 1598695.0], [1788739200, 1471401.0], [1788825600, 1325438.0], [1788912000, 1141019.0], [1788998400, 1020174.0], [1789084800, 1087322.0], [1789171200, 878951.0], [1789257600, 1066109.0], [1789344000, 896335.0], [1789430400, 665253.0], [1789516800, 368737.0], [1789603200, 473233.0], [1789689600, 447869.0], [1789776000, 470789.0], [1789862400, 304510.0], [1789948800, 535165.0], [1790035200, 376906.0], [1790121600, 354875.0], [1790208000, 255834.0], [1790294400, 245451.0], [1790380800, 249467.0], [1790467200, 191462.0], [1790553600, 226395.0], [1790640000, 266715.0], [1790726400, 291241.0], [1790812800, 213636.0], [1790899200, 214224.0], [1790985600, 162866.0]], "pons.dailyHoldersRevenue": [[1783987200, 305442.0], [1784073600, 28650.0], [1784160000, 16104.0], [1784246400, 66792.0], [1784332800, 51501.0], [1784419200, 31690.0], [1784505600, 49403.0], [1784592000, 108391.0], [1784678400, 93396.0], [1784764800, 58314.0], [1784851200, 220127.0], [1784937600, 117113.0], [1785024000, 123962.0], [1785110400, 312300.0], [1785196800, 85509.0], [1785283200, 90519.0], [1785369600, 94064.0], [1785456000, 139204.0], [1785542400, 13333.0], [1785628800, 165498.0], [1785715200, 8951.0], [1785801600, 87750.0], [1785888000, 107163.0], [1785974400, 116377.0], [1786060800, 104807.0], [1786147200, 68750.0], [1786233600, 29904.0], [1786320000, 20861.0], [1786406400, 102613.0], [1786492800, 29126.0], [1786579200, 22738.0], [1786665600, 20063.0], [1786752000, 22447.0], [1786838400, 21773.0], [1786924800, 26210.0], [1787011200, 24718.0], [1787097600, 27036.0], [1787184000, 22781.0], [1787270400, 21793.0], [1787356800, 25081.0], [1787443200, 35112.0], [1787529600, 30336.0], [1787616000, 247677.0], [1787702400, 0.0], [1787788800, 20927.0], [1787875200, 37189.0], [1787961600, 66149.0], [1788048000, 24161.0], [1788134400, 105752.0], [1788220800, 45292.0], [1788307200, 82756.0], [1788393600, 89533.0], [1788480000, 1188309.0], [1788566400, 1358760.0], [1788652800, 1006816.0], [1788739200, 1295340.0], [1788825600, 1327548.0], [1788912000, 757156.0], [1788998400, 995630.0], [1789084800, 1087603.0], [1789171200, 907926.0], [1789257600, 650021.0], [1789344000, 1129426.0], [1789430400, 930792.0], [1789516800, 463004.0], [1789603200, 506271.0], [1789689600, 209414.0], [1789776000, 149605.0], [1789862400, 140288.0], [1789948800, 129797.0], [1790035200, 749952.0], [1790121600, 121540.0], [1790208000, 125605.0], [1790294400, 131577.0], [1790380800, 127231.0], [1790467200, 295215.0], [1790553600, 258940.0], [1790640000, 148896.0], [1790726400, 132964.0], [1790812800, 122964.0], [1790899200, 112739.0], [1790985600, 401979.0]], "pons.dailyFees": [[1783987200, 159750.0], [1784073600, 683026.0], [1784160000, 518446.0], [1784246400, 387233.0], [1784332800, 458896.0], [1784419200, 546628.0], [1784505600, 1010243.0], [1784592000, 1535814.0], [1784678400, 1311611.0], [1784764800, 1283312.0], [1784851200, 1121193.0], [1784937600, 900719.0], [1785024000, 1303955.0], [1785110400, 1074846.0], [1785196800, 862002.0], [1785283200, 738922.0], [1785369600, 462410.0], [1785456000, 489955.0], [1785542400, 388464.0], [1785628800, 349070.0], [1785715200, 345317.0], [1785801600, 416739.0], [1785888000, 392197.0], [1785974400, 435833.0], [1786060800, 545023.0], [1786147200, 553826.0], [1786233600, 487791.0], [1786320000, 591596.0], [1786406400, 444534.0], [1786492800, 518406.0], [1786579200, 466436.0], [1786665600, 721366.0], [1786752000, 450504.0], [1786838400, 283884.0], [1786924800, 284637.0], [1787011200, 338958.0], [1787097600, 308437.0], [1787184000, 252524.0], [1787270400, 414374.0], [1787356800, 411692.0], [1787443200, 360621.0], [1787529600, 613757.0], [1787616000, 1254997.0], [1787702400, 1501786.0], [1787788800, 2337825.0], [1787875200, 1940841.0], [1787961600, 3826898.0], [1788048000, 5338322.0], [1788134400, 4892464.0], [1788220800, 4560219.0], [1788307200, 5963112.0], [1788393600, 6411894.0], [1788480000, 9050113.0], [1788566400, 11418716.0], [1788652800, 8747267.0], [1788739200, 8548231.0], [1788825600, 8676583.0], [1788912000, 6571491.0], [1788998400, 5851111.0], [1789084800, 6410562.0], [1789171200, 5821734.0], [1789257600, 6395539.0], [1789344000, 5347714.0], [1789430400, 4112124.0], [1789516800, 2487854.0], [1789603200, 3026476.0], [1789689600, 2941057.0], [1789776000, 3084909.0], [1789862400, 2031761.0], [1789948800, 3389265.0], [1790035200, 2580573.0], [1790121600, 2444706.0], [1790208000, 1817273.0], [1790294400, 1608949.0], [1790380800, 1680957.0], [1790467200, 1310993.0], [1790553600, 1461061.0], [1790640000, 1628899.0], [1790726400, 1683089.0], [1790812800, 1362458.0], [1790899200, 1400815.0], [1790985600, 1074196.0]], "stonkfun.dailyRevenue": [[1785024000, 88.0], [1785110400, 31.0], [1785196800, 56.0], [1785283200, 21.0], [1785369600, 18.0], [1785456000, 27.0], [1785542400, 14.0], [1785628800, 3158.0], [1785715200, 1681.0], [1785801600, 28922.0], [1785888000, 54962.0], [1785974400, 87191.0], [1786060800, 74770.0], [1786147200, 29627.0], [1786233600, 31171.0], [1786320000, 67924.0], [1786406400, 84020.0], [1786492800, 50045.0], [1786579200, 56425.0], [1786665600, 83932.0], [1786752000, 50015.0], [1786838400, 34033.0], [1786924800, 26784.0], [1787011200, 31360.0], [1787097600, 23311.0], [1787184000, 35179.0], [1787270400, 20375.0], [1787356800, 43630.0], [1787443200, 32850.0], [1787529600, 22451.0], [1787616000, 25331.0], [1787702400, 56522.0], [1787788800, 50075.0], [1787875200, 19736.0], [1787961600, 43842.0], [1788048000, 32014.0], [1788134400, 53435.0], [1788220800, 52054.0], [1788307200, 46738.0], [1788393600, 65630.0], [1788480000, 77271.0], [1788566400, 199477.0], [1788652800, 1507854.0], [1788739200, 922560.0], [1788825600, 1109821.0], [1788912000, 1354004.0], [1788998400, 820007.0], [1789084800, 2304391.0], [1789171200, 930336.0], [1789257600, 868294.0], [1789344000, 833301.0], [1789430400, 572457.0], [1789516800, 657435.0], [1789603200, 1034248.0], [1789689600, 1149922.0], [1789776000, 1133606.0], [1789862400, 1075748.0], [1789948800, 1805732.0], [1790035200, 1579549.0], [1790121600, 1372211.0], [1790208000, 1192833.0], [1790294400, 944073.0], [1790380800, 582580.0], [1790467200, 529093.0], [1790553600, 601020.0], [1790640000, 1174244.0], [1790726400, 940358.0], [1790812800, 909663.0], [1790899200, 536081.0]], "stonkfun.dailyHoldersRevenue": [[1785024000, 0.0], [1785110400, 0.0], [1785196800, 0.0], [1785283200, 0.0], [1785369600, 0.0], [1785456000, 0.0], [1785542400, 0.0], [1785628800, 0.0], [1785715200, 3438.0], [1785801600, 17073.0], [1785888000, 23424.0], [1785974400, 45280.0], [1786060800, 37837.0], [1786147200, 15946.0], [1786233600, 16741.0], [1786320000, 34731.0], [1786406400, 42331.0], [1786492800, 26112.0], [1786579200, 29191.0], [1786665600, 43539.0], [1786752000, 26097.0], [1786838400, 19014.0], [1786924800, 14571.0], [1787011200, 18755.0], [1787097600, 14025.0], [1787184000, 19042.0], [1787270400, 11461.0], [1787356800, 25726.0], [1787443200, 18882.0], [1787529600, 13976.0], [1787616000, 15445.0], [1787702400, 32639.0], [1787788800, 28687.0], [1787875200, 11290.0], [1787961600, 23585.0], [1788048000, 16907.0], [1788134400, 31640.0], [1788220800, 27109.0], [1788307200, 23961.0], [1788393600, 36470.0], [1788480000, 43690.0], [1788566400, 108693.0], [1788652800, 798567.0], [1788739200, 504571.0], [1788825600, 575319.0], [1788912000, 700793.0], [1788998400, 439917.0], [1789084800, 969735.0], [1789171200, 490622.0], [1789257600, 481100.0], [1789344000, 433914.0], [1789430400, 295670.0], [1789516800, 299191.0], [1789603200, 468177.0], [1789689600, 567689.0], [1789776000, 558679.0], [1789862400, 552836.0], [1789948800, 898641.0], [1790035200, 551691.0], [1790121600, 870052.0], [1790208000, 554180.0], [1790294400, 481882.0], [1790380800, 349633.0], [1790467200, 287036.0], [1790553600, 315380.0], [1790640000, 590859.0], [1790726400, 452636.0], [1790812800, 463091.0], [1790899200, 327923.0]], "stonkfun.dailyFees": [[1785024000, 88.0], [1785110400, 31.0], [1785196800, 56.0], [1785283200, 21.0], [1785369600, 18.0], [1785456000, 27.0], [1785542400, 14.0], [1785628800, 3158.0], [1785715200, 1681.0], [1785801600, 28922.0], [1785888000, 54962.0], [1785974400, 87191.0], [1786060800, 74770.0], [1786147200, 29627.0], [1786233600, 31171.0], [1786320000, 67924.0], [1786406400, 84020.0], [1786492800, 50045.0], [1786579200, 56425.0], [1786665600, 83932.0], [1786752000, 50015.0], [1786838400, 34033.0], [1786924800, 26784.0], [1787011200, 31360.0], [1787097600, 23311.0], [1787184000, 35179.0], [1787270400, 20375.0], [1787356800, 43630.0], [1787443200, 32850.0], [1787529600, 22451.0], [1787616000, 25331.0], [1787702400, 56522.0], [1787788800, 50075.0], [1787875200, 19736.0], [1787961600, 43842.0], [1788048000, 32014.0], [1788134400, 53435.0], [1788220800, 52054.0], [1788307200, 46738.0], [1788393600, 65630.0], [1788480000, 77271.0], [1788566400, 199477.0], [1788652800, 1507854.0], [1788739200, 922560.0], [1788825600, 1109821.0], [1788912000, 1354004.0], [1788998400, 820007.0], [1789084800, 2304391.0], [1789171200, 930336.0], [1789257600, 868294.0], [1789344000, 833301.0], [1789430400, 572457.0], [1789516800, 657435.0], [1789603200, 1034248.0], [1789689600, 1149922.0], [1789776000, 1133606.0], [1789862400, 1075748.0], [1789948800, 1805732.0], [1790035200, 1579549.0], [1790121600, 1372211.0], [1790208000, 1192833.0], [1790294400, 944073.0], [1790380800, 582580.0], [1790467200, 529093.0], [1790553600, 601020.0], [1790640000, 1174244.0], [1790726400, 940358.0], [1790812800, 909663.0], [1790899200, 536081.0]]}, "meta": {"pons": {"name": "Pons", "mcap": 281439253.25109017, "symbol": "PONS"}, "stonkfun": {"name": "StonkFun", "mcap": 159513448.31541833, "symbol": "STONK"}}, "priceSeries": {"pons": [[1784168965, 0.00978242], [1784255382, 0.00432991], [1784341771, 0.01133661], [1784428003, 0.01953786], [1784514582, 0.01783431], [1784600988, 0.0301465], [1784687392, 0.04514576], [1784773797, 0.02738017], [1784860189, 0.03452412], [1784948340, 0.03751639], [1785034733, 0.04286348], [1785121128, 0.05373911], [1785205805, 0.04772032], [1785292189, 0.03855843], [1785380325, 0.03407749], [1785464585, 0.0374863], [1785550981, 0.03110495], [1785637370, 0.02562353], [1785723780, 0.02923017], [1785810184, 0.02762201], [1785896581, 0.0234861], [1785983510, 0.01996966], [1786069310, 0.01903987], [1786156310, 0.0321727], [1786242110, 0.02941041], [1786328510, 0.03825926], [1786414910, 0.0349748], [1786501300, 0.04432126], [1786587700, 0.04783314], [1786674100, 0.04259654], [1786760500, 0.04004027], [1786846920, 0.03713798], [1786933310, 0.03057737], [1787019710, 0.03120948], [1787106110, 0.02926451], [1787192510, 0.03781674], [1787278910, 0.03567434], [1787365300, 0.03820421], [1787451700, 0.04427909], [1787538710, 0.06342989], [1787625100, 0.09115492], [1787711500, 0.11570453], [1787797900, 0.12508232], [1787884300, 0.11236297], [1787970710, 0.15055907], [1788057110, 0.27484699], [1788143400, 0.30384466], [1788229850, 0.39578002], [1788316250, 0.42606842], [1788402650, 0.50162025], [1788489050, 0.6689676], [1788575450, 0.66415496], [1788661850, 0.92387363], [1788748250, 0.75835225], [1788834640, 0.73675911], [1788921040, 0.76467658], [1789007450, 0.6316149], [1789093870, 0.60753647], [1789180230, 0.59706197], [1789266700, 0.59610139], [1789353080, 0.52605292], [1789439440, 0.63696857], [1789525840, 0.59970953], [1789612200, 0.62117966], [1789698650, 0.71153834], [1789785100, 0.69480749], [1789871500, 0.59266172], [1789957900, 0.59251173], [1790044200, 0.59311628], [1790130640, 0.70762698], [1790217100, 0.63895951], [1790303500, 0.61776124], [1790389910, 0.65500958], [1790476310, 0.64253829], [1790562710, 0.56018094], [1790649110, 0.51959292], [1790735510, 0.5453858], [1790821910, 0.52519546], [1790908310, 0.51247496], [1790994720, 0.43541241], [1791080200, 0.4163952]], "stonkfun": [[1785897156, 0.0030159], [1785982910, 0.00645208], [1786069310, 0.00459923], [1786155700, 0.00855691], [1786242110, 0.00586576], [1786328510, 0.00805767], [1786414900, 0.01300691], [1786501300, 0.01048037], [1786587700, 0.01094453], [1786674100, 0.00994756], [1786760500, 0.01022763], [1786846920, 0.00919991], [1786933310, 0.00709708], [1787019710, 0.00569216], [1787106110, 0.00501313], [1787192510, 0.00545591], [1787278910, 0.00691041], [1787365300, 0.00711754], [1787451700, 0.00857146], [1787538110, 0.00938542], [1787624500, 0.009648], [1787710910, 0.00840724], [1787797300, 0.01300307], [1787883710, 0.01491902], [1787970110, 0.01263953], [1788056510, 0.02199113], [1788142910, 0.02141619], [1788229310, 0.01724087], [1788316310, 0.01646476], [1788401810, 0.02179364], [1788488510, 0.02385703], [1788574910, 0.02586309], [1788661800, 0.08969349], [1788748250, 0.14939027], [1788834710, 0.16835028], [1788921000, 0.15199339], [1789007450, 0.19516494], [1789093870, 0.2579], [1789180230, 0.29403778], [1789266700, 0.27016519], [1789353080, 0.21046802], [1789439510, 0.195898], [1789525900, 0.15569925], [1789612310, 0.20988647], [1789698700, 0.24704819], [1789785100, 0.24545061], [1789871500, 0.26885175], [1789957900, 0.36281139], [1790044310, 0.37105966], [1790130680, 0.31488818], [1790217100, 0.34564836], [1790303500, 0.34709062], [1790389910, 0.31935571], [1790476310, 0.27885389], [1790562710, 0.25757594], [1790649110, 0.22945164], [1790735510, 0.301624], [1790821910, 0.25464125], [1790908310, 0.24710536], [1790994710, 0.22526477], [1791080210, 0.2013719]]}, "price": {"pons": 0.412245034153468, "stonkfun": 0.19833373363191148}, "market": {"pons": {"vol24h": 38392667.31, "mcap": 279991686.84, "price": 0.411454, "change24h": -4.57}, "stonkfun": {"vol24h": 13072761.69, "mcap": 159187281.75, "price": 0.198154, "change24h": -14.37}}, "leaderboard": {"total": 2468, "board": {"total24h": {"top": [{"r": 1, "n": "Tether", "c": "Stablecoin Issuer", "v": 17235590.0, "me": false}, {"r": 2, "n": "Circle USDC", "c": "Stablecoin Issuer", "v": 6991029.0, "me": false}, {"r": 3, "n": "pump.fun", "c": "Launchpad", "v": 1711103.0, "me": false}, {"r": 4, "n": "fomo Wallet", "c": "Trading App", "v": 819034.0, "me": false}, {"r": 5, "n": "Hyperliquid Perps", "c": "Derivatives", "v": 646058.0, "me": false}, {"r": 6, "n": "Collector Crypt", "c": "Physical TCG", "v": 624868.0, "me": false}, {"r": 7, "n": "Tron", "c": "Chain", "v": 623027.0, "me": false}, {"r": 8, "n": "Grayscale", "c": "RWA", "v": 613495.0, "me": false}, {"r": 9, "n": "GMGN", "c": "Trading App", "v": 608509.0, "me": false}, {"r": 10, "n": "PumpSwap", "c": "Dexs", "v": 604988.0, "me": false}], "near": {"pons": [{"r": 17, "n": "Paxos Stablecoin Issuer", "c": "Stablecoin Issuer", "v": 316291.0, "me": false}, {"r": 18, "n": "Ripple USD", "c": "Stablecoin Issuer", "v": 246356.0, "me": false}, {"r": 19, "n": "pump.fun Mobile App", "c": "Interface", "v": 201949.0, "me": false}, {"r": 20, "n": "Phantom Wallet", "c": "Wallets", "v": 192127.0, "me": false}, {"r": 21, "n": "Pons V2", "c": "Launchpad", "v": 157552.0, "me": true}, {"r": 22, "n": "Aave V3", "c": "Lending", "v": 147587.0, "me": false}, {"r": 23, "n": "DEX Screener", "c": "Coins Tracker", "v": 135210.0, "me": false}, {"r": 24, "n": "Aerodrome Slipstream", "c": "Dexs", "v": 129471.0, "me": false}, {"r": 25, "n": "Fidelity Crypto Fund", "c": "CeDeFi", "v": 117307.0, "me": false}], "stonkfun": [{"r": 8, "n": "Grayscale", "c": "RWA", "v": 613495.0, "me": false}, {"r": 9, "n": "GMGN", "c": "Trading App", "v": 608509.0, "me": false}, {"r": 10, "n": "PumpSwap", "c": "Dexs", "v": 604988.0, "me": false}, {"r": 11, "n": "Axiom", "c": "Trading App", "v": 574511.0, "me": false}, {"r": 12, "n": "StonkFun", "c": "Launchpad", "v": 536081.0, "me": true}, {"r": 13, "n": "Polymarket International", "c": "Prediction Market", "v": 510894.0, "me": false}, {"r": 14, "n": "Sky Lending", "c": "CDP", "v": 441457.0, "me": false}, {"r": 15, "n": "World Liberty Financial", "c": "Lending", "v": 411237.0, "me": false}, {"r": 16, "n": "Flap sh", "c": "Launchpad", "v": 402031.0, "me": false}]}, "rank": {"pons": 21, "stonkfun": 12}}, "total7d": {"top": [{"r": 1, "n": "Tether", "c": "Stablecoin Issuer", "v": 122085327.0, "me": false}, {"r": 2, "n": "Circle USDC", "c": "Stablecoin Issuer", "v": 49866266.0, "me": false}, {"r": 3, "n": "pump.fun", "c": "Launchpad", "v": 11374839.0, "me": false}, {"r": 4, "n": "Hyperliquid Perps", "c": "Derivatives", "v": 10855897.0, "me": false}, {"r": 5, "n": "Tron", "c": "Chain", "v": 5671333.0, "me": false}, {"r": 6, "n": "GMGN", "c": "Trading App", "v": 4743418.0, "me": false}, {"r": 7, "n": "StonkFun", "c": "Launchpad", "v": 4690459.0, "me": true}, {"r": 8, "n": "fomo Wallet", "c": "Trading App", "v": 4582888.0, "me": false}, {"r": 9, "n": "Axiom", "c": "Trading App", "v": 4327297.0, "me": false}, {"r": 10, "n": "Grayscale", "c": "RWA", "v": 4300376.0, "me": false}], "near": {"pons": [{"r": 19, "n": "Paxos Stablecoin Issuer", "c": "Stablecoin Issuer", "v": 2165705.0, "me": false}, {"r": 20, "n": "Ripple USD", "c": "Stablecoin Issuer", "v": 1737659.0, "me": false}, {"r": 21, "n": "Phantom Wallet", "c": "Wallets", "v": 1603554.0, "me": false}, {"r": 22, "n": "Aerodrome Slipstream", "c": "Dexs", "v": 1556830.0, "me": false}, {"r": 23, "n": "Pons V2", "c": "Launchpad", "v": 1497904.0, "me": true}, {"r": 24, "n": "Tether Gold", "c": "RWA", "v": 1235439.0, "me": false}, {"r": 25, "n": "pump.fun Mobile App", "c": "Interface", "v": 1209160.0, "me": false}, {"r": 26, "n": "BONK.fun Launchpad", "c": "Launchpad", "v": 1202825.0, "me": false}, {"r": 27, "n": "DEX Screener", "c": "Coins Tracker", "v": 1081825.0, "me": false}], "stonkfun": [{"r": 7, "n": "StonkFun", "c": "Launchpad", "v": 4690459.0, "me": true}, {"r": 8, "n": "fomo Wallet", "c": "Trading App", "v": 4582888.0, "me": false}, {"r": 9, "n": "Axiom", "c": "Trading App", "v": 4327297.0, "me": false}, {"r": 10, "n": "Grayscale", "c": "RWA", "v": 4300376.0, "me": false}, {"r": 11, "n": "Collector Crypt", "c": "Physical TCG", "v": 4262341.0, "me": false}, {"r": 12, "n": "PumpSwap", "c": "Dexs", "v": 4232766.0, "me": false}, {"r": 13, "n": "Polymarket International", "c": "Prediction Market", "v": 3217777.0, "me": false}, {"r": 14, "n": "Sky Lending", "c": "CDP", "v": 3126941.0, "me": false}, {"r": 15, "n": "World Liberty Financial", "c": "Lending", "v": 2906819.0, "me": false}]}, "rank": {"pons": 23, "stonkfun": 7}}, "total30d": {"top": [{"r": 1, "n": "Tether", "c": "Stablecoin Issuer", "v": 508355596.0, "me": false}, {"r": 2, "n": "Circle USDC", "c": "Stablecoin Issuer", "v": 208087588.0, "me": false}, {"r": 3, "n": "Hyperliquid Perps", "c": "Derivatives", "v": 52351226.0, "me": false}, {"r": 4, "n": "GMGN", "c": "Trading App", "v": 35835311.0, "me": false}, {"r": 5, "n": "pump.fun", "c": "Launchpad", "v": 34793404.0, "me": false}, {"r": 6, "n": "fomo Wallet", "c": "Trading App", "v": 29695739.0, "me": false}, {"r": 7, "n": "StonkFun", "c": "Launchpad", "v": 28718169.0, "me": true}, {"r": 8, "n": "Tron", "c": "Chain", "v": 23651179.0, "me": false}, {"r": 9, "n": "Robinhood Chain", "c": "Chain", "v": 21011646.0, "me": false}, {"r": 10, "n": "Pons V2", "c": "Launchpad", "v": 19901350.0, "me": true}], "near": {"pons": [{"r": 10, "n": "Pons V2", "c": "Launchpad", "v": 19901350.0, "me": true}, {"r": 11, "n": "Axiom", "c": "Trading App", "v": 18579095.0, "me": false}, {"r": 12, "n": "Grayscale", "c": "RWA", "v": 17870087.0, "me": false}, {"r": 13, "n": "Polymarket International", "c": "Prediction Market", "v": 15715082.0, "me": false}, {"r": 14, "n": "Uniswap V3", "c": "Dexs", "v": 14523388.0, "me": false}, {"r": 15, "n": "PumpSwap", "c": "Dexs", "v": 14156470.0, "me": false}, {"r": 16, "n": "Aerodrome Slipstream", "c": "Dexs", "v": 13799970.0, "me": false}, {"r": 17, "n": "Collector Crypt", "c": "Physical TCG", "v": 13486011.0, "me": false}, {"r": 18, "n": "Sky Lending", "c": "CDP", "v": 13454654.0, "me": false}], "stonkfun": [{"r": 7, "n": "StonkFun", "c": "Launchpad", "v": 28718169.0, "me": true}, {"r": 8, "n": "Tron", "c": "Chain", "v": 23651179.0, "me": false}, {"r": 9, "n": "Robinhood Chain", "c": "Chain", "v": 21011646.0, "me": false}, {"r": 10, "n": "Pons V2", "c": "Launchpad", "v": 19901350.0, "me": false}, {"r": 11, "n": "Axiom", "c": "Trading App", "v": 18579095.0, "me": false}, {"r": 12, "n": "Grayscale", "c": "RWA", "v": 17870087.0, "me": false}, {"r": 13, "n": "Polymarket International", "c": "Prediction Market", "v": 15715082.0, "me": false}, {"r": 14, "n": "Uniswap V3", "c": "Dexs", "v": 14523388.0, "me": false}, {"r": 15, "n": "PumpSwap", "c": "Dexs", "v": 14156470.0, "me": false}]}, "rank": {"pons": 10, "stonkfun": 7}}}, "updated": "2026-10-04T03:23:28Z", "source": "defillama.com/revenue"}, "burn": {"peers": {"rows": [{"slug": "hyperliquid-perps", "n": "Hyperliquid Perps", "c": "Hyperliquid", "h24": 646058.0, "d30": 52351226.0, "all": 1240717001.0, "r30": 1, "me": false}, {"slug": "pump.fun", "n": "pump.fun", "c": "Solana", "h24": 1237081.0, "d30": 24866567.0, "all": 375671103.0, "r30": 2, "me": false}, {"slug": "pons-v1", "n": "Pons V1", "c": "Launchpad", "h24": 401979.0, "d30": 16963308.0, "all": 20830446.0, "r30": 3, "me": true}, {"slug": "uniswap-v3", "n": "Uniswap V3", "c": "Ethereum + L2s", "h24": 109194.0, "d30": 14523388.0, "all": 53534685.0, "r30": 4, "me": false}, {"slug": "stonkfun", "n": "StonkFun", "c": "Launchpad", "h24": 327923.0, "d30": 14432167.0, "all": 15197092.0, "r30": 5, "me": true}, {"slug": "aerodrome-slipstream", "n": "Aerodrome Slipstream", "c": "Base", "h24": 129471.0, "d30": 13799970.0, "all": 281492200.0, "r30": 6, "me": false}, {"slug": "sky-lending", "n": "Sky Lending", "c": "Ethereum", "h24": 195619.0, "d30": 5291788.0, "all": 168662743.0, "r30": 7, "me": false}, {"slug": "bonk.fun-launchpad", "n": "BONK.fun Launchpad", "c": "Solana", "h24": 91514.0, "d30": 5285567.0, "all": 42760239.0, "r30": 8, "me": false}, {"slug": "chainlink-staking", "n": "Chainlink Staking", "c": "Services", "h24": 0.0, "d30": 4394742.0, "all": 68077987.0, "r30": 9, "me": false}], "total": 1087}, "chain": {"pons": {"burned": 319563819.24, "supply": 1000000000.0, "pct": 31.96, "addr": "0x000000000000000000000000000000000000dEaD", "explorer": "https://robinhoodchain.blockscout.com/token/0x39dBED3a2bd333467115dE45665cC57F813C4571", "src": "Robinhood Chain RPC · 死地址余额"}, "stonkfun": {"burned": 196746907.27, "supply": 1000000000.0, "pct": 19.67, "addr": "6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx", "explorer": "https://solscan.io/token/6GmAFSYs4gk3FDao5FzzySQpPZaWsa4rUJHacpMpUNgx", "src": "Solana RPC · 初始 10 亿 − 当前供应"}}, "market": {"pons": {"mcap": 279991686.84, "vol24h": 38391525.54, "price": 0.411473}, "stonkfun": {"mcap": 159187281.75, "vol24h": 13064411.93, "price": 0.198056}, "pumpfun": {"mcap": 2959380936.82, "vol24h": 343743190.11, "price": 0.00637752, "s7": 8145374.0, "s30": 24866567.0}}}};
-const DASH_VER = 'v2.9 · 2026-10-04';
+const BUNDLE = /*__DATA__*/;
+const DASH_VER = /*__VER__*/ 'v1.0';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -1355,28 +1126,6 @@ zh:{
   bgmTip:'🔊 行情BGM 已开启 · 点右下角可静音',
   bgmWait:'还没开始 · 碰一下页面就响',
   bgmSev24:'近 24 小时',
-  secBurn:'回购与销毁 · 真金白银烧掉多少',
-  burnSub:u=>'链上现读 · 数据源：Robinhood Chain / Solana 链上接口 + DefiLlama 全站回购榜'+(u?' · 快照 '+u:''),
-  burnLink:'链上记录 ↗',
-  burnBurned:'已销毁',
-  burnPctOf:'占总量',
-  burnValue:'按现价折算',
-  burn30d:'近 30 天回购',
-  burnYield:'回购年化收益率',
-  burnVolShare:'回购占成交 (7日)',
-  burnSrcPons:'链上现读：Robinhood Chain RPC · 死地址 balanceOf',
-  burnSrcStonk:'链上现读：Solana RPC · 初始 10 亿 − 当前总供应',
-  burnPeersH:n=>'回购强度榜 · 全行业近 30 天回购金额（共 '+n+' 个协议，已剔除「烧 gas」的公链）',
-  burnPeers24:'24h ',
-  burnCmpCol2:'30 天回购', burnCmpCol3:'回购 ÷ 成交额', burnCmpCol4:'回购 ÷ 市值（年化）',
-  burnNoteH:'回购到底能不能托住价格？把三个项目放到同一把尺子上',
-  burnFoot:'口径：链上余额/供应量为 RPC 现读，回购金额来自 DefiLlama holders-revenue；「年化」是按最近 30 天速度的线性外推，不是承诺。一家一周的数据说明不了趋势，请连着看。',
-  burnBody:o=>'<ul>'
-   +'<li><b>论托底力度（回购 ÷ 成交额，近 7 日）：</b>StonkFun <b class="hl">'+o.stonkVs+'</b> &gt; Pons <b class="hl">'+o.ponsVs+'</b> &gt; pump.fun <b class="hl">'+o.pfVs+'</b>。StonkFun 的回购力度是 pump.fun 的 <b>'+o.timesVs+'</b>，可它这一周在跌；pump.fun 的比值最低，价格反而在高位。<b>回购不是价格的开关。</b></li>'
-   +'<li><b>论供给收缩（回购 ÷ 市值，年化）：</b>StonkFun <b class="hl">'+o.stonkYd+'</b>、Pons <b class="hl">'+o.ponsYd+'</b>、pump.fun <b class="hl">'+o.pfYd+'</b>。按最近 30 天的速度外推，这两家一年买回的筹码相当于市值的很大一块 —— 这才是回购真正的价值：<b>慢变量，但会累积</b>。</li>'
-   +'<li><b>那 pump.fun 凭什么涨？</b>它一天成交 <b>'+o.pfVol+'</b>，是 Pons 的 <b>'+o.pfVolX+'</b>，涨在<b>需求、注意力和流动性</b>，不在回购。同一个道理反过来看：StonkFun 跌，不是回购停了（近 7 日回购 <b>'+o.stonk7+'</b>，一天没落），而是<b>卖盘比买盘急</b>。</li>'
-   +'<li><b>真正不可逆的是销毁：</b>Pons 已把 <b class="hl">'+o.ponsPct+'</b> 的总量送进死地址，StonkFun 已销毁 <b class="hl">'+o.stonkPct+'</b>。这部分筹码永远回不来。一句话：<b>回购是买盘，会被卖盘吃掉；销毁是抽走供给，永久生效。</b></li>'
-   +'</ul><div class="bb-foot">'+o.foot+'</div>',
   safeLine:'<b>只读数据面板</b> · 不连接钱包 · 不请求签名 · 不发起任何交易<span class="sf-sep">　|　</span>数据全部来自公开接口',
   foot1:'数据源：收入/回购＝DefiLlama（fees/revenue/holders-revenue API）；成交额/市值＝CoinGecko。Pons 收入=协议留存收入（创作者与 Uniswap 分成已扣除）；StonkFun 收入=其自留交易费（费用=收入）。P/S 年化 = 市值 ÷ (日均收入 × 365)，越低越便宜。参照系：pump.fun 30 日收入 $4,528 万、市值 $24.6 亿 → 4.45x。',
   foot2:'规则阈值：Pons 日收入 7 日均 &lt; $10 万＝离场，&lt; $15 万＝暂停加仓；StonkFun &lt; $20 万＝离场，&lt; $28 万＝暂停加仓。本面板仅为研究工具，不构成投资建议。'
@@ -1570,28 +1319,6 @@ en:{
   bgmTip:'🔊 Market BGM is on · tap the corner chip to mute',
   bgmWait:'Not started · tap the page to start',
   bgmSev24:'last 24h',
-  secBurn:'Buybacks & burns · how much was really retired',
-  burnSub:u=>'Read live from chain · Sources: Robinhood Chain / Solana RPC + DefiLlama industry buyback ranking'+(u?' · snapshot '+u:''),
-  burnLink:'On-chain ↗',
-  burnBurned:'burned',
-  burnPctOf:'of total supply',
-  burnValue:'at current price',
-  burn30d:'buyback, last 30d',
-  burnYield:'buyback yield (ann.)',
-  burnVolShare:'buyback ÷ volume (7d)',
-  burnSrcPons:'Read live: Robinhood Chain RPC · dead-address balanceOf',
-  burnSrcStonk:'Read live: Solana RPC · 1B initial − current supply',
-  burnPeersH:n=>'Buyback intensity · last 30 days across all protocols ('+n+' included; gas-burning chains excluded)',
-  burnPeers24:'24h ',
-  burnCmpCol2:'30d buyback', burnCmpCol3:'buyback ÷ volume', burnCmpCol4:'buyback ÷ mcap (ann.)',
-  burnNoteH:'Can buybacks actually hold the price? All three on one ruler',
-  burnFoot:'Method: on-chain balances/supply read live from RPC, buyback amounts from DefiLlama holders-revenue. "Annualised" is a linear extrapolation of the last 30 days — not a promise. One week of data is not a trend; watch it over time.',
-  burnBody:o=>'<ul>'
-   +'<li><b>Support strength (buyback ÷ volume, last 7 days):</b> StonkFun <b class="hl">'+o.stonkVs+'</b> &gt; Pons <b class="hl">'+o.ponsVs+'</b> &gt; pump.fun <b class="hl">'+o.pfVs+'</b>. StonkFun is buying back <b>'+o.timesVs+'</b> as hard as pump.fun, yet it fell this week; pump.fun has the weakest ratio and still trades near highs. <b>A buyback is not the price switch.</b></li>'
-   +'<li><b>Supply shrink (buyback ÷ market cap, annualised):</b> StonkFun <b class="hl">'+o.stonkYd+'</b>, Pons <b class="hl">'+o.ponsYd+'</b>, pump.fun <b class="hl">'+o.pfYd+'</b>. Extrapolated from the last 30 days, these two repurchase a large slice of their market cap every year — that is what a buyback is really worth: <b>a slow variable that compounds</b>.</li>'
-   +'<li><b>So why does pump.fun climb?</b> Its daily volume is <b>'+o.pfVol+'</b>, or <b>'+o.pfVolX+'</b> Pons. It climbs on <b>demand, attention and liquidity</b>, not on buybacks. The same logic runs in reverse: StonkFun falls not because buybacks stopped (7-day buyback <b>'+o.stonk7+'</b>, unbroken) but because <b>sellers are in more of a hurry than buyers</b>.</li>'
-   +'<li><b>The only irreversible part is the burn:</b> Pons has sent <b class="hl">'+o.ponsPct+'</b> of supply to the dead address and StonkFun has burned <b class="hl">'+o.stonkPct+'</b>. Those coins never come back. In one line: <b>a buyback is a bid — sellers can eat it; a burn removes supply — for good.</b></li>'
-   +'</ul><div class="bb-foot">'+o.foot+'</div>',
   safeLine:'<b>Read-only dashboard</b> · no wallet connection · no signatures · no transactions<span class="sf-sep">　|　</span>all data from public APIs',
   foot1:'Sources: revenue/buyback = DefiLlama (fees / revenue / holders-revenue APIs); volume & market cap = CoinGecko. Pons revenue = protocol-retained revenue (creator and Uniswap splits already deducted); StonkFun revenue = its retained trading fees (fees = revenue). Annualized P/S = mcap ÷ (daily revenue × 365), lower is cheaper. Reference point: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
   foot2:'Thresholds: Pons 7-day avg revenue &lt; $100K = exit, &lt; $150K = pause buying; StonkFun &lt; $200K = exit, &lt; $280K = pause buying. Research tool only — not investment advice.'
@@ -1742,7 +1469,7 @@ function stats(rows, p){
   return {price7, priceChg7, burnDays, streakUp, streakDown, dailyRate, daysToWarn,
     last, lag, lastDate, holdLast, holdLastDate, winFrom, winTo, avg7, avg7p, avg30, holdSum7, peak, peakDay, lastRev:rev[last],
     psv: priceNow, mcap, ps7: avg7>0? mcap/(avg7*365):null, ps30: avg30>0? mcap/(avg30*365):null,
-    retrace, slope, ath, priceArr, burnPct: burnOf(p).pct/100, burnAmt: burnOf(p).burned, rows,
+    retrace, slope, ath, priceArr, burnPct: p.burned/p.maxSupply, rows,
     vol24, volChange: (mk.change24h ?? null), turnover, burnForce, burnYield};
 }
 
@@ -1752,7 +1479,6 @@ function renderStatic(){
   var _sl = document.getElementById('safeTxt'); if(_sl) _sl.innerHTML = t('safeLine');
   document.getElementById('st-rules').textContent = t('secRules');
   document.getElementById('st-rank').textContent = t('secRank');
-  var _sb = document.getElementById('st-burn'); if(_sb) _sb.textContent = t('secBurn');
   document.getElementById('st-chart').textContent = t('secChart');
   document.getElementById('st-table').textContent = t('secTable');
   document.getElementById('st-guide').textContent = t('secGuide');
@@ -1940,114 +1666,6 @@ function renderRank(){
   }
 }
 
-/* ---------- 回购与销毁：链上真实烧毁量 + 全行业回购强度（work/buyback.py 现读） ---------- */
-function burnBundle(){ return DATA.burn || BUNDLE.burn || null; }
-function burnOf(p){
-  const c=(burnBundle()&&burnBundle().chain)||{};
-  const d=c[p.id]||{};
-  const burned=(d.burned!=null)? d.burned : p.burned;
-  const supply=(d.supply!=null)? d.supply : p.maxSupply;
-  return {burned:burned, supply:supply, pct:(supply>0)? burned/supply*100 : 0,
-          addr:d.addr||null, explorer:d.explorer||null};
-}
-function burnStats(){
-  const out={}, rows=build();
-  PROJECTS.forEach(function(p){
-    const hold=rows.map(function(r){ return r[p.id+'_hold']; });
-    let last=-1;
-    for(let i=0;i<rows.length;i++){ if(hold[i]!==null && hold[i]!==undefined) last=i; }
-    if(last<0) last=rows.length-1;
-    let s7=0; for(let i=Math.max(0,last-6);i<=last;i++) s7+=hold[i]||0;
-    let s30=0,n30=0;
-    for(let i=Math.max(0,last-29);i<=last;i++){ if(hold[i]!==null && hold[i]!==undefined){ s30+=hold[i]||0; n30++; } }
-    const mk=(DATA.market||{})[p.id]||{};
-    const b=burnOf(p);
-    const mcap=mk.mcap || (DATA.meta[p.id]||{}).mcap || p.mcapFallback || 0;
-    const price=(DATA.price&&DATA.price[p.id])||mk.price||(b.supply? mcap/b.supply : 0);
-    out[p.id]={s7:s7, s30:s30, mcap:mcap, price:price, vol:mk.vol24h||0,
-      volShare:(mk.vol24h>0)? s7/(mk.vol24h*7) : null,
-      yield30:(mcap>0&&n30)? (s30/n30*365)/mcap : null};
-  });
-  return out;
-}
-function pctS(v){ return (v===null||v===undefined||isNaN(v))?'—':(v*100).toFixed(2)+'%'; }
-
-function renderBurn(){
-  const sec=document.getElementById('st-burn'); if(!sec) return;
-  const bd=burnBundle(), sub=document.getElementById('burnSub'), cards=document.getElementById('burnCards');
-  const ph=document.getElementById('burnPeersH'), pl=document.getElementById('burnPeers'), note=document.getElementById('burnNote');
-  if(!bd || !bd.chain){
-    [sec,sub,cards,ph,pl,note].forEach(function(el){ if(el) el.style.display='none'; });
-    return;
-  }
-  [sec,sub,cards,ph,pl,note].forEach(function(el){ if(el) el.style.display=''; });
-  const st=burnStats(), peers=(bd.peers&&bd.peers.rows)||[], total=(bd.peers&&bd.peers.total)||0;
-  const bmk=bd.market||{};
-  if(sub) sub.textContent=t('burnSub')(new Date(DATA.generated||BUNDLE.generated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'));
-
-  if(cards) cards.innerHTML=PROJECTS.map(function(p){
-    const b=burnOf(p), s=st[p.id]||{}, d=(bd.chain||{})[p.id]||{};
-    const usd=b.burned*(s.price||0);
-    const fill=Math.max(0,Math.min(100,b.pct));
-    const link=d.explorer? '<a class="bn-link" href="'+d.explorer+'" target="_blank" rel="noopener">'+t('burnLink')+'</a>' : '';
-    const addr=b.addr? (b.addr.length>20? b.addr.slice(0,10)+'…'+b.addr.slice(-6) : b.addr) : '';
-    return '<div class="burn-card" style="--bc:'+p.color+'">'
-      + '<div class="burn-head">'
-      +   '<span class="proj-name"><span class="dot" style="background:'+p.color+';color:'+p.color+'"></span>'+p.ticker+'</span>'
-      +   '<span class="bn-chain">'+esc(p.chain)+'</span>'+link
-      + '</div>'
-      + '<div class="burn-big">'+fmtN(b.burned/1e6,2)+'M<small>'+p.ticker+' '+t('burnBurned')+'</small></div>'
-      + '<div class="burn-bar"><i style="width:'+fill.toFixed(2)+'%"></i></div>'
-      + '<div class="burn-barcap"><span>'+t('burnPctOf')+' <b>'+b.pct.toFixed(2)+'%</b></span>'
-      +   '<span>'+t('burnValue')+' <b>'+fmtU(usd)+'</b></span></div>'
-      + '<div class="burn-kv">'
-      +   '<span><b>'+t('burn30d')+'</b><i>'+fmtU(s.s30)+'</i></span>'
-      +   '<span><b>'+t('burnYield')+'</b><i>'+pctS(s.yield30)+'</i></span>'
-      +   '<span><b>'+t('burnVolShare')+'</b><i>'+pctS(s.volShare)+'</i></span>'
-      + '</div>'
-      + '<div class="burn-src">'+t(p.id==='pons'?'burnSrcPons':'burnSrcStonk')+(addr?' · <code>'+addr+'</code>':'')+'</div>'
-      + '</div>';
-  }).join('');
-
-  if(ph) ph.innerHTML='<span class="rh-t">'+t('burnPeersH')(fmtN(total,0))+'</span>';
-  if(pl) pl.innerHTML=peers.map(function(x){
-    return '<div class="bb-row'+(x.me?' me':'')+'">'
-      + '<span class="bb-rank">#'+x.r30+'</span>'
-      + '<span class="bb-name">'+esc(x.n)+(x.me?' <em class="rr-me">'+t('rankMe')+'</em>':'')+'</span>'
-      + '<span class="bb-sub">'+esc(x.c)+' · '+t('burnPeers24')+fmtU(x.h24)+'</span>'
-      + '<span class="bb-val mono">'+fmtU(x.d30)+'</span></div>';
-  }).join('');
-
-  if(note){
-    const bySlug={}; peers.forEach(function(x){ bySlug[x.slug]=x; });
-    const pf=bySlug['pump.fun']||{d30:0,h24:0};
-    const pfk=bmk.pumpfun||{};
-    const po=st.pons||{}, sk=st.stonkfun||{};
-    const pfVs=(pfk.vol24h>0 && pfk.s7)? pfk.s7/(pfk.vol24h*7) : null;
-    const pfYd=(pfk.mcap>0 && pfk.s30)? (pfk.s30/30*365)/pfk.mcap : null;
-    const times=(pfVs>0 && sk.volShare)? (sk.volShare/pfVs).toFixed(0)+'×' : '—';
-    const rowsCmp=[
-      {n:'StonkFun', c:'var(--stonk)', s30:sk.s30, vs:sk.volShare, yd:sk.yield30, me:1},
-      {n:'Pons',     c:'var(--pons)',  s30:po.s30, vs:po.volShare, yd:po.yield30, me:1},
-      {n:'pump.fun', c:'var(--mut)',   s30:pf.d30, vs:pfVs,         yd:pfYd,       me:0}
-    ];
-    const tbl='<table class="bb-tbl"><thead><tr><th></th><th>'+t('burnCmpCol2')+'</th><th>'+t('burnCmpCol3')
-      +'</th><th>'+t('burnCmpCol4')+'</th></tr></thead><tbody>'
-      + rowsCmp.map(function(r){
-          return '<tr'+(r.me?' class="me"':'')+'><td><span class="dot" style="background:'+r.c+';color:'+r.c
-            +';display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px"></span>'+r.n+'</td>'
-            +'<td>'+fmtU(r.s30)+'</td><td>'+pctS(r.vs)+'</td><td>'+pctS(r.yd)+'</td></tr>';
-        }).join('')
-      +'</tbody></table>';
-    const o={stonkVs:pctS(sk.volShare), ponsVs:pctS(po.volShare), pfVs:pctS(pfVs), timesVs:times,
-      stonkYd:pctS(sk.yield30), ponsYd:pctS(po.yield30), pfYd:pctS(pfYd),
-      pfVol:fmtU(pfk.vol24h), pfVolX:(pfk.vol24h&&po.vol)? (pfk.vol24h/po.vol).toFixed(0)+'×' : '—',
-      stonk7:fmtU(sk.s7), ponsPct:burnOf(PROJECTS[0]).pct.toFixed(2)+'%', stonkPct:burnOf(PROJECTS[1]).pct.toFixed(2)+'%',
-      foot:t('burnFoot')};
-    note.innerHTML='<div class="bb-h">'+t('burnNoteH')+'</div>'+tbl+t('burnBody')(o);
-  }
-}
-
 /* ---------- render cards ---------- */
 function renderCards(){
   const rows = build();
@@ -2067,7 +1685,7 @@ function renderCards(){
       <div class="proj-head">
         <div>
           <div class="proj-name"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span>${s.lag>0? `<span class="lagtag" title="${t('lagTip')}">${t('lagBadge')(s.lag)}</span>`:''}</div>
-          <div style="color:var(--mut);font-size:11.5px;margin-top:3px">${p.chain} · ${t('burned')}${(s.burnPct*100).toFixed(1)}% (${fmtN(s.burnAmt/1e6,1)}M ${p.ticker})</div>
+          <div style="color:var(--mut);font-size:11.5px;margin-top:3px">${p.chain} · ${t('burned')}${(s.burnPct*100).toFixed(1)}% (${fmtN(p.burned/1e6,1)}M ${p.ticker})</div>
         </div>
         <div class="price">
           <div class="p mono" id="px-${p.id}">$${fmtN(s.psv,4)}</div>
@@ -2675,7 +2293,7 @@ function loadViews(){
 }
 
 function renderAll(){
-  [renderCards, renderRules, renderRank, renderBurn, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
+  [renderCards, renderRules, renderRank, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

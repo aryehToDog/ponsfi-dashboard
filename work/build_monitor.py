@@ -107,6 +107,20 @@ def fetch_bundle():
                 bundle["leaderboard"] = old["leaderboard"]
         except Exception:
             pass
+    # 回购 / 销毁：链上真实烧毁量 + 全行业回购强度（见 buyback.py）
+    try:
+        from buyback import fetch_burn
+        old_burn = (json.load(open(OUT_JSON, encoding="utf-8")) or {}).get("burn")
+    except Exception:
+        fetch_burn = None
+        old_burn = None
+    if fetch_burn:
+        try:
+            bundle["burn"] = fetch_burn(old_burn)
+        except Exception as exc:
+            errors.append(f"buyback: {exc}")
+    if not bundle.get("burn") and old_burn:
+        bundle["burn"] = old_burn
     return bundle, errors
 
 

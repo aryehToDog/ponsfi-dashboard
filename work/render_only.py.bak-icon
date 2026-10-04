@@ -9,29 +9,6 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
-     ponsfi.xyz 看板 · 版本 v2.9「回购与销毁」 · 2026-10-04
-     【这一版改了什么】把 hyperleaf.finance/app/buybacks 的那套「回购 / 销毁」数据搬了进来，
-       而且比它更准（它 PONS 那栏的销毁量是空的，我们是链上现读）：
-       · 新板块「回购与销毁 · 真金白银烧掉多少」，位置在「收入排行」和「趋势图」之间
-         ① 两张销毁卡：PONS 死地址余额 319.55M（占总量 31.96%）、
-            STONK 初始 10 亿 − 当前供应 = 196.73M（19.67%）—— 都是 RPC 现读，带区块浏览器链接
-         ② 回购强度榜：DefiLlama 全站 1087 个协议里，Pons 30 天回购 $16.96M 排第 3、
-            StonkFun $14.43M 排第 5（已剔除把「烧 gas」当销毁的公链）
-         ③ 把「回购能不能托住价格」做成数据对比，不再是一句「杯水车薪」：
-            同一把尺子量三个项目（30 天回购 / 回购÷成交额 / 回购÷市值年化），
-            数据来自 work/buyback.py；结论：回购是慢变量，决定底部不决定短期涨跌
-       · 数据管道：buyback.py 新增 CoinGecko 市值/成交额 + pump.fun 的 7 日/30 日回购序列，
-         每日心跳跑 build_monitor.py 时会自动带上 burn 字段（失败则沿用上一份快照）
-       · 卡片上的「已销毁 %」也从写死的数字改成读链上实时值
-     ---------------------------------------------------------------------------
-     ponsfi.xyz 看板 · 版本 v2.8「品牌图标」 · 2026-10-04
-     【这一版改了什么】换掉了浏览器标签页上的「地球」占位图标 —— 之前 <link rel="icon" href="data:,">
-       是空图标，所以浏览器只能显示地球。现在换成正式 logo：深色圆角方块 + 紫(#8b7cff)→绿(#2ee6a8)
-       渐变的「P」字标（紫=Pons，绿=StonkFun，正好对上站内两个协议的主色）。
-       · 全部内嵌为 data URI（SVG 主图标 + 32px PNG 兜底 + 180px 苹果触屏图标），不新增任何文件
-       · 同时补了 <meta name="theme-color" content="#0a0c11">，手机浏览器地址栏跟着变深色
-       · 源文件：work/brand/logo.svg、logo-16/32/180/512.png（改完跑 work/brand/embed_icon.py 重新内嵌）
-     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v2.5「只读声明」 · 2026-10-03
      【为什么做这一版】用户在 X / 钱包内置浏览器里打开 ponsfi.xyz，被拦了两次：
        ① MetaMask Phishing Protection：「This website might be harmful」
@@ -153,10 +130,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v2.9-2026-10-04">
+<meta name="dashboard-version" content="v2.5-2026-10-03">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v2.9 · 2026-10-04"
+VER = "v2.5 · 2026-10-03"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

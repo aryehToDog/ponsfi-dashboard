@@ -1,7 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""从 template.base.html 重新生成 template.html（作者名片 + 全新主题系统）。幂等，可反复运行。"""
+"""从 template.base.html 重新生成 template.html（作者名片 + 全新主题系统）。幂等，可反复运行。
+
+⚠️ 2026-10-04 起默认拒绝执行：template.base.html 停更在 v1.5 前后，跑一次就会把
+   v1.3 之后的板块（收入排行 / 回购销毁 / BGM / 横幅歌词 / 共勉 / 浏览计数…）整段抹掉。
+   现在 work/template.html 才是唯一母版，直接改它。真要重建：PONSFI_ALLOW_REBUILD=yes 再跑。
+"""
 import os, re, base64
+import sys
+
+if os.environ.get("PONSFI_ALLOW_REBUILD") != "yes":
+    sys.exit(
+        "⚠️ 已停用：rebuild_template.py 会把 template.html 回退到 v1.5 的结构，\n"
+        "   丢掉收入排行 / 回购销毁 / BGM / 歌词 / 共勉 / 浏览计数等板块。\n"
+        "   → 现在请直接改 work/template.html（改前先备份 .bak-xxx），再跑 render_only.py。\n"
+        "   → 确实要从 base 重建：PONSFI_ALLOW_REBUILD=yes python3 work/rebuild_template.py"
+    )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.join(HERE, "template.base.html")

@@ -221,9 +221,13 @@ def sf_series(buckets):
         gap = b["ts"] - a["ts"]
         if gap <= 0 or gap > 2.5 * 3600:
             continue
-        bucket = int(b["ts"] // 3600 * 3600)
+        # 差值覆盖的是 a → b 这一段，标在 a 所在的小时更符合直觉
+        # （「16:00 那根柱子」= 16 点这一小时大概发生了什么）
+        bucket = int(a["ts"] // 3600 * 3600)
         if bucket not in rev:
-            continue
+            bucket = int(b["ts"] // 3600 * 3600)
+            if bucket not in rev:
+                continue
         dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
         db = (b.get("burnTokens") or 0) - (a.get("burnTokens") or 0)
         if dr >= 0:

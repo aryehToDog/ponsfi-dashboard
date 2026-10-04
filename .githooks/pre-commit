@@ -1,0 +1,35 @@
+#!/bin/sh
+# 提交前防呆（2026-10-04 加）：挡住服务器密码 / 证件 / 登录脚本，避免再次进版本库
+# 内容检查排除 .githooks/*，否则钩子自己的检测规则会把钩子本身拦下。
+bad=0
+
+# 1) 文件名层面：登录脚本、证件照片
+if git diff --cached --name-only | grep -qE '身份证|证件|\.exp$'; then
+  echo "❌ 提交被拦下：里面有登录脚本（.exp）或证件类文件。" >&2
+  bad=1
+fi
+
+# 2) 内容层面：私钥
+if git diff --cached -U0 -- . ':(exclude).githooks/**' | grep -qE 'BEGIN (RSA|OPENSSH|EC|PGP) PRIVATE KEY'; then
+  echo "❌ 提交被拦下：内容里出现私钥。" >&2
+  bad=1
+fi
+
+# 3) 内容层面：expect 登录脚本特征（明文密码就写在 send 后面）
+if git diff --cached -U0 -- . ':(exclude).githooks/**' | grep -qiE '^\+.*send "[^"]+"'; then
+  echo "❌ 提交被拦下：像是 expect 登录脚本。" >&2
+  bad=1
+fi
+
+# 4) 内容层面：拿本机登录脚本里的真实密码做比对（脚本本身已被 .gitignore 排除）
+SECRET=$(grep -ho 'send "[^"]*"' work/*.exp 2>/dev/null | head -1 | sed 's/^send "//; s/"$//; s/\\r$//')
+if [ -n "$SECRET" ] && git diff --cached -U0 -- . ':(exclude).githooks/**' | grep -qF -- "$SECRET"; then
+  echo "❌ 提交被拦下：内容里出现服务器密码。" >&2
+  bad=1
+fi
+
+if [ "$bad" = 1 ]; then
+  echo "   （确认没问题可以 git commit --no-verify 绕过，但请三思）" >&2
+  exit 1
+fi
+exit 0

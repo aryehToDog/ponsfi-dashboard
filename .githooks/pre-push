@@ -1,0 +1,30 @@
+#!/bin/sh
+# 推送前防呆：待推送的提交里如果含密码 / 证件 / 登录脚本，直接拦下
+fail=0
+zero=0000000000000000000000000000000000000000
+SECRET=$(grep -ho 'send "[^"]*"' work/*.exp 2>/dev/null | head -1 | sed 's/^send "//; s/"$//; s/\\r$//')
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_sha" ] && continue
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" = "$zero" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+  if git log --format= --name-only "$range" | grep -qE '身份证|证件|\.exp$'; then
+    echo "❌ 推送被拦下：待推送提交里有登录脚本或证件文件。" >&2
+    fail=1
+  fi
+  if git log --format= -p "$range" -- . ':(exclude).githooks/**' | grep -qE 'BEGIN (RSA|OPENSSH|EC|PGP) PRIVATE KEY|send "[^"]+"'; then
+    echo "❌ 推送被拦下：待推送提交内容里有私钥或 expect 登录脚本。" >&2
+    fail=1
+  fi
+  if [ -n "$SECRET" ] && git log --format= -p "$range" -- . ':(exclude).githooks/**' | grep -qF -- "$SECRET"; then
+    echo "❌ 推送被拦下：待推送提交内容里出现服务器密码。" >&2
+    fail=1
+  fi
+done
+
+[ "$fail" = 1 ] && exit 1
+exit 0

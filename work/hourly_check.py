@@ -62,6 +62,14 @@ def main():
         log("上线失败：" + ((r.stderr or r.stdout or "")[-200:]).replace("\n", " "))
         return 1
     log("已上线 · 小时级数据已刷新")
+    try:
+        g = subprocess.run([sys.executable, os.path.join(HERE, "git_sync.py")],
+                           cwd=ROOT, capture_output=True, text=True, timeout=300)
+        out = (g.stdout or "").strip().splitlines()
+        if out:
+            log("GitHub 同步：" + out[-1][-200:])
+    except Exception as exc:
+        log("GitHub 同步异常：%s" % exc)
     return 0
 
 

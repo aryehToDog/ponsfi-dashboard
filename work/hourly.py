@@ -150,18 +150,41 @@ def sf_load_hist():
         return []
 
 
+def _sf_parse(body):
+    """中转返回的不一定是纯 JSON：jina 会加 "Title/URL Source/Markdown Content" 前缀，
+    所以先直解，失败就取第一个 "{" 开始的部分。"""
+    try:
+        return json.loads(body)
+    except Exception:
+        i = body.find('{"')
+        if i < 0:
+            raise
+        return json.loads(body[i:])
+
+
 def sf_fetch():
-    """返回官方 totals 快照 dict；失败返回 None（下一小时再试）。"""
+    """返回官方 totals 快照 dict；失败返回 None（下一小时再试）。
+
+    官方站点在 Vercel、国内直连被墙，靠海外中转取数。中转本身会抽风/限流
+    （allorigins、codetabs 实测经常 5xx），所以按"实测可用性"排序依次接力：
+    cors.lol（原样 JSON）→ r.jina.ai（带前缀，能解析）→ allorigins → codetabs。
+    """
+    q = urllib.parse.quote(SF_API, safe="")
     relays = [
-        "https://api.allorigins.win/raw?url=" + urllib.parse.quote(SF_API, safe=""),
-        "https://api.codetabs.com/v1/proxy?quest=" + urllib.parse.quote(SF_API, safe=""),
+        "https://api.cors.lol/?url=" + q,
+        "https://r.jina.ai/" + SF_API,
+        "https://api.allorigins.win/raw?url=" + q,
+        "https://api.codetabs.com/v1/proxy?quest=" + q,
     ]
     last = None
     for url in relays:
         for i in range(2):
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"})
-                j = json.load(urllib.request.urlopen(req, timeout=75))
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
+                                                           "Accept": "application/json,text/plain,*/*",
+                                                           "Connection": "close"})
+                body = urllib.request.urlopen(req, timeout=45).read().decode("utf-8", "replace")
+                j = _sf_parse(body)
                 t = j.get("totals") or {}
                 if t.get("totalRevenueUsd") is None:
                     raise RuntimeError("totals missing")

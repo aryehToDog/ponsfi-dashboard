@@ -305,13 +305,14 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .guide{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .gitem{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;
   box-shadow:var(--card-shadow);scroll-margin-top:78px}
-/* 从「?」跳过来时闪一下，让人一眼找到是哪一条 */
-.gitem:target{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
-  animation:gflash 1.9s ease-out 1}
-@keyframes gflash{
-  0%{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 45%,transparent),var(--card-shadow)}
-  100%{box-shadow:0 0 0 0 transparent,var(--card-shadow)}}
-.gitem.gflash{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));animation:gflash 1.9s ease-out 1}
+/* 从「?」跳过来时：外框高亮 + 呼吸脉冲约 4 秒，让人一眼锁定是哪一条（v3.7.4 增强） */
+.gitem:target,.gitem.gflash{border-color:color-mix(in srgb,var(--accent) 78%,var(--line));
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent),var(--card-shadow);
+  animation:gflashPulse 1.4s ease-in-out 3}
+@keyframes gflashPulse{
+  0%,100%{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent),var(--card-shadow)}
+  50%{box-shadow:0 0 0 9px color-mix(in srgb,var(--accent) 20%,transparent),var(--card-shadow)}}
+@media (prefers-reduced-motion:reduce){.gitem:target,.gitem.gflash{animation:none}}
 .gitem h3{margin:0 0 5px;font-size:13px;font-weight:600;letter-spacing:-.1px}
 .gitem .f{font-size:10.5px;color:var(--mut2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   margin-bottom:10px;word-break:break-all}
@@ -3027,7 +3028,7 @@ function guideScrollTo(id, delay){
   var go = function(){
     try{ el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ el.scrollIntoView(); }
     el.classList.remove('gflash'); void el.offsetWidth; el.classList.add('gflash');
-    setTimeout(function(){ el.classList.remove('gflash'); }, 2100);
+    setTimeout(function(){ el.classList.remove('gflash'); }, 4300);
   };
   if(delay) setTimeout(go, delay); else go();
 }

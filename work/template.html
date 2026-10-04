@@ -994,9 +994,9 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:13px}
 .hourly-sum>div{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 11px}
 .hourly-sum .k{font-size:10.5px;color:var(--mut);margin-bottom:5px;letter-spacing:.2px}
-/* 汇总卡：两家并列一行、不要椭圆框；数字与代币名字号一致，仅靠颜色区分 */
-.hourly-sum .v{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:14px;row-gap:1px;
-  font-size:13.5px;font-weight:700;font-family:var(--font-num);letter-spacing:-.2px;line-height:1.55}
+/* 汇总卡：两家上下两行（一行时两组数字挨太近、不好区分）；不要椭圆框；数字与代币名字号一致，仅靠颜色区分 */
+.hourly-sum .v{display:flex;flex-direction:column;align-items:flex-start;row-gap:1px;
+  font-size:13.5px;font-weight:700;font-family:var(--font-num);letter-spacing:-.2px;line-height:1.5}
 .hourly-sum .v .pair{display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap}
 .hourly-sum .v .pair i{font-style:normal;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--mut2)}
 .hourly-sum .v .pair.p b{color:var(--pons)}

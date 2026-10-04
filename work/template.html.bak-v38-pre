@@ -89,7 +89,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;height:360px;pointer
 .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
 
 /* ---------- 页头 ---------- */
-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:var(--sp-card)}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 h1{font-size:15.5px;margin:0;font-weight:600;letter-spacing:-.1px}
 h1 span{color:var(--mut);font-weight:400;font-size:11.5px;margin-left:9px;letter-spacing:0}
 .hdr-right{display:flex;align-items:center;gap:8px}
@@ -104,27 +104,13 @@ button:hover{background:var(--panel3)}
 button:active{transform:translateY(1px)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* ---------- 安全说明条（原「只读数据面板…」一行）----------
-   之前这一行没有任何样式：贴着页头、又和下方卡片贴成 0 间距。v3.8 起做成一条
-   克制的信任提示条：绿色细边 = 安全语义，只在左缘点一笔，不抢主体卡片。 */
-.safe-line{position:relative;display:flex;align-items:center;gap:9px;flex-wrap:wrap;
-  margin:0 0 var(--sp-card);padding:10px 15px 10px 18px;border-radius:12px;
-  font-size:var(--fs-11);line-height:1.75;color:var(--mut);letter-spacing:.1px;
-  background:linear-gradient(90deg,color-mix(in srgb,var(--up) 10%,transparent),transparent 62%),var(--panel);
-  border:1px solid var(--line)}
-.safe-line::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;
-  border-radius:0 3px 3px 0;background:var(--up);opacity:.62}
-.safe-line .sf-ic{flex:0 0 auto;font-size:var(--fs-12);line-height:1}
-.safe-line b{color:var(--txt);font-weight:700}
-.safe-line .sf-sep{color:var(--line2)}
-
 /* ---------- 栅格与卡片 ---------- */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-card)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
   box-shadow:var(--card-shadow)}
 .card,.rule,.gitem,.chartbox,.cmp-head .col{transition:background .25s ease,border-color .25s ease}
 
-.proj-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:var(--sp-block)}
+.proj-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:13px}
 .proj-name{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;letter-spacing:-.1px}
 /* 小圆点 = 实时状态灯（v3.7）：呼吸微缩放 + 双层雷达扩散圈，颜色跟随代币主色 currentColor */
 .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;position:relative;display:inline-block;
@@ -147,7 +133,7 @@ button:active{transform:translateY(1px)}
 
 /* ---------- 指标格 ---------- */
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:var(--sp-block)}
+  border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:12px}
 .kv>div{background:var(--panel2);padding:9px 11px}
 .kv .k{font-size:10.5px;color:var(--mut);margin-bottom:4px;letter-spacing:.2px}
 .kv .v{font-size:14px;font-weight:600;letter-spacing:-.2px}
@@ -169,7 +155,7 @@ button:active{transform:translateY(1px)}
 
 /* ---------- 段落标题（右侧引一条细线） ---------- */
 .sec-title{display:flex;align-items:center;gap:11px;font-size:11.5px;color:var(--mut);
-  margin:var(--sp-sec) 0 var(--sp-block);letter-spacing:.6px;font-weight:600;text-transform:uppercase}
+  margin:26px 0 12px;letter-spacing:.6px;font-weight:600;text-transform:uppercase}
 .sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
 
 /* ---------- 指标说明：标题行即折叠开关（v3.7） ---------- */
@@ -191,7 +177,7 @@ button:active{transform:translateY(1px)}
 @media (prefers-reduced-motion:reduce){.guide-wrap,.guide-wrap .glegend,.guide-wrap .guide{transition:none}}
 
 /* ---------- 标签页 ---------- */
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--sp-block)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .tab{padding:6px 14px;border-radius:9px;border:1px solid var(--line);background:var(--panel);
   color:var(--mut);cursor:pointer;font-size:12px;font-weight:600;transition:.16s}
 .tab:hover{color:var(--txt);border-color:var(--line2)}
@@ -263,7 +249,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 /* ---------- 规则引擎 ---------- */
 .rules{display:flex;flex-direction:column;gap:16px}
-.rule-legend{display:flex;gap:20px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);margin:0 0 var(--sp-block);line-height:1.6}
+.rule-legend{display:flex;gap:20px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);margin:0 0 12px;line-height:1.6}
 .rule-legend .lg{display:flex;align-items:center;gap:7px}
 .tag{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:6px;white-space:nowrap;flex:0 0 auto;letter-spacing:.5px}
 .tag.ok{background:var(--ok-bg);color:var(--ok-txt);border:1px solid var(--ok-line)}
@@ -316,7 +302,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .rule.sum .act{color:var(--txt);border-color:var(--line2)}
 
 /* ---------- 指标说明 ---------- */
-.guide{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-card)}
+.guide{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .gitem{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;
   box-shadow:var(--card-shadow);scroll-margin-top:78px}
 /* 从「?」跳过来时：外框高亮 + 呼吸脉冲约 4 秒，让人一眼锁定是哪一条（v3.7.4 增强） */
@@ -330,9 +316,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .gitem h3{margin:0 0 5px;font-size:13px;font-weight:600;letter-spacing:-.1px}
 .gitem .f{font-size:10.5px;color:var(--mut2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   margin-bottom:10px;word-break:break-all}
-.gitem .lead{font-size:12px;color:var(--mut);line-height:1.8;margin:0 0 var(--sp-block)}
+.gitem .lead{font-size:12px;color:var(--mut);line-height:1.8;margin:0 0 11px}
 .gitem .ex{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;
-  font-size:11.5px;line-height:2;margin-bottom:var(--sp-block);word-break:break-word}
+  font-size:11.5px;line-height:2;margin-bottom:11px;word-break:break-word}
 .gitem .ex b{color:var(--txt)}
 .gitem .ex .cap{color:var(--mut2);font-size:10.5px;letter-spacing:.3px;margin-bottom:4px}
 .gitem ul{margin:0;padding-left:0;list-style:none;font-size:11.5px;line-height:1.95;color:var(--mut)}
@@ -343,7 +329,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .gitem .g-ok{color:var(--up)} .gitem .g-warn{color:var(--warn)} .gitem .g-bad{color:var(--down)}
 
 /* ---------- 页脚 ---------- */
-.foot{color:var(--mut2);font-size:11px;margin-top:var(--sp-sec);line-height:1.85;max-width:1080px}
+.foot{color:var(--mut2);font-size:11px;margin-top:28px;line-height:1.85;max-width:1080px}
 .foot a{color:var(--accent);text-decoration:none;font-weight:600;border-bottom:1px solid var(--pons-dim)}
 .foot a:hover{border-bottom-color:var(--accent)}
 .foot .foot-author{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:7px 12px;
@@ -475,9 +461,6 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
 @media(max-width:680px){
   body{font-size:12.5px}
   .wrap{padding:14px 14px 52px}
-  /* 手机端安全条会折成 2~3 行：收紧内边距，别把主卡挤下去 */
-  .safe-line{padding:8px 12px 8px 15px;gap:7px;line-height:1.6}
-  .safe-line .sf-sep{display:none}
   .kv{grid-template-columns:repeat(2,1fr)}
   .kv .v{font-size:13.5px}
   .price .p{font-size:18px}
@@ -487,7 +470,7 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   .author-bio{display:none}
   .author-acts{margin-left:0;width:100%}
   .author-acts>*{flex:1 1 0;justify-content:center;padding:10px 14px}
-  .sec-title{margin:22px 0 var(--sp-block)}
+  .sec-title{margin:22px 0 10px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
@@ -499,12 +482,6 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
   --font-num:ui-monospace,SFMono-Regular,"SF Mono",Menlo,"Roboto Mono",monospace;
   --fs-11:11.5px; --fs-12:12.5px; --fs-13:13.5px; --fs-14:15px; --fs-16:16.5px; --fs-20:21px;
-  /* 间距标尺 v3.8（4px 基准）—— 全站统一走这套，避免各处 9/10/11/13/18 乱跳 */
-  --sp-sec:28px;    /* 大段落之间：上个模块 → 下个模块标题 */
-  --sp-card:16px;   /* 卡片 / 栅格之间、页头下方 */
-  --sp-block:12px;  /* 段落标题 → 内容、控件 → 内容 */
-  --sp-tight:10px;  /* 段落内紧邻元素（副标题、小控件、表头） */
-  --sp-in:9px;      /* 卡片内部小间距（键值、脚注） */
 }
 body{font-family:var(--font-ui);font-size:var(--fs-13);line-height:1.62;
   font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
@@ -560,7 +537,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .gitem .f .hi{color:var(--accent)}
 .gitem .lead .hi,.gitem .note .hi,.gitem .ex .hi{color:var(--txt)}
 /* 指标说明：颜色图例 */
-.glegend{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 var(--sp-block);font-size:var(--fs-11);color:var(--mut)}
+.glegend{display:flex;gap:16px;flex-wrap:wrap;margin:-2px 0 12px;font-size:var(--fs-11);color:var(--mut)}
 .glegend span{display:inline-flex;align-items:center;gap:6px}
 .glegend i{width:24px;height:8px;border-radius:3px;display:inline-block}
 .glegend .sw-hl{background:linear-gradient(transparent 46%,color-mix(in srgb,var(--accent) 40%,transparent) 0);
@@ -571,9 +548,9 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 
 /* ---------- 一句话结论卡（放在信号区最上面） ---------- */
 .summary{background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--accent);
-  border-radius:14px;padding:14px 16px;margin-bottom:var(--sp-card);
+  border-radius:14px;padding:14px 16px;margin-bottom:14px;
   box-shadow:var(--card-shadow),0 18px 40px -34px rgba(0,0,0,.9)}
-.summary .sum-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:var(--sp-tight)}
+.summary .sum-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .summary .sum-badge{font-size:var(--fs-11);font-weight:700;letter-spacing:.5px;
   color:var(--cta-fg);background:var(--cta-bg);padding:3px 10px;border-radius:6px}
 .summary .sum-line{font-size:var(--fs-20);font-weight:700;letter-spacing:-.3px;line-height:1.4}
@@ -582,7 +559,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .summary .sum-line b.ok{color:var(--ok-txt)}
 .summary .sum-line b.warn{color:var(--wn-txt)}
 .summary .sum-line b.bad{color:var(--bd-txt)}
-.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-block)}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .sum-proj{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
 .sum-proj.ok{border-color:var(--ok-line);background:color-mix(in srgb,var(--ok-bg) 70%,var(--panel))}
 .sum-proj.warn{border-color:var(--wn-line);background:color-mix(in srgb,var(--wn-bg) 70%,var(--panel))}
@@ -590,7 +567,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   box-shadow:0 0 0 3px color-mix(in srgb,var(--down) 12%,transparent)}
 .sum-proj .sp-top{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--fs-13);margin-bottom:6px}
 .sum-proj .sp-act{font-size:var(--fs-12);line-height:1.7}
-.sum-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--sp-in)}
+.sum-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .chip{font-size:var(--fs-11);padding:2px 8px;border-radius:6px;background:var(--panel);
   border:1px solid var(--line2);color:var(--mut);white-space:nowrap}
 .chip b{color:var(--txt);font-family:var(--font-num);font-weight:700}
@@ -678,7 +655,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
    一张卡 = 一个项目：名次 + 对数刻度轴 + 三个口径 + 环比 + 还差多远
    ============================================================ */
 .rank-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:var(--fs-11);
-  color:var(--mut);line-height:1.7;margin:0 0 var(--sp-tight)}
+  color:var(--mut);line-height:1.7;margin:-2px 0 11px}
 .rank-sub .rank-force{font-size:var(--fs-11);font-weight:700;padding:4px 11px;color:var(--accent);
   border-color:color-mix(in srgb,var(--accent) 40%,var(--line2));
   background:color-mix(in srgb,var(--accent) 10%,var(--panel))}
@@ -687,7 +664,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .rank-warn{color:var(--wn-txt);font-weight:600}
 
 /* ---- 一句话总结：近一个月名次怎么动 ---- */
-.rank-insight{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:0 0 var(--sp-block);padding:9px 13px;
+.rank-insight{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:0 0 13px;padding:9px 13px;
   border-radius:11px;font-size:var(--fs-12);line-height:1.7;color:var(--txt);border:1px solid var(--line);
   background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 13%,transparent),transparent 58%),var(--panel)}
 .rank-insight .ri-t{font-size:var(--fs-11);font-weight:700;letter-spacing:.4px;color:var(--mut)}
@@ -714,7 +691,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   letter-spacing:0;color:var(--mut);margin-top:4px}
 
 /* ---- 对数刻度轴：#1 在最左，#总数 在最右 ---- */
-.rank-scale{padding:0 9px;margin:var(--sp-block) 0}
+.rank-scale{padding:0 9px;margin:13px 0 12px}
 .rs-track{position:relative;height:5px;border-radius:999px;background:var(--panel3);
   border:1px solid var(--line);box-shadow:inset 0 1px 2px rgba(0,0,0,.16)}
 .rs-track i{position:absolute;top:-4.5px;bottom:-4.5px;width:3px;margin-left:-1.5px;border-radius:2px;
@@ -748,8 +725,8 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .rank-gap b{color:color-mix(in srgb,var(--accent) 66%,var(--txt))}
 
 /* ---- 榜首 10 名 + 上下邻居 ---- */
-.rank-block{margin-top:var(--sp-card)}
-.rank-h{display:flex;align-items:center;gap:10px;margin:0 0 var(--sp-tight)}
+.rank-block{margin-top:16px}
+.rank-h{display:flex;align-items:center;gap:10px;margin:0 0 9px}
 .rank-h .rh-t{font-size:var(--fs-12);font-weight:700;letter-spacing:.3px;color:var(--mut)}
 .rank-h::after{content:"";flex:1;height:1px;background:var(--line)}
 .rank-list{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
@@ -770,7 +747,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   background:color-mix(in srgb,var(--accent) 16%,transparent);
   border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:5px;
   padding:1px 6px;margin-left:7px;vertical-align:1px;white-space:nowrap}
-.rank-near{margin-top:var(--sp-card);align-items:start}
+.rank-near{margin-top:14px;align-items:start}
 @media(max-width:680px){
   .rank-card{padding:13px 13px 13px 16px}
   .rank-big{font-size:30px}
@@ -793,7 +770,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   border-radius:7px;padding:3px 9px;white-space:nowrap;transition:background .15s ease}
 .burn-head .bn-link:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .burn-big{font-family:var(--font-num);font-size:30px;font-weight:800;letter-spacing:-1.3px;line-height:1.14;
-  margin:var(--sp-block) 0 0;font-variant-numeric:tabular-nums}
+  margin:11px 0 0;font-variant-numeric:tabular-nums}
 .burn-big small{font-family:var(--font-ui);font-size:var(--fs-12);font-weight:600;letter-spacing:0;
   color:var(--mut);margin-left:7px}
 .burn-bar{height:9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);
@@ -802,7 +779,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   box-shadow:0 0 12px -3px var(--bc,var(--accent))}
 .burn-barcap{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-11);color:var(--mut2)}
 .burn-barcap b{color:var(--txt);font-family:var(--font-num);font-weight:800}
-.burn-kv{display:flex;gap:6px;flex-wrap:wrap;margin-top:var(--sp-block)}
+.burn-kv{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
 .burn-kv span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:var(--fs-11);
   background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px 9px}
 .burn-kv span b{color:var(--mut2);font-weight:600}
@@ -831,9 +808,9 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .bb-row.me .bb-name{font-weight:800;color:var(--txt)}
 .bb-row.me .bb-rank{color:var(--accent)}
 .bb-row .bb-v .bb-live{font-style:normal;font-size:10px;font-weight:800;color:var(--accent);margin-left:5px}
-.bb-note{margin-top:var(--sp-card);background:var(--panel);border:1px solid var(--line);border-radius:14px;
+.bb-note{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
   padding:14px 16px;box-shadow:var(--card-shadow);font-size:var(--fs-12);line-height:1.9}
-.bb-note .bb-h{font-size:var(--fs-13);font-weight:800;margin-bottom:var(--sp-in)}
+.bb-note .bb-h{font-size:var(--fs-13);font-weight:800;margin-bottom:9px}
 .bb-tbl{width:100%;border-collapse:collapse;margin:0 0 10px;font-size:var(--fs-11);
   font-variant-numeric:tabular-nums}
 .bb-tbl th{font-weight:600;color:var(--mut2);text-align:right;padding:5px 8px;border-bottom:1px solid var(--line2);
@@ -852,7 +829,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .bb-note .bb-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
   font-size:var(--fs-11);color:var(--mut2);line-height:1.7}
 /* ---- v3.0：24h 口径主位（用户最关心「今天烧了多少」）---- */
-.burn-tabs{margin:0 0 var(--sp-tight)}
+.burn-tabs{margin:0 0 9px}
 .burn-tabs .tab{padding:5px 13px}
 .bb-lag{margin:8px 2px 0;font-size:var(--fs-11);color:var(--mut2);line-height:1.75}
 .bb-lag b{color:var(--txt);font-weight:700}
@@ -1044,7 +1021,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-axis{fill:var(--mut2);font-size:10px;font-family:var(--font-num)}
 .hourly-bar{cursor:default;transition:opacity .15s ease}
 .hourly-bar:hover{opacity:.66}
-.hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:var(--sp-block)}
+.hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:13px}
 .hourly-sum>div{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 11px}
 .hourly-sum .k{font-size:10.5px;color:var(--mut);margin-bottom:5px;letter-spacing:.2px}
 /* 汇总卡：两家上下两行（一行时两组数字挨太近、不好区分）；不要椭圆框；数字与代币名字号一致，仅靠颜色区分 */
@@ -1054,7 +1031,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-sum .v .pair i{font-style:normal;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--mut2)}
 .hourly-sum .v .pair.p b{color:var(--pons)}
 .hourly-sum .v .pair.s b{color:var(--stonk)}
-.hourly-note{font-size:11.5px;color:var(--mut);line-height:1.8;margin-top:var(--sp-block);
+.hourly-note{font-size:11.5px;color:var(--mut);line-height:1.8;margin-top:12px;
   background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
 .hourly-note b{color:var(--txt)}
 .sec-live{font-size:10.5px;font-weight:600;color:var(--ok-txt);margin-left:8px;letter-spacing:0}
@@ -3050,29 +3027,10 @@ function guideScrollTo(id, delay){
   if(!el) return;
   var go = function(){
     try{ el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ el.scrollIntoView(); }
-    gflashAfterScroll(el);
-  };
-  if(delay) setTimeout(go, delay); else go();
-}
-/* v3.8：高亮等「滚动停稳」再亮。
-   跨半个页面滚动要约 2 秒，若点击瞬间就点亮，用户滚到时闪光只剩一半 —— 白烧。
-   目标本来就在视口内（不产生滚动）时 0.45 秒后直接亮；兜底最长 7 秒。 */
-function gflashAfterScroll(el){
-  var fired = false, idle = null, t0 = Date.now(), moved = false;
-  function fire(){
-    if(fired) return; fired = true;
-    window.removeEventListener('scroll', onScroll);
-    clearTimeout(idle);
     el.classList.remove('gflash'); void el.offsetWidth; el.classList.add('gflash');
     setTimeout(function(){ el.classList.remove('gflash'); }, 4300);
-  }
-  function onScroll(){
-    moved = true;
-    if(Date.now() - t0 > 7000){ fire(); return; }
-    clearTimeout(idle); idle = setTimeout(fire, 180);
-  }
-  window.addEventListener('scroll', onScroll, {passive:true});
-  idle = setTimeout(function(){ if(!moved) fire(); }, 450);
+  };
+  if(delay) setTimeout(go, delay); else go();
 }
 function guideHashInit(){
   if(!/^#gloss-/.test(location.hash || '')) return;

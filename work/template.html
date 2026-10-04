@@ -168,7 +168,13 @@ button:active{transform:translateY(1px)}
   border-bottom:1.6px solid currentColor;transform:rotate(45deg);margin-top:-3px;
   transition:transform .3s cubic-bezier(.25,.55,.35,1)}
 .guide-head.open .gt-chev{transform:rotate(-135deg);margin-top:3px}
-.guide-wrap{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.22,.61,.36,1)}
+.guide-wrap{max-height:0;overflow:hidden;transition:max-height .62s cubic-bezier(.4,0,.2,1)}
+/* 内容块配合高度做「淡入 + 轻微上移」；收起时先淡出，避免被裁切的生硬感 */
+.guide-wrap .glegend,.guide-wrap .guide{opacity:0;transform:translateY(-7px);
+  transition:opacity .26s ease,transform .26s ease}
+.guide-wrap.open .glegend,.guide-wrap.open .guide{opacity:1;transform:none;
+  transition:opacity .5s ease .1s,transform .5s cubic-bezier(.2,.6,.3,1) .08s}
+@media (prefers-reduced-motion:reduce){.guide-wrap,.guide-wrap .glegend,.guide-wrap .guide{transition:none}}
 
 /* ---------- 标签页 ---------- */
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}

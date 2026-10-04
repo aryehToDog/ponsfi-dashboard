@@ -1,0 +1,19 @@
+GoPlus 误报申诉提交凭证
+=======================
+时间：2026-10-04 22:29（北京时间）
+入口：https://console.gopluslabs.io/feedback?type=phishing（免费反馈中心）
+接口：POST https://api.gopluslabs.io/api/v1/feedback/saveInfo
+类型：phishing（钓鱼网站误报）
+对象：https://ponsfi.xyz
+
+提交内容摘要：
+- ponsfi.xyz 是只读公开数据看板（DefiLlama 收入/费用数据），不连钱包、不签名、不发起交易
+- 域名 2026-10-02 新注册，无前持有者、无滥用历史
+- ChainPatrol / ScamSniffer / Google 安全浏览三家均无标记
+- 仿冒站是 ponsfi.top（请保留在黑名单）
+- 可随时加 DNS TXT 记录验证归属
+
+返回结果：{"code":1,"message":"ok","result":"问题反馈成功"}
+
+后续：等 GoPlus 人工复审（一般 1~3 个工作日）；每天由自动化复查
+      api.gopluslabs.io/api/v1/phishing_site?url=ponsfi.xyz 是否恢复为 0。

@@ -957,11 +957,12 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 /* ---------- 小时监控（最近 72 小时） ---------- */
 .hourly-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;
   padding:14px 16px 10px;box-shadow:var(--card-shadow);position:relative}
-/* 当前小时：默认就摆着，不用悬停也能看到 */
+/* 当前小时：默认就摆着，不用悬停也能看到；查看某根柱子时先让位（和提示框数据重复） */
 .hourly-now{position:absolute;right:14px;top:12px;z-index:3;pointer-events:none;
   background:color-mix(in srgb,var(--panel2) 86%,transparent);border:1px solid var(--line2);
   border-radius:11px;padding:8px 11px;min-width:172px;box-shadow:var(--card-shadow);
-  backdrop-filter:blur(6px)}
+  backdrop-filter:blur(6px);transition:opacity .18s ease,transform .18s ease}
+.hourly-now.hide{opacity:0;transform:translateY(-4px)}
 .hourly-now .h{font-size:10.5px;color:var(--mut2);margin-bottom:5px;letter-spacing:.3px}
 .hourly-now .r{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--mut)}
 .hourly-now .r b{font-family:var(--font-num);font-size:12.5px;color:var(--txt)}
@@ -2290,8 +2291,10 @@ function renderHourly(){
   });
   if(svg) svg.innerHTML=body;
 
-  /* 当前小时：默认摆在图右上角，不悬停也能看到 */
+  /* 当前小时：默认摆在图右上角，不悬停也能看到；查看某根柱子时先让位 */
   const nowBox=document.getElementById('hourlyNow');
+  const showNow=function(){ if(nowBox) nowBox.classList.remove('hide'); };
+  const hideNow=function(){ if(nowBox) nowBox.classList.add('hide'); };
   if(nowBox){
     const li=s.hours.length-1, dl=new Date(s.hours[li]*1000);
     const ongoing=(Date.now()/1000) < (s.hours[li]+3600);
@@ -2306,6 +2309,7 @@ function renderHourly(){
     const box=svg.parentElement;
     const label=function(raw){ return (HOUR_TAB==='burn'&&raw!=null)? ' <em>'+fmtN(raw,0)+'</em>' : ''; };
     const hoverAt=function(ev){
+      hideNow();
       const r=svg.getBoundingClientRect();
       let i=Math.floor((ev.clientX-r.left)/r.width*s.hours.length);
       i=Math.max(0, Math.min(s.hours.length-1, i));
@@ -2324,7 +2328,28 @@ function renderHourly(){
     /* 手机：点一下柱子也能看那一小时的数值（触屏没有 hover） */
     svg.onclick=hoverAt;
     svg.ontouchstart=function(ev){ if(ev.touches && ev.touches[0]) hoverAt({clientX:ev.touches[0].clientX, clientY:ev.touches[0].clientY}); };
-    svg.onmouseleave=function(){ tipBox.style.display='none'; if(hlEl) hlEl.classList.remove('on'); };
+    const hideTip=function(){ tipBox.style.display='none'; if(hlEl) hlEl.classList.remove('on'); };
+    svg.onmouseleave=function(){ hideTip(); showNow(); };
+    /* 手机：点图表以外的地方 / 页面划走 → 收起提示框，让固定卡回来 */
+    if(!window.__hourlyNowOut){
+      window.__hourlyNowOut=1;
+      document.addEventListener('click', function(ev){
+        const sv=document.getElementById('hourlyChart');
+        if(!sv || sv.contains(ev.target)) return;
+        const tb=document.getElementById('hourlyTipBox'), nb=document.getElementById('hourlyNow');
+        if(tb) tb.style.display='none';
+        const hl2=sv.querySelector('#hourHl'); if(hl2) hl2.classList.remove('on');
+        if(nb) nb.classList.remove('hide');
+      }, true);
+      window.addEventListener('scroll', function(){
+        const nb=document.getElementById('hourlyNow');
+        if(!nb || !nb.classList.contains('hide')) return;
+        const sv=document.getElementById('hourlyChart'), tb=document.getElementById('hourlyTipBox');
+        if(tb) tb.style.display='none';
+        if(sv){ const hl2=sv.querySelector('#hourHl'); if(hl2) hl2.classList.remove('on'); }
+        nb.classList.remove('hide');
+      }, {passive:true});
+    }
   }
 
   if(hl){

@@ -12,6 +12,7 @@
     python3 work/git_sync.py
 """
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -87,7 +88,7 @@ def sync_main():
     d = git("diff", "--cached", "--quiet")
     if d is not None and d.returncode == 0:
         log("main：没有源文件改动")
-        return True
+        return False
 
     msg = "自动同步：上线源文件更新 " + time.strftime("%Y-%m-%d %H:%M")
     c = git("commit", "-q", "-m", msg)
@@ -135,9 +136,69 @@ def push_snapshot():
             pass
 
 
+def _last_version_tag():
+    """形如 v3.5 / v3.5.1 的最大版本标签 -> ((3,5,1), "v3.5.1")"""
+    r = git("tag", "--list", "v[0-9]*")
+    best = None
+    for line in ((r.stdout or "").splitlines() if r else []):
+        m = re.match(r"^v(\d+)\.(\d+)(?:\.(\d+))?$", line.strip())
+        if not m:
+            continue
+        key = (int(m.group(1)), int(m.group(2)), int(m.group(3) or 0))
+        if best is None or key > best[0]:
+            best = (key, line.strip())
+    return best
+
+
+def _page_version():
+    """页脚版本号（work/render_only.py 的 VER，如 v3.5）—— 有它就用它当标签名。"""
+    r = git("show", "HEAD:work/render_only.py")
+    if r is None or r.returncode != 0:
+        return None
+    m = re.search(r'^VER\s*=\s*"(v[\d.]+)', r.stdout or "", re.M)
+    return m.group(1) if m else None
+
+
+def push_release_tag():
+    """源文件上线后：自动打版本标签（附更新说明）并推送。"""
+    tags = set(((git("tag", "--list").stdout or "").split()))
+    prev = _last_version_tag()
+    prev_name = prev[1] if prev else None
+    page = _page_version()
+    if page and page not in tags:
+        new = page
+    elif prev:
+        new = "v%d.%d.%d" % (prev[0][0], prev[0][1], prev[0][2] + 1)
+    else:
+        new = "v0.1"
+    rng = (prev_name + "..HEAD") if prev_name else "HEAD"
+    cnt = (git("rev-list", "--count", rng).stdout or "?").strip()
+    lg = git("log", "--pretty=\u00b7 %h %s", rng)
+    st = git("diff", "--stat", rng) if prev_name else git("show", "--stat", "--format=", "HEAD")
+    msg = "\n".join([
+        "自动发布 \u00b7 " + time.strftime("%Y-%m-%d %H:%M"),
+        "",
+        "自 %s 起的源文件改动（%s 个提交）：" % (prev_name or "仓库起点", cnt),
+        (lg.stdout or "").strip(),
+        "",
+        "改动文件：",
+        (st.stdout or "").strip(),
+    ])
+    c = git("tag", "-a", new, "-m", msg)
+    if c is None or c.returncode != 0:
+        log("版本标签：创建失败 " + ((c.stderr or "").strip()[:200] if c else ""))
+        return False
+    p2 = git("push", REMOTE, new)
+    ok = p2 is not None and p2.returncode == 0
+    log("版本标签：" + new + (" 已创建并推送" if ok else
+        (" 已创建，推送失败：" + (p2.stderr or "").strip()[:160] if p2 else " 已创建，推送超时")))
+    return ok
+
+
 def main():
     try:
-        sync_main()
+        if sync_main():
+            push_release_tag()
         push_snapshot()
         log("GitHub 同步完成")
     except Exception as exc:

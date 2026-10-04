@@ -2978,8 +2978,10 @@ function guideSetOpen(open){
   h.setAttribute('aria-expanded', open ? 'true' : 'false');
   var hint = document.getElementById('guideHint');
   if(hint) hint.textContent = open ? t('guideCollapse') : t('guideExpand');
+  /* 容器始终 overflow:hidden —— 折叠动画期间内容必须被裁掉；
+     若放开成 visible，盒子收到 0 高度后内容仍会画在外面、和下方区块重叠（v3.7.1 修复） */
+  w.style.overflow = 'hidden';
   if(open){
-    w.style.overflow = 'hidden';
     w.classList.add('open');
     w.style.maxHeight = w.scrollHeight + 'px';       /* 量出实际高度，动画才顺 */
   }else{
@@ -2998,8 +3000,8 @@ function guideToggle(force){
   if(!w) return;
   w.addEventListener('transitionend', function(ev){
     if(ev.propertyName !== 'max-height') return;
-    if(w.classList.contains('open')){ w.style.maxHeight = 'none'; w.style.overflow = 'visible'; }
-    /* 展开后解除高度上限，语言切换 / 数据刷新导致内容变高也不会被裁 */
+    if(w.classList.contains('open')) w.style.maxHeight = 'none';
+    /* 展开后只解除高度上限（overflow 保持 hidden），语言切换 / 数据刷新导致内容变高也不会被裁 */
   });
   document.addEventListener('click', function(ev){
     var a = ev.target && ev.target.closest ? ev.target.closest('a.qi') : null;

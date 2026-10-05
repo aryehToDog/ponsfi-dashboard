@@ -142,7 +142,7 @@ button:active{transform:translateY(1px)}
 .proj-name{display:flex;align-items:center;flex-wrap:wrap;gap:9px;row-gap:6px;font-size:var(--fs-14);font-weight:600;letter-spacing:-.1px}
 /* 小圆点 = 实时状态灯（v3.7）：呼吸微缩放 + 双层雷达扩散圈，颜色跟随代币主色 currentColor */
 .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;position:relative;display:inline-block;
-  box-shadow:0 0 10px currentColor;animation:dotBreath 2.8s ease-in-out infinite;will-change:transform}
+  box-shadow:0 0 10px currentColor;animation:dotBreath 2.8s ease-in-out infinite}
 .dot::before,.dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:currentColor;
   pointer-events:none;will-change:transform,opacity}
 .dot::before{animation:dotPing 2.8s cubic-bezier(.25,.55,.35,1) infinite}
@@ -306,19 +306,16 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .rule.ok{border-left-color:var(--up)}
 .rule.warn{border-left-color:var(--warn)}
 /* 危险/已触发：整张卡片变红 + 呼吸高亮，第一眼就能看到 */
-/* v3.13.3 性能：原来呼吸的是 box-shadow，每帧都要把整张卡片重画一遍。
-   现在把光圈挪到一层只改 opacity 的伪元素上，视觉几乎一样，动画全交给合成器。 */
-@keyframes badpulse{0%,100%{opacity:0}50%{opacity:1}}
-.rule.bad{border-left-color:var(--down);border-left-width:4px;border-color:var(--bd-line);position:relative;
-  background:color-mix(in srgb,var(--bd-bg) 42%,var(--panel))}
-.rule.bad::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
-  box-shadow:inset 0 0 0 1px var(--bd-line),0 0 0 5px color-mix(in srgb,var(--down) 13%,transparent);
-  opacity:0;animation:badpulse 2.6s ease-in-out infinite;will-change:opacity}
+@keyframes badpulse{
+  0%,100%{box-shadow:var(--card-shadow),0 0 0 1px var(--bd-line)}
+  50%{box-shadow:var(--card-shadow),0 0 0 1px var(--bd-line),0 0 0 5px color-mix(in srgb,var(--down) 13%,transparent)}}
+.rule.bad{border-left-color:var(--down);border-left-width:4px;border-color:var(--bd-line);
+  background:color-mix(in srgb,var(--bd-bg) 42%,var(--panel));animation:badpulse 2.6s ease-in-out infinite}
 .rule.bad .badflag{display:inline-flex;align-items:center;gap:5px;margin-bottom:7px;padding:3px 9px;
   font-size:var(--fs-10);font-weight:800;letter-spacing:.4px;border-radius:var(--r-sm);
   color:var(--bd-txt);background:var(--bd-bg);border:1px solid var(--bd-line)}
 .rule.bad .s{color:var(--txt);font-weight:600}
-@media (prefers-reduced-motion:reduce){.rule.bad::after{animation:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.rule.bad{animation:none}}
 /* 顶部异常横幅：把所有「已触发」的项一次列清楚 */
 .alertbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px;padding:10px 13px;
   border-radius:var(--r-md);font-size:var(--fs-12);line-height:1.7;font-weight:600;
@@ -1338,70 +1335,9 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
   .author-tip:hover .ic,.foot-tip:hover .ic,.tip-mini:hover .ic,
   .rank-row:hover .rr-rank.rk{transform:none}
 }
-/* ==========================================================================
-   v3.13.3（2026-10-05）性能 & 手机端专项
-   目标：滚动跟手、首屏不跳、手机上点得到。
-   ========================================================================== */
-
-/* --- ① 重绘隔离：行内的小动效不带着整页一起重画（这几类行里都有呼吸点） --- */
-.srcrow,.kv>div{contain:layout paint}
-
-/* --- ② 首屏防跳（CLS 0.26 -> ~0）：价格卡在数据落地前先用骨架占住高度 --- */
-.card.sk{position:relative;overflow:hidden;box-shadow:none;min-height:var(--cards-h,380px)}
-.card.sk::before{content:"";position:absolute;inset:14px;border-radius:12px;
-  background:linear-gradient(100deg,
-    color-mix(in srgb,var(--mut) 7%,transparent) 0 40%,
-    color-mix(in srgb,var(--mut) 14%,transparent) 50%,
-    color-mix(in srgb,var(--mut) 7%,transparent) 60% 100%)}
-@media(max-width:900px){.card.sk{min-height:var(--cards-h,520px)}}
-@media(max-width:680px){.card.sk{min-height:var(--cards-h,610px)}}
-
-/* --- ③ 手机端：每个呼吸点原来 3 层动画，手机上只留 1 层（省电、省 GPU） --- */
-@media(max-width:640px){
-  .dot::before,.dot::after{animation:none;opacity:.2;transform:scale(1.75)}
-}
-
-/* --- ④ 手机端点击目标：一律抬到 38px 上下，手指点得准 --- */
-@media(max-width:680px){
-  .tabs{gap:8px}
-  .tab{padding:9px 13px;min-height:38px;display:inline-flex;align-items:center}
-  header .tbtn,#btnRefresh{min-height:38px;padding:8px 12px}
-  .q-like{min-height:38px;padding:6px 14px}
-  .livechip{min-height:26px;padding:4px 9px}
-  .bn-link{min-height:34px;display:inline-flex;align-items:center;padding:6px 10px}
-  .kv .qi{position:relative;width:16px;height:16px;line-height:14px}
-  .kv .qi::after{content:"";position:absolute;inset:-11px;border-radius:50%}   /* 38px 命中区 */
-}
-
-/* --- ⑤ 手机端注解文字抬高：10.5px 在手机上太费眼（动的是全局刻度，所有小字一起抬） --- */
-@media(max-width:680px){
-  :root{--fs-10:11.5px}
-  .sec-live,.lagtag,#gen,.srcrow .s-from,.tnote{font-weight:600}
-  #st-guide{min-height:38px}                       /* 指标说明的标题即折叠开关，点得着 */
-  .rank-force{min-height:34px;display:inline-flex;align-items:center}
-}
-
-/* --- ⑥ 手机端表格：日期列吸住左边，右边滑动看全部；滑动提示中英各一份 --- */
-.tbl-hint{display:none}
-@media(max-width:680px){
-  #tbl{min-width:660px}
-  #tbl th:first-child,#tbl td:first-child{position:sticky;left:0;z-index:3;
-    background:var(--panel);box-shadow:1px 0 0 var(--line)}
-  .tbl-hint{display:block;margin:-6px 0 10px;font-size:11.5px;font-weight:600;color:var(--mut);letter-spacing:.2px}
-  html[lang="en"] .tbl-hint .zh{display:none}
-  html[lang^="zh"] .tbl-hint .en{display:none}
-}
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
-<script>
-document.documentElement.classList.add("ic-motion");
-/* v3.13.3：首屏骨架按「上次真实卡高」占位 —— 数据落地时页面几乎不再跳动 */
-try{
-  var _bk=(window.innerWidth<=680?'m':(window.innerWidth<=900?'t':'d'));
-  var _h=localStorage.getItem('ponsCardsH-'+_bk);
-  if(_h) document.documentElement.style.setProperty('--cards-h', _h+'px');
-}catch(e){}
-</script>
+<script>document.documentElement.classList.add("ic-motion");</script>
 </head>
 <body>
 <!-- ===== v3.13.1 图标库 · Phosphor Icons「Fill」实心权重 (phosphoricons.com · MIT License) 内联 sprite，零外部请求 ===== -->
@@ -1425,7 +1361,7 @@ try{
         <span class="q-plus" id="qPlus">+1</span>
       </button>
     </div>
-    <div class="lyric hidden" id="lyric">
+    <div class="lyric" id="lyric">
       <div class="ly-in">
         <div class="ly-window"><div class="ly-track" id="lyTrack"></div></div>
         <div class="ly-bar"><i id="lyBarI"></i></div>
@@ -1475,7 +1411,7 @@ try{
 
   <div class="safe-line" id="safeLine"><span class="sf-ic"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg></span><span id="safeTxt"></span></div>
 
-  <div class="grid2" id="cards"><div class="card sk"></div><div class="card sk"></div></div>
+  <div class="grid2" id="cards"></div>
 
   <div class="sec-title" id="st-hourly"><svg class="ic" aria-hidden="true"><use href="#ic-activity"/></svg>小时监控 · 最近 72 小时<span class="sec-live" id="hourlyLive"></span></div>
   <div class="rank-sub" id="hourlySub"></div>
@@ -1525,7 +1461,6 @@ try{
   </div>
 
   <div class="sec-title" id="st-table"><svg class="ic" aria-hidden="true"><use href="#ic-table"/></svg>日度明细（最近 20 天）</div>
-  <div class="tbl-hint"><span class="zh">← 左右滑动看完整表格 →</span><span class="en">← Swipe to see the full table →</span></div>
   <div class="card" style="padding:0;overflow:auto;max-height:430px">
     <table id="tbl"><thead></thead><tbody></tbody></table>
   </div>
@@ -2946,15 +2881,6 @@ function renderCards(){
       <div class="status ${status[0]}"><span class="lbl">${stTxt}</span><span>${status[1]}</span></div>
     </div>`;
   }).join('');
-  /* v3.13.3：记住这次真实卡高，下次打开时骨架直接按它占位（分断点存，手机/电脑互不干扰） */
-  try{
-    var kids = el.children, mx = 0;
-    for(var i=0;i<kids.length;i++) mx = Math.max(mx, kids[i].offsetHeight);
-    if(mx > 60){
-      var bk = (window.innerWidth<=680?'m':(window.innerWidth<=900?'t':'d'));
-      localStorage.setItem('ponsCardsH-'+bk, String(Math.round(mx)));
-    }
-  }catch(e){}
 }
 
 /* ---------- rules ---------- */
@@ -3752,8 +3678,6 @@ function renderAll(){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;
-  if(icRevealMeasure){ try{ icRevealMeasure(); }catch(e){} }
-  if(window.__miniMeasure){ try{ window.__miniMeasure(); }catch(e){} }
   document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')
     + (DATA.priceAt? t('priceLive')(new Date(DATA.priceAt).toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit'})) : '');
   document.getElementById('foot').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
@@ -3815,22 +3739,12 @@ applyTheme(curTheme());
   var reduce=false;
   try{ reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
   var ticking=false, sx=null, sy=0, s0=1;
-  /* v3.13.3 性能：名片与头像的位置只在开场/改窗口大小时量一次，
-     滚动时只算数字（原来每帧两次 getBoundingClientRect，是第二处强制同步布局）。 */
-  var cTop=0, cH=1, bLeft=0, bTop=0, bW=IMG;
-  function measure(){
-    var y=window.pageYOffset||document.documentElement.scrollTop||0;
-    var rc=card.getBoundingClientRect(), rb=big.getBoundingClientRect();
-    cTop=rc.top+y; cH=rc.height||1;
-    bLeft=rb.left; bTop=rb.top+y; bW=rb.width||IMG;
-    sx=null;                                    /* 起点重新采样 */
-  }
   function frame(){
     ticking=false;
-    var y=window.pageYOffset||document.documentElement.scrollTop||0;
-    var p=(8-(cTop-y))/(cH-8);                 /* 0＝停在顶部　1＝名片已完全离开视口 */
+    var rc=card.getBoundingClientRect(), rb=big.getBoundingClientRect();
+    var p=(8-rc.top)/(rc.height-8);            /* 0＝停在顶部　1＝名片已完全离开视口 */
     p=p<0?0:(p>1?1:p);
-    if(p<=0.001||sx===null){ sx=bLeft; sy=bTop-y; s0=bW/IMG; }  /* 起点＝顶部时的原位 */
+    if(p<=0.001||sx===null){ sx=rb.left; sy=rb.top; s0=rb.width/IMG; }  /* 起点＝顶部时的原位 */
     var e=reduce?(p>0.5?1:0):p*p*(3-2*p);      /* smoothstep：起步轻、中段快、落位稳 */
     var s=s0+(1-s0)*e;
     var tx=sx+(CX-sx)*e-PAD*s;
@@ -3845,12 +3759,9 @@ applyTheme(curTheme());
     if(tmini) tmini.classList.toggle('settled',st);
   }
   function req(){ if(!ticking){ ticking=true; requestAnimationFrame(frame); } }
-  function remeasure(){ measure(); req(); }
-  measure();
-  window.__miniMeasure=measure;               /* 数据落地后高度可能变，由 renderAll 再量一次 */
   window.addEventListener('scroll',req,{passive:true});
-  window.addEventListener('resize',remeasure);
-  window.addEventListener('load',remeasure);
+  window.addEventListener('resize',req);
+  window.addEventListener('load',req);
   req();
 })();
 
@@ -4602,56 +4513,39 @@ function qInit(){
   qLoadLikes();
 }
 
-/* ---------- v3.13.2 板块图标：滚进视野时弹一下（一次性的「这里有板块」提示） ----------
-   v3.13.3 性能：位置只在开场量一次并缓存，之后滚动只比较数字、不再读布局。
-   原来每帧对 8 个板块调 getBoundingClientRect（会强制同步布局），实测一次滚动
-   就吃掉 300ms+ 的主线程 —— 这就是「上线后有点卡」的主因。
-   判定用「进入视野，或已经被滚到上方去」（快速滑动 / 点锚点跳转时是后者）。
-   用扫描而不是 IntersectionObserver —— 观察器在「一步跳到页底」时，
-   中间从没进入过视野的板块不会产生任何回调，图标会永远停在 opacity:0。 */
-var icRevealMeasure = null;
+/* ---------- v3.13.2 板块图标：滚进视野时弹一下（一次性的「这里有板块」提示） ---------- */
 function icRevealInit(){
   var list = [].slice.call(document.querySelectorAll('.sec-title'));
   if(!list.length) return;
-  var tops = new Array(list.length), remain = list.length;
-  var ticking = false, done = false;
-  function measure(){
-    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    for(var i = 0; i < list.length; i++){
-      var b = list[i].getBoundingClientRect();
-      tops[i] = b.top + y + b.height;      /* 缓存「底边」的文档绝对位置 */
-    }
-  }
+  var ticking = false, finished = false;
+  /* 判定「该亮了」：进入视野，或者已经被滚到上方去（快速滑动 / 点锚点跳转时会出现后者）。
+     用 rAF 节流的滚动扫描而不是 IntersectionObserver —— 观察器在「一步跳到页底」时，
+     中间那些从没进入过视野的板块不会产生任何回调，图标会永远停在 opacity:0。 */
   function sweep(){
-    if(done) return;
-    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
     var vh = window.innerHeight || document.documentElement.clientHeight || 900;
-    var line = y + vh * 0.94;
-    /* 板块按文档顺序排：碰到第一个还没到的，后面的也都没到，可以直接收工 */
+    var remain = 0;
     for(var i = 0; i < list.length; i++){
-      if(list[i].classList.contains('ic-in')) continue;
-      if(tops[i] < line || tops[i] < y){ list[i].classList.add('ic-in'); remain--; }
-      else break;
+      var e = list[i];
+      if(e.classList.contains('ic-in')) continue;
+      var b = e.getBoundingClientRect();
+      if(b.top < vh * 0.94 || b.bottom < 0) e.classList.add('ic-in');
+      else remain++;
     }
-    if(remain <= 0){
-      done = true;
+    if(remain === 0 && !finished){
+      finished = true;
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', onScroll);
     }
   }
   function onScroll(){
-    if(ticking || done) return;
+    if(ticking) return;
     ticking = true;
     var raf = window.requestAnimationFrame || function(f){ return setTimeout(f, 16); };
     raf(function(){ ticking = false; sweep(); });
   }
-  function onResize(){ measure(); sweep(); }
-  measure();
   sweep();
-  icRevealMeasure = measure;               /* 数据落地后布局会变，由 renderAll 再量一次 */
   window.addEventListener('scroll', onScroll, {passive:true});
-  window.addEventListener('resize', onResize);
-  window.addEventListener('load', measure);
+  window.addEventListener('resize', onScroll);
 }
 
 renderTip();

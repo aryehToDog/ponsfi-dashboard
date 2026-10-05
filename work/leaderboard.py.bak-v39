@@ -12,11 +12,9 @@
       from leaderboard import fetch_board  # 供 build_monitor.py 调用
 """
 import datetime
-import gzip
 import json
 import os
 import sys
-import time
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -33,35 +31,9 @@ NEAR = 4          # 上下各取几名
 TOP_N = 10        # 榜首取几名
 
 
-def get(url, tries=3):
-    """带重试 + gzip。
-
-    背景（2026-10-05 实测定性）：这个总榜接口原始包 4.2MB，偶发被中途掐断，
-    报 IncompleteRead(4267266 bytes read)；而这里以前**没有重试**，
-    一失败就静默退回上一份旧快照 —— 结果榜单连续两天没更新，
-    页面上却只显示一个「排行数据时间」，看起来像数据源坏了。
-    现在：最多试 3 次，每次都带 gzip（体积更小、更不容易被掐），
-    仍然失败才由调用方标 stale，让页面把「这份榜单是旧的」明说出来。
-    """
-    last = None
-    for i in range(tries):
-        try:
-            req = urllib.request.Request(url, headers={
-                "User-Agent": "curl/8",
-                "Accept": "application/json",
-                "Accept-Encoding": "gzip",
-                "Connection": "close",
-            })
-            r = urllib.request.urlopen(req, timeout=60)
-            raw = r.read()
-            if (r.headers.get("Content-Encoding") or "").lower() == "gzip":
-                raw = gzip.decompress(raw)
-            return json.loads(raw)
-        except Exception as exc:
-            last = exc
-            if i < tries - 1:
-                time.sleep(1.5 + i)
-    raise last
+def get(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "curl/8"})
+    return json.load(urllib.request.urlopen(req, timeout=60))
 
 
 def _row(p, rank, field, me=False):
@@ -111,12 +83,8 @@ def build_board(protocols):
 def fetch_board():
     j = get(API)
     b = build_board(j.get("protocols") or [])
-    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    # updated   = 上游自己给的时间（没有就用我们的抓取时间）
-    # fetchedAt = 我们这次真正抓到的时刻，页面据此判断"这份榜单是不是旧的"
-    b["updated"] = j.get("updated") or now
-    b["fetchedAt"] = now
-    b["stale"] = False
+    b["updated"] = (j.get("updated") or
+                    datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
     b["source"] = "defillama.com/revenue"
     return b
 

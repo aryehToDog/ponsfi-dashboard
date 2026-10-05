@@ -10,7 +10,7 @@
   3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 ÷ 80%（回购占比），明确标注为推算；
        StonkFun → 官方接口 stonkfun.xyz/api/revenue 的累计收入每小时差值（真值，国内直连被墙、走海外中转）
 """
-import datetime, json, os, sys, tempfile, time, urllib.request, urllib.parse
+import json, os, sys, tempfile, time, urllib.request, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "hourly.json")
@@ -252,48 +252,6 @@ def sf_series(buckets):
     return [rev[b] for b in buckets], [burn[b] for b in buckets]
 
 
-def sf_daily():
-    """官方累计值 → 按 UTC 自然日做差 = 官方口径的「日收入 / 日回购 / 日销毁」。
-
-    只产出**完整天**：相邻两个取样点要分别落在各自日子的尾部（≥21:00 UTC），
-    且两点间隔 22~26 小时 —— 半天的数据宁可不出，也不拿来冒充一整天
-    （页面上「日度明细」里 DefiLlama 滞后那两天，就是这么被官方口径补上的）。
-
-    注意：官方口径与 DefiLlama 的统计基准不同（实测 STONK 官方约为 DefiLlama 的 2 倍），
-    所以这里**单独出一份**，前端并列标注，绝不混进同一条序列。
-    """
-    hist = [h for h in sf_load_hist() if isinstance(h, dict) and h.get("ts")]
-    hist.sort(key=lambda h: h["ts"])
-    if not hist:
-        return None
-    by_day = {}
-    for h in hist:                      # 每天只留最晚的一条
-        day = datetime.datetime.utcfromtimestamp(h["ts"]).strftime("%Y-%m-%d")
-        if day not in by_day or h["ts"] > by_day[day]["ts"]:
-            by_day[day] = h
-    days = sorted(by_day)
-    out = {"rev": {}, "hold": {}, "burn": {}, "hours": {},
-           "snapshots": len(hist), "from": days[0] if days else None}
-    for a, b in zip(days, days[1:]):
-        ha, hb = by_day[a], by_day[b]
-        gap = hb["ts"] - ha["ts"]
-        if not (22 * 3600 <= gap <= 26 * 3600):
-            continue
-        ta = datetime.datetime.utcfromtimestamp(ha["ts"])
-        tb = datetime.datetime.utcfromtimestamp(hb["ts"])
-        if ta.hour < 21 or tb.hour < 21:
-            continue
-        dr = (hb.get("revUsd") or 0) - (ha.get("revUsd") or 0)
-        dh = (hb.get("buybackUsd") or 0) - (ha.get("buybackUsd") or 0)
-        db = (hb.get("burnTokens") or 0) - (ha.get("burnTokens") or 0)
-        if dr >= 0: out["rev"][b] = round(dr, 2)
-        if dh >= 0: out["hold"][b] = round(dh, 2)
-        if db >= 0: out["burn"][b] = round(db, 2)
-        out["hours"][b] = round(gap / 3600, 1)
-    out["last"] = max(out["rev"]) if out["rev"] else None
-    return out
-
-
 def main():
     now = time.time()
     h_now = int(now // 3600 * 3600)
@@ -348,13 +306,6 @@ def main():
     out["pons"]["rev"], out["pons"]["revEst"] = pv, True
     out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
     out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
-
-    # 官方口径日线（另一套统计基准，只用于「数据源体检」板块，不混进 DefiLlama 那条序列）
-    try:
-        out["stonkDaily"] = sf_daily()
-    except Exception as exc:
-        print("warn: sf_daily: %s" % exc, file=sys.stderr)
-        out["stonkDaily"] = (old.get("stonkDaily") if isinstance(old, dict) else None)
 
     atomic_dump(out, OUT)
     pb = [x for x in out["pons"]["burn"] if x]

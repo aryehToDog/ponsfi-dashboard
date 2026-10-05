@@ -569,29 +569,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .gitem b,.gitem .ex b,.rule b,.summary b{font-weight:700;color:var(--txt)}
 .gitem .ex b{color:var(--txt)}
 
-/* ---------- 数据源体检（v3.9）：每个数字来自哪里、新到什么程度 ---------- */
-.srcbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  padding:4px 15px 12px;box-shadow:var(--card-shadow)}
-.srcrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:9px 2px;border-bottom:1px solid var(--line);font-size:var(--fs-12)}
-.srcrow:last-of-type{border-bottom:0}
-.srcrow .s-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 9px currentColor;
-  background:currentColor;animation:dotBreath 2.8s ease-in-out infinite}
-.srcrow .s-dot.ok{color:var(--up)}
-.srcrow .s-dot.wn{color:var(--warn)}
-.srcrow .s-dot.bd{color:var(--down)}
-.srcrow .s-name{font-weight:700;color:var(--txt)}
-.srcrow .s-from{font-size:var(--fs-11);color:var(--mut2)}
-.srcrow .s-badge{font-size:var(--fs-11);font-weight:700;padding:1px 8px;border-radius:999px;
-  color:var(--ok-txt);background:var(--ok-bg);border:1px solid var(--ok-line)}
-.srcrow .s-badge.wn{color:var(--wn-txt);background:var(--wn-bg);border-color:var(--wn-line)}
-.srcrow .s-last{margin-left:auto;font-family:var(--font-num);color:var(--mut);white-space:nowrap}
-.srcrow .s-note{flex:1 1 100%;font-size:var(--fs-11);color:var(--mut);line-height:1.7;margin-top:-2px}
-.srcsum{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2);
-  font-size:var(--fs-11);color:var(--mut);line-height:1.8}
-.srcsum b{color:var(--txt)}
-@media (prefers-reduced-motion:reduce){.srcrow .s-dot{animation:none}}
-
 /* ---------- 一句话结论卡（放在信号区最上面） ---------- */
 .summary{background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--accent);
   border-radius:14px;padding:14px 16px;margin-bottom:var(--sp-card);
@@ -1219,9 +1196,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
     <table id="tbl"><thead></thead><tbody></tbody></table>
   </div>
 
-  <div class="sec-title" id="st-src">数据源体检 · 每个数字有多新</div>
-  <div class="srcbox" id="srcBox"></div>
-
   <div class="sec-title guide-head" id="st-guide" role="button" tabindex="0" aria-expanded="false" aria-controls="guideWrap"
        onclick="guideToggle()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();guideToggle();}">
     <span id="st-guideTxt">指标说明 · 每个数字怎么读</span>
@@ -1474,16 +1448,6 @@ zh:{
    +'<li><b>那 pump.fun 凭什么涨？</b>它一天成交 <b>'+o.pfVol+'</b>，是 Pons 的 <b>'+o.pfVolX+'</b>，涨在<b>需求、注意力和流动性</b>，不在回购。同一个道理反过来看：StonkFun 跌，不是回购停了（近 7 日回购 <b>'+o.stonk7+'</b>，一天没落），而是<b>卖盘比买盘急</b>。</li>'
    +'<li><b>真正不可逆的是销毁（币是真的没了）：</b>Pons 已把 <b class="hl">'+o.ponsPct+'</b> 的总量送进死地址，StonkFun 已销毁 <b class="hl">'+o.stonkPct+'</b>。这部分永远回不来。一句话：<b>回购是买盘，会被卖盘吃掉；销毁是抽走供给，永久生效。</b></li>'
    +'</ul><div class="bb-foot">'+o.foot+'</div>',
-  secSrc:'数据源体检 · 每个数字有多新',
-  srcPrice:'币价', srcPriceFrom:'coins.llama.fi', srcJustNow:'打开即刷新',
-  srcDailyP:'PONS 日度（收入 / 销毁）', srcDailyS:'STONK 日度（收入 / 销毁）', srcDailyFrom:'DefiLlama',
-  srcHourly:'小时级（交易量 / 收入 / 销毁）', srcHourlyFrom:'官方接口 + 链上',
-  srcLb:'收入排行榜', srcLbFrom:'DefiLlama 全站榜',
-  srcLag:n=>'滞后 '+n+' 天',
-  srcStonkNote:'DefiLlama 给 STONK 出数比官方慢 1~2 天，统计基准也大约只有官方的一半：日度用 DefiLlama（保证历史一致），小时级用官方真值（保证最新）—— 两套口径不同，别直接相减。',
-  srcLbStale:'上次抓取失败（4.2MB 榜单接口被中途掐断），现在显示的是上一份；已补上重试，下次抓取会自动追上。',
-  srcHourNote:'PONS 收入＝链上回购支出 ÷ 80%（推算，已标注），销毁＝链上真值；STONK 收入与销毁＝官方接口真值。',
-  srcSum:(n,ok,lag)=>'共 <b>'+n+'</b> 项数据源：<b>'+ok+'</b> 项是最新的'+(lag?('，<b>'+lag+'</b> 项滞后（上方已标黄 —— 那是上游出数的节奏，不是本站故障，小时级那套照旧是最新的）'):'')+'。',
   safeLine:'<b>只读数据面板</b> · 不连接钱包 · 不请求签名 · 不发起任何交易<span class="sf-sep">　|　</span>数据全部来自公开接口',
   foot1:'数据来源：收入和回购＝DefiLlama；成交额和市值＝CoinGecko。Pons 算的是它自己留下的那部分收入（创作者和 Uniswap 的分成已经扣掉）；StonkFun 算的就是它留下的交易费。贵不贵＝市值 ÷（每天收入 × 365 天），数字越小越便宜。参照：pump.fun 30 天收入 $4,528 万、市值 $24.6 亿 → 4.45x。',
   foot2:'红线怎么定的：Pons 7 日均收入 &lt; $10 万＝该走，&lt; $15 万＝别加仓；StonkFun &lt; $20 万＝该走，&lt; $28 万＝别加仓。这个看板只是研究工具，不是投资建议。'
@@ -1720,16 +1684,6 @@ en:{
    +'<li><b>So why does pump.fun climb?</b> Its daily volume is <b>'+o.pfVol+'</b>, or <b>'+o.pfVolX+'</b> Pons. It climbs on <b>demand, attention and liquidity</b>, not on buybacks. The same logic runs in reverse: StonkFun falls not because buybacks stopped (7-day buyback <b>'+o.stonk7+'</b>, unbroken) but because <b>sellers are in more of a hurry than buyers</b>.</li>'
    +'<li><b>The only irreversible part is the burn (those coins are gone):</b> Pons has sent <b class="hl">'+o.ponsPct+'</b> of supply to the dead address and StonkFun has burned <b class="hl">'+o.stonkPct+'</b>. They never come back. In one line: <b>a buyback is a bid — sellers can eat it; a burn removes supply — for good.</b></li>'
    +'</ul><div class="bb-foot">'+o.foot+'</div>',
-  secSrc:'Data health · how fresh is each number',
-  srcPrice:'Price', srcPriceFrom:'coins.llama.fi', srcJustNow:'refreshed on open',
-  srcDailyP:'PONS daily (revenue / burn)', srcDailyS:'STONK daily (revenue / burn)', srcDailyFrom:'DefiLlama',
-  srcHourly:'Hourly (volume / revenue / burn)', srcHourlyFrom:'official API + on-chain',
-  srcLb:'Revenue leaderboard', srcLbFrom:'DefiLlama all-protocol board',
-  srcLag:n=>'lagging '+n+'d',
-  srcStonkNote:'DefiLlama publishes STONK 1–2 days later than the official API, and on roughly half the basis. Daily figures follow DefiLlama (consistent history); hourly follows the official truth (freshest). The two bases differ — do not subtract one from the other.',
-  srcLbStale:'Last fetch failed (the 4.2MB board endpoint was cut off); showing the previous board. Retries are in place, so the next fetch catches up automatically.',
-  srcHourNote:'PONS revenue = on-chain buyback spend ÷ 80% (estimated, labelled); burn = on-chain truth. Both STONK figures are official-API truth.',
-  srcSum:(n,ok,lag)=>n+' sources: '+ok+' up to date'+(lag?(', '+lag+' lagging (highlighted above — upstream publishing cadence, not an outage here; the hourly series is still current)'):'')+'.',
   safeLine:'<b>Read-only dashboard</b> · no wallet connection · no signatures · no transactions<span class="sf-sep">　|　</span>all data from public APIs',
   foot1:'Sources: revenue and buybacks = DefiLlama; volume and market cap = CoinGecko. Pons revenue is what the protocol keeps (creator and Uniswap splits already deducted); StonkFun revenue is the trading fees it keeps. Valuation = mcap ÷ (daily revenue × 365) — lower is cheaper. Reference: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
   foot2:'Where the lines come from: Pons 7-day avg revenue &lt; $100K = get out, &lt; $150K = stop adding; StonkFun &lt; $200K = get out, &lt; $280K = stop adding. A research tool, not investment advice.'
@@ -1895,7 +1849,6 @@ function renderStatic(){
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.textContent = t('secBurn');
   document.getElementById('st-chart').textContent = t('secChart');
   document.getElementById('st-table').textContent = t('secTable');
-  var _ss = document.getElementById('st-src'); if(_ss) _ss.textContent = t('secSrc');
   document.getElementById('st-guideTxt').textContent = t('secGuide');
   var _gh = document.getElementById('guideHint');
   if(_gh) _gh.textContent = (document.getElementById('guideWrap').classList.contains('open') ? t('guideCollapse') : t('guideExpand'));
@@ -2920,69 +2873,6 @@ function renderChart(){
 }
 
 /* ---------- table ---------- */
-/* ---------- 数据源体检（v3.9）：每个数字来自哪里、最新到什么时候 ----------
-   用户反馈「数据源不统一，有的晚 2 天但小时级又能拿到」—— 这一块就是这个问题的正面回答：
-   把每一项数据的上游、最后一天（或最后一小时）、是否滞后全部摊开，滞后的标黄并解释原因。
-   原则：只陈述事实，不美化；拿不到就说拿不到（v3.2 定下的口径，继续守）。 */
-function lastDayOf(key){
-  const arr = (DATA.series && DATA.series[key]) || [];
-  for(let i=arr.length-1;i>=0;i--){ if(arr[i] && arr[i][1]!=null && isFinite(arr[i][0])) return dayKey(arr[i][0]); }
-  return null;
-}
-function renderSrc(){
-  const el = document.getElementById('srcBox'); if(!el) return;
-  const todayK = dayKey(Math.floor(Date.now()/1000));
-  const todayTs = Date.parse(todayK+'T00:00:00Z');
-  const lagDays = d => { if(!d) return null; const t0 = Date.parse(d+'T00:00:00Z');
-                         return isFinite(t0) ? Math.max(0, Math.round((todayTs-t0)/86400000)) : null; };
-  const rows = [];
-  const push = o => rows.push(o);
-
-  /* 币价 */
-  const pxp = (DATA.price||{}).pons, pxs = (DATA.price||{}).stonkfun;
-  push({ st:'ok', name:t('srcPrice'), from:t('srcPriceFrom'), last:t('srcJustNow'),
-         note:(pxp?'PONS $'+fmtN(pxp,4):'')+(pxp&&pxs?'　·　':'')+(pxs?'STONK $'+fmtN(pxs,4):'') });
-
-  /* 两家日度（收入与销毁取更早的那条，别报喜不报忧） */
-  [['srcDailyP','pons.dailyRevenue','pons.dailyHoldersRevenue',''],
-   ['srcDailyS','stonkfun.dailyRevenue','stonkfun.dailyHoldersRevenue','stonkfun']].forEach(function(x){
-    const d1 = lastDayOf(x[1]), d2 = lastDayOf(x[2]);
-    const last = (d1 && d2) ? (d1 < d2 ? d1 : d2) : (d1 || d2);
-    const lg = lagDays(last);
-    push({ st: (lg!=null && lg>=2) ? 'wn' : 'ok', name:t(x[0]), from:t('srcDailyFrom'),
-           last: last ? last.slice(5) : '—',
-           badge: (lg!=null && lg>=1) ? t('srcLag')(lg) : null,
-           note: x[3] ? t('srcStonkNote') : null });
-  });
-
-  /* 小时级 */
-  const hb = hourlyBundle();
-  const hrs = (hb && hb.hours) || [];
-  const lastH = hrs.length ? hrs[hrs.length-1] : null;
-  push({ st:'ok', name:t('srcHourly'), from:t('srcHourlyFrom'),
-         last: lastH ? new Date(lastH*1000).toISOString().slice(5,16).replace('T',' ') : '—',
-         note:t('srcHourNote') });
-
-  /* 全站收入排行榜 */
-  const lb = rankBoard();
-  const lbT = lb && (lb.fetchedAt || lb.updated);
-  const lbLast = lbT ? new Date(lbT).toLocaleString(LANG==='zh'?'zh-CN':'en-GB',
-                    {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-  push({ st: (lb && lb.stale) ? 'wn' : 'ok', name:t('srcLb'), from:t('srcLbFrom'),
-         last: lbLast, note: (lb && lb.stale) ? t('srcLbStale') : null });
-
-  const lag = rows.filter(r=>r.st!=='ok').length;
-  el.innerHTML = rows.map(function(r){
-    return '<div class="srcrow">'
-      + '<span class="s-dot '+r.st+'"></span>'
-      + '<span class="s-name">'+r.name+'</span>'
-      + '<span class="s-from">'+r.from+'</span>'
-      + (r.badge ? '<span class="s-badge'+(r.st==='ok'?'':' wn')+'">'+r.badge+'</span>' : '')
-      + '<span class="s-last">'+r.last+'</span>'
-      + (r.note ? '<span class="s-note">'+r.note+'</span>' : '')
-      + '</div>';
-  }).join('') + '<div class="srcsum">'+t('srcSum')(rows.length, rows.length-lag, lag)+'</div>';
-}
 function renderTable(){
   const all  = build();
   const rows = all.slice(-20).reverse();
@@ -3270,29 +3160,12 @@ async function loadLive(){
   b.textContent = t('fetching'); b.className = 'badge';
   const btn = document.getElementById('btnRefresh');
   if(btn){ btn.disabled = true; btn.classList.add('busy'); }
-  /* ⚡ v3.9 首屏价格优先（用户反馈：打开后 1~3 秒价格才变，第一印象像数据不对）
-     价格只走 coins.llama.fi 一个最小接口；以前它排在 6 个日度口径请求「后面」串行等待，
-     所以最快也要等 loadFees 全部跑完才轮到它。现在先发出去、回来立刻单独上屏，
-     不等其它任何数据。 */
-  const priceP = loadPrices().then(function(n){
-    if(n){
-      renderAll();          /* 先用最新价重画一遍（其余字段仍是内嵌快照值） */
-      flashPrices();
-      setSrc(true, n);
-    }
-    return n;
-  }).catch(function(){ return 0; });
-
-  /* ⚡ v3.9 主数据与重数据拆成两条流水线。
-     以前是「日度口径 → 成交额 → 4.2MB 排行榜」一路 await 串下来，
-     时序实测：日度数据 600ms 就回来了，但 renderAll 要等到排行榜 1682ms 跑完才执行
-     —— 用户多等 1 秒多才看到新数字。现在各走各的，谁回来谁上屏。 */
-  const coreP = Promise.allSettled([loadFees(), loadMarket()]);
-  /* 排行榜 4.2MB：单独发，回来只重画「收入排行」那一段，绝不拖住主数据上屏 */
-  const lbP = loadLeaderboard().then(function(){
-    try{ renderRank(); }catch(e){}
-  }).catch(function(){});
-  /* 链上 24h 回购（20+ 次 RPC，最慢）：同样不阻塞首屏 */
+  let ok = true, priceOk = 0;
+  try{ await loadFees(); }catch(e){ ok = false; }
+  try{ priceOk = await loadPrices(); }catch(e){}
+  try{ ok = ok && true; await loadMarket(); }catch(e){}
+  try{ await loadLeaderboard(); }catch(e){}
+  /* 链上 24h 回购：不阻塞其它数据渲染，读回来再补一次渲染 */
   const chainP = loadChainBurn().then(function(r){
     CHAIN_TRIED = true;
     if(r) renderAll(); else renderBurn();
@@ -3300,10 +3173,6 @@ async function loadLive(){
   }).catch(function(){ CHAIN_TRIED = true; return false; });
   /* 小时监控：交易量 / 链上销毁 的小时级实时刷新（不阻塞首屏） */
   try{ refreshHourlyLive(); }catch(e){}
-
-  const core = await coreP;
-  const ok = core[0].status === 'fulfilled';
-  const priceOk = await priceP;
   DATA.generated = new Date().toISOString();
   try{
     setSrc(ok, priceOk);
@@ -3353,7 +3222,7 @@ function loadViews(){
 }
 
 function renderAll(){
-  [renderCards, renderHourly, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
+  [renderCards, renderHourly, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

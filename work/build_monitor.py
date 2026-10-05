@@ -105,7 +105,12 @@ def fetch_bundle():
         try:
             old = json.load(open(OUT_JSON, encoding="utf-8"))
             if old.get("leaderboard"):
-                bundle["leaderboard"] = old["leaderboard"]
+                # 退回旧榜时必须打标记：页面要能说出"这份榜单是旧的、抓取失败了"，
+                # 而不是让用户看到一个不明所以的时间戳（2026-10-05 修的坑）
+                lb = dict(old["leaderboard"])
+                lb["stale"] = True
+                lb["staleReason"] = "fetch-failed"
+                bundle["leaderboard"] = lb
         except Exception:
             pass
     # 回购 / 销毁：链上真实烧毁量 + 全行业回购强度（见 buyback.py）

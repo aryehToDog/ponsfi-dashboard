@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-10-05T15:57:31",
+  "metamask_entries": [
+    "ponsfi.top",
+    "ponsfi.xyz"
+  ],
+  "metamask_has_xyz": true,
+  "metamask_ok": true,
+  "pr_state": "open",
+  "pr_merged": false,
+  "pr_ok": true,
+  "ss_state": "open",
+  "ss_comments": 0,
+  "ss_ok": true,
+  "goplus_flag": true,
+  "goplus_ok": true,
+  "notified_gp_escalate": false,
+  "days_no_progress": 0,
+  "notified_10d": false
+}

@@ -9,6 +9,27 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.13.1「实心图标 + 三档尺寸，拉开层次」 · 2026-10-05
+     【这一版改了什么】只动图标层，数据 / 接口 / 文案一行没改。
+       ① 线性描边 → 实心填充。Lucide 本身是纯描边库，没有实心权重，所以整套换成
+          Phosphor Icons 的「Fill」实心权重（phosphoricons.com · MIT License · 免费商用，
+          仍是 256 网格、单路径填充、内联 <symbol>，零外部请求）。
+       ② 尺寸分三档，解决「所有图标一样大、看不出主次」：
+          一档 板块标题 18px —— 并且填的是品牌渐变（PONS 紫 → STONK 绿），
+               扫读时先看到它，一眼分得出"这是新的板块"；
+          二档 主操作 / 状态 15px —— 顶部按钮、刷新、安全条盾牌、打赏咖啡；
+          三档 提示与行内 11~14px —— 告警 13~14px、链上现读闪电 11~13px、
+               BGM 箭头 12px、浏览量眼睛 13px、外链 12px。
+       ③ 顺手补上「刷新数据」按钮的图标，并在刷新时让它转起来（reduced-motion 下自动停）。
+       ④ 渐变怎么做的：sprite 里放一个 <linearGradient id="icGrad313">，两个 stop 的颜色
+          由 CSS 变量给（--pons / --stonk），所以浅色深色主题各自换色，不用改 SVG。
+          注意：symbol 里的 path 不能带 fill 属性，否则会盖掉继承来的渐变
+          （本轮生成的 symbol 已全部去掉 fill="currentColor"）。
+       ⑤ 实测：1440 / 1024 / 768 / 390 × 暗 / 浅 共 8 组，溢出 0、裁切 0、报错 0；
+          24 个图标 0 引用缺失；板块图标 18px 渐变解析为
+          暗色 #8b7cff→#2ee6a8 / 浅色 #6249e8→#0d9b73。
+       ⑥ 回退：把 work/template.html.bak-v3131 覆盖回 work/template.html 重渲染即可。
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.13「图标系统：把 emoji 换成一整套线性图标」 · 2026-10-05
      【这一版改了什么】只动图标层，数据 / 接口 / 文案含义一行没改。
        ① 引入 Lucide 图标库（lucide.dev · MIT License · 免费商用），把全站 20 处 emoji
@@ -408,10 +429,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.13-2026-10-05">
+<meta name="dashboard-version" content="v3.13.1-2026-10-05">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.13 · 2026-10-05"
+VER = "v3.13.1 · 2026-10-05"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

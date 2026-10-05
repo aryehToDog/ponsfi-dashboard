@@ -1285,7 +1285,6 @@ zh:{
   loading:'加载中…', fetching:'拉取中…',
   live:'● 实时数据', offline:'● 内置快照（联网失败）', liveAt:'● 实时数据 · ',
   updatedAt:'数据时间 ',
-  priceLive:t=>' · 价格实时 '+t,
   burned:'已销毁 ', mcap:'市值 ', fromAth:'距 ATH ',
   perDay:' /天',
   kAvg7:'7 日均收入', kMom:'比上一个 7 天', kLast:'最新单日收入', kPeak:'单日收入峰值',
@@ -1362,15 +1361,17 @@ zh:{
   thDate:'日期', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
   pendingCell:'待更新',
   pendingTip:'DefiLlama 还没出这天的数字（不是看板坏了）。出数后刷新一下就自动补上。',
-  suppNew:'最新',
-  suppNewPart:h=>'最新·'+h+'h',
+  suppChain:'链上',
+  suppChainPart:h=>'链上·'+h+'h',
+  suppOff:'官方',
+  suppOffPart:h=>'官方·'+h+'h',
   suppWhoPons:'PONS 来自链上回购（收入＝回购支出÷80%）',
   suppWhoStonk:'STONK 来自官方接口（累计值做差）',
   suppTip:(h,p,who)=>'DefiLlama 还没出这天的数，这里显示的是'+(p? ('部分时段（'+h+' 小时）') : '整天（24 小时）')+'的真值 —— '+who+'。口径和 DefiLlama 不完全一样，别直接相减。',
   srcLatest:d=>'数据源最新 '+d,
   lagBadge:d=>'数据晚了 '+d+' 天',
   lagTip:'DefiLlama 还没更新最近这几天的收入，所以这条线用的是它最后一次更新前的 7 天 —— 对比两家的 7 日均时注意这点差别。',
-  liveChip:v=>'最近 24 小时 '+v,
+  liveChip:v=>'实时 24 小时 '+v,
   liveChipTip:'DefiLlama 的日度还没更新到最近这几天，所以这里直接用更快的源把「最近 24 小时」补上：PONS＝链上回购支出折算的收入，STONK＝官方接口真值。点一下跳到下面「小时监控」看逐小时明细。注意：这是滚动 24 小时，和上面 7 日均的日度口径不同，别直接相减。',
   gPsT:'市值÷年收入 —— 你花多少钱，买它一年的收入',
   gPsF:'市值÷年收入 ＝ <b class="hi">市值</b> ÷ (<b class="hi">每天收入 × 365 天</b>)',
@@ -1541,7 +1542,6 @@ en:{
   loading:'Loading…', fetching:'Fetching…',
   live:'● Live data', offline:'● Snapshot (offline)', liveAt:'● Live · ',
   updatedAt:'Updated ',
-  priceLive:t=>' · price live '+t,
   burned:'burned ', mcap:'Mcap ', fromAth:'From ATH ',
   perDay:' /day',
   kAvg7:'7-day avg revenue', kMom:'vs the previous 7 days', kLast:'Latest daily revenue', kPeak:'Peak daily revenue',
@@ -1618,15 +1618,17 @@ en:{
   thDate:'Date', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
   pendingCell:'pending',
   pendingTip:'DefiLlama has not published this day yet (the dashboard is fine). It fills in on the next refresh.',
-  suppNew:'Latest',
-  suppNewPart:h=>'Latest·'+h+'h',
+  suppChain:'Chain',
+  suppChainPart:h=>'Chain·'+h+'h',
+  suppOff:'Official',
+  suppOffPart:h=>'Official·'+h+'h',
   suppWhoPons:'PONS from on-chain buybacks (revenue = buyback spend ÷ 80%)',
   suppWhoStonk:'STONK from the official API (cumulative diff)',
   suppTip:(h,p,who)=>'DefiLlama has not published this day yet; the figure shown is the real value for '+(p? ('a part of the day ('+h+'h)') : 'the full day (24h)')+' — '+who+'. The basis differs from DefiLlama, so do not subtract them directly.',
   srcLatest:d=>'latest '+d,
   lagBadge:d=>d+'d late',
   lagTip:'DefiLlama has not updated the last few days for this protocol, so its 7-day average uses the last 7 days that do have data — keep that in mind when comparing the two.',
-  liveChip:v=>'Last 24h '+v,
+  liveChip:v=>'Live 24h '+v,
   liveChipTip:'DefiLlama has not published the last few days, so the last-24h figure comes from a faster source: PONS = on-chain buyback spend converted to revenue, STONK = official API. Click to jump to the hourly monitor below. Note: this is a rolling 24h window, not the same basis as the daily 7-day average above.',
   gPsT:'Mcap ÷ yearly revenue — what you pay for one year of revenue',
   gPsF:'Mcap ÷ yearly revenue = <b class="hi">market cap</b> ÷ (<b class="hi">daily revenue × 365</b>)',
@@ -1887,7 +1889,7 @@ function stats(rows, p){
   const peak = Math.max(...idxValid.map(i=>rev[i]));
   const peakDay = rows[idxValid[idxValid.findIndex(i=>rev[i]===peak)]].date;
   const mcap = DATA.meta[p.id]?.mcap || p.mcapFallback;
-  const priceNow = pxOf(p.id) || (rows[last]? rows[last][p.id+'_price'] : null);
+  const priceNow = DATA.price?.[p.id] ?? rows[last][p.id+'_price'];
   const priceArr = rows.map(r=>r[p.id+'_price']).filter(v=>v!==null);
   const ath = priceArr.length? Math.max(...priceArr) : null;
   const retrace = avg7p? (avg7-avg7p)/avg7p : 0;
@@ -2127,20 +2129,9 @@ let BURN_BY='h24';                    /* 榜单口径：默认 24 小时（「�
 let CHAIN_STATE='', CHAIN_TRIED=false; /* 链上实时读数的状态（成功时刻 / 是否试过） */
 
 function burnBundle(){ return DATA.burn || BUNDLE.burn || null; }
-/* 全站唯一的「当前价」出口：主源 coins.llama.fi → 兜底 CoinGecko → 最后收盘价。
-   禁止其它地方直接读 DATA.market[..].price —— 两个源会打架，同一个币价显示两个数（2026-10-05 修）。 */
-function pxOf(id){
-  const a=(DATA.price||{})[id];
-  if(typeof a==='number' && a>0) return a;
-  const m=((DATA.market||{})[id]||{}).price;
-  if(typeof m==='number' && m>0) return m;
-  const arr=(DATA.priceSeries||{})[id]||[];
-  for(let i=arr.length-1;i>=0;i--){ if(arr[i] && arr[i][1]>0) return arr[i][1]; }
-  return 0;
-}
 /* 链上/快照读回来的 24h 回购是「代币数量」，这里统一折成美元（拿不到币价就返回 null，宁可显示 — 也不要报个数骗人） */
 function b24usd(pid, tok){
-  const px=pxOf(pid);
+  const px=((DATA.market||{})[pid]||{}).price || 0;
   return (px>0 && tok!=null && isFinite(tok))? tok*px : null;
 }
 function burnOf(p){
@@ -2179,7 +2170,7 @@ function burnStats(){
     const mk=(DATA.market||{})[p.id]||{};
     const b=burnOf(p);
     const mcap=mk.mcap || (DATA.meta[p.id]||{}).mcap || p.mcapFallback || 0;
-    const price=pxOf(p.id)||(b.supply? mcap/b.supply : 0);
+    const price=(DATA.price&&DATA.price[p.id])||mk.price||(b.supply? mcap/b.supply : 0);
     out[p.id]={s7:s7, s30:s30, mcap:mcap, price:price, vol:mk.vol24h||0,
       d1:(hold[last]!=null? hold[last] : null), d1date:(rows[last]? rows[last].date : null),
       volShare:(mk.vol24h>0)? s7/(mk.vol24h*7) : null,
@@ -3078,7 +3069,8 @@ function renderTable(){
     const d=(suppData[id==='pons'?'pons':'stonk']||{})[day];
     if(!d || d[key]==null) return null;
     return { v:d[key],
-      tag:(d.partial? t('suppNewPart')(d.hours) : t('suppNew')),
+      tag:(d.partial? (id==='pons'? t('suppChainPart')(d.hours) : t('suppOffPart')(d.hours))
+                    : (id==='pons'? t('suppChain') : t('suppOff'))),
       tip:t('suppTip')(d.hours, !!d.partial, id==='pons'? t('suppWhoPons') : t('suppWhoStonk')) };
   };
   const cell = (cl,k,v,extra,pending,supp)=>{
@@ -3323,7 +3315,6 @@ async function loadPrices(){
     const lastTs = arr.length? arr[arr.length-1][0] : 0;
     if(dayKey(lastTs) === dayKey(today)) arr[arr.length-1] = [lastTs, c.price];
     else arr.push([today, c.price]);
-    DATA.priceAt = Date.now();
     const p = PROJECTS.find(x=>x.id===id);
     const mk = (DATA.market||{})[id];
     const mc = (mk && mk.mcap) ? mk.mcap : (p ? c.price * p.supply : null);
@@ -3340,11 +3331,7 @@ async function loadMarket(){
   Object.entries(CG_IDS).forEach(([name,cid])=>{
     const x = j[cid] || {};
     if(x.usd_24h_vol) mk[name] = {vol24h:x.usd_24h_vol, mcap:x.usd_market_cap||0, price:x.usd, change24h:x.usd_24h_change||0};
-    /* 价格只认一个主源（coins.llama.fi）。这里以前会无条件覆盖 DATA.price，
-       两个接口完成顺序不同 → 同一个币价一会是这个、一会是那个（2026-10-05 修）：
-       只有当主源没给到价时，才用 CoinGecko 兜底。 */
-    DATA.price = DATA.price || {};
-    if(x.usd && !(DATA.price[name] > 0)) DATA.price[name] = x.usd;
+    if(x.usd) { DATA.price = DATA.price || {}; DATA.price[name] = x.usd; }
   });
   PROJECTS.forEach(p=>{
     const m = mk[p.id];
@@ -3447,8 +3434,7 @@ function renderAll(){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;
-  document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')
-    + (DATA.priceAt? t('priceLive')(new Date(DATA.priceAt).toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit'})) : '');
+  document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB');
   document.getElementById('foot').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
       + '<div class="foot-meta"><span class="dash-ver" title="'+t('verTip')+'">'+DASH_VER+'</span>'
       + '<span class="pv" id="pvStat" title="'+t('pvTip')+'"></span></div>';

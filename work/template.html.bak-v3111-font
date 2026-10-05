@@ -89,7 +89,7 @@ body{margin:0;background:var(--bg);color:var(--txt);
 body::before{content:"";position:fixed;left:0;right:0;top:0;height:360px;pointer-events:none;z-index:0;
   background:radial-gradient(780px 360px at 50% -110px,var(--glow),transparent 72%)}
 .wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:18px 20px 64px}
-.mono{font-family:var(--font-mono)}
+.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
 
 /* ---------- 页头 ---------- */
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:var(--sp-card)}
@@ -218,9 +218,6 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 /* ---------- 表格（日度明细）---------- */
 #tbl{width:100%;min-width:720px;border-collapse:separate;border-spacing:0;font-size:var(--fs-13)}
-/* v3.11.1：表内单元格统一走 UI 字体 —— 表里带中文（「近 7 日均」「待更新」），
-   挂 .mono 会让中文回退到另一个字体，同一列出现两种字形。数字列靠 tabular-nums 对齐。 */
-#tbl td{font-family:var(--font-ui)}
 #tbl th,#tbl td{text-align:right;padding:9px 14px;border-bottom:1px solid var(--line);
   font-variant-numeric:tabular-nums;white-space:nowrap}
 #tbl th{color:var(--mut);font-weight:600;font-size:var(--fs-11);letter-spacing:.4px;user-select:none;
@@ -334,7 +331,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   50%{box-shadow:0 0 0 9px color-mix(in srgb,var(--accent) 20%,transparent),var(--card-shadow)}}
 @media (prefers-reduced-motion:reduce){.gitem:target,.gitem.gflash{animation:none}}
 .gitem h3{margin:0 0 5px;font-size:var(--fs-13);font-weight:600;letter-spacing:-.1px}
-.gitem .f{font-size:var(--fs-10);color:var(--mut2);font-family:var(--font-mono);
+.gitem .f{font-size:var(--fs-10);color:var(--mut2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   margin-bottom:10px;word-break:break-all}
 .gitem .lead{font-size:var(--fs-12);color:var(--mut);line-height:1.8;margin:0 0 var(--sp-block)}
 .gitem .ex{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;
@@ -343,7 +340,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .gitem .ex .cap{color:var(--mut2);font-size:var(--fs-10);letter-spacing:.3px;margin-bottom:4px}
 .gitem ul{margin:0;padding-left:0;list-style:none;font-size:var(--fs-11);line-height:1.95;color:var(--mut)}
 .gitem ul li{display:flex;gap:9px}
-.gitem ul li .band{flex:0 0 auto;min-width:66px;font-family:var(--font-mono);color:var(--txt)}
+.gitem ul li .band{flex:0 0 auto;min-width:66px;font-family:ui-monospace,monospace;color:var(--txt)}
 .gitem .note{margin-top:10px;font-size:var(--fs-11);color:var(--mut2);line-height:1.8;
   border-top:1px dashed var(--line2);padding-top:9px}
 .gitem .g-ok{color:var(--up)} .gitem .g-warn{color:var(--warn)} .gitem .g-bad{color:var(--down)}
@@ -356,7 +353,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   border:1px solid var(--line2);border-radius:var(--r-pill);background:var(--panel);vertical-align:middle}
 .foot .foot-author img{width:22px;height:22px;border-radius:50%;object-fit:cover}
 .dash-ver{display:inline-flex;align-items:center;gap:7px;margin-top:7px;
-  font-size:var(--fs-10);letter-spacing:.5px;color:var(--mut2);font-family:var(--font-mono);
+  font-size:var(--fs-10);letter-spacing:.5px;color:var(--mut2);font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
   border:1px solid var(--line);border-radius:var(--r-pill);padding:3px 11px;background:var(--panel)}
 .dash-ver::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--up);opacity:.75;
   box-shadow:0 0 0 3px color-mix(in srgb,var(--up) 14%,transparent)}
@@ -365,7 +362,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .foot-meta .dash-ver{margin-top:0}
 .pv{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-10);letter-spacing:.4px;
   color:var(--mut);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px 11px;background:var(--panel);
-  font-family:var(--font-mono)}
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
 .pv b{font-weight:800;color:var(--txt);letter-spacing:0}
 .pv .pv-ic{font-size:var(--fs-12);line-height:1;opacity:.85}
 .pv .pv-k{color:var(--mut2)}
@@ -521,19 +518,8 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
    所有组件统一走 --fs-* 一套字号，数字统一用 tabular-nums 对齐
    ============================================================ */
 :root{
-  /* UI / 正文 / 数值：系统栈（不下载字体，中文站最优解）
-     Mac=SF Pro+苹方 · Win11=Segoe UI Variable+雅黑UI · 安卓=Roboto+思源/小米/鸿蒙
-     拉丁字排在前、中文字排在后：浏览器按「谁有字形谁上」逐字回退，两边都不将就 */
-  --font-ui:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","SF Pro Text",
-    "Segoe UI",Roboto,"PingFang SC","HarmonyOS Sans SC","MiSans","Noto Sans SC","Source Han Sans SC",
-    "Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
-  /* 数值：跟着 UI 字体走 + 表格数字（tabular-nums 由 body 统一开启）——
-     日度大表一直就是这么渲染的，现在卡片/排行/销毁跟它统一。
-     等宽只留给「机器码」：地址、哈希、公式、图表刻度 */
-  --font-num:var(--font-ui);
-  /* 机器码专用等宽：有现代等宽的先用，没有就退回系统等宽 */
-  --font-mono:"JetBrains Mono","Geist Mono","IBM Plex Mono","Cascadia Mono","SF Mono",
-    ui-monospace,SFMono-Regular,Menlo,Consolas,"Roboto Mono",monospace;
+  --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+  --font-num:ui-monospace,SFMono-Regular,"SF Mono",Menlo,"Roboto Mono",monospace;
   --fs-11:11.5px; --fs-12:12.5px; --fs-13:13.5px; --fs-14:15px; --fs-16:16.5px; --fs-20:21px;
   /* 间距标尺 v3.8（4px 基准）—— 全站统一走这套，避免各处 9/10/11/13/18 乱跳 */
   --sp-sec:28px;    /* 大段落之间：上个模块 → 下个模块标题 */
@@ -558,8 +544,7 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   --sh-3:0 26px 64px -30px rgba(0,0,0,.8);
 }
 body{font-family:var(--font-ui);font-size:var(--fs-13);line-height:1.62;
-  font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1,"lnum" 1;
-  font-kerning:normal;font-optical-sizing:auto;text-rendering:optimizeLegibility}
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
 h1{font-size:var(--fs-16);font-weight:700;letter-spacing:-.15px}
 h1 span{font-size:var(--fs-11);font-weight:500}
 .badge,.tbtn,header button{font-size:var(--fs-12)}
@@ -601,7 +586,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hl-dn{color:var(--down);font-weight:700}
 .hl-warn{color:var(--warn);font-weight:700}
 /* 关键数字高亮：颜色自动跟着这张卡的等级走（危险=红 / 警戒=黄 / 正常=绿） */
-.hi{font-weight:800;font-family:var(--font-num);letter-spacing:-.1px}
+.hi{font-weight:800;font-family:var(--font-num);letter-spacing:-.2px}
 .hi-dn{font-weight:800;color:var(--down)}
 .hi-up{font-weight:800;color:var(--up)}
 .hi-wn{font-weight:800;color:var(--warn)}
@@ -723,7 +708,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .addr{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--line);
   border-radius:var(--r-md);padding:10px 12px;margin-top:8px}
 .addr .chain{font-size:var(--fs-11);font-weight:700;color:var(--mut);flex:0 0 auto;min-width:58px}
-.addr code{flex:1;font-family:var(--font-mono);font-size:var(--fs-11);word-break:break-all;color:var(--txt)}
+.addr code{flex:1;font-family:var(--font-num);font-size:var(--fs-11);word-break:break-all;color:var(--txt)}
 .addr button{flex:0 0 auto;font-size:var(--fs-11);padding:6px 12px;font-weight:700}
 .tip-close{position:absolute;top:12px;right:14px}
 .tip-thanks{margin-top:14px;padding:10px 12px;border-radius:var(--r-md);font-size:var(--fs-12);line-height:1.75;
@@ -783,7 +768,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .rank-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .rank-pct{font-size:var(--fs-11);font-weight:700;color:var(--mut);background:var(--panel2);
   border:1px solid var(--line2);border-radius:var(--r-pill);padding:2px 10px;white-space:nowrap}
-.rank-big{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:36px;font-weight:800;letter-spacing:-.85px;line-height:1.02;
+.rank-big{font-family:var(--font-num);font-size:36px;font-weight:800;letter-spacing:-1.6px;line-height:1.02;
   color:color-mix(in srgb,var(--rank-c,var(--accent)) 72%,var(--txt))}
 .rank-big small{display:block;font-family:var(--font-ui);font-size:var(--fs-11);font-weight:500;
   letter-spacing:0;color:var(--mut);margin-top:4px}
@@ -867,7 +852,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   text-decoration:none;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));
   border-radius:var(--r-sm);padding:3px 9px;white-space:nowrap;transition:background .15s ease}
 .burn-head .bn-link:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
-.burn-big{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:30px;font-weight:800;letter-spacing:-.7px;line-height:1.14;
+.burn-big{font-family:var(--font-num);font-size:30px;font-weight:800;letter-spacing:-1.3px;line-height:1.14;
   margin:var(--sp-block) 0 0;font-variant-numeric:tabular-nums}
 .burn-big small{font-family:var(--font-ui);font-size:var(--fs-12);font-weight:600;letter-spacing:0;
   color:var(--mut);margin-left:7px}
@@ -883,7 +868,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .burn-kv span b{color:var(--mut2);font-weight:600}
 .burn-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
 .burn-src{margin-top:10px;font-size:var(--fs-11);color:var(--mut2);line-height:1.6}
-.burn-src code{font-family:var(--font-mono);font-size:var(--fs-10);color:var(--mut)}
+.burn-src code{font-family:var(--font-num);font-size:var(--fs-10);color:var(--mut)}
 .bb-head{display:grid;grid-template-columns:40px minmax(0,1fr) 116px 116px;align-items:end;gap:10px;
   padding:0 14px 7px;font-size:var(--fs-11);font-weight:700;color:var(--mut2)}
 .bb-head span:nth-child(3),.bb-head span:nth-child(4){text-align:right}
@@ -1116,7 +1101,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-legend .lg em{font-style:normal;color:var(--mut2);font-size:var(--fs-10)}
 #hourlyChart{width:100%;height:270px;display:block}
 .hourly-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 5;opacity:.8}
-.hourly-axis{fill:var(--mut2);font-size:var(--fs-10);font-family:var(--font-mono)}
+.hourly-axis{fill:var(--mut2);font-size:var(--fs-10);font-family:var(--font-num)}
 .hourly-bar{cursor:default;transition:opacity .15s ease}
 .hourly-bar:hover{opacity:.66}
 .hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:var(--sp-block)}
@@ -1182,7 +1167,7 @@ h1 #gen{font-size:var(--fs-11);font-weight:500;color:var(--mut);margin-left:10px
   background:linear-gradient(180deg,var(--pons),var(--stonk));opacity:.8}
 
 /* --- 价格：等宽数字 + 收紧字距，两个币上下对齐一眼比大小 --- */
-.price .p{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.45px}
+.price .p{font-family:var(--font-num);font-weight:700;letter-spacing:-.9px}
 .price .p small{letter-spacing:-.2px}
 
 /* --- 控件手感：按钮 / 标签页 / 问号 --- */
@@ -3010,7 +2995,7 @@ function renderChart(){
   for(let k=0;k<=TICKS;k++){
     const v = min + (max-min)*k/TICKS, y = Y(v);
     g += `<line x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}" style="stroke:var(--grid)"/>`;
-    g += `<text x="${P.l-9}" y="${y+4}" style="fill:var(--mut2)" font-size="11" text-anchor="end" font-family="JetBrains Mono,IBM Plex Mono,Cascadia Mono,SF Mono,Menlo,Consolas,monospace">${yfmt(v)}</text>`;
+    g += `<text x="${P.l-9}" y="${y+4}" style="fill:var(--mut2)" font-size="11" text-anchor="end" font-family="ui-monospace,monospace">${yfmt(v)}</text>`;
   }
   const step = Math.max(1, Math.round(sub.length/7));
   sub.forEach((r,i)=>{ if(i%step===0||i===sub.length-1){
@@ -3062,7 +3047,7 @@ function renderChart(){
     const x = Math.min(l.x + 13, W - 10 - w);
     const y = Math.max(P.t - 6, Math.min(H - P.b - h/2, l.y));
     g += `<g class="endlbl"><rect x="${x.toFixed(1)}" y="${(y-h/2).toFixed(1)}" width="${w.toFixed(1)}" height="${h}" rx="${(h/2).toFixed(1)}" style="fill:${l.color};stroke:${l.color}" fill-opacity="0.15" stroke-opacity="0.75" stroke-width="1"/>`+
-         `<text x="${(x+9).toFixed(1)}" y="${(y+4.5).toFixed(1)}" font-size="12.5" font-weight="800" font-family="JetBrains Mono,IBM Plex Mono,Cascadia Mono,SF Mono,Menlo,Consolas,monospace" style="fill:${l.color}">${l.text}</text></g>`;
+         `<text x="${(x+9).toFixed(1)}" y="${(y+4.5).toFixed(1)}" font-size="12.5" font-weight="800" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" style="fill:${l.color}">${l.text}</text></g>`;
   });
   svg.innerHTML = g;
   document.getElementById('legend').innerHTML = series.map(s=>

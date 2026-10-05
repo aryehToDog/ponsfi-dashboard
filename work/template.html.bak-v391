@@ -463,13 +463,6 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   font-size:10.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;
   color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);
   border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);vertical-align:middle}
-/* 日度表补充值（链上 / 官方）：数值 + 一个小标签，hover 说明覆盖了多久、口径是什么 */
-.sup-tag{margin-left:6px;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:700;font-style:normal;
-  color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);
-  border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);vertical-align:middle}
-.bb-chainrk{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.2px;color:var(--accent);
-  background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
-  border-radius:999px;padding:1px 7px;cursor:help}
 /* 卡片上的「实时 24 小时」小胶囊：哪里写了数据晚了几天，旁边就补一个更快的源，
    让用户第一眼看到的是最新数字，而不是只有一个"晚了"的告警（2026-10-05 加） */
 .livechip{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:2px 8px;border-radius:999px;
@@ -1361,13 +1354,6 @@ zh:{
   thDate:'日期', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
   pendingCell:'待更新',
   pendingTip:'DefiLlama 还没出这天的数字（不是看板坏了）。出数后刷新一下就自动补上。',
-  suppChain:'链上',
-  suppChainPart:h=>'链上·'+h+'h',
-  suppOff:'官方',
-  suppOffPart:h=>'官方·'+h+'h',
-  suppWhoPons:'PONS 来自链上回购（收入＝回购支出÷80%）',
-  suppWhoStonk:'STONK 来自官方接口（累计值做差）',
-  suppTip:(h,p,who)=>'DefiLlama 还没出这天的数，这里显示的是'+(p? ('部分时段（'+h+' 小时）') : '整天（24 小时）')+'的真值 —— '+who+'。口径和 DefiLlama 不完全一样，别直接相减。',
   srcLatest:d=>'数据源最新 '+d,
   lagBadge:d=>'数据晚了 '+d+' 天',
   lagTip:'DefiLlama 还没更新最近这几天的收入，所以这条线用的是它最后一次更新前的 7 天 —— 对比两家的 7 日均时注意这点差别。',
@@ -1483,9 +1469,7 @@ zh:{
   burnSrcPons:'链上现读：Robinhood Chain · 死地址余额',
   burnSrcStonk:'链上现读：Solana · 初始 10 亿 − 当前总量',
   burnTab24:'近 24 小时', burnTab30:'近 30 天', bbColName:'项目',
-  burnRankBy:t=>'名次按「'+t+'」这一列排（带 ⚡ 的两行是链上现读，口径不同）',
-  bbChainRk:'链上',
-  bbChainRkTip:'这行金额是链上最近 24 小时现读（比 DefiLlama 新）；口径与 DefiLlama 不同，所以不占用它的名次。',
+  burnRankBy:t=>'名次按「'+t+'」这一列排',
   burnPeersH24:n=>'回购力度榜 · 全行业近 24 小时回购金额（共 '+n+' 个项目，已去掉「烧 gas」的公链）',
   burnPeersH30:n=>'回购力度榜 · 全行业近 30 天回购金额（共 '+n+' 个项目，已去掉「烧 gas」的公链）',
   burnPeersNote24:'⚡ 只有 Pons / StonkFun 这两行是链上现读的：PONS 一直算到最新区块（真 24 小时），STONK 用总量差值。其它项目来自 DefiLlama，它有时晚 1~2 天出数。',
@@ -1618,13 +1602,6 @@ en:{
   thDate:'Date', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
   pendingCell:'pending',
   pendingTip:'DefiLlama has not published this day yet (the dashboard is fine). It fills in on the next refresh.',
-  suppChain:'Chain',
-  suppChainPart:h=>'Chain·'+h+'h',
-  suppOff:'Official',
-  suppOffPart:h=>'Official·'+h+'h',
-  suppWhoPons:'PONS from on-chain buybacks (revenue = buyback spend ÷ 80%)',
-  suppWhoStonk:'STONK from the official API (cumulative diff)',
-  suppTip:(h,p,who)=>'DefiLlama has not published this day yet; the figure shown is the real value for '+(p? ('a part of the day ('+h+'h)') : 'the full day (24h)')+' — '+who+'. The basis differs from DefiLlama, so do not subtract them directly.',
   srcLatest:d=>'latest '+d,
   lagBadge:d=>d+'d late',
   lagTip:'DefiLlama has not updated the last few days for this protocol, so its 7-day average uses the last 7 days that do have data — keep that in mind when comparing the two.',
@@ -1740,9 +1717,7 @@ en:{
   burnSrcPons:'Read live: Robinhood Chain · dead-address balance',
   burnSrcStonk:'Read live: Solana · 1B initial − current supply',
   burnTab24:'Last 24h', burnTab30:'Last 30d', bbColName:'Project',
-  burnRankBy:t=>'ranked by the "'+t+'" column (⚡ rows are read live from chain; different basis)',
-  bbChainRk:'Chain',
-  bbChainRkTip:'This amount is read live from chain over the last 24h (fresher than DefiLlama); its basis differs, so it does not take a DefiLlama rank.',
+  burnRankBy:t=>'ranked by the "'+t+'" column',
   burnPeersH24:n=>'Buyback leaderboard · last 24 hours ('+n+' projects across the industry; gas-burning chains excluded)',
   burnPeersH30:n=>'Buyback leaderboard · last 30 days ('+n+' projects across the industry; gas-burning chains excluded)',
   burnPeersNote24:'⚡ Only Pons / StonkFun are read live from chain (PONS up to the latest block; STONK from supply deltas). Every other project comes from DefiLlama, which can lag 1-2 days.',
@@ -2254,16 +2229,11 @@ function renderBurn(){
     + '<span class="'+(BURN_BY==='h24'?'on':'')+'">'+t('burnTab24')+'</span>'
     + '<span class="'+(BURN_BY==='d30'?'on':'')+'">'+t('burnTab30')+'</span>';
   if(pl) pl.innerHTML=peers.slice().sort(function(a,b){
-      /* 按「这一列实际显示的金额」排。以前按 DefiLlama 的名次排，而自家两行显示的是链上现读数，
-         于是出现「钱少的在上面、钱多的在下面」（2026-10-05 用户发现）。 */
-      const va=(BURN_BY==='h24')? (burnPeerVal(a,'h24').v||0) : (a.d30||0);
-      const vb=(BURN_BY==='h24')? (burnPeerVal(b,'h24').v||0) : (b.d30||0);
-      return vb-va;
+      return (a[byK]||9999)-(b[byK]||9999);
     }).map(function(x){
       const v24=burnPeerVal(x,'h24');       /* 自家两家这里会用链上现读数覆盖 */
-      const override=(BURN_BY==='h24') && (x.slug==='pons-v1'||x.slug==='stonkfun') && v24.v!=null;
       return '<div class="bb-row'+(x.me?' me':'')+'">'
-        + '<span class="bb-rank">'+(override? '<em class="bb-chainrk" title="'+esc(t('bbChainRkTip'))+'">'+esc(t('bbChainRk'))+'</em>' : '#'+x[byK])+'</span>'
+        + '<span class="bb-rank">#'+x[byK]+'</span>'
         + '<span class="bb-name"><b>'+esc(x.n)+(x.me?' <em class="rr-me">'+t('rankMe')+'</em>':'')+'</b>'
         +   '<i>'+esc(x.c)+'</i></span>'
         + '<span class="bb-v'+(BURN_BY==='h24'?' on':'')+'">'+fmtU(v24.v)
@@ -3063,23 +3033,9 @@ function renderTable(){
     if(!isFinite(d)||Math.abs(d)<0.005) return '<span class="dlt flat">–</span>';
     return '<span class="dlt '+(d>0?'up':'dn')+'">'+(d>0?'▲':'▼')+Math.abs(d*100).toFixed(0)+'%</span>';
   };
-  /* 补充值：DefiLlama 还没出的日子，用更快的源补上（链上 / 官方），并标明覆盖了多久 */
-  const suppData=(hourlyBundle()&&hourlyBundle().dailySupp)||{};
-  const suppOf=(id,day,key)=>{
-    const d=(suppData[id==='pons'?'pons':'stonk']||{})[day];
-    if(!d || d[key]==null) return null;
-    return { v:d[key],
-      tag:(d.partial? (id==='pons'? t('suppChainPart')(d.hours) : t('suppOffPart')(d.hours))
-                    : (id==='pons'? t('suppChain') : t('suppOff'))),
-      tip:t('suppTip')(d.hours, !!d.partial, id==='pons'? t('suppWhoPons') : t('suppWhoStonk')) };
-  };
-  const cell = (cl,k,v,extra,pending,supp)=>{
-    if(pending){
-      if(supp) return `<td class="mono ${cl} sup" title="${esc(supp.tip)}"><span class="v">${fmtU(supp.v)}</span><em class="sup-tag">${esc(supp.tag)}</em></td>`;
-      return `<td class="mono ${cl} pend" title="${t('pendingTip')}"><span class="v pend-v">${t('pendingCell')}</span></td>`;
-    }
-    return `<td class="mono ${cl}"><span class="bar" style="--w:${w(k,v)}%"></span><span class="v">${fmtU(v)}</span>${extra||''}</td>`;
-  };
+  const cell = (cl,k,v,extra,pending)=> pending
+    ? `<td class="mono ${cl} pend" title="${t('pendingTip')}"><span class="v pend-v">${t('pendingCell')}</span></td>`
+    : `<td class="mono ${cl}"><span class="bar" style="--w:${w(k,v)}%"></span><span class="v">${fmtU(v)}</span>${extra||''}</td>`;
   const lagTag = id => { const s = st[id]; return s.lag>0
     ? `<span class="lagtag" title="${t('lagTip')}">${t('srcLatest')(s.lastDate.slice(5))}</span>` : ''; };
 
@@ -3107,11 +3063,11 @@ function renderTable(){
     const pPend = r.date > pLast,   pHoldPend = r.date > pHoldLast;
     const bPend = r.date > bLast,   bHoldPend = r.date > bHoldLast;
     return `<tr><td class="mono c-date">${r.date}</td>`+
-      cell('g-pons v-rev','pons_rev',r.pons_rev, dlt(r.pons_rev, prev.pons_rev), pPend, pPend? suppOf('pons',r.date,'rev'):null)+
-      cell('g-pons v-bb','pons_hold',r.pons_hold, '', pHoldPend, pHoldPend? suppOf('pons',r.date,'hold'):null)+
+      cell('g-pons v-rev','pons_rev',r.pons_rev, dlt(r.pons_rev, prev.pons_rev), pPend)+
+      cell('g-pons v-bb','pons_hold',r.pons_hold, '', pHoldPend)+
       priceTd(r.pons_price)+
-      cell('g-stonk v-rev','stonkfun_rev',r.stonkfun_rev, dlt(r.stonkfun_rev, prev.stonkfun_rev), bPend, bPend? suppOf('stonkfun',r.date,'rev'):null)+
-      cell('g-stonk v-bb','stonkfun_hold',r.stonkfun_hold, '', bHoldPend, bHoldPend? suppOf('stonkfun',r.date,'hold'):null)+
+      cell('g-stonk v-rev','stonkfun_rev',r.stonkfun_rev, dlt(r.stonkfun_rev, prev.stonkfun_rev), bPend)+
+      cell('g-stonk v-bb','stonkfun_hold',r.stonkfun_hold, '', bHoldPend)+
       priceTd(r.stonkfun_price)+`</tr>`;
   }).join('');
 

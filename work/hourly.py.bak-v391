@@ -349,52 +349,6 @@ def main():
     out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
     out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
 
-    # 日度补充（v3.9.1）：DefiLlama 日度会晚 1~2 天出数，缺的那几天用更快的源补上 ——
-    #   PONS ＝链上（收入＝回购支出÷80%，与小时级同一口径，回购销毁＝收入×80%）
-    #   STONK＝官方接口累计快照差值
-    #   差几个小时就标几个小时（front-end 会写明「链上·8h」这种），绝不拿半天冒充整天。
-    #   前端只在「待更新」的格子里用它，不混进 DefiLlama 序列。
-    def daily_supp():
-        supp = {"pons": {}, "stonk": {}}
-        for i, b in enumerate(buckets):
-            rev = out["pons"]["rev"][i] if i < len(out["pons"]["rev"]) else None
-            if rev is None:
-                continue
-            day = datetime.datetime.utcfromtimestamp(b).strftime("%Y-%m-%d")
-            d = supp["pons"].setdefault(day, {"rev": 0.0, "hold": 0.0, "hours": 0})
-            d["rev"] += rev
-            d["hold"] += rev * BUYBACK_SHARE
-            d["hours"] += 1
-        for day, d in supp["pons"].items():
-            d["rev"] = round(d["rev"], 2)
-            d["hold"] = round(d["hold"], 2)
-            d["partial"] = d["hours"] < 24
-        hist = [h for h in sf_load_hist() if isinstance(h, dict) and h.get("ts")]
-        hist.sort(key=lambda h: h["ts"])
-        by_day = {}
-        for h in hist:
-            by_day.setdefault(datetime.datetime.utcfromtimestamp(h["ts"]).strftime("%Y-%m-%d"), []).append(h)
-        days = sorted(by_day)
-        for i, b in enumerate(days):
-            hb = by_day[b][-1]
-            # 起点：上一天的最后一条；没有上一天（我们刚开始记录）就用当天第一条 —— 覆盖几小时就标几小时
-            ha = by_day[days[i - 1]][-1] if i > 0 else by_day[b][0]
-            gap = hb["ts"] - ha["ts"]
-            if not (6 * 3600 <= gap <= 26 * 3600):
-                continue
-            supp["stonk"][b] = {
-                "rev": round((hb.get("revUsd") or 0) - (ha.get("revUsd") or 0), 2),
-                "hold": round((hb.get("buybackUsd") or 0) - (ha.get("buybackUsd") or 0), 2),
-                "hours": round(gap / 3600, 1),
-                "partial": gap < 22 * 3600,
-            }
-        return supp
-    try:
-        out["dailySupp"] = daily_supp()
-    except Exception as exc:
-        print("warn: dailySupp: %s" % exc, file=sys.stderr)
-        out["dailySupp"] = old.get("dailySupp") if isinstance(old, dict) else None
-
     # 官方口径日线（另一套统计基准，只用于「数据源体检」板块，不混进 DefiLlama 那条序列）
     try:
         out["stonkDaily"] = sf_daily()

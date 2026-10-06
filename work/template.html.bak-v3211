@@ -873,7 +873,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   .topbar .tb-t{padding-left:140px}
   .foot .foot-author{flex:1 1 100%}
   .foot .foot-tip{flex:1 1 100%;justify-content:center}
-  .foot .fa-follow{padding:9px 18px}
+  .foot .fa-follow{padding:7px 14px}
 }
 
 /* ============================================================
@@ -1555,9 +1555,7 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
      不再把「系统 / 刷新数据」挤成竖排两字（2026-10-06 用户反馈） */
   header{gap:10px}
   .hdr-right{width:100%;flex-wrap:wrap;row-gap:8px}
-  /* 状态条单独占一行；三个按钮平分下一行 —— 谁也不会被挤成竖排两字 */
-  .hdr-right .badge{flex:1 1 100%;text-align:center;justify-content:center}
-  header .tbtn,#btnRefresh{min-height:38px;padding:8px 10px;flex:1 1 0;min-width:0;justify-content:center;
+  header .tbtn,#btnRefresh{min-height:38px;padding:8px 12px;flex:1 1 auto;justify-content:center;
     white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
   .q-like{min-height:38px;padding:6px 14px}
   .livechip{min-height:26px;padding:4px 9px}

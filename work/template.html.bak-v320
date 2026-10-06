@@ -507,71 +507,6 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
 #tbl td.pend .pend-v{font-size:var(--fs-11);font-weight:700;color:var(--mut2);letter-spacing:.3px}
 #tbl .win{display:block;margin-top:1px;font-size:var(--fs-10);font-weight:600;color:var(--mut2);letter-spacing:.2px}
 
-
-/* ==========================================================================
-   v3.20 页面导航（#secNav）· 长页面不再迷路
-   —— 顶部是「现在多少钱」，往下十几个板块，翻到一半就忘了上面有什么。
-   设计目标：常驻一条「模块快捷跳转」，点哪滚哪，当前模块自动高亮。
-   ≥1024px：左侧竖排导轨（图标点 + 悬停浮出名称，不占版面）
-      · 1440 以内给 .wrap 留出一条 66px 导航槽，导轨绝不压内容；
-      · 1504 以上页面两侧出现自然留白，导轨跟着贴到内容左边（9px 保底）。
-   <1024px：标题下方横滑胶囊条，滚动时吸顶（让位给顶部固定栏 60px）。
-   ========================================================================== */
-#secNav{position:fixed;left:max(9px,calc(50vw - 752px));top:50%;transform:translateY(-50%);
-  z-index:100;display:flex;flex-direction:column;gap:3px;padding:6px 5px;border-radius:999px;
-  background:color-mix(in srgb,var(--panel) 76%,transparent);
-  border:1px solid var(--line);box-shadow:var(--stick-shadow);
-  -webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);
-  opacity:.52;transition:opacity .22s ease}
-#secNav:hover,#secNav:focus-within{opacity:1}
-#secNav button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-.nav-i{position:relative;display:flex;align-items:center;justify-content:center;width:32px;height:32px;
-  padding:0;border:0;border-radius:999px;background:transparent;color:var(--mut);cursor:pointer;
-  transition:color .16s ease,background .16s ease,box-shadow .16s ease}
-.nav-i .nav-dot{display:flex;align-items:center;justify-content:center}
-.nav-i .nav-dot .ic{width:15px;height:15px}
-.nav-i:hover{color:var(--txt);background:color-mix(in srgb,var(--accent) 11%,transparent);box-shadow:none}
-.nav-i.on{color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,transparent);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 36%,transparent),0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent)}
-.nav-i:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:2px}
-/* 名称：默认藏起来，鼠标悬停 / 键盘聚焦时从右边浮出（不占导轨宽度） */
-.nav-i .nav-t{position:absolute;left:calc(100% + 9px);top:50%;transform:translate(-5px,-50%);
-  opacity:0;pointer-events:none;white-space:nowrap;
-  padding:5px 11px;border-radius:10px;font-size:var(--fs-11);font-weight:600;letter-spacing:.2px;
-  color:var(--txt);background:var(--panel3);border:1px solid var(--line2);box-shadow:var(--card-shadow);
-  transition:opacity .16s ease,transform .16s ease}
-.nav-i:hover .nav-t,.nav-i:focus-visible .nav-t{opacity:1;transform:translate(0,-50%)}
-/* 1024~1503：内容整体右移一条导航槽，导轨不压卡片 */
-@media(min-width:1024px) and (max-width:1503px){.wrap{padding-left:66px}}
-/* 锚点落位：顶部固定栏 60px，再留 20px 呼吸（手机端在下面单独加高） */
-#st-hourly,#st-rules,#st-burn,#st-share,#st-rank,#st-chart,#st-table,#st-src,#st-guide{scroll-margin-top:80px}
-/* 点导航跳过去时：目标标题轻微闪一下（告诉眼睛「就是这里」），1.5 秒后自己淡掉 */
-.sec-title.nflash{animation:nflash 1.5s ease-out 1}
-@keyframes nflash{0%,16%{color:var(--accent)}100%{color:var(--mut)}}
-@media (prefers-reduced-motion:reduce){#secNav,.nav-i,.nav-i .nav-t{transition:none}.sec-title.nflash{animation:none}}
-
-/* <1024：导轨变「标题下面一条横滑胶囊」，跟着页面滚动吸顶 */
-@media(max-width:1023px){
-  #secNav{position:sticky;left:auto;top:6px;transform:none;z-index:106;
-    flex-direction:row;align-items:center;gap:6px;padding:4px 2px;margin:4px 0 12px;
-    border:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;opacity:1;
-    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
-    scrollbar-width:none;transition:top .28s ease}
-  #secNav::-webkit-scrollbar{display:none}
-  body.tb-on #secNav{top:66px}          /* 顶部固定栏出现时，横条跟着下移 */
-  /* 手机端顶部一共两条：固定栏 60px + 吸顶横条约 40px，锚点落位要再往下让一点 */
-  #st-hourly,#st-rules,#st-burn,#st-share,#st-rank,#st-chart,#st-table,#st-src,#st-guide{scroll-margin-top:114px}
-  .nav-i{flex:0 0 auto;width:auto;height:auto;gap:6px;padding:7px 12px;border-radius:999px;
-    border:1px solid var(--line);color:var(--mut);background:color-mix(in srgb,var(--panel) 90%,transparent);
-    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--card-shadow)}
-  .nav-i .nav-dot .ic{width:13px;height:13px}
-  .nav-i:hover{background:color-mix(in srgb,var(--panel) 90%,transparent);box-shadow:var(--card-shadow)}
-  .nav-i.on,.nav-i.on:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--panel));
-    border-color:color-mix(in srgb,var(--accent) 40%,transparent);box-shadow:var(--card-shadow)}
-  .nav-i .nav-t{position:static;transform:none;opacity:1;pointer-events:auto;
-    padding:0;border:0;background:none;box-shadow:none;font-size:var(--fs-11)}
-  .nav-i:hover .nav-t{transform:none}
-}
 /* ---------- 响应式 ---------- */
 @media(max-width:900px){
   .grid2,.guide,.cmp-head,.cmp-pair{grid-template-columns:1fr}
@@ -1629,8 +1564,6 @@ try{
 
   <div class="safe-line" id="safeLine"><span class="sf-ic"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg></span><span id="safeTxt"></span></div>
 
-  <nav id="secNav" class="secnav" aria-label="页面模块导航"></nav>
-
   <div class="grid2" id="cards"><div class="card sk"></div><div class="card sk"></div></div>
 
   <div class="sec-title" id="st-hourly"><svg class="ic" aria-hidden="true"><use href="#ic-activity"/></svg>小时监控 · 最近 72 小时<span class="sec-live" id="hourlyLive"></span></div>
@@ -1728,9 +1661,6 @@ const I18N = {
 zh:{
   docTitle:'Pons · StonkFun 收入与回购监控面板',
   h1:'Pons · StonkFun 收入与回购监控面板',
-  navAria:'页面模块导航',
-  navTop:'总览', navHourly:'小时监控', navRules:'该做什么', navBurn:'回购销毁', navShare:'市场占有',
-  navRank:'收入排行', navChart:'趋势图', navTable:'每日明细', navSrc:'数据体检', navGuide:'指标说明',
   secRules:'现在该做什么 · 五个关键指标对照',
   secHourly:'小时监控 · 最近 72 小时',
   hourSub:'每小时一格：交易量 / 收入 / 销毁，看得出现在是热还是冷。',
@@ -2047,9 +1977,6 @@ zh:{
 en:{
   docTitle:'Pons · StonkFun Revenue & Buyback Monitor',
   h1:'Pons · StonkFun Revenue & Buyback Monitor',
-  navAria:'Section navigation',
-  navTop:'Overview', navHourly:'Hourly', navRules:'Action', navBurn:'Buybacks', navShare:'Share',
-  navRank:'Ranking', navChart:'Trends', navTable:'Daily', navSrc:'Data health', navGuide:'Glossary',
   secRules:'What to do now · the five numbers that matter',
   secHourly:'Hourly monitor · last 72 hours',
   hourSub:'One bar per hour — volume / revenue / burns. Is it heating up or cooling down?',
@@ -2551,7 +2478,6 @@ function renderStatic(){
       '<span class="lg"><span class="tag ok">'+t('lvOk')+'</span>'+t('legendOk')+'</span>'+
       '<span class="lg"><span class="tag warn">'+t('lvWarn')+'</span>'+t('legendWarn')+'</span>'+
       '<span class="lg"><span class="tag bad">'+t('lvBad')+'</span>'+t('legendBad')+'</span>';
-  navBuild();                        /* v3.20：导航文案跟着语言一起换 */
 }
 
 /* ---------- 收入排行：把 DefiLlama 全站榜单裁成"你的位置" ---------- */
@@ -4131,126 +4057,6 @@ function guideHashInit(){
   guideScrollTo(location.hash.slice(1), 580);
 }
 
-
-/* ==========================================================================
-   v3.20 页面导航（#secNav）：长页面「我在哪、去哪」的答案
-   —— 桌面：左侧竖排导轨，滚到哪一节，对应小点自动亮；点击平滑滚过去。
-      指针悬停 / 键盘 Tab 到某一项时，名称从右侧浮出（导轨本身只占 42px）。
-   —— 手机：顶部横滑胶囊条（吸顶在固定头部下面），当前项自动滚到中间。
-   —— 目标如果是折叠区（数据体检 / 指标说明），先展开、等页面撑高再滚，
-      否则会滚到一半被文档底截断（复用 guideScrollTo 的成熟时序）。
-   ========================================================================== */
-const NAV_ITEMS=[
-  {id:'top',       ic:'zap',      k:'navTop'},
-  {id:'st-hourly', ic:'activity', k:'navHourly'},
-  {id:'st-rules',  ic:'bell',     k:'navRules'},
-  {id:'st-burn',   ic:'flame',    k:'navBurn'},
-  {id:'st-share',  ic:'pie',      k:'navShare'},
-  {id:'st-rank',   ic:'trophy',   k:'navRank'},
-  {id:'st-chart',  ic:'trend',    k:'navChart'},
-  {id:'st-table',  ic:'table',    k:'navTable'},
-  {id:'st-src',    ic:'db',       k:'navSrc'},
-  {id:'st-guide',  ic:'book',     k:'navGuide'}
-];
-let NAV_NOW=null, NAV_TICK=false, NAV_ELS=null, NAV_CARD=null, NAV_TBON=false;
-function navReduce(){ try{ return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } }
-function navBuild(){
-  const nav=document.getElementById('secNav'); if(!nav) return;
-  nav.setAttribute('aria-label', t('navAria'));
-  nav.innerHTML=NAV_ITEMS.map(function(it){
-    const lab=t(it.k);
-    return '<button class="nav-i" type="button" data-nav="'+it.id+'" title="'+esc(lab)+'" aria-label="'+esc(lab)+'">'
-      + '<span class="nav-dot">'+IC[it.ic]+'</span><span class="nav-t">'+esc(lab)+'</span></button>';
-  }).join('');
-  NAV_NOW=null; navSpy();
-}
-function navSet(id){
-  const nav=document.getElementById('secNav'); if(!nav || id===NAV_NOW) return;
-  NAV_NOW=id;
-  const bs=nav.querySelectorAll('[data-nav]');
-  let act=null;
-  for(let i=0;i<bs.length;i++){
-    const on=bs[i].getAttribute('data-nav')===id;
-    bs[i].classList.toggle('on',on);
-    if(on){ bs[i].setAttribute('aria-current','true'); act=bs[i]; }
-    else bs[i].removeAttribute('aria-current');
-  }
-  /* 手机横条：把当前项滚到可视区中间（只动横条自己，不带动整页） */
-  if(act && nav.scrollWidth>nav.clientWidth+8){
-    const x=act.offsetLeft-(nav.clientWidth-act.offsetWidth)/2;
-    try{ nav.scrollTo({left:Math.max(0,x),behavior:navReduce()?'auto':'smooth'}); }catch(e){ nav.scrollLeft=Math.max(0,x); }
-  }
-}
-function navSpy(){
-  NAV_TICK=false;
-  const nav=document.getElementById('secNav'); if(!nav) return;
-  /* 性能：板块元素、作者卡只查一次（它们是静态节点，语言切换/数据刷新都不会被替换），
-     滚动时每帧只做 getBoundingClientRect 这一种「读」，不查 DOM、不写样式（除高亮变化）。 */
-  if(!NAV_ELS) NAV_ELS=NAV_ITEMS.map(function(it){ return it.id==='top'? null : document.getElementById(it.id); });
-  if(NAV_CARD===null) NAV_CARD=document.querySelector('.author')||false;
-  const y=window.pageYOffset||document.documentElement.scrollTop||0;
-  const vh=window.innerHeight, atBottom=(y+vh>=(document.documentElement.scrollHeight-6));
-  let cur='top';
-  if(atBottom){
-    /* 已在页底：页尾几节都贴着屏幕，取「最上面那个可见的」当当前 —— 否则点「数据体检」
-       这种倒数第二节会因为滚不到顶而错亮最后一节 */
-    for(let i=1;i<NAV_ELS.length;i++){
-      const el=NAV_ELS[i]; if(!el) continue;
-      const t=el.getBoundingClientRect().top;
-      if(t>=0 && t<=vh*0.6){ cur=NAV_ITEMS[i].id; break; }
-    }
-    if(cur==='top') cur=NAV_ITEMS[NAV_ITEMS.length-1].id;
-  }else{
-    for(let i=1;i<NAV_ELS.length;i++){
-      const el=NAV_ELS[i]; if(!el) continue;
-      /* 判定线（视口坐标）：标题滚进上缘 132px 内就算「当前」（比锚点落位 80/114 略大，点完不会差一格） */
-      if(el.getBoundingClientRect().top<=132) cur=NAV_ITEMS[i].id;
-    }
-  }
-  navSet(cur);
-  /* 手机：横条跟着顶部固定栏下移，别叠在一起（判定与左上角小头像同源） */
-  const tbOn=NAV_CARD ? NAV_CARD.getBoundingClientRect().bottom<=8 : y>160;
-  if(tbOn!==NAV_TBON){ NAV_TBON=tbOn; document.body.classList.toggle('tb-on',tbOn); }
-}
-function navReq(){ if(NAV_TICK) return; NAV_TICK=true; requestAnimationFrame(navSpy); }
-function navGo(id){
-  if(id==='top'){
-    try{ window.scrollTo({top:0,behavior:navReduce()?'auto':'smooth'}); }catch(e){ window.scrollTo(0,0); }
-    navSet('top'); return;
-  }
-  const el=document.getElementById(id); if(!el) return;
-  const go=function(){
-    try{ el.scrollIntoView({behavior:navReduce()?'auto':'smooth',block:'start'}); }catch(e){ el.scrollIntoView(); }
-    el.classList.remove('nflash'); void el.offsetWidth; el.classList.add('nflash');
-    setTimeout(function(){ el.classList.remove('nflash'); },1600);
-  };
-  /* 目标是折叠区：先展开，等展开动画真正结束再滚 —— 固定延时会在页面还没长高时就把
-     滚动截断在旧的底部，落点差出一两百像素（实测点「数据体检」）。优先听 transitionend，
-     没有动画（reduced-motion）时用 1s 兜底。 */
-  const w=(id==='st-src')? document.getElementById('srcWrap') : (id==='st-guide')? document.getElementById('guideWrap') : null;
-  if(w && !w.classList.contains('open')){
-    if(id==='st-src') srcSetOpen(true); else guideSetOpen(true);
-    let fired=false;
-    const onEnd=function(ev){ if(ev.propertyName==='max-height') fire(); };
-    const fire=function(){ if(fired) return; fired=true; w.removeEventListener('transitionend',onEnd); go(); };
-    w.addEventListener('transitionend',onEnd);
-    setTimeout(fire,1000);
-    navSet(id); return;
-  }
-  go(); navSet(id);
-}
-(function(){
-  const nav=document.getElementById('secNav'); if(!nav) return;
-  nav.addEventListener('click',function(ev){
-    const b=ev.target && ev.target.closest? ev.target.closest('[data-nav]') : null;
-    if(b) navGo(b.getAttribute('data-nav'));
-  });
-  window.addEventListener('scroll',navReq,{passive:true});
-  window.addEventListener('resize',navReq);
-  window.addEventListener('load',navReq);
-  window.__navSpy=navReq;               /* 数据落地后布局变了，renderAll 会再叫一次 */
-})();
- 
 /* ---------- live ---------- */
 async function fetchJSON(u, ms){
   /* 统一超时：第三方接口偶尔挂起，没有超时会把「刷新中」状态卡死 */
@@ -4425,7 +4231,6 @@ function renderAll(){
   const g = DATA.generated || BUNDLE.generated;
   if(icRevealMeasure){ try{ icRevealMeasure(); }catch(e){} }
   if(window.__miniMeasure){ try{ window.__miniMeasure(); }catch(e){} }
-  if(window.__navSpy){ try{ window.__navSpy(); }catch(e){} }   /* v3.20：数据落地后刷新导航高亮 */
   document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')
     + (DATA.priceAt? t('priceLive')(new Date(DATA.priceAt).toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit'})) : '');
   document.getElementById('foot').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]

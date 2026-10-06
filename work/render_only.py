@@ -9,6 +9,13 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.21.2「共勉长句完整显示」 · 2026-10-06
+     【为什么做这一版】手机端（≤680px）作者卡里的「共勉」一句被 CSS 截成 2 行，
+       长句只剩「…」看不到结尾（用户截图反馈）。
+     【这一版改了什么】只放宽手机端 .qtext 的 2 行截断（桌面布局不动）：
+       整句自然换行、完整可读；点赞按钮位置与其余布局保持不变。
+     回退：cp work/template.html.bak-v3212 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.21.1「手机端布局修复」 · 2026-10-06
      【为什么做这一版】v3.21 上线后，用户用手机截图反馈 5 处问题：
        ① 顶部工具条「系统 / 刷新数据」被挤成竖排两字；
@@ -589,10 +596,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.21.1-2026-10-06">
+<meta name="dashboard-version" content="v3.21.2-2026-10-06">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.21.1 · 2026-10-06"
+VER = "v3.21.2 · 2026-10-06"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

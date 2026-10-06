@@ -1203,42 +1203,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .rank-sub a.qi:hover,.rank-sub a.qi:focus-visible{color:var(--accent);
   border-color:color-mix(in srgb,var(--accent) 40%,var(--line));transform:scale(1.12)}
 @media(max-width:680px){.share-big b{font-size:27px}}
-/* ---- v3.15 销毁里程碑（参考 stonk.fyi 的 milestone 卡，按本站设计标尺重绘） ---- */
-.ms-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
-  padding:var(--sp-card);overflow:hidden}
-.ms-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,var(--accent))}
-.ms-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.ms-head .ms-n{font-size:var(--fs-13);font-weight:800}
-.ms-head .ms-n i{font-style:normal;font-size:var(--fs-10);font-weight:700;color:var(--mut2);margin-left:5px;letter-spacing:.4px}
-.ms-head .ms-src{margin-left:auto;font-size:var(--fs-11);font-weight:600;color:var(--mut2);background:var(--panel2);
-  border:1px solid var(--line);border-radius:var(--r-pill);padding:3px 10px;white-space:nowrap}
-.ms-hero{display:flex;align-items:center;gap:16px;margin-top:var(--sp-block)}
-.ms-ring{position:relative;width:106px;height:106px;flex:0 0 auto}
-.ms-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
-.ms-ring .ms-trk{fill:none;stroke:var(--panel3);stroke-width:9}
-.ms-ring .ms-arc{fill:none;stroke-width:9;stroke-linecap:round}
-.ms-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
-.ms-c b{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;letter-spacing:-.6px;line-height:1}
-.ms-c b em{font-style:normal;font-size:12px;font-weight:700;margin-left:1px;color:var(--mut)}
-.ms-c span{font-size:var(--fs-10);color:var(--mut2);font-weight:600;letter-spacing:.2px}
-.ms-kv{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ms-kv>div{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-md);padding:7px 10px 8px;min-width:0}
-.ms-kv .k{display:block;font-size:var(--fs-10);color:var(--mut2);font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ms-kv .v{display:block;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:var(--fs-13);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ms-kv .v em{font-style:normal;font-size:var(--fs-10);color:var(--mut);font-weight:600;margin-left:2px}
-.ms-kv .s{display:block;font-size:var(--fs-10);color:var(--mut2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ms-bar{position:relative;height:11px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--panel2);
-  background-image:repeating-linear-gradient(to right,var(--line2) 0 1px,transparent 1px 5%);
-  margin-top:calc(var(--sp-block) + 12px)}
-.ms-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:var(--r-pill);min-width:3px;
-  background:linear-gradient(90deg,color-mix(in srgb,var(--sc,var(--accent)) 45%,transparent),var(--sc,var(--accent)))}
-.ms-bar>u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--warn);border-radius:2px}
-.ms-bar>u::after{content:attr(data-lbl);position:absolute;top:-16px;left:50%;transform:translateX(-50%);
-  font-size:var(--fs-10);font-weight:700;color:var(--warn);background:var(--panel);
-  border:1px solid color-mix(in srgb,var(--warn) 42%,var(--line));border-radius:var(--r-pill);padding:0 6px;white-space:nowrap}
-.ms-caps{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-10);color:var(--mut2);margin-top:6px}
-.ms-caps b{color:var(--txt);font-family:var(--font-num);font-weight:800}
-@media(max-width:680px){.ms-hero{gap:12px}.ms-ring{width:94px;height:94px}.ms-c b{font-size:19px}}
 @media(max-width:680px){
   #hourlyChart{height:200px}
   .hourly-sum{grid-template-columns:repeat(2,1fr)}
@@ -1593,11 +1557,6 @@ try{
   </div>
   <div class="bb-note" id="burnNote"></div>
 
-  <div class="sec-title" id="st-milestone"><svg class="ic" aria-hidden="true"><use href="#ic-medal"/></svg>销毁里程碑 · 离下一个整数关口还有多久<span class="sec-live" id="msLive"></span></div>
-  <div class="rank-sub" id="msSub"></div>
-  <div class="grid2" id="msCards"></div>
-  <div class="bb-note" id="msNote"></div>
-
   <div class="sec-title" id="st-share"><svg class="ic" aria-hidden="true"><use href="#ic-pie"/></svg>市场占有率 · 24 小时成交量份额<span class="sec-live" id="shareLive"></span></div>
   <div class="rank-sub" id="shareSub"></div>
   <div class="grid2" id="shareCards"></div>
@@ -1650,7 +1609,7 @@ const BUNDLE = /*__DATA__*/;
 /* ---------- v3.13 图标辅助（Phosphor Fill 实心 sprite，见 <body> 开头的 <symbol> 定义） ---------- */
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
-  activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal')};
+  activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie')};
 const DASH_VER = /*__VER__*/ 'v1.0';
 
 /* ==================== 多语言 / i18n ==================== */
@@ -1685,33 +1644,6 @@ zh:{
   shVsLine:(r,ps,mult)=>'StonkFun 成交量 = pump.fun 的 <b>'+r+'</b>；pump.fun 一家占全链 <b>'+ps+'</b>，是我们的 <b>'+mult+'</b>。',
   shareNoteH:'这块数字怎么读',
   shareNote:'<b>占比</b> ＝ 本品 24h 成交量 ÷ 所在链全部 DEX 成交量（DefiLlama 口径，每小时更新）。链越大分母越大，占比天然越小 —— <b>看趋势（近 14 天）和跟龙头的差距，比看绝对值有用</b>。口径提醒：本模块是「协议」口径（平台所有交易对加总），与上方小时监控的「单一池子」口径不同，两个数字不要互相加减。',
-  /* —— 销毁里程碑（v3.15）：参考 stonk.fyi 的 milestone 卡 —— */
-  secMilestone:'销毁里程碑 · 离下一个整数关口还有多久',
-  msLive:'● 每小时更新',
-  msSub:(f,r)=> f? f+' 的销毁速度约是另一家的 '+r+' 倍（口径：每天烧掉总量的百分之几）' : '两家的销毁数据都在持续累积',
-  msStamp:'快照 ',
-  msBurned:'已销毁',
-  msBurnQty:'已销毁数量',
-  msSupplyTxt:'总量 10 亿',
-  msUsd:'现价折算',
-  msAtPrice:'按现价 ',
-  msSpeed:'销毁速度',
-  msPerDay:'/天',
-  msPerDayPct:v=>v+'%/天',
-  msNext:'下一个 1%',
-  msDays:v=>'≈ '+v+' 天',
-  msToGo:'还差',
-  msChip:n=>'下一关 '+n,
-  msScale:'刻度每 5%',
-  msNoteH:'这块数字怎么读',
-  msNote:'<b>已销毁</b>＝打进死地址的币，链上可对账、谁也拿不回来；<b>销毁速度</b>取最近约 24 小时的真实烧毁量，换算成「每天烧掉总量的百分之几」，两家用同一把尺子对比。<b>下一个 1%</b>＝离下一个整数百分比还差多少枚、按当前速度预计几天 —— 把「慢变量」翻译成「离下一座里程碑还有多远」。口径提醒：销毁的币来自回购，与上方「回购与销毁」是同一批钱的两种视角；快照晚一天内属正常。',
-  msSrcOfficial:'官方累计值', msSrcSnapshot:'链上快照', msSrcChain72:'链上日志 72h',
-  gMmT:'销毁里程碑（烧掉多少 / 多快 / 下一关多远）',
-  gMmF:'已销毁占比 ＝ <b class="hi">累计销毁</b> ÷ <b class="hi">总量 10 亿</b>；销毁速度 ＝ 最近约 24 小时销毁量 ÷ 总量（每天百分比）；下一关 ＝ 下一个整数百分比',
-  gMmL:'回购把钱变成买盘，销毁把币永久拿掉 —— <b>销毁是更硬的证据</b>：币少了就是少了。看三件事：<b class="hl">速度（每天烧掉百分之几）</b>、<b class="hl">跟另一家比谁快</b>、<b class="hl">离下一个整数关口还有几天</b>。速度平稳或加快＝回购照常；速度明显掉档＝回购可能出了问题，回去盯收入与回购日数据。',
-  gMmBands:[['速度平稳或加快','g-ok','回购照常，按原计划持有'],['速度明显掉档','g-warn','回购力度下降，盯紧收入与回购数据'],['连续多日几乎不烧','g-bad','回购停摆信号：按规则先离场观察']],
-  gMmNote:'口径提醒：① Pons 的累计销毁用死地址余额快照（每天更新一次），StonkFun 用官方累计值（每小时）—— 两家的更新节奏不同，短窗口对比会有轻微误差；② 「下一个 1%」是<b>按最近 24 小时速度的直线推算</b>，速度变了它会跟着变，不是承诺。',
-  gMmEx:(pb,pp,pn,pd,sb,sp,sn,sd)=>'<b>现在</b>：Pons 已烧 <b>'+pb+'</b>（'+pp+'，下一关 '+pn+' 约 '+pd+' 天）；StonkFun 已烧 <b>'+sb+'</b>（'+sp+'，下一关 '+sn+' 约 '+sd+' 天）。',
   secChart:'趋势图',
   secTable:'每天的明细（最近 20 天）',
   secGuide:'指标说明 · 每个数字怎么读',
@@ -1989,33 +1921,6 @@ en:{
   shVsLine:(r,ps,mult)=>'StonkFun volume = <b>'+r+'</b> of pump.fun; pump.fun alone holds <b>'+ps+'</b> of the chain — <b>'+mult+'</b> our share.',
   shareNoteH:'How to read this block',
   shareNote:'<b>Share</b> = protocol 24h volume ÷ all DEX volume on its chain (DefiLlama, refreshed hourly). The bigger the chain, the smaller the share by construction — <b>watch the 14-day trend and the gap to the leader rather than the absolute number</b>. Note: this is the protocol scope (all markets of the platform), unlike the single-pool scope in the hourly monitor above — do not add or subtract the two numbers.',
-  /* —— Burn milestones (v3.15) —— */
-  secMilestone:'Burn milestones · how far to the next round number',
-  msLive:'● hourly',
-  msSub:(f,r)=> f? f+' burns ~'+r+'× faster than the other (as % of supply per day)' : 'Both burn counters are still accumulating',
-  msStamp:'snapshot ',
-  msBurned:'Burned',
-  msBurnQty:'Burned so far',
-  msSupplyTxt:'1B total',
-  msUsd:'Value at spot',
-  msAtPrice:'at ',
-  msSpeed:'Burn speed',
-  msPerDay:'/day',
-  msPerDayPct:v=>v+'% / day',
-  msNext:'Next 1%',
-  msDays:v=>'≈ '+v+' days',
-  msToGo:'to go',
-  msChip:n=>'next '+n,
-  msScale:'ticks every 5%',
-  msNoteH:'How to read this',
-  msNote:'<b>Burned</b> = tokens sent to the dead address (verifiable on-chain, gone forever). <b>Burn speed</b> uses the last ~24h of real burns converted to "what % of supply is burned per day" — one ruler for both. <b>Next 1%</b> = how many tokens remain to the next whole-percent milestone and the estimated days at the current pace. Note: burned tokens come from the buyback — same money, two views; snapshots up to a day old are normal.',
-  msSrcOfficial:'official counter', msSrcSnapshot:'on-chain snapshot', msSrcChain72:'on-chain logs 72h',
-  gMmT:'Burn milestone (how much / how fast / how far to the next mark)',
-  gMmF:'Burned share = <b class="hi">cumulative burned</b> ÷ <b class="hi">1B supply</b>; burn speed = last ~24h burned ÷ supply (per-day %); next mark = the next whole percent',
-  gMmL:'The buyback turns revenue into bids; the burn removes coins forever — <b>the burn is the harder evidence</b>: gone is gone. Watch three things: <b class="hl">speed (%/day)</b>, <b class="hl">who burns faster</b>, and <b class="hl">days to the next whole percent</b>. Steady or rising speed = buyback on track; a visible drop = the buyback may be struggling — go back to revenue and daily buyback numbers.',
-  gMmBands:[['Steady or rising speed','g-ok','Buyback on track — hold as planned'],['Speed clearly lower','g-warn','Buyback weakening — watch revenue and buyback data'],['Almost no burns for days','g-bad','Buyback looks stalled — exit and watch, per the rules']],
-  gMmNote:'Two notes: (1) Pons cumulative burned uses dead-address balance snapshots (daily), StonkFun uses its official counter (hourly) — the refresh rhythms differ, so short-window comparisons carry a small error; (2) "Days to next 1%" is a <b>straight-line estimate from the last 24h pace</b>, not a promise.',
-  gMmEx:(pb,pp,pn,pd,sb,sp,sn,sd)=>'<b>Now</b>: Pons has burned <b>'+pb+'</b> ('+pp+', next '+pn+' in ~'+pd+' days); StonkFun has burned <b>'+sb+'</b> ('+sp+', next '+sn+' in ~'+sd+' days).',
   secChart:'Trends',
   secTable:'Day-by-day detail (last 20 days)',
   secGuide:'How to read every number',
@@ -2422,8 +2327,6 @@ function renderStatic(){
   if(_sh) _sh.innerHTML = IC.activity + esc(t('secHourly')) + '<span class="sec-live" id="hourlyLive"></span>';
   var _ssh = document.getElementById('st-share');
   if(_ssh) _ssh.innerHTML = IC.pie + esc(t('secShare')) + '<span class="sec-live" id="shareLive"></span>';
-  var _ssm = document.getElementById('st-milestone');
-  if(_ssm) _ssm.innerHTML = IC.medal + esc(t('secMilestone')) + '<span class="sec-live" id="msLive"></span>';
   document.getElementById('st-rank').innerHTML = IC.trophy + t('secRank');
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.innerHTML = IC.flame + t('secBurn');
   document.getElementById('st-chart').innerHTML = IC.trend + t('secChart');
@@ -3161,80 +3064,6 @@ function renderShare(){
   }
   if(note) note.innerHTML='<div class="bb-h">'+t('shareNoteH')+'</div>'+t('shareNote');
 }
-/* ---------- v3.15 销毁里程碑：烧了多少 / 烧多快 / 下一个 1% 还有多久 ---------- */
-function msBundle(){
-  var h=((typeof DATA!=='undefined' && DATA.hourly) || (typeof BUNDLE!=='undefined' && BUNDLE.hourly) || null);
-  return (h && h.milestone) || null;
-}
-function fmtT(v){
-  if(v===null||v===undefined||isNaN(v)) return '—';
-  var a=Math.abs(v);
-  if(LANG==='zh'){
-    if(a>=1e8) return (v/1e8).toFixed(2)+' 亿';
-    if(a>=1e4) return (v/1e4).toFixed(1)+' 万';
-  }
-  if(a>=1e9) return (v/1e9).toFixed(2)+'B';
-  if(a>=1e6) return (v/1e6).toFixed(2)+'M';
-  if(a>=1e3) return (v/1e3).toFixed(1)+'K';
-  return String(Math.round(v));
-}
-function msDayTxt(d){ return (d===null||d===undefined||isNaN(d))?'—':(d<10? d.toFixed(1):String(Math.round(d))); }
-function msPriceTxt(p){ return '$'+(p>=1? p.toFixed(3) : p.toFixed(4)); }
-function renderMilestone(){
-  var sec=document.getElementById('st-milestone'); if(!sec) return;
-  var ms=msBundle();
-  var sub=document.getElementById('msSub'), cards=document.getElementById('msCards'),
-      note=document.getElementById('msNote'), lv=document.getElementById('msLive');
-  var ALL=[sec,sub,cards,note];
-  if(!ms||!ms.pons||!ms.stonk){ ALL.forEach(function(e){ if(e) e.style.display='none'; }); return; }
-  ALL.forEach(function(e){ if(e) e.style.display=''; });
-  if(lv){ lv.textContent=t('msLive'); lv.className='sec-live'; }
-  if(sub){
-    var stamp=ms.generated? new Date(ms.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '';
-    var v=ms.versus||{};
-    sub.innerHTML=esc(t('msSub')(v.ratio? v.faster : null, v.ratio? v.ratio.toFixed(1) : ''))
-      + (stamp? ' · '+esc(t('msStamp'))+esc(stamp) : '')
-      + ' <a class="qi" href="#gloss-milestone" title="'+esc(t('gMmT'))+'">?</a>';
-  }
-  if(cards){
-    cards.innerHTML=[['pons',ms.pons],['stonk',ms.stonk]].map(function(pair){
-      var key=pair[0], o=pair[1];
-      var color=(key==='pons')?'var(--pons)':'var(--stonk)';
-      var name=(key==='pons')?'Pons':'StonkFun', ticker=(key==='pons')?'PONS':'STONK';
-      var pct=(o.pct===null||o.pct===undefined)?null:o.pct;
-      var C=2*Math.PI*44, arc=(pct===null)?0:Math.min(1,pct/100)*C;
-      var ring='<svg viewBox="0 0 108 108" aria-hidden="true">'
-        +'<circle class="ms-trk" cx="54" cy="54" r="44"/>'
-        +'<circle class="ms-arc" cx="54" cy="54" r="44" style="stroke:'+color+'" stroke-dasharray="'+arc.toFixed(2)+' '+C.toFixed(2)+'"/>'
-        +'</svg>'
-        +'<div class="ms-c"><b>'+(pct===null?'—':pct.toFixed(2))+'<em>%</em></b><span>'+esc(t('msBurned'))+'</span></div>';
-      var srcTxt=o.src==='official'? t('msSrcOfficial') : (o.src==='chain72'? t('msSrcChain72') : t('msSrcSnapshot'));
-      var barPct=(pct===null)?0:Math.min(100,pct);
-      var flag=(o.nextPct===null||o.nextPct===undefined)?''
-        : '<u style="left:'+Math.min(99.4,o.nextPct)+'%" data-lbl="'+esc(t('msChip')(o.nextPct+'%'))+'"></u>';
-      var kv=''
-        +'<div title="'+(o.burned!=null?esc(fmtN(o.burned,2)+' '+ticker):'')+'"><span class="k">'+esc(t('msBurnQty'))+'</span>'
-        +  '<b class="v">'+(o.burned!=null?fmtT(o.burned):'—')+' <em>'+ticker+'</em></b>'
-        +  '<span class="s">'+esc(t('msSupplyTxt'))+'</span></div>'
-        +'<div><span class="k">'+esc(t('msUsd'))+'</span>'
-        +  '<b class="v">'+(o.burnedUsd!=null?fmtU(o.burnedUsd):'—')+'</b>'
-        +  '<span class="s">'+(o.price!=null?esc(t('msAtPrice'))+msPriceTxt(o.price):'')+'</span></div>'
-        +'<div><span class="k">'+esc(t('msSpeed'))+'</span>'
-        +  '<b class="v">'+(o.perDay!=null?(fmtT(o.perDay)+' '+t('msPerDay')):'—')+'</b>'
-        +  '<span class="s">'+(o.speedPct!=null?esc(t('msPerDayPct')(o.speedPct.toFixed(3))):'')+'</span></div>'
-        +'<div><span class="k">'+esc(t('msNext'))+'</span>'
-        +  '<b class="v">'+(o.daysTo!=null?esc(t('msDays')(msDayTxt(o.daysTo))):'—')+'</b>'
-        +  '<span class="s">'+(o.toNext!=null?(esc(t('msToGo'))+' '+fmtT(o.toNext)+' → '+o.nextPct+'%'):'')+'</span></div>';
-      return '<div class="ms-card" style="--sc:'+color+'">'
-        + '<div class="ms-head"><span class="ms-n">'+name+'<i>'+ticker+'</i></span><span class="ms-src">'+esc(srcTxt)+'</span></div>'
-        + '<div class="ms-hero"><div class="ms-ring">'+ring+'</div><div class="ms-kv">'+kv+'</div></div>'
-        + '<div class="ms-bar"><i style="width:'+barPct.toFixed(2)+'%"></i>'+flag+'</div>'
-        + '<div class="ms-caps"><span>0%</span><span>'+esc(t('msScale'))+'</span><span>100%</span></div>'
-        + '</div>';
-    }).join('');
-  }
-  if(note) note.innerHTML='<div class="bb-h">'+esc(t('msNoteH'))+'</div>'+t('msNote');
-}
 function renderCards(){
   const rows = build();
   const el = document.getElementById('cards');
@@ -3823,12 +3652,6 @@ function renderGuide(){
       shPct(sk.pons.share), (sk.pons.rank!=null? '#'+sk.pons.rank+' / '+sk.pons.total : '—'),
       shPct(sk.stonk.share), (sk.stonk.rank!=null? '#'+sk.stonk.rank+' / '+sk.stonk.total : '—'),
       shPct(sk.stonk.pumpShare), shPct(sk.stonk.vsPump)) : '';
-  const msk = msBundle() || {};
-  const exMs = (msk.pons && msk.stonk)? t('gMmEx')(
-      fmtT(msk.pons.burned), (msk.pons.pct!=null? msk.pons.pct.toFixed(2)+'%':'—'),
-      (msk.pons.nextPct!=null? msk.pons.nextPct+'%':'—'), msDayTxt(msk.pons.daysTo),
-      fmtT(msk.stonk.burned), (msk.stonk.pct!=null? msk.stonk.pct.toFixed(2)+'%':'—'),
-      (msk.stonk.nextPct!=null? msk.stonk.nextPct+'%':'—'), msDayTxt(msk.stonk.daysTo)) : '';
 
   document.getElementById('guide').innerHTML =
     item(t('gPsT'), t('gPsF'), t('gPsL'), ex1, t('gPsBands'), t('gPsNote'), 'gloss-ps')
@@ -3838,8 +3661,7 @@ function renderGuide(){
   + item(t('gBpT'), t('gBpF'), t('gBpL'), ex3, t('gBpBands'), t('gBpNote'), 'gloss-bp')
   + item(t('gToT'), t('gToF'), t('gToL'), ex4, t('gToBands'), t('gToNote'), 'gloss-to')
   + item(t('gMomT'), t('gMomF'), t('gMomL'), ex5, t('gMomBands'), null, 'gloss-mom')
-  + item(t('gMsT'), t('gMsF'), t('gMsL'), exShare, t('gMsBands'), t('gMsNote'), 'gloss-share')
-  + item(t('gMmT'), t('gMmF'), t('gMmL'), exMs, t('gMmBands'), t('gMmNote'), 'gloss-milestone');
+  + item(t('gMsT'), t('gMsF'), t('gMsL'), exShare, t('gMsBands'), t('gMsNote'), 'gloss-share');
 }
 
 /* ---------- 指标说明：默认折叠 + 「?」直达（v3.7） ----------
@@ -4093,7 +3915,7 @@ function loadViews(){
 }
 
 function renderAll(){
-  [renderCards, renderHourly, renderShare, renderMilestone, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
+  [renderCards, renderHourly, renderShare, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

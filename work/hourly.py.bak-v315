@@ -9,8 +9,6 @@
        STONK → StonkFun 官方接口的累计销毁量每小时差值（真值）；拿不到时退回 burn-history 快照累积
   3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 ÷ 80%（回购占比），明确标注为推算；
        StonkFun → 官方接口 stonkfun.xyz/api/revenue 的累计收入每小时差值（真值，国内直连被墙、走海外中转）
-  4. 销毁里程碑（v3.15）→ burn-history 快照 + sf-history 累计值：算「已烧掉多少、按最近
-       24h 速度还要几天过下一个 1%」，产出 hourly.json → milestone（前端「销毁里程碑」板块）
 """
 import datetime, json, os, sys, tempfile, time, urllib.request, urllib.parse
 
@@ -361,138 +359,6 @@ def market_share():
     }
 
 
-# ---- 销毁里程碑（v3.15）：烧掉多少 / 烧多快 / 离下一个 1% 还有多久 ----
-def _ms_snaps():
-    """burn-history 快照（[{t, pons, stonk}]）→ 按时间升序。"""
-    try:
-        rows = json.load(open(HIST, encoding="utf-8"))
-    except Exception:
-        return []
-    return sorted([r for r in rows if isinstance(r, dict) and isinstance(r.get("t"), (int, float))],
-                  key=lambda r: r["t"])
-
-
-def _ms_sf_rows():
-    """官方 sf-history 快照（含 burnTokens / priceUsd）→ 按时间升序。"""
-    try:
-        rows = json.load(open(SF_HIST, encoding="utf-8"))
-    except Exception:
-        return []
-    return sorted([r for r in rows if isinstance(r, dict) and r.get("ts")],
-                  key=lambda r: r["ts"])
-
-
-def _burn_speed(points):
-    """累计销毁序列 [(ts, value)] → (per_day, win_days, t0, t1)；算不出给 None。
-
-    优先取「最近一跳本来就≈一天」（20~28 小时）的差值——最贴近「最近 24 小时速度」；
-    否则退到 7 天窗口内最早的可用点做首尾差（窗口越长越稳）。负增长（取数回退）丢弃。
-    """
-    pts = [(int(t), float(v)) for t, v in points if v is not None]
-    if len(pts) < 2:
-        return None
-    t1, v1 = pts[-1]
-    for t0, v0 in reversed(pts[:-1]):
-        gap = t1 - t0
-        if gap > 28 * 3600:
-            break
-        if gap >= 20 * 3600 and v1 > v0:
-            return ((v1 - v0) / (gap / 86400.0), gap / 86400.0, t0, t1)
-    for t0, v0 in pts[:-1]:
-        gap = t1 - t0
-        if gap <= 7 * 86400 and v1 > v0:
-            return ((v1 - v0) / (gap / 86400.0), gap / 86400.0, t0, t1)
-    return None
-
-
-def milestone(ho):
-    """销毁里程碑（v3.15）：已销毁占比、最近 24h 速度、下一个整数关口倒计时。
-
-    · PONS：累计＝burn-history 死地址余额快照（每天一条，最准）；速度优先快照差值，
-      快照不够时退回 72h 链上分桶合计（标 src=chain72）。
-    · STONK：累计与速度优先官方接口累计值（sf-history，每小时一条）；退回快照。
-    · 价格：STONK 优先官方报价，PONS 用池子最新收盘价；算不出的字段留空，
-      前端显示「—」，绝不因为一个字段拿不到就让整轮抓取失败。
-    """
-    now = int(time.time())
-    out = {"generated": now, "step": 1.0}
-    snaps = _ms_snaps()
-    sfr = _ms_sf_rows()
-
-    def last_close(key):
-        for v in reversed((ho.get(key) or {}).get("close") or []):
-            if v:
-                return float(v)
-        return None
-
-    def pack(burned, supply, price, speed, src):
-        d = {"burned": round(burned, 2), "supply": supply, "src": src,
-             "pct": round(burned / supply * 100.0, 4)}
-        if price:
-            d["price"] = round(price, 6)
-            d["burnedUsd"] = round(burned * price, 2)
-        if speed:
-            per_day, win_days, t0, t1 = speed
-            d["perDay"] = round(per_day, 1)
-            d["speedPct"] = round(per_day / supply * 100.0, 4)
-            d["winDays"] = round(win_days, 1)
-            step_tok = supply / 100.0                      # 1% ＝ 总量的 1/100
-            to_next = step_tok - (burned % step_tok)
-            d["nextPct"] = int(burned // step_tok) + 1
-            d["toNext"] = round(to_next, 1)
-            if per_day > 0:
-                d["daysTo"] = round(to_next / per_day, 1)
-        return d
-
-    # —— PONS ——
-    try:
-        burned = float(snaps[-1]["pons"]) if snaps and snaps[-1].get("pons") else None
-        speed = _burn_speed([(s["t"], s.get("pons")) for s in snaps]) if snaps else None
-        src = "snapshot"
-        if speed is None:                                  # 快照还没攒够 → 退回 72h 链上分桶
-            arr = (ho.get("pons") or {}).get("burn") or []
-            hrs = ho.get("hours") or []
-            tot = sum(v for v in arr if v)
-            span = (hrs[-1] + 3600 - hrs[0]) if len(hrs) > 1 else 0
-            if tot > 0 and span >= 24 * 3600:
-                speed = (tot / (span / 86400.0), span / 86400.0, hrs[0], hrs[-1] + 3600)
-                src = "chain72"
-        if burned:
-            out["pons"] = pack(burned, 1_000_000_000.0, last_close("pons"), speed, src)
-    except Exception as exc:
-        print("warn: milestone pons: %s" % exc, file=sys.stderr)
-
-    # —— STONK ——
-    try:
-        burned = price = None
-        speed = None
-        src = "official"
-        if sfr:
-            burned = float(sfr[-1].get("burnTokens") or 0) or None
-            price = float(sfr[-1].get("priceUsd") or 0) or None
-            speed = _burn_speed([(r["ts"], r.get("burnTokens")) for r in sfr])
-        if burned is None and snaps and snaps[-1].get("stonk"):
-            burned = float(snaps[-1]["stonk"])
-            src = "snapshot"
-        if speed is None and snaps:
-            speed = _burn_speed([(s["t"], s.get("stonk")) for s in snaps])
-            if speed is not None and src == "official":
-                src = "snapshot"
-        if burned:
-            out["stonk"] = pack(burned, 1_000_000_000.0, price or last_close("stonk"), speed, src)
-    except Exception as exc:
-        print("warn: milestone stonk: %s" % exc, file=sys.stderr)
-
-    pr = (out.get("pons") or {}).get("speedPct")
-    sr = (out.get("stonk") or {}).get("speedPct")
-    if pr and sr:
-        if sr >= pr:
-            out["versus"] = {"faster": "StonkFun", "ratio": round(sr / pr, 1)}
-        else:
-            out["versus"] = {"faster": "Pons", "ratio": round(pr / sr, 1)}
-    return out
-
-
 def main():
     now = time.time()
     h_now = int(now // 3600 * 3600)
@@ -608,13 +474,6 @@ def main():
         print("warn: market share: %s" % exc, file=sys.stderr)
         out["share"] = (old.get("share") if isinstance(old, dict) else None)
 
-    # 销毁里程碑（v3.15）：同样「拿不到就沿用上一份」，绝不拖垮整轮
-    try:
-        out["milestone"] = milestone(out)
-    except Exception as exc:
-        print("warn: milestone: %s" % exc, file=sys.stderr)
-        out["milestone"] = (old.get("milestone") if isinstance(old, dict) else None)
-
     atomic_dump(out, OUT)
     pb = [x for x in out["pons"]["burn"] if x]
     print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s"
@@ -629,10 +488,5 @@ if __name__ == "__main__":
         _old["share"] = market_share()
         atomic_dump(_old, OUT)
         print(json.dumps(_old["share"], ensure_ascii=False)[:400])
-    elif "--milestone-only" in sys.argv:  # 调试用：只刷新销毁里程碑，不重跑整条管道
-        _old = json.load(open(OUT, encoding="utf-8"))
-        _old["milestone"] = milestone(_old)
-        atomic_dump(_old, OUT)
-        print(json.dumps(_old["milestone"], ensure_ascii=False)[:400])
     else:
         main()

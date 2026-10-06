@@ -112,6 +112,9 @@ def main():
         except Exception:
             old = {}
     new = fetch()
+    if not new.get("goplus_ok") and "goplus_flag" in old:
+        # 抓取失败时沿用上一次的判定，避免恢复后误报「新增标记」（2026-10-06 修）
+        new["goplus_flag"] = old.get("goplus_flag")
     alerts = []
     success = False
 

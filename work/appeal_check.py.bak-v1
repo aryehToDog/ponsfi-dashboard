@@ -14,10 +14,8 @@
 import datetime
 import json
 import os
-import re
 import subprocess
 import sys
-import time
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -25,9 +23,7 @@ LOG = os.path.join(HERE, "appeal-check.log")
 STATE = os.path.join(HERE, "appeal-check-state.json")
 
 MM_URL = "https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json"
-MM_API = "https://api.github.com/repos/MetaMask/eth-phishing-detect/contents/src/config.json"   # 直读最新提交，绕过 CDN 缓存
 PR_URL = "https://api.github.com/repos/MetaMask/eth-phishing-detect/pulls/299334"
-PR_COMMENTS_URL = "https://api.github.com/repos/MetaMask/eth-phishing-detect/issues/299334/comments"
 SS_ISSUE_URL = "https://api.github.com/repos/scamsniffer/scam-database/issues/827"
 GP_URL = "https://api.gopluslabs.io/api/v1/phishing_site?url=ponsfi.xyz"
 GP_ESCALATE_DATE = datetime.date(2026, 10, 9)  # 申诉提交（10-04）后超 3 个工作日仍无变化则提醒催办
@@ -56,11 +52,8 @@ def notify(title, message):
         log(f"通知异常: {exc}")
 
 
-def get(url, timeout=30, headers=None):
-    hdrs = dict(UA)
-    if headers:
-        hdrs.update(headers)
-    req = urllib.request.Request(url, headers=hdrs)
+def get(url, timeout=30):
+    req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read().decode("utf-8", "replace")
 
@@ -68,12 +61,7 @@ def get(url, timeout=30, headers=None):
 def fetch():
     state = {"checked_at": datetime.datetime.now().isoformat(timespec="seconds")}
     try:
-        # 2026-10-06：维护者已确认移除，改用 API 直读（raw 有 CDN 缓存，会滞后几分钟）
-        try:
-            text = get(MM_API + "?t=" + str(int(time.time())),
-                       headers={"Accept": "application/vnd.github.raw"})
-        except Exception:
-            text = get(MM_URL)
+        text = get(MM_URL)
         entries = sorted({tok.strip('[]," ') for tok in text.replace('"', " ").replace(",", " ").split() if "ponsfi" in tok})
         state["metamask_entries"] = entries
         state["metamask_has_xyz"] = any("ponsfi.xyz" in e for e in entries)
@@ -85,27 +73,10 @@ def fetch():
         pr = json.loads(get(PR_URL))
         state["pr_state"] = pr.get("state")
         state["pr_merged"] = bool(pr.get("merged"))
-        state["pr_closed_at"] = pr.get("closed_at")
         state["pr_ok"] = True
     except Exception as exc:
         state["pr_ok"] = False
         state["pr_error"] = str(exc)[:160]
-    # 维护者留言（COLLABORATOR/MEMBER/OWNER）—— 2026-10-06 AlexHerman1「this has been removed, thanks!」
-    try:
-        cms = json.loads(get(PR_COMMENTS_URL))
-        note = None
-        for c in reversed(cms):
-            assoc = (c.get("author_association") or "").upper()
-            if assoc in ("COLLABORATOR", "MEMBER", "OWNER"):
-                note = {"login": (c.get("user") or {}).get("login"),
-                        "body": (c.get("body") or "")[:300], "at": c.get("created_at")}
-                break
-        state["pr_note"] = note
-        state["pr_removed_claim"] = bool(note and re.search(r"remov|fixed|done|handled", note["body"], re.I))
-        state["pr_note_ok"] = True
-    except Exception as exc:
-        state["pr_note_ok"] = False
-        state["pr_note_error"] = str(exc)[:160]
     try:
         issue = json.loads(get(SS_ISSUE_URL))
         state["ss_state"] = issue.get("state")
@@ -153,24 +124,8 @@ def main():
     if new.get("pr_ok") and old.get("pr_ok") and new.get("pr_merged") and not old.get("pr_merged"):
         alerts.append("PR #299334 已被合并")
         success = True
-    if (new.get("pr_ok") and old.get("pr_ok") and new.get("pr_state") == "closed"
-            and not new.get("pr_merged") and old.get("pr_state") != "closed"
-            and not new.get("pr_removed_claim")):
+    if new.get("pr_ok") and old.get("pr_ok") and new.get("pr_state") == "closed" and not new.get("pr_merged") and old.get("pr_state") != "closed":
         alerts.append("PR #299334 被关闭且未合并，建议去 PR 里看维护者留言并回复")
-    # 维护者文字确认「已移除」但名单迟迟没更新 → 等满 48 小时提醒一次去追问（只提醒一次）
-    notified_wait48 = bool(old.get("notified_wait48"))
-    if new.get("pr_removed_claim") and new.get("metamask_has_xyz"):
-        closed_at = new.get("pr_closed_at") or ""
-        try:
-            dtc = datetime.datetime.strptime(closed_at, "%Y-%m-%dT%H:%M:%SZ")
-            waited = (datetime.datetime.utcnow() - dtc) > datetime.timedelta(hours=48)
-        except Exception:
-            waited = False
-        if waited and not notified_wait48:
-            alerts.append("维护者已确认移除 ponsfi.xyz，但官方名单 48 小时仍未更新：建议在 PR 里礼貌追问一句"
-                          "「Hi! Just checking when the list update lands — thanks!」")
-            notified_wait48 = True
-    new["notified_wait48"] = notified_wait48
     if new.get("ss_ok") and old.get("ss_ok") and new.get("ss_comments", 0) > old.get("ss_comments", 0):
         alerts.append(f"ScamSniffer issue #827 有新回复（评论 {old.get('ss_comments')}→{new.get('ss_comments')}），建议查看")
     if new.get("goplus_ok") and new.get("goplus_flag") and not old.get("goplus_flag"):

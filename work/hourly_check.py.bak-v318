@@ -13,49 +13,6 @@ OUT = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")
 TMP = "/tmp/publish-index.html"
 
 
-STONK_SUPPLY = 999_969_797.91   # 官方原始供应（不是整 10 亿，见 buyback.py 同名常量）
-
-
-def patch_official_stonk(d):
-    """把 STONK 卡片数字换成官方累计值（每小时跑一次）：与 stonkfun.xyz 完全对齐。
-
-    为什么需要：buyback.py 的链上读数每天才刷一次（build_monitor 09:00），官方接口
-    是分钟级更新 —— 不覆盖就会出现「卡片 199.85M vs 官网 200.11M」这种滞后差
-    （2026-10-06 用户对账时发现）。官方快照超过 6 小时没更新时不动，宁可显示旧值
-    也不拿过期数据冒充实时。
-    """
-    path = os.path.join(HERE, "sf-history.json")
-    hist = [r for r in json.load(open(path, encoding="utf-8"))
-            if isinstance(r, dict) and r.get("ts")]
-    hist.sort(key=lambda r: r["ts"])
-    if not hist:
-        return
-    last = hist[-1]
-    if time.time() - last["ts"] > 6 * 3600:
-        return
-    node = ((d.get("burn") or {}).get("chain") or {}).get("stonkfun")
-    burned = float(last.get("burnTokens") or 0)
-    if not node or burned <= 0:
-        return
-    node["burned"] = round(burned, 2)
-    node["supply"] = STONK_SUPPLY
-    node["pct"] = round(burned / STONK_SUPPLY * 100, 2)
-    node["src"] = "StonkFun 官方接口 · 累计销毁（每小时刷新）"
-    # 官方 24h：找离「24 小时前」最近的一条快照做差（±3h 容差，找不到就保留原值）
-    target = last["ts"] - 24 * 3600
-    base = None
-    for r in hist:
-        if abs(r["ts"] - target) <= 3 * 3600 and (base is None or abs(r["ts"] - target) < abs(base["ts"] - target)):
-            base = r
-    if base is not None:
-        delta = burned - float(base.get("burnTokens") or 0)
-        if delta >= 0:
-            node["burn24h"] = round(delta, 2)
-            node["burn24hSrc"] = "official"
-            node["burn24hHours"] = round((last["ts"] - base["ts"]) / 3600, 2)
-            node.pop("burn24hLive", None)
-
-
 def log(msg):
     line = time.strftime("%Y-%m-%d %H:%M:%S ") + str(msg)
     print(line)
@@ -78,7 +35,6 @@ def main():
         data_p = os.path.join(HERE, "dashboard-data.json")
         d = json.load(open(data_p, encoding="utf-8"))
         d["hourly"] = json.load(open(os.path.join(HERE, "hourly.json"), encoding="utf-8"))
-        patch_official_stonk(d)
         fd, tmp = tempfile.mkstemp(dir=os.path.dirname(data_p), prefix=".tmp-data-")
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(d, fh, ensure_ascii=False)

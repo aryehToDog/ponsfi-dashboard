@@ -1911,7 +1911,7 @@ zh:{
   burnPeersH30:n=>'回购力度榜 · 全行业近 30 天回购金额（共 '+n+' 个项目，已去掉「烧 gas」的公链）',
   burnPeersNote24:'只有 Pons / StonkFun 这两行是链上现读的：PONS 一直算到最新区块（真 24 小时），STONK 用总量差值。其它项目来自 DefiLlama，它有时晚 1~2 天出数。',
   burnPeersNote30:'说明：数字来自 DefiLlama 的 holders-revenue，近 30 天累计；已经把「烧 gas」的公链去掉（那不叫回购）。',
-  burn24:'近 24 小时回购', burn24Wait:'积累中', burn24Chain:'链上现读', burn24Snap:'链上快照', burn24Official:'官方接口',
+  burn24:'近 24 小时回购', burn24Wait:'积累中', burn24Chain:'链上现读', burn24Snap:'链上快照',
   burnCmpCol1:'近 24 小时', burnCmpCol2:'近 30 天', burnCmpCol3:'回购占成交额', burnCmpCol4:'折合一年能买回',
   burnLiveOk:s=>'链上实时已同步（'+s+'）· 收入与全站榜单来自 DefiLlama，可能晚 1~2 天',
   burnLiveFail:'链上接口这次没读通 · 显示的是最近一次快照值',
@@ -2217,7 +2217,7 @@ en:{
   burnPeersH30:n=>'Buyback leaderboard · last 30 days ('+n+' projects across the industry; gas-burning chains excluded)',
   burnPeersNote24:'Only Pons / StonkFun are read live from chain (PONS up to the latest block; STONK from supply deltas). Every other project comes from DefiLlama, which can lag 1-2 days.',
   burnPeersNote30:'Method: DefiLlama holders-revenue, 30-day cumulative; gas-burning chains excluded (burning gas is not a buyback).',
-  burn24:'buyback, last 24h', burn24Wait:'accumulating', burn24Chain:'on-chain', burn24Snap:'on-chain snapshot', burn24Official:'official API',
+  burn24:'buyback, last 24h', burn24Wait:'accumulating', burn24Chain:'on-chain', burn24Snap:'on-chain snapshot',
   burnCmpCol1:'last 24h', burnCmpCol2:'last 30d', burnCmpCol3:'buyback vs volume', burnCmpCol4:'bought back per year',
   burnLiveOk:s=>'On-chain data synced ('+s+') · revenue & industry ranking come from DefiLlama, which can lag 1-2 days',
   burnLiveFail:'Chain RPC unreachable right now · showing the last snapshot',
@@ -2633,7 +2633,7 @@ function b24Of(pid, st){
   if(d.burn24h!=null){
     const usd=b24usd(pid, d.burn24h);
     if(usd!=null) return {v:usd, wait:false, live:!!d.burn24hLive, txs:(d.burn24hTxs||null),
-            tag:(d.burn24hLive? t('burn24Chain') : (d.burn24hSrc==='official'? t('burn24Official') : t('burn24Snap')))};
+            tag:(d.burn24hLive? t('burn24Chain') : t('burn24Snap'))};
   }
   if(x.d1!=null){
     return {v:x.d1, wait:false, live:false, txs:null, tag:((x.d1date||'').slice(5)), tip:t('burn24DayTip')};

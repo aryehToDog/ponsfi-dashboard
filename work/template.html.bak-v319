@@ -198,11 +198,11 @@ button:active{transform:translateY(1px)}
 .guide-head.open .gt-chev{transform:rotate(-135deg);margin-top:3px}
 .guide-wrap{max-height:0;overflow:hidden;transition:max-height .62s cubic-bezier(.4,0,.2,1)}
 /* 内容块配合高度做「淡入 + 轻微上移」；收起时先淡出，避免被裁切的生硬感 */
-.guide-wrap .glegend,.guide-wrap .guide,.guide-wrap .srcbox{opacity:0;transform:translateY(-7px);
+.guide-wrap .glegend,.guide-wrap .guide{opacity:0;transform:translateY(-7px);
   transition:opacity .26s ease,transform .26s ease}
-.guide-wrap.open .glegend,.guide-wrap.open .guide,.guide-wrap.open .srcbox{opacity:1;transform:none;
+.guide-wrap.open .glegend,.guide-wrap.open .guide{opacity:1;transform:none;
   transition:opacity .5s ease .1s,transform .5s cubic-bezier(.2,.6,.3,1) .08s}
-@media (prefers-reduced-motion:reduce){.guide-wrap,.guide-wrap .glegend,.guide-wrap .guide,.guide-wrap .srcbox{transition:none}}
+@media (prefers-reduced-motion:reduce){.guide-wrap,.guide-wrap .glegend,.guide-wrap .guide{transition:none}}
 
 /* ---------- 标签页 ---------- */
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--sp-block)}
@@ -693,24 +693,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .sum-foot{margin-top:10px;font-size:var(--fs-12);color:var(--mut);
   border-top:1px dashed var(--line2);padding-top:9px;line-height:1.7}
 .sum-foot b{color:var(--txt)}
-
-/* ---------- v3.19 结论深读：把「一句话结论」背后的推理链摊开 ---------- */
-.sum-deep{margin-top:var(--sp-block);border-top:1px dashed var(--line2);padding-top:10px}
-.sum-deep .sd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  font-size:var(--fs-12);font-weight:700;color:var(--txt);margin-bottom:9px}
-.sum-deep .sd-head .sd-ic{color:var(--accent);display:inline-flex}
-.sum-deep .sd-head .sd-ic .ic{width:14px;height:14px}
-.sum-deep .sd-hint{font-weight:400;font-size:var(--fs-11);color:var(--mut2)}
-.sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-block)}
-.sd-col{background:color-mix(in srgb,var(--panel2) 55%,transparent);border:1px solid var(--line);
-  border-radius:var(--r-md);padding:9px 12px}
-.sd-proj{display:flex;align-items:center;gap:7px;font-weight:700;font-size:var(--fs-12);margin-bottom:4px}
-.sd-row{display:flex;gap:8px;font-size:var(--fs-11);line-height:1.75;color:var(--mut);padding:6px 0 0;margin-top:6px;
-  border-top:1px dashed color-mix(in srgb,var(--line2) 65%,transparent)}
-.sd-k{flex:0 0 auto;font-weight:700;color:var(--accent);min-width:2.6em}
-.sd-t b{color:var(--txt)}
-.sd-t .hl-up,.sd-t .hl-dn{font-weight:700}
-@media(max-width:820px){.sd-grid{grid-template-columns:1fr}}
 
 /* ---------- 深层分析（每条信号下面的一块数据推理） ---------- */
 .rule .deep{margin-top:9px;padding:9px 11px;border-radius:var(--r-md);
@@ -1624,15 +1606,8 @@ try{
     <table id="tbl"><thead></thead><tbody></tbody></table>
   </div>
 
-  <div class="sec-title guide-head" id="st-src" role="button" tabindex="0" aria-expanded="false" aria-controls="srcWrap"
-       onclick="srcToggle()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();srcToggle();}">
-    <svg class="ic" aria-hidden="true"><use href="#ic-db"/></svg><span id="st-srcTxt">数据源体检 · 每个数字有多新</span>
-    <span class="gt-hint" id="srcHint"></span>
-    <span class="gt-chev" aria-hidden="true"></span>
-  </div>
-  <div class="guide-wrap" id="srcWrap">
-    <div class="srcbox" id="srcBox"></div>
-  </div>
+  <div class="sec-title" id="st-src"><svg class="ic" aria-hidden="true"><use href="#ic-db"/></svg>数据源体检 · 每个数字有多新</div>
+  <div class="srcbox" id="srcBox"></div>
 
   <div class="sec-title guide-head" id="st-guide" role="button" tabindex="0" aria-expanded="false" aria-controls="guideWrap"
        onclick="guideToggle()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();guideToggle();}">
@@ -1775,16 +1750,6 @@ zh:{
   anPs:d=>'市值 '+d.mcap+' ÷（7 日均收入 '+d.avg7+' × 365 ＝ '+d.yearRev+'）＝ <b>'+d.ps7+'</b>；用 30 天算 '+d.ps30+'（相差 '+d.div+'×）→ '+d.trend+'。对照 pump.fun 约 4.45x。',
   priority:t=>'优先买哪家：'+t+'（估值更低、安全垫更厚）；另一家先等收入不再下滑、估值回落再考虑加仓。',
   priorityNone:'数据不足，暂不给资金优先级建议。',
-  drHead:'深度解读 · 这个结论怎么推出来的',
-  drHint:'把全站数据逐步拆开算给你看，不是一句判断',
-  drDrop:'跌势', drBuy:'托底', drVal:'估值', drTurn:'拐点', drCond:'条件',
-  drDropT:d=>'本周后 3 天日均 <b>'+d.a3+'</b>，前 4 天 <b>'+d.a4+'</b>：'+(d.worse? '<b class="hl-dn">又低 '+d.d3abs+'</b>，下滑还在继续，不是单日抖动' : d.up? '<b class="hl-up">回升 '+d.d3+'</b>，刚出现企稳迹象，还要再连 2 天才算确认' : '变化 '+d.d3+'，跌势暂时踩住，但还没掉头')+'；日线'+d.streakTxt+'。',
-  drBuyT:d=> d.vol7? '7 天回购 <b>'+d.buy7+'</b>，占同期成交额（'+d.vol7+'）的 <b>'+d.f+'</b>：'+(d.strong? '已站上 5% 的「有效买盘」门槛，回购对短期价格有真实支撑。' : d.weak? '离 5% 的「有效买盘」门槛还差 <b>'+d.gap+'</b>，短期改变不了供需，价格仍由收入预期主导。' : '接近但未到 5% 的「有效买盘」门槛（差 '+d.gap+'），有存在感、还不算强支撑。')+' 另一面看长期：'+d.yTxt+'——供应真实变少，这是慢变量，也是长期底。' : '成交额数据缺失，暂时无法测算回购托底力度。',
-  drYFull:'按当前速度不足一年就能买回全部流通盘',
-  drYPart:v=>'按当前速度一年约买回流通市值的 '+v,
-  drValT:d=>'按 7 日均收入年化，市值/年收入 = <b>'+d.ps7+'</b>（便宜线 1.5x ｜ 偏贵线 4x）。这一周收入 '+d.rev7+'、价格 '+d.p7+'，'+(d.compressed? '价格跌得比收入快 → 估值被压得更低，安全垫在变厚' : d.expanded? '价格比收入抗跌 → 估值反而抬高了，安全垫在变薄' : '两者步调接近，估值基本没动')+(d.psPrev? '（上周同口径约 '+d.psPrev+'）':'')+'。',
-  drTurnT:d=> (d.h24!=null)? '最近 24 小时收入 <b>'+d.h24+'</b>（折合日均 '+d.h24per+'），比前 24 小时 '+d.h24chg+'；相对 7 日均 '+(d.hot? '<b class="hl-up">偏高，当下节奏在回暖</b>' : d.cold? '<b class="hl-dn">偏低，当下仍在走弱</b>' : '基本持平，还没给出方向')+'。' : '小时数据不足，暂不判断实时拐点。',
-  drCondT:d=> (d.avg7N>=d.warnN)? '收入还在警戒线 <b>'+d.warn+'/天</b>上方（离场线 '+d.danger+' 更远），现在拖住结论的是周环比 '+d.rev7+'。按规则：周环比回到 -15% 以内或连续 3 天回升，就解除「暂停加仓」；若收入跌破警戒线先收紧，跌破离场线按纪律撤。' : '要让结论从「暂停加仓」回到「可以加仓」，收入得回到 <b>'+d.warn+'/天</b>上方并站稳（现在 '+d.avg7+'，还差 '+d.needUp+'）'+(d.days? '；按最近两周的斜率外推，约 <b>'+d.days+' 天</b>后会跌破警戒线' : '')+'。若直接跌破 <b>'+d.danger+'/天</b>（离场线），按纪律先撤。',
   actFloorBad:'已跌破离场线：建议分批减仓或清仓，不要补仓',
   actFloorWarn:'低于警戒线：暂停加仓，每天盯住这条线',
   actFloorOk:v=>'高出警戒线 '+v+'%，可继续持有',
@@ -2091,16 +2056,6 @@ en:{
   anPs:d=>'Market cap '+d.mcap+' ÷ (7-day avg '+d.avg7+' × 365 = '+d.yearRev+') = <b>'+d.ps7+'</b>; using 30 days '+d.ps30+' ('+d.div+'× apart) → '+d.trend+'. pump.fun reference ≈ 4.45x.',
   priority:t=>'Prefer '+t+' (cheaper, thicker buffer); wait for the other one to stop bleeding before adding.',
   priorityNone:'Not enough data for an allocation call.',
-  drHead:'Deep read · how this bottom line is derived',
-  drHint:'Every step computed from full-site data — not a one-line opinion',
-  drDrop:'Trend', drBuy:'Support', drVal:'Value', drTurn:'Now', drCond:'Trigger',
-  drDropT:d=>'Last 3 days average <b>'+d.a3+'</b> vs the first 4 days <b>'+d.a4+'</b>: '+(d.worse? '<b class="hl-dn">another '+d.d3abs+' lower</b> — still deteriorating, not a one-day dip' : d.up? '<b class="hl-up">up '+d.d3+'</b> — first sign of stabilising, needs 2 more days to confirm' : 'change '+d.d3+' — the slide paused but has not turned')+'; daily line '+d.streakTxt+'.',
-  drBuyT:d=> d.vol7? '7-day buyback <b>'+d.buy7+'</b> = <b>'+d.f+'</b> of same-period volume ('+d.vol7+'): '+(d.strong? 'above the 5% "real bid" bar — buybacks genuinely support the price short term.' : d.weak? '<b>'+d.gap+'</b> short of the 5% "real bid" bar — it cannot move supply/demand yet, price is still driven by revenue expectations.' : 'close to but below the 5% "real bid" bar ('+d.gap+' away) — visible, not yet strong support.')+' The long side: '+d.yTxt+' — supply really shrinks; a slow variable and a long-term floor.' : 'Volume data missing — buyback support cannot be measured right now.',
-  drYFull:'at the current pace the entire float is bought back in under a year',
-  drYPart:v=>'at the current pace roughly '+v+' of the float is bought back per year',
-  drValT:d=>'Annualising 7-day revenue, market cap / annual revenue = <b>'+d.ps7+'</b> (cheap below 1.5x | rich above 4x). Over the week revenue '+d.rev7+', price '+d.p7+': '+(d.compressed? 'price fell faster than revenue → the multiple compressed, buffer getting thicker' : d.expanded? 'price held up better than revenue → the multiple expanded, buffer getting thinner' : 'both moved together, multiple roughly unchanged')+(d.psPrev? ' (last week ≈ '+d.psPrev+')':'')+'.',
-  drTurnT:d=> (d.h24!=null)? 'Last 24h revenue <b>'+d.h24+'</b> (≈ '+d.h24per+'/day), '+d.h24chg+' vs the prior 24h; versus the 7-day average it is '+(d.hot? '<b class="hl-up">running hot — near-term pace improving</b>' : d.cold? '<b class="hl-dn">running cold — still weakening</b>' : 'roughly flat — no direction yet')+'.' : 'Not enough hourly data for a real-time call.',
-  drCondT:d=> (d.avg7N>=d.warnN)? 'Revenue still sits above the warning line <b>'+d.warn+'/day</b> (exit line '+d.danger+' further down); what holds the current call down is the weekly change '+d.rev7+'. Per the rules: a weekly change within -15%, or 3 consecutive up days, lifts the "pause buying" call; a break of the warning line tightens it, and the exit line means step aside.' : 'For the call to turn from "pause buying" back to "can add", revenue must reclaim <b>'+d.warn+'/day</b> and hold it (now '+d.avg7+', still '+d.needUp+' away)'+(d.days? '; at the last two weeks\' slope the warning line breaks in about <b>'+d.days+' days</b>' : '')+'. If it breaks <b>'+d.danger+'/day</b> (the exit line), the rule says step aside first.',
   actFloorBad:'Below the exit line: trim in tranches or exit, do not average down',
   actFloorWarn:'Below the warning line: no new buys, watch this line daily',
   actFloorOk:v=>'Sits '+v+'% above the warning line — keep holding',
@@ -2463,9 +2418,7 @@ function renderStatic(){
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.innerHTML = IC.flame + t('secBurn');
   document.getElementById('st-chart').innerHTML = IC.trend + t('secChart');
   document.getElementById('st-table').innerHTML = IC.table + t('secTable');
-  var _sst = document.getElementById('st-srcTxt'); if(_sst) _sst.textContent = t('secSrc');
-  var _ssh = document.getElementById('srcHint');
-  if(_ssh){ var _ssw = document.getElementById('srcWrap'); _ssh.textContent = (_ssw && _ssw.classList.contains('open')) ? t('guideCollapse') : t('guideExpand'); }
+  var _ss = document.getElementById('st-src'); if(_ss) _ss.innerHTML = IC.db + t('secSrc');
   document.getElementById('st-guideTxt').textContent = t('secGuide');
   var _gh = document.getElementById('guideHint');
   if(_gh) _gh.textContent = (document.getElementById('guideWrap').classList.contains('open') ? t('guideCollapse') : t('guideExpand'));
@@ -3407,73 +3360,6 @@ function deepFor(p, s){
   };
 }
 
-/* ---------- v3.19 结论深读：给「一句话结论」配上完整的推理链 ---------- */
-/* 7 日窗口对半分：最近 3 天 vs 前 4 天 —— 判断下滑是在继续还是已踩住 */
-function last7Split(rows, p){
-  const idx = rows.map((r,i)=>r[p.id+'_rev']!==null?i:-1).filter(i=>i>=0);
-  if(idx.length < 7) return null;
-  const win = idx.slice(-7);
-  const avg = a => { let s=0,n=0; a.forEach(i=>{ const v=rows[i][p.id+'_rev']; if(v!=null&&isFinite(v)){ s+=v; n++; } }); return n? s/n : null; };
-  const a3 = avg(win.slice(-3)), a4 = avg(win.slice(0,4));
-  return {a3, a4, chg: (a3!=null&&a4)? a3/a4-1 : null};
-}
-/* 小时级拐点：最近 24 个有数小时 vs 再往前 24 个 —— 比日线早 1~2 天看到转向 */
-function hourlyInflection(key){
-  const b = hourlyBundle(); if(!b || !b[key]) return null;
-  const rev = b[key].rev || [];
-  const vals = [];
-  for(let i=rev.length-1;i>=0 && vals.length<48;i--){ const v=rev[i]; if(v!=null&&isFinite(v)) vals.push(v); }
-  if(vals.length < 12) return null;
-  const n = Math.min(24, vals.length-6);
-  const last = vals.slice(0, n), prev = vals.slice(n, n+24);
-  const sum = a => a.reduce((x,y)=>x+y,0);
-  const sl = sum(last), sp = prev.length? sum(prev) : null;
-  return {last:sl, prev:sp, chg:(sp&&sp>0)? sl/sp-1 : null, n:last.length,
-          perDay: last.length? sl/last.length*24 : null};
-}
-function deepReview(p, s, rows){
-  const w = last7Split(rows, p);
-  const h2 = hourlyInflection(p.id==='pons'? 'pons' : 'stonk');
-  const money = v => (v===null||v===undefined||!isFinite(v))? '—' : fmtU(v);
-  const pct1 = v => (v===null||v===undefined||!isFinite(v))? '—' : (v>=0?'+':'')+(v*100).toFixed(1)+'%';
-  const vol7 = s.vol24? s.vol24*7 : null;
-  const f = s.burnForce;
-  const revChg = s.avg7p? (s.avg7-s.avg7p)/s.avg7p : null;
-  const priceChg = (s.priceChg7!==null&&isFinite(s.priceChg7))? s.priceChg7 : null;
-  const psPrev = (s.ps7 && priceChg!==null && s.avg7p>0 && (1+priceChg)>0)
-    ? (s.mcap/(1+priceChg))/(s.avg7p*365) : null;
-  const y = (s.burnYield!==null&&isFinite(s.burnYield))? s.burnYield : null;
-  const streakN = (s.streakUp>=s.streakDown? s.streakUp : s.streakDown);
-  const d = {
-    a3: money(w&&w.a3), a4: money(w&&w.a4), d3: pct1(w? w.chg : null),
-    d3abs: (w&&w.chg!==null&&w.chg!==undefined)? (Math.abs(w.chg)*100).toFixed(1)+'%' : '—',
-    worse: !!(w && w.chg!==null && w.chg < -0.08),
-    up:    !!(w && w.chg!==null && w.chg > 0.03),
-    streakTxt: t('streakTxt')(streakN, s.streakUp>s.streakDown),
-    buy7: money(s.holdSum7), vol7: money(vol7),
-    f: (f!==null&&isFinite(f))? (f*100).toFixed(2)+'%' : '—',
-    weak: (f!==null&&isFinite(f))? f<0.02 : false,
-    strong: (f!==null&&isFinite(f))? f>=0.05 : false,
-    gap: (f&&f>0)? fmtN(0.05/f,1)+'×' : '—',
-    yTxt: y===null? '—' : (y>=1? t('drYFull') : t('drYPart')(fmtN(y*100,0)+'%')),
-    ps7: s.ps7? fmtN(s.ps7,2)+'x':'—',
-    psPrev: psPrev? fmtN(psPrev,2)+'x':'',
-    rev7: pct1(revChg), p7: pct1(priceChg),
-    compressed: (psPrev&&s.ps7)? s.ps7 < psPrev*0.97 : false,
-    expanded:   (psPrev&&s.ps7)? s.ps7 > psPrev*1.03 : false,
-    h24: h2? money(h2.last) : null, h24per: h2? money(h2.perDay) : null,
-    h24chg: (h2&&h2.chg!==null)? pct1(h2.chg) : '—',
-    hot:  (h2&&s.avg7>0)? h2.perDay > s.avg7*1.05 : false,
-    cold: (h2&&s.avg7>0)? h2.perDay < s.avg7*0.95 : false,
-    avg7: money(s.avg7), avg7N: s.avg7, warn: money(p.warn), warnN: p.warn, danger: money(p.danger),
-    needUp: (s.avg7>0 && s.avg7<p.warn)? '+'+fmtN((p.warn/s.avg7-1)*100,0)+'%' : '—',
-    days: (s.daysToWarn && isFinite(s.daysToWarn) && s.daysToWarn>0 && s.daysToWarn<400)? Math.round(s.daysToWarn) : null
-  };
-  const row = (k, body) => '<div class="sd-row"><span class="sd-k">'+t(k)+'</span><span class="sd-t">'+body+'</span></div>';
-  return row('drDrop', t('drDropT')(d)) + row('drBuy', t('drBuyT')(d)) + row('drVal', t('drValT')(d))
-       + row('drTurn', t('drTurnT')(d)) + row('drCond', t('drCondT')(d));
-}
-
 function sumActionOf(it){
   if(it.floor.level==='bad') return ['bad', t('sumActBad')];
   if(it.burn.level==='bad')  return ['bad', t('sumActBurnBad')];
@@ -3549,21 +3435,10 @@ function renderRules(){
   const cheaper = (ra.s.ps7 && rb.s.ps7) ? (ra.s.ps7 < rb.s.ps7 ? A : B) : null;
   const action = cheaper ? t('priority')(cheaper.ticker) : t('priorityNone');
 
-  /* v3.19：把推理链摊在结论下面 —— 跌势结构 / 回购托底 / 估值安全垫 / 实时拐点 / 反转条件 */
-  const deepCol = (p, r2) => `<div class="sd-col">
-      <div class="sd-proj"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span></div>
-      ${deepReview(p, r2.s, rows)}
-    </div>`;
-  const deepBlock = `<div class="sum-deep">
-      <div class="sd-head"><span class="sd-ic">${IC.book}</span>${t('drHead')}<span class="sd-hint">${t('drHint')}</span></div>
-      <div class="sd-grid">${deepCol(A, ra)}${deepCol(B, rb)}</div>
-    </div>`;
-
   const summary = `<div class="summary">
       <div class="sum-head"><span class="sum-badge">${t('conclusion')}</span>
         <span class="sum-line"><span class="pnm">${A.name}</span> <b class="${sa[0]}">${sa[1]}</b>　·　<span class="pnm">${B.name}</span> <b class="${sb[0]}">${sb[1]}</b></span></div>
       <div class="sum-grid">${projBlock(A, ra, sa)}${projBlock(B, rb, sb)}</div>
-      ${deepBlock}
       <div class="sum-foot">${action}<br><span style="color:var(--mut2)">${t('sumHint')}</span></div>
     </div>`;
 
@@ -3988,38 +3863,6 @@ function guideToggle(force){
     guideSetOpen(true);
     /* 折叠时页面比展开后矮一截，立即滚会被文档底截断 → 等展开动画把页面撑高再滚 */
     guideScrollTo(id, wasOpen ? 0 : 580);
-  });
-})();
-
-/* v3.19：数据源体检也支持折叠（默认收起，风格与指标说明一致） */
-function srcSetOpen(open){
-  var w = document.getElementById('srcWrap'), h = document.getElementById('st-src');
-  if(!w || !h) return;
-  h.classList.toggle('open', !!open);
-  h.setAttribute('aria-expanded', open ? 'true' : 'false');
-  var hint = document.getElementById('srcHint');
-  if(hint) hint.textContent = open ? t('guideCollapse') : t('guideExpand');
-  w.style.overflow = 'hidden';
-  if(open){
-    w.classList.add('open');
-    w.style.maxHeight = w.scrollHeight + 'px';
-  }else{
-    if(!w.classList.contains('open')){ w.style.maxHeight = '0px'; return; }
-    w.style.maxHeight = w.scrollHeight + 'px';
-    requestAnimationFrame(function(){ w.classList.remove('open'); w.style.maxHeight = '0px'; });
-  }
-}
-function srcToggle(force){
-  var w = document.getElementById('srcWrap');
-  if(!w) return;
-  srcSetOpen(force === undefined ? !w.classList.contains('open') : !!force);
-}
-(function(){
-  var w = document.getElementById('srcWrap');
-  if(!w) return;
-  w.addEventListener('transitionend', function(ev){
-    if(ev.propertyName !== 'max-height') return;
-    if(w.classList.contains('open')) w.style.maxHeight = 'none';
   });
 })();
 function guideScrollTo(id, delay){

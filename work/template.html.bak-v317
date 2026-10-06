@@ -901,22 +901,14 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .burn-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
 .burn-src{margin-top:10px;font-size:var(--fs-11);color:var(--mut2);line-height:1.6}
 .burn-src code{font-family:var(--font-mono);font-size:var(--fs-10);color:var(--mut)}
-/* v3.17：进度条改环形（大号百分比在圈里）＋ 销毁速度/下一关一行小字 */
-.burn-hero{display:flex;align-items:center;gap:16px;margin-top:var(--sp-block)}
-.burn-ring{position:relative;width:122px;height:122px;flex:0 0 auto}
-.burn-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
-.burn-ring .brk-trk{fill:none;stroke:var(--panel3);stroke-width:10}
-.burn-ring .brk-arc{fill:none;stroke-width:10;stroke-linecap:round;
-  filter:drop-shadow(0 2px 9px color-mix(in srgb,var(--bc,var(--accent)) 46%,transparent))}
-.brk-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-.brk-c b{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:28px;font-weight:800;letter-spacing:-1.1px;line-height:1}
-.brk-c b em{font-style:normal;font-size:14px;font-weight:700;margin-left:1px;color:var(--mut)}
-.brk-c span{font-size:var(--fs-10);color:var(--mut2);font-weight:600;letter-spacing:.2px}
-.burn-hero-txt{flex:1;min-width:0}
-.burn-hero-txt .burn-big{margin:0}
-.burn-husd{margin-top:6px;font-size:var(--fs-12);color:var(--mut2)}
-.burn-husd b{color:var(--txt);font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800}
-@media(max-width:680px){.burn-hero{gap:12px}.burn-ring{width:102px;height:102px}.brk-c b{font-size:23px}}
+/* v3.16：销毁速度 / 下一关并进卡片（原「销毁里程碑」板块的精华，去掉重复数字） */
+.burn-barwrap{position:relative;margin:12px 0 7px}
+.burn-barwrap.has-gate{margin-top:26px}
+.burn-barwrap .burn-bar{margin:0}
+.burn-barwrap>u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--warn);border-radius:2px}
+.burn-barwrap>u::after{content:attr(data-lbl);position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+  font-size:var(--fs-10);font-weight:700;color:var(--warn);background:var(--panel);
+  border:1px solid color-mix(in srgb,var(--warn) 42%,var(--line));border-radius:var(--r-pill);padding:0 6px;white-space:nowrap}
 .burn-mile{margin-top:9px;font-size:var(--fs-11);color:var(--mut2);line-height:1.65}
 .burn-mile b{color:var(--txt);font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800}
 .burn-mile em{font-style:normal;font-family:var(--font-num);font-size:var(--fs-10);color:var(--mut2);margin-left:6px}
@@ -1684,7 +1676,6 @@ zh:{
   msNoteH:'这块数字怎么读',
   msNote:'<b>已销毁</b>＝打进死地址的币，链上可对账、谁也拿不回来；<b>销毁速度</b>取最近约 24 小时的真实烧毁量，换算成「每天烧掉总量的百分之几」，两家用同一把尺子对比。<b>下一个 1%</b>＝离下一个整数百分比还差多少枚、按当前速度预计几天 —— 把「慢变量」翻译成「离下一座里程碑还有多远」。口径提醒：销毁的币来自回购，与上方「回购与销毁」是同一批钱的两种视角；快照晚一天内属正常。',
   bmSpeedL:'销毁速度', bmAfter:'后抵达下一关', bmTip:'基于最近约 24 小时的链上销毁量推算；每小时随管道刷新（口径：每天烧掉总量的百分之几）',
-  bmNext:(g,t,d)=>'距下一关 '+g+' 还差 '+t+' · 按当前速度 '+d+'后抵达',
   msSrcOfficial:'官方累计值', msSrcSnapshot:'链上快照', msSrcChain72:'链上日志 72h',
   gMmT:'销毁速度与下一关（在「回购与销毁」卡里怎么读）',
   gMmF:'已销毁占比 ＝ <b class="hi">累计销毁</b> ÷ <b class="hi">总量 10 亿</b>；销毁速度 ＝ 最近约 24 小时销毁量 ÷ 总量（每天百分比）；下一关 ＝ 下一个整数百分比',
@@ -1990,7 +1981,6 @@ en:{
   msNoteH:'How to read this',
   msNote:'<b>Burned</b> = tokens sent to the dead address (verifiable on-chain, gone forever). <b>Burn speed</b> uses the last ~24h of real burns converted to "what % of supply is burned per day" — one ruler for both. <b>Next 1%</b> = how many tokens remain to the next whole-percent milestone and the estimated days at the current pace. Note: burned tokens come from the buyback — same money, two views; snapshots up to a day old are normal.',
   bmSpeedL:'Burn speed', bmAfter:' to the next mark at this pace', bmTip:'Based on the last ~24h of on-chain burns; refreshes hourly',
-  bmNext:(g,t,d)=>t+' to the '+g+' mark · '+d+' at this pace',
   msSrcOfficial:'official counter', msSrcSnapshot:'on-chain snapshot', msSrcChain72:'on-chain logs 72h',
   gMmT:'Burn speed & next mark (how to read them in the Buyback & Burn card)',
   gMmF:'Burned share = <b class="hi">cumulative burned</b> ÷ <b class="hi">1B supply</b>; burn speed = last ~24h burned ÷ supply (per-day %); next mark = the next whole percent',
@@ -2698,19 +2688,18 @@ function renderBurn(){
   if(cards) cards.innerHTML=PROJECTS.map(function(p){
     const b=burnOf(p), s=st[p.id]||{}, d=(bd.chain||{})[p.id]||{};
     const usd=b.burned*(s.price||0);
+    const fill=Math.max(0,Math.min(100,b.pct));
     const link=d.explorer? '<a class="bn-link" href="'+d.explorer+'" target="_blank" rel="noopener">'+t('burnLink')+'</a>' : '';
     const addr=b.addr? (b.addr.length>20? b.addr.slice(0,10)+'…'+b.addr.slice(-6) : b.addr) : '';
     const h24=b24Of(p.id, st);
     const ms=(msBundle()||{})[p.id==='stonkfun'?'stonk':p.id]||null;
-    const ARC=2*Math.PI*52, arcFill=(ARC*Math.max(0,Math.min(100,b.pct))/100).toFixed(2);
+    const gate=(ms && ms.nextPct!=null)
+      ? '<u style="left:'+Math.min(99.4,ms.nextPct)+'%" data-lbl="'+esc(t('msChip')(ms.nextPct+'%'))+'"></u>' : '';
     const mile=(ms && ms.perDay!=null)
       ? '<div class="burn-mile" title="'+esc(t('bmTip'))+(ms.generated? ' · '+esc(t('msStamp'))+esc(new Date(ms.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')) : '')+'">'
         + '<span>'+esc(t('bmSpeedL'))+' <b>'+fmtT(ms.perDay)+t('msPerDay')+'</b>'
         + (ms.speedPct!=null? '<em>'+esc(t('msPerDayPct')(ms.speedPct.toFixed(3)))+'</em>':'')+'</span>'
-        + (ms.daysTo!=null? ' · <span>'+esc(t('bmNext')(
-            (ms.nextPct!=null? ms.nextPct+'%':'—'),
-            (ms.toNext!=null? fmtT(ms.toNext):'—'),
-            t('msDays')(msDayTxt(ms.daysTo)) ))+'</span>' : '')
+        + (ms.daysTo!=null? ' · <span><b>'+esc(t('msDays')(msDayTxt(ms.daysTo)))+'</b>'+esc(t('bmAfter'))+'</span>' : '')
         + '</div>'
       : '';
     const chip = h24.wait
@@ -2724,19 +2713,10 @@ function renderBurn(){
       +   '<span class="proj-name"><span class="dot" style="background:'+p.color+';color:'+p.color+'"></span>'+p.ticker+'</span>'
       +   '<span class="bn-chain">'+esc(p.chain)+'</span>'+link
       + '</div>'
-      + '<div class="burn-hero">'
-      +   '<div class="burn-ring" title="'+esc(t('burnPctOf'))+' '+(b.pct!=null? b.pct.toFixed(2)+'%':'—')+'">'
-      +     '<svg viewBox="0 0 120 120" aria-hidden="true">'
-      +       '<circle class="brk-trk" cx="60" cy="60" r="52"/>'
-      +       '<circle class="brk-arc" cx="60" cy="60" r="52" style="stroke:'+p.color+';stroke-dasharray:'+arcFill+' '+ARC.toFixed(2)+'"/>'
-      +     '</svg>'
-      +     '<div class="brk-c"><b>'+(b.pct!=null? b.pct.toFixed(2):'—')+'<em>%</em></b><span>'+esc(t('burnPctOf'))+'</span></div>'
-      +   '</div>'
-      +   '<div class="burn-hero-txt">'
-      +     '<div class="burn-big">'+fmtN(b.burned/1e6,2)+'M<small>'+p.ticker+' '+t('burnBurned')+'</small></div>'
-      +     '<div class="burn-husd">'+t('burnValue')+' <b>'+fmtU(usd)+'</b></div>'
-      +   '</div>'
-      + '</div>'
+      + '<div class="burn-big">'+fmtN(b.burned/1e6,2)+'M<small>'+p.ticker+' '+t('burnBurned')+'</small></div>'
+      + '<div class="burn-barwrap'+(gate?' has-gate':'')+'"><div class="burn-bar"><i style="width:'+fill.toFixed(2)+'%"></i></div>'+gate+'</div>'
+      + '<div class="burn-barcap"><span>'+t('burnPctOf')+' <b>'+b.pct.toFixed(2)+'%</b></span>'
+      +   '<span>'+t('burnValue')+' <b>'+fmtU(usd)+'</b></span></div>'
       + mile
       + '<div class="burn-kv">'+ chip
       +   '<span><b>'+t('burn30d')+'</b><i>'+fmtU(s.s30)+'</i></span>'

@@ -1152,57 +1152,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .sec-live{font-size:var(--fs-10);font-weight:600;color:var(--ok-txt);margin-left:8px;letter-spacing:0}
 .sec-live.off{color:var(--mut2)}
 .sec-live.est{color:var(--warn)}
-/* ---------- 市场占有率 · 24 小时成交量份额（v3.14） ---------- */
-.share-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
-  padding:14px 16px 13px 19px;box-shadow:var(--card-shadow);overflow:hidden}
-.share-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,var(--accent))}
-.share-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.share-head .sh-name{font-size:var(--fs-13);font-weight:800}
-.share-head .sh-name i{font-style:normal;font-size:var(--fs-10);font-weight:700;color:var(--mut2);margin-left:5px;letter-spacing:.4px}
-.share-head .sh-chain{margin-left:auto;font-size:var(--fs-11);font-weight:600;color:var(--mut2);background:var(--panel2);
-  border:1px solid var(--line);border-radius:var(--r-sm);padding:1px 7px;white-space:nowrap}
-.share-big{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:var(--sp-block) 0 0}
-.share-big b{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:31px;font-weight:800;
-  letter-spacing:-.8px;line-height:1.08;color:var(--sc,var(--accent))}
-.share-big span{font-size:var(--fs-12);font-weight:600;color:var(--mut)}
-.share-bar{position:relative;height:9px;border-radius:var(--r-pill);background:var(--panel2);border:1px solid var(--line);
-  overflow:hidden;margin:12px 0 7px}
-.share-bar i{position:absolute;left:0;top:0;bottom:0;min-width:3px;border-radius:var(--r-pill);background:var(--sc,var(--accent));
-  box-shadow:0 0 12px -3px var(--sc,var(--accent))}
-.share-bar u{position:absolute;top:0;bottom:0;width:2px;background:color-mix(in srgb,var(--warn) 82%,transparent)}
-.share-caps{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-11);color:var(--mut2)}
-.share-caps b{color:var(--txt);font-family:var(--font-num);font-weight:800}
-.share-kv{display:flex;gap:6px;flex-wrap:wrap;margin-top:var(--sp-block)}
-.share-kv span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:var(--fs-11);
-  background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px 9px}
-.share-kv span b{color:var(--mut2);font-weight:600}
-.share-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
-.share-kv span i.up{color:var(--up)}
-.share-kv span i.down{color:var(--down)}
-.share-spark{display:flex;align-items:center;gap:10px;margin-top:11px}
-.share-spark svg{flex:1;height:30px;min-width:0;color:var(--sc,var(--accent))}
-.share-spark .sh-spk{font-size:var(--fs-10);color:var(--mut2);white-space:nowrap}
-.share-vs{margin-top:var(--sp-block);border-top:1px dashed var(--line2);padding-top:11px}
-.share-vs .sh-vs-h{font-size:var(--fs-11);font-weight:800;color:var(--mut);margin-bottom:7px}
-.share-vs .sh-vs-h em{font-style:normal;font-weight:600;color:var(--mut2);font-size:var(--fs-10)}
-.share-vsbar{display:flex;height:9px;border-radius:var(--r-pill);overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
-.share-vsbar i{display:block;height:100%}
-.share-vsbar i.a{min-width:3px;background:var(--stonk)}
-.share-vsbar i.b{background:color-mix(in srgb,var(--warn) 70%,transparent)}
-.share-vscap{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-10);color:var(--mut2);margin-top:5px}
-.share-vscap b{font-family:var(--font-num);font-weight:800;color:var(--txt)}
-.share-vsline{margin-top:7px;font-size:var(--fs-11);color:var(--mut);line-height:1.75}
-.share-vsline b{color:var(--txt);font-family:var(--font-num);font-weight:800}
-.share-note{margin-top:var(--sp-card);background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
-  padding:14px 16px;box-shadow:var(--card-shadow);font-size:var(--fs-12);line-height:1.9}
-.share-note .bb-h{font-size:var(--fs-13);font-weight:800;margin-bottom:var(--sp-in)}
-.share-note .bb-h em{font-style:normal;font-size:var(--fs-10);font-weight:600;color:var(--mut2);margin-left:7px}
-.rank-sub a.qi{display:inline-block;width:15px;height:15px;line-height:14px;text-align:center;border-radius:50%;
-  font-size:var(--fs-10);font-weight:800;color:var(--mut2);background:var(--panel2);border:1px solid var(--line);
-  text-decoration:none;vertical-align:-3px;transition:transform .15s ease,color .15s ease,border-color .15s ease}
-.rank-sub a.qi:hover,.rank-sub a.qi:focus-visible{color:var(--accent);
-  border-color:color-mix(in srgb,var(--accent) 40%,var(--line));transform:scale(1.12)}
-@media(max-width:680px){.share-big b{font-size:27px}}
 @media(max-width:680px){
   #hourlyChart{height:200px}
   .hourly-sum{grid-template-columns:repeat(2,1fr)}
@@ -1457,7 +1406,6 @@ try{
 <body>
 <!-- ===== v3.13.1 图标库 · Phosphor Icons「Fill」实心权重 (phosphoricons.com · MIT License) 内联 sprite，零外部请求 ===== -->
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><linearGradient id="icGrad313" x1="0" y1="1" x2="1" y2="0"><stop class="gs1" offset="0"/><stop class="gs2" offset="1"/></linearGradient></defs><symbol id="ic-shield" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm-34.32,69.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></symbol><symbol id="ic-refresh" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol><symbol id="ic-sun" viewBox="0 0 256 256"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm8,24a64,64,0,1,0,64,64A64.07,64.07,0,0,0,128,64ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></symbol><symbol id="ic-moon" viewBox="0 0 256 256"><path d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/></symbol><symbol id="ic-monitor" viewBox="0 0 256 256"><path d="M232,64V176a24,24,0,0,1-24,24H48a24,24,0,0,1-24-24V64A24,24,0,0,1,48,40H208A24,24,0,0,1,232,64ZM160,216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Z"/></symbol><symbol id="ic-eye" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></symbol><symbol id="ic-coffee" viewBox="0 0 256 256"><path d="M208,80H32a8,8,0,0,0-8,8v48a96.3,96.3,0,0,0,32.54,72H32a8,8,0,0,0,0,16H208a8,8,0,0,0,0-16H183.46a96.59,96.59,0,0,0,27-40.09A40,40,0,0,0,248,128v-8A40,40,0,0,0,208,80Zm24,48a24,24,0,0,1-17.2,23,95.78,95.78,0,0,0,1.2-15V97.38A24,24,0,0,1,232,120ZM112,56V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0Zm32,0V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0ZM80,56V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0Z"/></symbol><symbol id="ic-alert" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/></symbol><symbol id="ic-zap" viewBox="0 0 256 256"><path d="M213.85,125.46l-112,120a8,8,0,0,1-13.69-7l14.66-73.33L45.19,143.49a8,8,0,0,1-3-13l112-120a8,8,0,0,1,13.69,7L153.18,90.9l57.63,21.61a8,8,0,0,1,3,12.95Z"/></symbol><symbol id="ic-chev-up" viewBox="0 0 256 256"><path d="M215.39,163.06A8,8,0,0,1,208,168H48a8,8,0,0,1-5.66-13.66l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,215.39,163.06Z"/></symbol><symbol id="ic-activity" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm-8,96H188.64L159,188a8,8,0,0,1-6.95,4h-.46a8,8,0,0,1-6.89-4.84L103,89.92,79,132a8,8,0,0,1-7,4H48a8,8,0,0,1,0-16H67.36L97.05,68a8,8,0,0,1,14.3.82L153,166.08l24-42.05a8,8,0,0,1,6.95-4h24a8,8,0,0,1,0,16Z"/></symbol><symbol id="ic-bell" viewBox="0 0 256 256"><path d="M224,71.1a8,8,0,0,1-10.78-3.42,94.13,94.13,0,0,0-33.46-36.91,8,8,0,1,1,8.54-13.54,111.46,111.46,0,0,1,39.12,43.09A8,8,0,0,1,224,71.1ZM35.71,72a8,8,0,0,0,7.1-4.32A94.13,94.13,0,0,1,76.27,30.77a8,8,0,1,0-8.54-13.54A111.46,111.46,0,0,0,28.61,60.32,8,8,0,0,0,35.71,72Zm186.1,103.94A16,16,0,0,1,208,200H167.2a40,40,0,0,1-78.4,0H48a16,16,0,0,1-13.79-24.06C43.22,160.39,48,138.28,48,112a80,80,0,0,1,160,0C208,138.27,212.78,160.38,221.81,175.94ZM150.62,200H105.38a24,24,0,0,0,45.24,0Z"/></symbol><symbol id="ic-flame" viewBox="0 0 256 256"><path d="M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z"/></symbol><symbol id="ic-trophy" viewBox="0 0 256 256"><path d="M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80V96a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.58c31.94-3.23,58.44-25.64,68.08-55.58H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4,.39,8ZM232,96a24,24,0,0,1-24,24h-.5a81.81,81.81,0,0,0,.5-8.9V80h24Z"/></symbol><symbol id="ic-trend" viewBox="0 0 256 256"><path d="M240,56v64a8,8,0,0,1-13.66,5.66L200,99.31l-58.34,58.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,188.69,88,162.34,61.66A8,8,0,0,1,168,48h64A8,8,0,0,1,240,56Z"/></symbol><symbol id="ic-table" viewBox="0 0 256 256"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM40,112H80v32H40Zm56,0H216v32H96ZM40,160H80v32H40Zm176,32H96V160H216v32Z"/></symbol><symbol id="ic-db" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol><symbol id="ic-book" viewBox="0 0 256 256"><path d="M240,56V200a8,8,0,0,1-8,8H160a24,24,0,0,0-24,23.94,7.9,7.9,0,0,1-5.12,7.55A8,8,0,0,1,120,232a24,24,0,0,0-24-24H24a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H88a32,32,0,0,1,32,32v87.73a8.17,8.17,0,0,0,7.47,8.25,8,8,0,0,0,8.53-8V80a32,32,0,0,1,32-32h64A8,8,0,0,1,240,56Z"/></symbol><symbol id="ic-volume" viewBox="0 0 256 256"><path d="M160,32.25V223.69a8.29,8.29,0,0,1-3.91,7.18,8,8,0,0,1-9-.56l-65.57-51A4,4,0,0,1,80,176.16V79.84a4,4,0,0,1,1.55-3.15l65.57-51a8,8,0,0,1,10,.16A8.27,8.27,0,0,1,160,32.25ZM60,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H60a4,4,0,0,0,4-4V84A4,4,0,0,0,60,80Zm126.77,20.84a8,8,0,0,0-.72,11.3,24,24,0,0,1,0,31.72,8,8,0,1,0,12,10.58,40,40,0,0,0,0-52.88A8,8,0,0,0,186.74,100.84Zm40.89-26.17a8,8,0,1,0-11.92,10.66,64,64,0,0,1,0,85.34,8,8,0,1,0,11.92,10.66,80,80,0,0,0,0-106.66Z"/></symbol><symbol id="ic-medal" viewBox="0 0 256 256"><path d="M216,96A88,88,0,1,0,72,163.83V240a8,8,0,0,0,11.58,7.16L128,225l44.43,22.21A8.07,8.07,0,0,0,176,248a8,8,0,0,0,8-8V163.83A87.85,87.85,0,0,0,216,96ZM56,96a72,72,0,1,1,72,72A72.08,72.08,0,0,1,56,96Zm16,0a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></symbol><symbol id="ic-external" viewBox="0 0 256 256"><path d="M192,136v72a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V80A16,16,0,0,1,48,64h72a8,8,0,0,1,0,16H48V208H176V136a8,8,0,0,1,16,0Zm32-96a8,8,0,0,0-8-8H152a8,8,0,0,0-5.66,13.66L172.69,72l-42.35,42.34a8,8,0,0,0,11.32,11.32L184,83.31l26.34,26.35A8,8,0,0,0,224,104Z"/></symbol></svg>
-<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><symbol id="ic-pie" viewBox="0 0 256 256"><path opacity=".4" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"/><path d="M128 128 L128 40 A88 88 0 0 1 216 128 Z"/></symbol></svg>
 <div class="wrap">
   <!-- ===== 作者名片（改文案改这里）===== -->
   <div class="author">
@@ -1557,11 +1505,6 @@ try{
   </div>
   <div class="bb-note" id="burnNote"></div>
 
-  <div class="sec-title" id="st-share"><svg class="ic" aria-hidden="true"><use href="#ic-pie"/></svg>市场占有率 · 24 小时成交量份额<span class="sec-live" id="shareLive"></span></div>
-  <div class="rank-sub" id="shareSub"></div>
-  <div class="grid2" id="shareCards"></div>
-  <div class="share-note" id="shareNote"></div>
-
   <div class="sec-title" id="st-rank"><svg class="ic" aria-hidden="true"><use href="#ic-trophy"/></svg>收入排行 · 在整个行业里的位置</div>
   <div class="rank-sub" id="rankSub"></div>
   <div class="rank-insight" id="rankInsight"></div>
@@ -1609,7 +1552,7 @@ const BUNDLE = /*__DATA__*/;
 /* ---------- v3.13 图标辅助（Phosphor Fill 实心 sprite，见 <body> 开头的 <symbol> 定义） ---------- */
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
-  activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie')};
+  activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book')};
 const DASH_VER = /*__VER__*/ 'v1.0';
 
 /* ==================== 多语言 / i18n ==================== */
@@ -1629,21 +1572,6 @@ zh:{
   hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 两个主流池的每小时成交额（GeckoTerminal 小时线）。成交量放大说明短线资金在进场，缩下去说明热度在退——这是判断"有没有人在玩"的最快指标。',
   hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）；StonkFun 是<b>官方接口真值</b>——直接读 stonkfun.xyz 官方累计收入，逐小时做差，不再靠猜。<b>注意</b>：官方累计值是按批结算的，个别小时的柱子会忽高忽低，看 6h / 24h 合计更稳。',
   hourNoteBurn:'<b>销毁</b>：Pons 按小时统计打进死地址的 PONS，<b>链上可对账</b>（约每 15 分钟一笔）；StonkFun 用<b>官方累计销毁量</b>逐小时做差，和平台自己页面同一个数据源。',
-  /* —— 市场占有率（v3.14）：DefiLlama DEX 同源口径 —— */
-  secShare:'市场占有率 · 24 小时成交量份额',
-  shareLive:'● 每小时更新',
-  shareSub:u=>'口径：DefiLlama · DEX 成交量（分子＝平台，分母＝所在链全部 DEX）'+(u?' · 抓取 '+u:''),
-  shOfChain:'占全链 DEX 成交量',
-  shChainVol:'全链总量',
-  shRank:'链上排名',
-  sh7d:'近 7 日',
-  sh14d:'近 14 天占比',
-  shPumpMark:'pump.fun 全链占比',
-  shVsT:'对阵 Solana 龙头 pump.fun',
-  shVsSub:'同一把尺子：DefiLlama 24h 成交量',
-  shVsLine:(r,ps,mult)=>'StonkFun 成交量 = pump.fun 的 <b>'+r+'</b>；pump.fun 一家占全链 <b>'+ps+'</b>，是我们的 <b>'+mult+'</b>。',
-  shareNoteH:'这块数字怎么读',
-  shareNote:'<b>占比</b> ＝ 本品 24h 成交量 ÷ 所在链全部 DEX 成交量（DefiLlama 口径，每小时更新）。链越大分母越大，占比天然越小 —— <b>看趋势（近 14 天）和跟龙头的差距，比看绝对值有用</b>。口径提醒：本模块是「协议」口径（平台所有交易对加总），与上方小时监控的「单一池子」口径不同，两个数字不要互相加减。',
   secChart:'趋势图',
   secTable:'每天的明细（最近 20 天）',
   secGuide:'指标说明 · 每个数字怎么读',
@@ -1777,12 +1705,6 @@ zh:{
   gMomL:'这是所有数字里<b class="hl">最早报警</b>的一个。因为回购的钱来自收入：<b>收入 ↓ → 回购的钱 ↓ → 买盘 ↓ → 价格失去支撑</b>。盯收入，比盯回购更早。',
   gMomBands:[['&gt; −15%','g-ok','收入平稳，维持仓位'],['−15% ~ −25%','g-warn','走弱，只观察不加仓'],['&lt; −25%','g-bad','骤降，暂停一切加仓']],
   gMomFoot:'两家都在 <b class="hi">−35%</b> 附近 → 已越过 −25% 触发线，按规则＝<b class="hl">暂停加仓</b>',
-  gMsT:'市场占有率（24h 成交量份额）',
-  gMsF:'占比 = <b class="hi">本品 24 小时成交量</b> ÷ <b class="hi">所在链全部 DEX 成交量</b>（DefiLlama 口径）',
-  gMsL:'它回答的是「在整条链里，你占多大位置」。链越大分母越大，占比天然越小 —— 别看绝对值大小，看三件事：<b class="hl">跟自己比</b>（占比在升还是降）、<b class="hl">跟同链龙头比</b>（还差多少倍）、<b class="hl">全链在放量还是缩量</b>（决定占比变化是不是假象）。',
-  gMsBands:[['占比连续走高','g-ok','资金在往这边搬，赛道热度上升'],['占比横盘 · 全链缩量','g-warn','池子在变小，不是你变强'],['占比连续下滑','g-bad','跑输所在的链：钱去了别处']],
-  gMsEx:(p,pr,s,sr,pu,vs)=>'<b>现在</b>：PONS 占 Robinhood Chain <b>'+p+'</b>（链上第 '+pr+'）；STONK 占 Solana <b>'+s+'</b>（第 '+sr+'）。pump.fun 一家就占 Solana 的 <b>'+pu+'</b>，STONK 是它的 <b>'+vs+'</b>。',
-  gMsNote:'口径提醒：本模块用「协议」口径（平台全部交易对加总），与小时监控的「单一池子」口径不同，两个数字不要互相加减；DefiLlama 大约每小时刷新一次。',
   bgmName:'行情BGM',
   bgmOff:'点一下开始听',
   bgmUpName:'逍遥仙',
@@ -1906,21 +1828,6 @@ en:{
   hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. Rising volume means short-term money is coming in; fading volume means interest is cooling off — the fastest read on whether anyone is trading.',
   hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is <b>official truth</b>: we read stonkfun.xyz’s official cumulative revenue and difference it hour by hour. <b>Note</b>: the official counter settles in batches, so single hours can jump around — use the 6h / 24h totals for a steadier read.',
   hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one buy every 15 min). StonkFun uses the <b>official cumulative burn figure</b>, differenced per hour — the same source as the platform’s own page.',
-  /* —— Market share (v3.14): DefiLlama DEX scope —— */
-  secShare:'Market share · 24h trading volume',
-  shareLive:'● hourly',
-  shareSub:u=>'Source: DefiLlama · DEX volume (numerator = protocol, denominator = every DEX on its chain)'+(u?' · fetched '+u:''),
-  shOfChain:'of chain DEX volume',
-  shChainVol:'Whole chain',
-  shRank:'Chain rank',
-  sh7d:'Last 7 days',
-  sh14d:'14-day share',
-  shPumpMark:'pump.fun share',
-  shVsT:'Versus Solana leader pump.fun',
-  shVsSub:'same ruler: DefiLlama 24h volume',
-  shVsLine:(r,ps,mult)=>'StonkFun volume = <b>'+r+'</b> of pump.fun; pump.fun alone holds <b>'+ps+'</b> of the chain — <b>'+mult+'</b> our share.',
-  shareNoteH:'How to read this block',
-  shareNote:'<b>Share</b> = protocol 24h volume ÷ all DEX volume on its chain (DefiLlama, refreshed hourly). The bigger the chain, the smaller the share by construction — <b>watch the 14-day trend and the gap to the leader rather than the absolute number</b>. Note: this is the protocol scope (all markets of the platform), unlike the single-pool scope in the hourly monitor above — do not add or subtract the two numbers.',
   secChart:'Trends',
   secTable:'Day-by-day detail (last 20 days)',
   secGuide:'How to read every number',
@@ -2054,12 +1961,6 @@ en:{
   gMomL:'This is the first number to flash. The buyback is funded by revenue: revenue ↓ → buyback ↓ → bid ↓ → price loses support. Watching revenue gets you ahead of the buyback.',
   gMomBands:[['&gt; −15%','g-ok','Stable — keep position'],['−15% ~ −25%','g-warn','Weakening — watch, do not add'],['&lt; −25%','g-bad','Sharp drop — pause all buying']],
   gMomFoot:'Both are near <b class="hi">−35%</b> → past the −25% trigger, which means: <b class="hl">pause all buying</b>',
-  gMsT:'Market share (24h trading volume)',
-  gMsF:'Share = <b class="hi">protocol 24h volume</b> ÷ <b class="hi">all DEX volume on its chain</b> (DefiLlama)',
-  gMsL:'It answers "how big is this platform inside its whole chain". The bigger the chain, the smaller the share by construction — so read three things, not the absolute number: <b class="hl">vs its own history</b> (rising or falling), <b class="hl">vs the chain leader</b> (how many times behind), and <b class="hl">whether the chain itself is expanding or shrinking</b>.',
-  gMsBands:[['Share rising','g-ok','Money is moving in — the niche is heating up'],['Flat share · chain shrinking','g-warn','The pond is getting smaller, not you getting stronger'],['Share falling for days','g-bad','Underperforming its own chain — money went elsewhere']],
-  gMsEx:(p,pr,s,sr,pu,vs)=>'<b>Now</b>: PONS is <b>'+p+'</b> of Robinhood Chain (rank '+pr+'); STONK is <b>'+s+'</b> of Solana ('+sr+'). pump.fun alone holds <b>'+pu+'</b> of Solana; STONK is <b>'+vs+'</b> of it.',
-  gMsNote:'Note: this module uses the protocol scope (all markets of the platform), which differs from the single-pool scope of the hourly monitor — do not add or subtract the two. DefiLlama refreshes roughly hourly.',
   bgmName:'Market BGM',
   bgmOff:'Tap to play',
   bgmUpName:'Xiao Yao Xian',
@@ -2325,8 +2226,6 @@ function renderStatic(){
   document.getElementById('st-rules').innerHTML = IC.bell + t('secRules');
   var _sh = document.getElementById('st-hourly');
   if(_sh) _sh.innerHTML = IC.activity + esc(t('secHourly')) + '<span class="sec-live" id="hourlyLive"></span>';
-  var _ssh = document.getElementById('st-share');
-  if(_ssh) _ssh.innerHTML = IC.pie + esc(t('secShare')) + '<span class="sec-live" id="shareLive"></span>';
   document.getElementById('st-rank').innerHTML = IC.trophy + t('secRank');
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.innerHTML = IC.flame + t('secBurn');
   document.getElementById('st-chart').innerHTML = IC.trend + t('secChart');
@@ -3004,66 +2903,6 @@ function jumpHourly(){
   const el=document.getElementById('st-hourly');
   if(el){ try{ el.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){ el.scrollIntoView(); } }
 }
-/* ---------- 市场占有率（v3.14）：DefiLlama DEX 同源口径（协议 ÷ 所在链全部） ---------- */
-function shareBundle(){ var h=((typeof DATA!=='undefined' && DATA.hourly) || (typeof BUNDLE!=='undefined' && BUNDLE.hourly) || null); return (h && h.share) || null; }
-function shPct(v){ return (v===null||v===undefined||isNaN(v))?'—':(v*100).toFixed(2)+'%'; }
-function shSpark(hist){
-  var pts=(hist||[]).filter(function(r){ return r && r[1]!=null; }).slice(-14);
-  if(pts.length<3) return '';
-  var W=220,H=30,P=3;
-  var mn=Math.min.apply(null,pts.map(function(r){return r[1];})), mx=Math.max.apply(null,pts.map(function(r){return r[1];}));
-  var sp=(mx-mn)||1, st=(W-2*P)/(pts.length-1), xy=[];
-  pts.forEach(function(r,i){ xy.push([P+i*st, H-P-((r[1]-mn)/sp)*(H-2*P)]); });
-  var line=xy.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' ');
-  var area=line+' L'+xy[xy.length-1][0].toFixed(1)+','+(H-P)+' L'+xy[0][0].toFixed(1)+','+(H-P)+' Z';
-  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'
-    + '<path d="'+area+'" fill="currentColor" opacity=".13"/>'
-    + '<path d="'+line+'" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>';
-}
-function renderShare(){
-  var sec=document.getElementById('st-share'); if(!sec) return;
-  var s=shareBundle();
-  var sub=document.getElementById('shareSub'), cards=document.getElementById('shareCards'),
-      note=document.getElementById('shareNote'), lv=document.getElementById('shareLive');
-  var ALL=[sec,sub,cards,note];
-  if(!s || !s.pons || !s.stonk){ ALL.forEach(function(e){ if(e) e.style.display='none'; }); return; }
-  ALL.forEach(function(e){ if(e) e.style.display=''; });
-  if(lv){ lv.textContent=t('shareLive'); lv.className='sec-live'; }
-  if(sub){
-    var stamp=s.generated? new Date(s.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '';
-    sub.innerHTML=esc(t('shareSub')(stamp))+' <a class="qi" href="#gloss-share" title="'+esc(t('gMsT'))+'">?</a>';
-  }
-  if(cards){
-    cards.innerHTML=[['pons',s.pons],['stonk',s.stonk]].map(function(pair){
-      var key=pair[0], o=pair[1];
-      var color=(key==='pons')? 'var(--pons)' : 'var(--stonk)';
-      var name=(key==='pons')? 'Pons' : 'StonkFun', ticker=(key==='pons')? 'PONS' : 'STONK';
-      var vals=(o.hist||[]).filter(function(r){ return r && r[1]!=null; });
-      var last=vals.length? vals[vals.length-1][1] : null;
-      var week=vals.length>7? vals[vals.length-8][1] : (vals.length? vals[0][1] : null);
-      var delta=(last!=null&&week!=null)? (last-week) : null;
-      var deltaChip = delta==null? '' :
-        '<span>'+t('sh7d')+' <i class="'+(delta>=0?'up':'down')+'">'+((delta>=0)?'↑ ':'↓ ')+Math.abs(delta*100).toFixed(2)+'pp</i></span>';
-      var marker = (key==='stonk' && o.pumpShare!=null)?
-        '<u style="left:'+(Math.min(99.6,o.pumpShare*100)).toFixed(2)+'%" title="'+esc(t('shPumpMark'))+'"></u>' : '';
-      var vs = (key!=='stonk')? '' :
-        '<div class="share-vs"><div class="sh-vs-h">'+t('shVsT')+' <em>'+t('shVsSub')+'</em></div>'
-        + '<div class="share-vsbar"><i class="a" style="width:'+Math.max(0.6,(o.vsPump||0)*100).toFixed(2)+'%"></i><i class="b" style="width:'+Math.max(0,(100-(o.vsPump||0)*100)).toFixed(2)+'%"></i></div>'
-        + '<div class="share-vscap"><span>StonkFun <b>'+fmtU(o.vol24h)+'</b></span><span>pump.fun <b>'+fmtU(o.pumpVol24h)+'</b></span></div>'
-        + '<div class="share-vsline">'+t('shVsLine')(shPct(o.vsPump), shPct(o.pumpShare), (o.vsPump? (1/o.vsPump).toFixed(1)+'×' : '—'))+'</div></div>';
-      return '<div class="share-card" style="--sc:'+color+'">'
-        + '<div class="share-head"><span class="sh-name">'+name+'<i>'+ticker+'</i></span><span class="sh-chain">'+esc(o.chain||'')+'</span></div>'
-        + '<div class="share-big"><b>'+shPct(o.share)+'</b><span>'+t('shOfChain')+'</span></div>'
-        + '<div class="share-bar"><i style="width:'+Math.min(100,(o.share||0)*100).toFixed(3)+'%"></i>'+marker+'</div>'
-        + '<div class="share-caps"><span>'+name+' <b>'+fmtU(o.vol24h)+'</b></span><span>'+t('shChainVol')+' <b>'+fmtU(o.chainVol24h)+'</b></span></div>'
-        + '<div class="share-kv"><span>'+t('shRank')+' <i>'+((o.rank!=null)? '#'+o.rank+' / '+o.total : '—')+'</i></span>'+deltaChip+'</div>'
-        + '<div class="share-spark">'+shSpark(o.hist)+'<span class="sh-spk">'+t('sh14d')+'</span></div>'
-        + vs
-        + '</div>';
-    }).join('');
-  }
-  if(note) note.innerHTML='<div class="bb-h">'+t('shareNoteH')+'</div>'+t('shareNote');
-}
 function renderCards(){
   const rows = build();
   const el = document.getElementById('cards');
@@ -3647,11 +3486,6 @@ function renderGuide(){
   const momA = (sa.avg7-sa.avg7p)/(sa.avg7p||1), momB = (sb.avg7-sb.avg7p)/(sb.avg7p||1);
   const ex5 = A.name+' <b>'+(momA*100).toFixed(1)+'%</b>　·　'+B.name+' <b>'+(momB*100).toFixed(1)+'%</b>'+
     '<br><span style="color:var(--mut2)">'+t('gMomFoot')+'</span>';
-  const sk = shareBundle() || {};
-  const exShare = (sk.pons && sk.stonk)? t('gMsEx')(
-      shPct(sk.pons.share), (sk.pons.rank!=null? '#'+sk.pons.rank+' / '+sk.pons.total : '—'),
-      shPct(sk.stonk.share), (sk.stonk.rank!=null? '#'+sk.stonk.rank+' / '+sk.stonk.total : '—'),
-      shPct(sk.stonk.pumpShare), shPct(sk.stonk.vsPump)) : '';
 
   document.getElementById('guide').innerHTML =
     item(t('gPsT'), t('gPsF'), t('gPsL'), ex1, t('gPsBands'), t('gPsNote'), 'gloss-ps')
@@ -3660,8 +3494,7 @@ function renderGuide(){
          null, t('g730Note'), 'gloss-730')
   + item(t('gBpT'), t('gBpF'), t('gBpL'), ex3, t('gBpBands'), t('gBpNote'), 'gloss-bp')
   + item(t('gToT'), t('gToF'), t('gToL'), ex4, t('gToBands'), t('gToNote'), 'gloss-to')
-  + item(t('gMomT'), t('gMomF'), t('gMomL'), ex5, t('gMomBands'), null, 'gloss-mom')
-  + item(t('gMsT'), t('gMsF'), t('gMsL'), exShare, t('gMsBands'), t('gMsNote'), 'gloss-share');
+  + item(t('gMomT'), t('gMomF'), t('gMomL'), ex5, t('gMomBands'), null, 'gloss-mom');
 }
 
 /* ---------- 指标说明：默认折叠 + 「?」直达（v3.7） ----------
@@ -3915,7 +3748,7 @@ function loadViews(){
 }
 
 function renderAll(){
-  [renderCards, renderHourly, renderShare, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
+  [renderCards, renderHourly, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

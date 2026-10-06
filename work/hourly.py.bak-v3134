@@ -290,73 +290,8 @@ def sf_daily():
         if dh >= 0: out["hold"][b] = round(dh, 2)
         if db >= 0: out["burn"][b] = round(db, 2)
         out["hours"][b] = round(gap / 3600, 1)
-        out["last"] = max(out["rev"]) if out["rev"] else None
-        return out
-
-
-# ---- 市场占有率（DefiLlama DEX 口径：分子＝协议成交量、分母＝所在链全部 DEX 成交量）----
-SHARE_SUM = "https://api.llama.fi/summary/dexs/%s?dataType=dailyVolume"
-SHARE_CHAIN = "https://api.llama.fi/overview/dexs/%s?excludeTotalDataChart=false&excludeTotalDataChartBreakdown=true"
-
-
-def _chart_map(chart):
-    out = {}
-    for row in chart or []:
-        try:
-            ts, v = int(row[0]), float(row[1])
-        except Exception:
-            continue
-        if v >= 0:
-            out[ts] = v
+    out["last"] = max(out["rev"]) if out["rev"] else None
     return out
-
-
-def _rank_in(protocols, slugs):
-    """在链协议列表里按 24h 成交量排名 → (名次, 协议总数)；找不到给 (None, 总数)"""
-    arr = sorted(protocols or [], key=lambda p: -(p.get("total24h") or 0))
-    for i, p in enumerate(arr):
-        if p.get("slug") in slugs:
-            return i + 1, len(arr)
-    return None, len(arr)
-
-
-def _share_hist(a, b, days=14):
-    """两条日线相除 → 最近 N 天的占比序列 [[ts, share], ...]（缺的天自动跳过）"""
-    am, bm = _chart_map(a.get("totalDataChart")), _chart_map(b.get("totalDataChart"))
-    keys = sorted(set(am) & set(bm))[-days:]
-    return [[k, round(am[k] / bm[k], 6) if bm[k] else None] for k in keys]
-
-
-def market_share():
-    """PONS÷Robinhood Chain、STONK÷Solana 的 24h 成交量份额；STONK 另附与 pump.fun 的对比。
-
-    全部取 DefiLlama 的 DEX 口径（同源同尺）：占比＝本品成交量 ÷ 该链全部 DEX 成交量。
-    另给链内名次（这一列排第几）和最近 14 天占比走势（日线）。
-    """
-    pons = get(SHARE_SUM % "pons")
-    stonk = get(SHARE_SUM % "stonkfun")
-    pump = get(SHARE_SUM % "pump.fun")
-    rh = get(SHARE_CHAIN % urllib.parse.quote("Robinhood Chain"))
-    sol = get(SHARE_CHAIN % "solana")
-    pv, sv, uv = (float(x.get("total24h") or 0) for x in (pons, stonk, pump))
-    rv, ov = float(rh.get("total24h") or 0), float(sol.get("total24h") or 0)
-    pr, prn = _rank_in(rh.get("protocols"), {"pons-v2", "pons"})
-    sr, srn = _rank_in(sol.get("protocols"), {"stonkfun"})
-    ur, urn = _rank_in(sol.get("protocols"), {"pump.fun"})
-    return {
-        "generated": int(time.time()),
-        "src": "DefiLlama · DEX volume",
-        "pons": {"chain": "Robinhood Chain", "vol24h": round(pv, 2),
-                 "chainVol24h": round(rv, 2), "share": round(pv / rv, 6) if rv else None,
-                 "rank": pr, "total": prn, "hist": _share_hist(pons, rh)},
-        "stonk": {"chain": "Solana", "vol24h": round(sv, 2),
-                  "chainVol24h": round(ov, 2), "share": round(sv / ov, 6) if ov else None,
-                  "rank": sr, "total": srn,
-                  "pumpVol24h": round(uv, 2), "pumpRank": ur, "pumpTotal": urn,
-                  "vsPump": round(sv / uv, 6) if uv else None,
-                  "pumpShare": round(uv / ov, 6) if ov else None,
-                  "hist": _share_hist(stonk, sol), "vsPumpHist": _share_hist(stonk, pump)},
-    }
 
 
 def main():
@@ -467,13 +402,6 @@ def main():
         print("warn: sf_daily: %s" % exc, file=sys.stderr)
         out["stonkDaily"] = (old.get("stonkDaily") if isinstance(old, dict) else None)
 
-    # 市场占有率：拿不到就沿用上一份，绝不让整轮抓取失败
-    try:
-        out["share"] = market_share()
-    except Exception as exc:
-        print("warn: market share: %s" % exc, file=sys.stderr)
-        out["share"] = (old.get("share") if isinstance(old, dict) else None)
-
     atomic_dump(out, OUT)
     pb = [x for x in out["pons"]["burn"] if x]
     print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s"
@@ -483,10 +411,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if "--share-only" in sys.argv:      # 调试用：只刷新市场占有率，不重跑整条管道
-        _old = json.load(open(OUT, encoding="utf-8"))
-        _old["share"] = market_share()
-        atomic_dump(_old, OUT)
-        print(json.dumps(_old["share"], ensure_ascii=False)[:400])
-    else:
-        main()
+    main()

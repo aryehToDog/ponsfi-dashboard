@@ -901,17 +901,6 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .burn-kv span i{font-style:normal;font-family:var(--font-num);font-weight:700;color:var(--txt)}
 .burn-src{margin-top:10px;font-size:var(--fs-11);color:var(--mut2);line-height:1.6}
 .burn-src code{font-family:var(--font-mono);font-size:var(--fs-10);color:var(--mut)}
-/* v3.16：销毁速度 / 下一关并进卡片（原「销毁里程碑」板块的精华，去掉重复数字） */
-.burn-barwrap{position:relative;margin:12px 0 7px}
-.burn-barwrap.has-gate{margin-top:26px}
-.burn-barwrap .burn-bar{margin:0}
-.burn-barwrap>u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--warn);border-radius:2px}
-.burn-barwrap>u::after{content:attr(data-lbl);position:absolute;top:-16px;left:50%;transform:translateX(-50%);
-  font-size:var(--fs-10);font-weight:700;color:var(--warn);background:var(--panel);
-  border:1px solid color-mix(in srgb,var(--warn) 42%,var(--line));border-radius:var(--r-pill);padding:0 6px;white-space:nowrap}
-.burn-mile{margin-top:9px;font-size:var(--fs-11);color:var(--mut2);line-height:1.65}
-.burn-mile b{color:var(--txt);font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800}
-.burn-mile em{font-style:normal;font-family:var(--font-num);font-size:var(--fs-10);color:var(--mut2);margin-left:6px}
 .bb-head{display:grid;grid-template-columns:40px minmax(0,1fr) 116px 116px;align-items:end;gap:10px;
   padding:0 14px 7px;font-size:var(--fs-11);font-weight:700;color:var(--mut2)}
 .bb-head span:nth-child(3),.bb-head span:nth-child(4){text-align:right}
@@ -1214,6 +1203,42 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .rank-sub a.qi:hover,.rank-sub a.qi:focus-visible{color:var(--accent);
   border-color:color-mix(in srgb,var(--accent) 40%,var(--line));transform:scale(1.12)}
 @media(max-width:680px){.share-big b{font-size:27px}}
+/* ---- v3.15 销毁里程碑（参考 stonk.fyi 的 milestone 卡，按本站设计标尺重绘） ---- */
+.ms-card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:var(--sp-card);overflow:hidden}
+.ms-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,var(--accent))}
+.ms-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.ms-head .ms-n{font-size:var(--fs-13);font-weight:800}
+.ms-head .ms-n i{font-style:normal;font-size:var(--fs-10);font-weight:700;color:var(--mut2);margin-left:5px;letter-spacing:.4px}
+.ms-head .ms-src{margin-left:auto;font-size:var(--fs-11);font-weight:600;color:var(--mut2);background:var(--panel2);
+  border:1px solid var(--line);border-radius:var(--r-pill);padding:3px 10px;white-space:nowrap}
+.ms-hero{display:flex;align-items:center;gap:16px;margin-top:var(--sp-block)}
+.ms-ring{position:relative;width:106px;height:106px;flex:0 0 auto}
+.ms-ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+.ms-ring .ms-trk{fill:none;stroke:var(--panel3);stroke-width:9}
+.ms-ring .ms-arc{fill:none;stroke-width:9;stroke-linecap:round}
+.ms-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.ms-c b{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:22px;font-weight:800;letter-spacing:-.6px;line-height:1}
+.ms-c b em{font-style:normal;font-size:12px;font-weight:700;margin-left:1px;color:var(--mut)}
+.ms-c span{font-size:var(--fs-10);color:var(--mut2);font-weight:600;letter-spacing:.2px}
+.ms-kv{flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ms-kv>div{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-md);padding:7px 10px 8px;min-width:0}
+.ms-kv .k{display:block;font-size:var(--fs-10);color:var(--mut2);font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-kv .v{display:block;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:var(--fs-13);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-kv .v em{font-style:normal;font-size:var(--fs-10);color:var(--mut);font-weight:600;margin-left:2px}
+.ms-kv .s{display:block;font-size:var(--fs-10);color:var(--mut2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-bar{position:relative;height:11px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--panel2);
+  background-image:repeating-linear-gradient(to right,var(--line2) 0 1px,transparent 1px 5%);
+  margin-top:calc(var(--sp-block) + 12px)}
+.ms-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:var(--r-pill);min-width:3px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--sc,var(--accent)) 45%,transparent),var(--sc,var(--accent)))}
+.ms-bar>u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--warn);border-radius:2px}
+.ms-bar>u::after{content:attr(data-lbl);position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+  font-size:var(--fs-10);font-weight:700;color:var(--warn);background:var(--panel);
+  border:1px solid color-mix(in srgb,var(--warn) 42%,var(--line));border-radius:var(--r-pill);padding:0 6px;white-space:nowrap}
+.ms-caps{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-10);color:var(--mut2);margin-top:6px}
+.ms-caps b{color:var(--txt);font-family:var(--font-num);font-weight:800}
+@media(max-width:680px){.ms-hero{gap:12px}.ms-ring{width:94px;height:94px}.ms-c b{font-size:19px}}
 @media(max-width:680px){
   #hourlyChart{height:200px}
   .hourly-sum{grid-template-columns:repeat(2,1fr)}
@@ -1568,6 +1593,11 @@ try{
   </div>
   <div class="bb-note" id="burnNote"></div>
 
+  <div class="sec-title" id="st-milestone"><svg class="ic" aria-hidden="true"><use href="#ic-medal"/></svg>销毁里程碑 · 离下一个整数关口还有多久<span class="sec-live" id="msLive"></span></div>
+  <div class="rank-sub" id="msSub"></div>
+  <div class="grid2" id="msCards"></div>
+  <div class="bb-note" id="msNote"></div>
+
   <div class="sec-title" id="st-share"><svg class="ic" aria-hidden="true"><use href="#ic-pie"/></svg>市场占有率 · 24 小时成交量份额<span class="sec-live" id="shareLive"></span></div>
   <div class="rank-sub" id="shareSub"></div>
   <div class="grid2" id="shareCards"></div>
@@ -1675,9 +1705,8 @@ zh:{
   msScale:'刻度每 5%',
   msNoteH:'这块数字怎么读',
   msNote:'<b>已销毁</b>＝打进死地址的币，链上可对账、谁也拿不回来；<b>销毁速度</b>取最近约 24 小时的真实烧毁量，换算成「每天烧掉总量的百分之几」，两家用同一把尺子对比。<b>下一个 1%</b>＝离下一个整数百分比还差多少枚、按当前速度预计几天 —— 把「慢变量」翻译成「离下一座里程碑还有多远」。口径提醒：销毁的币来自回购，与上方「回购与销毁」是同一批钱的两种视角；快照晚一天内属正常。',
-  bmSpeedL:'销毁速度', bmAfter:'后抵达下一关', bmTip:'基于最近约 24 小时的链上销毁量推算；每小时随管道刷新（口径：每天烧掉总量的百分之几）',
   msSrcOfficial:'官方累计值', msSrcSnapshot:'链上快照', msSrcChain72:'链上日志 72h',
-  gMmT:'销毁速度与下一关（在「回购与销毁」卡里怎么读）',
+  gMmT:'销毁里程碑（烧掉多少 / 多快 / 下一关多远）',
   gMmF:'已销毁占比 ＝ <b class="hi">累计销毁</b> ÷ <b class="hi">总量 10 亿</b>；销毁速度 ＝ 最近约 24 小时销毁量 ÷ 总量（每天百分比）；下一关 ＝ 下一个整数百分比',
   gMmL:'回购把钱变成买盘，销毁把币永久拿掉 —— <b>销毁是更硬的证据</b>：币少了就是少了。看三件事：<b class="hl">速度（每天烧掉百分之几）</b>、<b class="hl">跟另一家比谁快</b>、<b class="hl">离下一个整数关口还有几天</b>。速度平稳或加快＝回购照常；速度明显掉档＝回购可能出了问题，回去盯收入与回购日数据。',
   gMmBands:[['速度平稳或加快','g-ok','回购照常，按原计划持有'],['速度明显掉档','g-warn','回购力度下降，盯紧收入与回购数据'],['连续多日几乎不烧','g-bad','回购停摆信号：按规则先离场观察']],
@@ -1980,9 +2009,8 @@ en:{
   msScale:'ticks every 5%',
   msNoteH:'How to read this',
   msNote:'<b>Burned</b> = tokens sent to the dead address (verifiable on-chain, gone forever). <b>Burn speed</b> uses the last ~24h of real burns converted to "what % of supply is burned per day" — one ruler for both. <b>Next 1%</b> = how many tokens remain to the next whole-percent milestone and the estimated days at the current pace. Note: burned tokens come from the buyback — same money, two views; snapshots up to a day old are normal.',
-  bmSpeedL:'Burn speed', bmAfter:' to the next mark at this pace', bmTip:'Based on the last ~24h of on-chain burns; refreshes hourly',
   msSrcOfficial:'official counter', msSrcSnapshot:'on-chain snapshot', msSrcChain72:'on-chain logs 72h',
-  gMmT:'Burn speed & next mark (how to read them in the Buyback & Burn card)',
+  gMmT:'Burn milestone (how much / how fast / how far to the next mark)',
   gMmF:'Burned share = <b class="hi">cumulative burned</b> ÷ <b class="hi">1B supply</b>; burn speed = last ~24h burned ÷ supply (per-day %); next mark = the next whole percent',
   gMmL:'The buyback turns revenue into bids; the burn removes coins forever — <b>the burn is the harder evidence</b>: gone is gone. Watch three things: <b class="hl">speed (%/day)</b>, <b class="hl">who burns faster</b>, and <b class="hl">days to the next whole percent</b>. Steady or rising speed = buyback on track; a visible drop = the buyback may be struggling — go back to revenue and daily buyback numbers.',
   gMmBands:[['Steady or rising speed','g-ok','Buyback on track — hold as planned'],['Speed clearly lower','g-warn','Buyback weakening — watch revenue and buyback data'],['Almost no burns for days','g-bad','Buyback looks stalled — exit and watch, per the rules']],
@@ -2394,6 +2422,8 @@ function renderStatic(){
   if(_sh) _sh.innerHTML = IC.activity + esc(t('secHourly')) + '<span class="sec-live" id="hourlyLive"></span>';
   var _ssh = document.getElementById('st-share');
   if(_ssh) _ssh.innerHTML = IC.pie + esc(t('secShare')) + '<span class="sec-live" id="shareLive"></span>';
+  var _ssm = document.getElementById('st-milestone');
+  if(_ssm) _ssm.innerHTML = IC.medal + esc(t('secMilestone')) + '<span class="sec-live" id="msLive"></span>';
   document.getElementById('st-rank').innerHTML = IC.trophy + t('secRank');
   var _sb = document.getElementById('st-burn'); if(_sb) _sb.innerHTML = IC.flame + t('secBurn');
   document.getElementById('st-chart').innerHTML = IC.trend + t('secChart');
@@ -2677,12 +2707,9 @@ function renderBurn(){
 
   if(sub){
     const stamp=esc(new Date(DATA.generated||BUNDLE.generated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'));
-    const msv=(msBundle()||{}).versus||{};
     sub.innerHTML = IC.zap + esc(t('burnSub')(stamp))
       + (CHAIN_STATE? ' <b class="lk">'+IC.zap+esc(t('burnLiveOk')(CHAIN_STATE))+'</b>'
-                    : (CHAIN_TRIED? ' <b class="lk mut">'+IC.zap+esc(t('burnLiveFail'))+'</b>' : ''))
-      + (msv.ratio? ' · '+esc(t('msSub')(msv.faster, msv.ratio.toFixed(1))) : '')
-      + ' <a class="qi" href="#gloss-milestone" title="'+esc(t('gMmT'))+'">?</a>';
+                    : (CHAIN_TRIED? ' <b class="lk mut">'+IC.zap+esc(t('burnLiveFail'))+'</b>' : ''));
   }
 
   if(cards) cards.innerHTML=PROJECTS.map(function(p){
@@ -2692,16 +2719,6 @@ function renderBurn(){
     const link=d.explorer? '<a class="bn-link" href="'+d.explorer+'" target="_blank" rel="noopener">'+t('burnLink')+'</a>' : '';
     const addr=b.addr? (b.addr.length>20? b.addr.slice(0,10)+'…'+b.addr.slice(-6) : b.addr) : '';
     const h24=b24Of(p.id, st);
-    const ms=(msBundle()||{})[p.id==='stonkfun'?'stonk':p.id]||null;
-    const gate=(ms && ms.nextPct!=null)
-      ? '<u style="left:'+Math.min(99.4,ms.nextPct)+'%" data-lbl="'+esc(t('msChip')(ms.nextPct+'%'))+'"></u>' : '';
-    const mile=(ms && ms.perDay!=null)
-      ? '<div class="burn-mile" title="'+esc(t('bmTip'))+(ms.generated? ' · '+esc(t('msStamp'))+esc(new Date(ms.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')) : '')+'">'
-        + '<span>'+esc(t('bmSpeedL'))+' <b>'+fmtT(ms.perDay)+t('msPerDay')+'</b>'
-        + (ms.speedPct!=null? '<em>'+esc(t('msPerDayPct')(ms.speedPct.toFixed(3)))+'</em>':'')+'</span>'
-        + (ms.daysTo!=null? ' · <span><b>'+esc(t('msDays')(msDayTxt(ms.daysTo)))+'</b>'+esc(t('bmAfter'))+'</span>' : '')
-        + '</div>'
-      : '';
     const chip = h24.wait
       ? '<span class="wait"><b>'+t('burn24')+'</b><i>'+t('burn24Wait')+'</i></span>'
       : '<span class="live"'+(h24.tip?' title="'+esc(h24.tip)+'"':'')+'>'
@@ -2714,10 +2731,9 @@ function renderBurn(){
       +   '<span class="bn-chain">'+esc(p.chain)+'</span>'+link
       + '</div>'
       + '<div class="burn-big">'+fmtN(b.burned/1e6,2)+'M<small>'+p.ticker+' '+t('burnBurned')+'</small></div>'
-      + '<div class="burn-barwrap'+(gate?' has-gate':'')+'"><div class="burn-bar"><i style="width:'+fill.toFixed(2)+'%"></i></div>'+gate+'</div>'
+      + '<div class="burn-bar"><i style="width:'+fill.toFixed(2)+'%"></i></div>'
       + '<div class="burn-barcap"><span>'+t('burnPctOf')+' <b>'+b.pct.toFixed(2)+'%</b></span>'
       +   '<span>'+t('burnValue')+' <b>'+fmtU(usd)+'</b></span></div>'
-      + mile
       + '<div class="burn-kv">'+ chip
       +   '<span><b>'+t('burn30d')+'</b><i>'+fmtU(s.s30)+'</i></span>'
       +   '<span><b>'+t('burnYield')+'</b><i>'+pctS(s.yield30)+'</i></span>'
@@ -3145,7 +3161,7 @@ function renderShare(){
   }
   if(note) note.innerHTML='<div class="bb-h">'+t('shareNoteH')+'</div>'+t('shareNote');
 }
-/* ---------- 销毁里程碑数据（v3.15 新增；v3.16 并进「回购与销毁」卡片，不再单独成块） ---------- */
+/* ---------- v3.15 销毁里程碑：烧了多少 / 烧多快 / 下一个 1% 还有多久 ---------- */
 function msBundle(){
   var h=((typeof DATA!=='undefined' && DATA.hourly) || (typeof BUNDLE!=='undefined' && BUNDLE.hourly) || null);
   return (h && h.milestone) || null;
@@ -3164,7 +3180,61 @@ function fmtT(v){
 }
 function msDayTxt(d){ return (d===null||d===undefined||isNaN(d))?'—':(d<10? d.toFixed(1):String(Math.round(d))); }
 function msPriceTxt(p){ return '$'+(p>=1? p.toFixed(3) : p.toFixed(4)); }
-/* v3.16：原「销毁里程碑」独立板块已并入「回购与销毁」卡片（速度 + 下一关），渲染函数删除 */
+function renderMilestone(){
+  var sec=document.getElementById('st-milestone'); if(!sec) return;
+  var ms=msBundle();
+  var sub=document.getElementById('msSub'), cards=document.getElementById('msCards'),
+      note=document.getElementById('msNote'), lv=document.getElementById('msLive');
+  var ALL=[sec,sub,cards,note];
+  if(!ms||!ms.pons||!ms.stonk){ ALL.forEach(function(e){ if(e) e.style.display='none'; }); return; }
+  ALL.forEach(function(e){ if(e) e.style.display=''; });
+  if(lv){ lv.textContent=t('msLive'); lv.className='sec-live'; }
+  if(sub){
+    var stamp=ms.generated? new Date(ms.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '';
+    var v=ms.versus||{};
+    sub.innerHTML=esc(t('msSub')(v.ratio? v.faster : null, v.ratio? v.ratio.toFixed(1) : ''))
+      + (stamp? ' · '+esc(t('msStamp'))+esc(stamp) : '')
+      + ' <a class="qi" href="#gloss-milestone" title="'+esc(t('gMmT'))+'">?</a>';
+  }
+  if(cards){
+    cards.innerHTML=[['pons',ms.pons],['stonk',ms.stonk]].map(function(pair){
+      var key=pair[0], o=pair[1];
+      var color=(key==='pons')?'var(--pons)':'var(--stonk)';
+      var name=(key==='pons')?'Pons':'StonkFun', ticker=(key==='pons')?'PONS':'STONK';
+      var pct=(o.pct===null||o.pct===undefined)?null:o.pct;
+      var C=2*Math.PI*44, arc=(pct===null)?0:Math.min(1,pct/100)*C;
+      var ring='<svg viewBox="0 0 108 108" aria-hidden="true">'
+        +'<circle class="ms-trk" cx="54" cy="54" r="44"/>'
+        +'<circle class="ms-arc" cx="54" cy="54" r="44" style="stroke:'+color+'" stroke-dasharray="'+arc.toFixed(2)+' '+C.toFixed(2)+'"/>'
+        +'</svg>'
+        +'<div class="ms-c"><b>'+(pct===null?'—':pct.toFixed(2))+'<em>%</em></b><span>'+esc(t('msBurned'))+'</span></div>';
+      var srcTxt=o.src==='official'? t('msSrcOfficial') : (o.src==='chain72'? t('msSrcChain72') : t('msSrcSnapshot'));
+      var barPct=(pct===null)?0:Math.min(100,pct);
+      var flag=(o.nextPct===null||o.nextPct===undefined)?''
+        : '<u style="left:'+Math.min(99.4,o.nextPct)+'%" data-lbl="'+esc(t('msChip')(o.nextPct+'%'))+'"></u>';
+      var kv=''
+        +'<div title="'+(o.burned!=null?esc(fmtN(o.burned,2)+' '+ticker):'')+'"><span class="k">'+esc(t('msBurnQty'))+'</span>'
+        +  '<b class="v">'+(o.burned!=null?fmtT(o.burned):'—')+' <em>'+ticker+'</em></b>'
+        +  '<span class="s">'+esc(t('msSupplyTxt'))+'</span></div>'
+        +'<div><span class="k">'+esc(t('msUsd'))+'</span>'
+        +  '<b class="v">'+(o.burnedUsd!=null?fmtU(o.burnedUsd):'—')+'</b>'
+        +  '<span class="s">'+(o.price!=null?esc(t('msAtPrice'))+msPriceTxt(o.price):'')+'</span></div>'
+        +'<div><span class="k">'+esc(t('msSpeed'))+'</span>'
+        +  '<b class="v">'+(o.perDay!=null?(fmtT(o.perDay)+' '+t('msPerDay')):'—')+'</b>'
+        +  '<span class="s">'+(o.speedPct!=null?esc(t('msPerDayPct')(o.speedPct.toFixed(3))):'')+'</span></div>'
+        +'<div><span class="k">'+esc(t('msNext'))+'</span>'
+        +  '<b class="v">'+(o.daysTo!=null?esc(t('msDays')(msDayTxt(o.daysTo))):'—')+'</b>'
+        +  '<span class="s">'+(o.toNext!=null?(esc(t('msToGo'))+' '+fmtT(o.toNext)+' → '+o.nextPct+'%'):'')+'</span></div>';
+      return '<div class="ms-card" style="--sc:'+color+'">'
+        + '<div class="ms-head"><span class="ms-n">'+name+'<i>'+ticker+'</i></span><span class="ms-src">'+esc(srcTxt)+'</span></div>'
+        + '<div class="ms-hero"><div class="ms-ring">'+ring+'</div><div class="ms-kv">'+kv+'</div></div>'
+        + '<div class="ms-bar"><i style="width:'+barPct.toFixed(2)+'%"></i>'+flag+'</div>'
+        + '<div class="ms-caps"><span>0%</span><span>'+esc(t('msScale'))+'</span><span>100%</span></div>'
+        + '</div>';
+    }).join('');
+  }
+  if(note) note.innerHTML='<div class="bb-h">'+esc(t('msNoteH'))+'</div>'+t('msNote');
+}
 function renderCards(){
   const rows = build();
   const el = document.getElementById('cards');
@@ -4023,7 +4093,7 @@ function loadViews(){
 }
 
 function renderAll(){
-  [renderCards, renderHourly, renderShare, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
+  [renderCards, renderHourly, renderShare, renderMilestone, renderRules, renderBurn, renderRank, renderTabs, renderChart, renderTable, renderSrc, renderGuide].forEach(function(fn){
     try{ fn(); }catch(e){ console.error('render failed:', fn.name, e); }
   });
   const g = DATA.generated || BUNDLE.generated;

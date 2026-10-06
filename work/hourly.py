@@ -26,7 +26,10 @@ POOLS = {"pons": ("robinhood", "0xed50bdeea8adc232f159486192a4157281d722ff"),
          "stonk": ("solana", "zxTpi4BtaWX3mgdAPoezkMD1hxx8CdeCfrqXMWvSCLX")}
 HOURS = 72
 BUYBACK_SHARE = 0.8          # Pons 公开口径：80% 收入用于回购
+# STONK 官方原始供应（不是整 10 亿；同 buyback.py 的 STONK_INITIAL，2026-10-06 对账修正）
+STONK_SUPPLY = 999_969_797.91
 SF_API = "https://www.stonkfun.xyz/api/revenue"   # StonkFun 官方收入/回购/销毁（国内被墙，走海外中转）
+SF_DAILY_API = "https://www.stonkfun.xyz/api/v2/revenue/daily"   # 官方日线（v3.18 起用于日度对账）
 SF_HIST = os.path.join(HERE, "sf-history.json")    # 官方累计值快照（每小时一条）
 
 
@@ -234,6 +237,29 @@ def sf_fetch():
             "burnTokens": float(t.get("stonkBurnedTokens") or 0),
             "burnUsd": float(t.get("stonkBurnedUsd") or 0),
             "priceUsd": float(t.get("platformTokenPriceUsd") or 0)}
+
+
+def sf_official_daily():
+    """官方日线（/api/v2/revenue/daily）→ {日期: {rev, hold, burn}}（剔除今天：可能不满一天）。
+
+    v3.18 新增：STONK 日度明细改读官方口径（与 stonkfun.xyz 一致），
+    前端 build() 用它覆盖 DefiLlama 序列；官方断流时才退回 DefiLlama。
+    """
+    j = _sf_get(SF_DAILY_API)
+    if not j or not isinstance(j.get("days"), list):
+        return None
+    today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+    days = {}
+    for r in j["days"]:
+        d = (r.get("date") or "")[:10]
+        if not d or d >= today:          # 今天不满一天，不混进来
+            continue
+        days[d] = {"rev": round(float(r.get("revenueUsd") or 0), 2),
+                   "hold": round(float(r.get("buybackUsd") or 0), 2),
+                   "burn": round(float(r.get("stonkBurnedTokens") or 0), 2)}
+    if not days:
+        return None
+    return {"days": days, "generated": int(time.time())}
 
 
 def sf_record(cur):
@@ -497,7 +523,7 @@ def milestone(ho):
             if speed is not None and src == "official":
                 src = "snapshot"
         if burned:
-            out["stonk"] = pack(burned, 1_000_000_000.0, price or last_close("stonk"), speed, src)
+            out["stonk"] = pack(burned, STONK_SUPPLY, price or last_close("stonk"), speed, src)
     except Exception as exc:
         print("warn: milestone stonk: %s" % exc, file=sys.stderr)
 
@@ -618,6 +644,13 @@ def main():
     except Exception as exc:
         print("warn: sf_daily: %s" % exc, file=sys.stderr)
         out["stonkDaily"] = (old.get("stonkDaily") if isinstance(old, dict) else None)
+
+    # 官方日线（v3.18）：STONK 日度与官网对账用；拿不到沿用上一份
+    try:
+        out["sfDaily"] = sf_official_daily() or (old.get("sfDaily") if isinstance(old.get("sfDaily"), dict) else None)
+    except Exception as exc:
+        print("warn: sfDaily: %s" % exc, file=sys.stderr)
+        out["sfDaily"] = old.get("sfDaily") if isinstance(old.get("sfDaily"), dict) else None
 
     # 市场占有率：拿不到就沿用上一份，绝不让整轮抓取失败
     try:

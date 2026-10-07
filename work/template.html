@@ -226,6 +226,24 @@ button:active{transform:translateY(1px)}
 /* ---------- 图表 ---------- */
 .chartbox{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
   padding:14px 14px 8px;box-shadow:var(--card-shadow)}
+/* 趋势图坐标文字：和小时图同源问题 —— SVG 被整体缩放到手机宽度后，里面的 10.5~12.5px
+   字只剩 3~4px（2026-10-07 一并修）。搬进这层原生 HTML：字号真实、任何缩放都清晰；
+   用 aspect-ratio + 负 margin 精确盖在 SVG 上，百分比定位随图表自适应。 */
+.chart-marks{position:relative;z-index:2;width:100%;aspect-ratio:1200/340;margin-top:-28.3333%;
+  pointer-events:none}
+.chart-marks i{position:absolute;font-style:normal;font-size:var(--fs-10);font-family:var(--font-mono);
+  color:var(--mut2);white-space:nowrap;line-height:1;font-variant-numeric:tabular-nums}
+.chart-marks i.y{left:0;width:4.5833%;text-align:right;transform:translateY(-50%)}
+.chart-marks i.xl{bottom:2.6%;transform:translateX(-50%)}
+.chart-marks i.th{right:9%;transform:translateY(calc(-100% - 3px))}
+.chart-marks i.pill{transform:translateY(-50%);font-weight:800;font-size:var(--fs-11);
+  padding:3px 9px;border-radius:var(--r-pill);border:1px solid;letter-spacing:.2px;
+  background:color-mix(in srgb,currentColor 14%,transparent)}
+@media(max-width:680px){
+  .chart-marks i.y{left:3px;width:auto;text-align:left}
+  .chart-marks i.y[data-alt],.chart-marks i.xl[data-alt]{display:none}
+  .chart-marks i.pill{font-size:11.5px;padding:2px 8px}
+}
 .legend{display:flex;gap:16px;margin-bottom:6px;font-size:var(--fs-11);color:var(--mut);flex-wrap:wrap}
 .legend i{display:inline-block;width:11px;height:3px;border-radius:var(--r-xs);margin-right:6px;vertical-align:middle}
 svg{display:block;width:100%;height:auto;overflow:visible}
@@ -1263,9 +1281,21 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-legend .lg i{width:9px;height:9px;border-radius:var(--r-xs);display:inline-block;font-style:normal}
 .hourly-legend b{color:var(--txt);font-family:var(--font-num)}
 .hourly-legend .lg em{font-style:normal;color:var(--mut2);font-size:var(--fs-10)}
-#hourlyChart{width:100%;height:270px;display:block}
+:root{--chart-h:270px}
+#hourlyChart{width:100%;height:var(--chart-h);display:block}
+/* 坐标轴文字：从 SVG 里搬出来用原生 HTML 渲染 —— SVG 被 preserveAspectRatio="none"
+   横向压扁后，里面 10px 的字在手机上只剩 6~7px 且被拉变形（2026-10-07 用户反馈「模糊」）。
+   这一层正好盖住图表区域（负 margin 等高铁），百分比定位跟着图表一起缩放，缩放窗口也不用重算。 */
+.hourly-marks{position:relative;height:var(--chart-h);margin-top:calc(-1 * var(--chart-h));
+  pointer-events:none;z-index:2}
+.hourly-marks i{position:absolute;font-style:normal;font-size:var(--fs-10);font-family:var(--font-mono);
+  color:var(--mut2);white-space:nowrap;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.2px}
+.hourly-marks i.x{bottom:7px;transform:translateX(-50%)}
+.hourly-marks i.x.l{transform:none}
+.hourly-marks i.x.r{transform:translateX(-100%)}
+.hourly-marks i.y{left:4px}
+@media(max-width:680px){.hourly-marks i.x[data-alt]{display:none}}
 .hourly-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 5;opacity:.8}
-.hourly-axis{fill:var(--mut2);font-size:var(--fs-10);font-family:var(--font-mono)}
 .hourly-bar{cursor:default;transition:opacity .15s ease}
 .hourly-bar:hover{opacity:.66}
 .hourly-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:var(--sp-block)}
@@ -1336,7 +1366,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
   border-color:color-mix(in srgb,var(--accent) 40%,var(--line));transform:scale(1.12)}
 @media(max-width:680px){.share-big b{font-size:27px}}
 @media(max-width:680px){
-  #hourlyChart{height:200px}
+  :root{--chart-h:200px}
   .hourly-sum{grid-template-columns:repeat(2,1fr)}
   .hourly-box{padding:12px 12px 8px}
   /* 手机端：当前小时卡片改成图下通栏，两个代币左右分列（2026-10-06 重排） */
@@ -1681,6 +1711,7 @@ try{
   <div class="hourly-box">
     <div class="hourly-legend" id="hourlyLegend"></div>
     <svg id="hourlyChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>
+    <div class="hourly-marks" id="hourlyMarks" aria-hidden="true"></div>
     <div class="hourly-now" id="hourlyNow"></div>
     <div class="hourly-tipbox" id="hourlyTipBox"></div>
   </div>
@@ -1724,6 +1755,7 @@ try{
   <div class="chartbox">
     <div class="legend" id="legend"></div>
     <svg id="chart" viewBox="0 0 1200 340" preserveAspectRatio="none"></svg>
+    <div class="chart-marks" id="chartMarks" aria-hidden="true"></div>
     <div class="tip" id="tip"></div>
   </div>
 
@@ -3102,11 +3134,11 @@ function renderHourly(){
   const max=Math.max.apply(null, vals.concat([1]));
   const yv=function(v){ return padT+(1-v/max)*(CH-padT-padB); };
   const step=(W-padL-padR)/n, bw=Math.max(2.2, step*0.42);
-  let body='';
+  let body='', marks='';
   [1,0.5].forEach(function(f){
     const yy=yv(max*f).toFixed(1);
-    body+='<line class="hourly-grid" x1="0" y1="'+yy+'" x2="'+W+'" y2="'+yy+'"/>'
-       +  '<text class="hourly-axis" x="3" y="'+(Number(yy)-4).toFixed(1)+'">'+fmtU(max*f)+'</text>';
+    body+='<line class="hourly-grid" x1="0" y1="'+yy+'" x2="'+W+'" y2="'+yy+'"/>';
+    marks+='<i class="y" style="top:'+(((Number(yy)-14)/CH)*100).toFixed(2)+'%">'+fmtU(max*f)+'</i>';
   });
   s.hours.forEach(function(ts,i){
     const x=padL+i*step;
@@ -3119,13 +3151,19 @@ function renderHourly(){
     body+=g+'</g>';
   });
   body+='<rect id="hourHl" class="hourly-hl" x="0" y="'+padT+'" width="0" height="'+(CH-padT-padB)+'" rx="3" pointer-events="none"/>';
+  /* 时间轴：每 12 小时一个（桌面全显；手机只留 0h / 36h / 最新，间距疏、不打架） */
+  let labI=0;
   s.hours.forEach(function(ts,i){
     if(i%12===0 || i===n-1){
-      const x=Math.min(W-58, padL+i*step);
-      body+='<text class="hourly-axis" x="'+x.toFixed(1)+'" y="'+(CH-8)+'">'+fmtDay(new Date(ts*1000))+'</text>';
+      const x=padL+i*step;
+      const cls=(x<70? ' l' : (x>W-70? ' r' : ''));
+      const alt=(i!==n-1 && (labI%3!==0))? ' data-alt="1"' : '';
+      marks+='<i class="x'+cls+'"'+alt+' style="left:'+((x/W)*100).toFixed(2)+'%">'+fmtDay(new Date(ts*1000))+'</i>';
+      labI++;
     }
   });
   if(svg) svg.innerHTML=body;
+  const mk=document.getElementById('hourlyMarks'); if(mk) mk.innerHTML=marks;
 
   /* 当前小时读数卡：不点也能看到；手机点柱子 → 直接切成那一小时的数据
      （v3.21.1 起不再把卡收起 —— 收起后它在手机上是「隐形但占位」，会留一大块空白） */
@@ -3770,22 +3808,27 @@ function renderChart(){
   const X = i => P.l + (sub.length<=1?0:(i/(sub.length-1))*iw);
   const Y = v => P.t + ih - ((v-min)/(max-min))*ih;
 
-  let g='';
+  /* 坐标文字走 HTML 覆盖层（#chartMarks）：SVG 被 preserveAspectRatio="none" 拉伸后
+     里面的字在手机上只剩 3~4px，2026-10-07 起统一搬进原生 HTML，字号真实、永久清晰。 */
+  let g='', marks='';
   const TICKS=5;
   for(let k=0;k<=TICKS;k++){
     const v = min + (max-min)*k/TICKS, y = Y(v);
     g += `<line x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}" style="stroke:var(--grid)"/>`;
-    g += `<text x="${P.l-9}" y="${y+4}" style="fill:var(--mut2)" font-size="11" text-anchor="end" font-family="JetBrains Mono,IBM Plex Mono,Cascadia Mono,SF Mono,Menlo,Consolas,monospace">${yfmt(v)}</text>`;
+    marks += `<i class="y"${k%2===1?' data-alt="1"':''} style="top:${(y/H*100).toFixed(2)}%">${yfmt(v)}</i>`;
   }
   const step = Math.max(1, Math.round(sub.length/7));
+  let xlN=0;
   sub.forEach((r,i)=>{ if(i%step===0||i===sub.length-1){
-    g += `<text x="${X(i)}" y="${H-9}" style="fill:var(--mut2)" font-size="10.5" text-anchor="middle">${r.date.slice(5)}</text>`;
+    const alt=(i!==sub.length-1 && xlN%2===1)?' data-alt="1"':'';
+    marks += `<i class="xl"${alt} style="left:${(X(i)/W*100).toFixed(2)}%">${r.date.slice(5)}</i>`;
+    xlN++;
   }});
   thresholds.forEach(th=>{
     if(th.v===undefined||th.v===null) return;
     const y=Y(th.v);
     g += `<line x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}" style="stroke:${th.color}" class="warnline"/>`;
-    g += `<text x="${W-P.r-4}" y="${y-5}" style="fill:${th.color}" font-size="10.5" text-anchor="end">${th.label}</text>`;
+    marks += `<i class="th" style="top:${(y/H*100).toFixed(2)}%;color:${th.color}">${th.label}</i>`;
   });
   const endLabels = [];
   series.forEach(s=>{
@@ -3823,13 +3866,13 @@ function renderChart(){
     if(endLabels[i].y - endLabels[i-1].y < 18) endLabels[i].y = endLabels[i-1].y + 18;
   }
   endLabels.forEach(l=>{
-    const w = 18 + l.text.length*7.7, h = 22;
+    const w = 18 + l.text.length*7.7;                    /* 只用于右侧防溢出钳制 */
     const x = Math.min(l.x + 13, W - 10 - w);
-    const y = Math.max(P.t - 6, Math.min(H - P.b - h/2, l.y));
-    g += `<g class="endlbl"><rect x="${x.toFixed(1)}" y="${(y-h/2).toFixed(1)}" width="${w.toFixed(1)}" height="${h}" rx="${(h/2).toFixed(1)}" style="fill:${l.color};stroke:${l.color}" fill-opacity="0.15" stroke-opacity="0.75" stroke-width="1"/>`+
-         `<text x="${(x+9).toFixed(1)}" y="${(y+4.5).toFixed(1)}" font-size="12.5" font-weight="800" font-family="JetBrains Mono,IBM Plex Mono,Cascadia Mono,SF Mono,Menlo,Consolas,monospace" style="fill:${l.color}">${l.text}</text></g>`;
+    const y = Math.max(P.t - 6, Math.min(H - P.b - 11, l.y));
+    marks += `<i class="pill" style="left:${(x/W*100).toFixed(2)}%;top:${(y/H*100).toFixed(2)}%;color:${l.color}">${l.text}</i>`;
   });
   svg.innerHTML = g;
+  const cm=document.getElementById('chartMarks'); if(cm) cm.innerHTML=marks;
   document.getElementById('legend').innerHTML = series.map(s=>
     `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('') +
     (MODE==='price'?'<span style="color:var(--mut2)">'+t('start100')+'</span>':'');

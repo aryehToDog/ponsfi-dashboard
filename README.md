@@ -1,4 +1,4 @@
-<img src="docs/logo-dog.svg" width="84" alt="Logo（加密狗）">
+<img src="docs/logo-pixel.png" width="84" alt="Logo（像素画）">
 
 # Pons & StonkFun 收入与回购监控看板
 

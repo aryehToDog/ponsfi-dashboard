@@ -9,6 +9,17 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.23「像素画 Logo」 · 2026-10-07
+     【为什么做这一版】作者指定用自己的一张 800×800 像素画当 Logo，替换 v3.22 的卡通狗。
+     【这一版改了什么】
+       ① Logo 全点位换像素画：标签页图标（32px）、苹果触屏（180px）、页头品牌标（52px 内嵌、
+          26px 显示、image-rendering:pixelated）、og/twitter 分享图（新地址 logo-pixel.png，
+          800px 原画 —— 换文件名同时绕开平台旧图缓存）
+       ② 素材与复跑：work/brand/pixel-source.webp（原图拷贝）；node work/brand/render_pixel.mjs
+          生成各尺寸；python3 work/brand/embed_icon.py 内嵌到模板
+       ③ 旧「卡通狗」整套素材移入 work/brand/prev-dog/，随时可回退
+     回退：cp work/template.html.bak-logo-pixel work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.22「卡通 Logo + 手机端 + 断档回填」 · 2026-10-07
      【为什么做这一版】三条反馈：① 手机端图表坐标文字发糊（SVG 被整体拉伸，字只剩 3~4px）；
        ② 手机端观感一般：字号偏小、次级文字发灰、帮助入口难按；③ 站点没辨识度 ——
@@ -611,10 +622,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.22-2026-10-07">
+<meta name="dashboard-version" content="v3.23-2026-10-07">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.22 · 2026-10-07"
+VER = "v3.23 · 2026-10-07"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

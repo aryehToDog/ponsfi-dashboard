@@ -1,0 +1,10 @@
+[Unit]
+Description=每 10 分钟检查一次快照新鲜度（GitHub 自带定时没触发时兜底踢一脚）
+
+[Timer]
+OnBootSec=240s
+OnUnitActiveSec=10min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

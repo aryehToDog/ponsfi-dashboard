@@ -1,0 +1,11 @@
+[Unit]
+Description=PonsPulse 兜底触发器：快照不新鲜时用 workflow_dispatch 踢云端构建
+Documentation=https://github.com/aryehToDog/ponsfi-dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+ExecStart=/home/ubuntu/ponspulse/dispatch.sh
+Nice=10

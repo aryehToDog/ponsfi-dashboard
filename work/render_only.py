@@ -9,6 +9,15 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.24「GitHub 名片」 · 2026-10-07
+     【为什么做这一版】作者要求页脚在 X 名片旁再加一张 GitHub 名片（头像 + 账号链接），
+       给开源仓库一个入口，也方便路过的朋友顺手点 Star。
+     【这一版改了什么】只动页脚 FOOT_AUTHOR 一段（中英各一份），数据管道零改动：
+       ① 新增 GitHub 名片：GitHub 头像（base64 内嵌，不依赖外链）+「@aryehToDog」
+          （链接到 github.com/aryehToDog）+「Star」按钮（链接到开源仓库 ponsfi-dashboard）
+       ② 样式复用 .foot-author：桌面与 X 名片并排自适应，手机端整行堆叠，无新增 CSS
+     回退：cp work/template.html.bak-v324 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.23「像素画 Logo」 · 2026-10-07
      【为什么做这一版】作者指定用自己的一张 800×800 像素画当 Logo，替换 v3.22 的卡通狗。
      【这一版改了什么】
@@ -622,10 +631,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.23-2026-10-07">
+<meta name="dashboard-version" content="v3.24-2026-10-07">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.23 · 2026-10-07"
+VER = "v3.24 · 2026-10-07"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

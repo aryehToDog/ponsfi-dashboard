@@ -8,4 +8,4 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "schedule probe alive: $(date -u)"
+      - run: 'echo "schedule probe alive: $(date -u)"'

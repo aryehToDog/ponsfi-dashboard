@@ -273,29 +273,45 @@ def sf_record(cur):
 
 
 def sf_series(buckets):
-    """官方累计值 → 每小时差值：(收入USD[], 销毁STONK[])；间隔 >2.5h 的那一跳不落桶（会误导）。"""
+    """官方累计值 → 每小时差值：(收入USD[], 销毁STONK[], 回填小时[])。
+
+    间隔 >2.5h 的那一跳以前是直接丢掉的 —— 电脑睡眠 / 接口抽风 / 中转挂掉一晚上，
+    第二天就有十几个小时的柱子全空（2026-10-07 用户反馈「小时级 STONK 数据都没了」）。
+    现在改成：这一跳的总量按小时平均摊回中间那几个小时，并记进 span；
+    前端把那几根柱子画成斜纹 + 标注「回填估算」，既不留白，也不假装是实测值。
+    """
     hist = [h for h in sf_load_hist() if isinstance(h, dict) and h.get("ts")]
     hist.sort(key=lambda h: h["ts"])
     rev = {b: None for b in buckets}
     burn = {b: None for b in buckets}
+    span = set()          # 并集（前端不区分口径时用）
+    spanR, spanB = set(), set()
     for a, b in zip(hist, hist[1:]):
         gap = b["ts"] - a["ts"]
-        if gap <= 0 or gap > 2.5 * 3600:
+        if gap <= 0:
             continue
-        # 差值覆盖的是 a → b 这一段，标在 a 所在的小时更符合直觉
-        # （「16:00 那根柱子」= 16 点这一小时大概发生了什么）
-        bucket = int(a["ts"] // 3600 * 3600)
-        if bucket not in rev:
-            bucket = int(b["ts"] // 3600 * 3600)
-            if bucket not in rev:
-                continue
+        ha = int(a["ts"] // 3600 * 3600)
+        hb = int(b["ts"] // 3600 * 3600)
+        n = max(1, min(48, (hb - ha) // 3600))      # 这一跳覆盖了几个整点
         dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
         db = (b.get("burnTokens") or 0) - (a.get("burnTokens") or 0)
-        if dr >= 0:
-            rev[bucket] = round((rev[bucket] or 0) + dr, 2)
-        if db >= 0:
-            burn[bucket] = round((burn[bucket] or 0) + db, 2)
-    return [rev[b] for b in buckets], [burn[b] for b in buckets]
+        for k in range(n):
+            hour = ha + k * 3600
+            if hour not in rev:
+                continue
+            if dr > 0:
+                rev[hour] = round((rev[hour] or 0) + dr / n, 2)
+                if n > 1:
+                    spanR.add(hour)
+            if db > 0:
+                burn[hour] = round((burn[hour] or 0) + db / n, 2)
+                if n > 1:
+                    spanB.add(hour)
+            if n > 1 and hour in spanR and hour in spanB:
+                span.add(hour)
+    keep = lambda st: sorted(h for h in st if h in rev)
+    return ([rev[b] for b in buckets], [burn[b] for b in buckets],
+            keep(span), keep(spanR), keep(spanB))
 
 
 def sf_daily():
@@ -572,7 +588,7 @@ def main():
     sf_cur = sf_fetch()
     if sf_cur:
         sf_record(sf_cur)
-    srev, sburn = sf_series(buckets)
+    srev, sburn, sspan, sspanR, sspanB = sf_series(buckets)
     if any(v is not None for v in sburn):
         out["stonk"]["burn"], out["stonk"]["burnSrc"] = sburn, "official"
     else:
@@ -591,6 +607,8 @@ def main():
     out["pons"]["rev"], out["pons"]["revEst"] = pv, True
     out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
     out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
+    # v3.22：断档回填的小时（前端用斜纹柱 + 文案标注「估算」，不当成实测）
+    out["stonk"]["span"], out["stonk"]["spanR"], out["stonk"]["spanB"] = sspan, sspanR, sspanB
 
     # 日度补充（v3.9.1）：DefiLlama 日度会晚 1~2 天出数，缺的那几天用更快的源补上 ——
     #   PONS ＝链上（收入＝回购支出÷80%，与小时级同一口径，回购销毁＝收入×80%）

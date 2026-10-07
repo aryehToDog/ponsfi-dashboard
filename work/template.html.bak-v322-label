@@ -244,7 +244,7 @@ button:active{transform:translateY(1px)}
 @media(max-width:680px){
   .chart-marks i.y{left:3px;width:auto;text-align:left}
   .chart-marks i.y[data-alt],.chart-marks i.xl[data-alt],.chart-marks i.xl[data-close]{display:none}
-  .chart-marks i.th{left:58px;right:auto;text-align:left}
+  .chart-marks i.th{left:44px;right:auto;text-align:left}
   .chart-marks i.pill{font-size:11.5px;padding:2px 8px}
 }
 .legend{display:flex;gap:16px;margin-bottom:6px;font-size:var(--fs-11);color:var(--mut);flex-wrap:wrap}
@@ -405,7 +405,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .foot .foot-author img{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:0 0 auto}
 .foot .fa-txt{display:flex;flex-direction:column;min-width:0;line-height:1.55}
 .foot .fa-txt b{font-size:var(--fs-12);color:var(--txt);font-weight:700}
-.foot .fa-txt b a{color:var(--txt);border-bottom:0;padding:6px 0}   /* 昵称行里的 X 链接：补一点上下命中区（不改变行高） */
+.foot .fa-txt b a{color:var(--txt);border-bottom:0}
 .foot .fa-txt i{font-style:normal;font-size:var(--fs-10);color:var(--mut2)}
 .foot .fa-follow{margin-left:auto;flex:0 0 auto;align-self:center;display:inline-flex;align-items:center;justify-content:center;
   padding:6px 13px;border-radius:var(--r-pill);text-decoration:none;font-weight:700;font-size:var(--fs-11);
@@ -3891,6 +3891,7 @@ function renderChart(){
     if(th.v===undefined||th.v===null) return;
     const y=Y(th.v);
     g += `<line x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}" style="stroke:${th.color}" class="warnline"/>`;
+    marks += `<i class="th" style="top:${(y/H*100).toFixed(2)}%;color:${th.color}">${th.label}</i>`;
   });
   const endLabels = [];
   series.forEach(s=>{
@@ -3924,61 +3925,20 @@ function renderChart(){
   });
   /* 曲线末端固定标签：不用 hover 也能一眼看到当前值。
      位置全部按「真实 CSS 像素」排：先避开阈值标签，再按最小间距错开，
-     最后夹回图表范围内 —— 顺序不能反，否则后面的步骤会把前面的间距吃掉。
-     2026-10-07 补两条手机端才暴露的规则：
-       ① 两条止损线的文字标签会互相压住（图表只有 ~94px 高，两条线只差 4px）
-          → 标签按真实像素上下错开，且不许越过底部的日期行；
-       ② 最下面那枚胶囊会骑到日期行上 → 先按「日期行顶部」算出可用高度再夹回。 */
+     最后夹回图表范围内 —— 顺序不能反，否则后面的步骤会把前面的间距吃掉。 */
   const isNarrow = (window.innerWidth||1440) <= 680;
   const txtW = (str,fs)=>{ let w=0; for(const ch of String(str)) w += (ch.charCodeAt(0)>255? fs : fs*0.62); return w; };
   const pillW = t => svgScale>0? (22 + 7.2*t.length) : (18 + t.length*7.7);
   const pillX = l => Math.max(2, Math.min((svgScale>0? l.x*svgScale : l.x) + 13, shellW - 4 - pillW(l.text)));
-  const pillH = 20;                        /* 胶囊高度是固定 CSS 像素，不随图表缩放 */
-  const cm = document.getElementById('chartMarks');
-  /* 先把 y 刻度 + 日期行放进覆盖层，量出「日期行顶部」的真实像素（后续两步的底线） */
-  if(cm) cm.innerHTML = marks;
-  const xRowTopPx = (function(){
-    const fallback = (H-P.b)*svgScale;
-    if(!cm) return fallback;
-    const xs=[...cm.querySelectorAll('i.xl')].filter(e=>e.offsetParent!==null&&e.offsetWidth>0);
-    if(!xs.length) return fallback;
-    const box=cm.getBoundingClientRect(); let t=Infinity;
-    xs.forEach(e=>{ t=Math.min(t, e.getBoundingClientRect().top-box.top); });
-    return isFinite(t)? t : fallback;
-  })();
-  /* ① 阈值标签先自己错开：标签是 translateY(-100% - 3px) 挂在线上方的，
-       所以错位按「标签盒」算（线 y - 盒高 - 3 才是盒顶），整组不许压到日期行。 */
-  if(svgScale>0){
-    const thFs = isNarrow? 11.5 : 10.5, thH = Math.round(thFs*1.05)+3;
-    const thPx = thresholds.filter(th=>th.v!==undefined&&th.v!==null&&isFinite(th.v))
-                          .map(th=>({th, y: Y(th.v)*svgScale}));
-    thPx.sort((a,b)=>a.y-b.y);
-    for(let i=1;i<thPx.length;i++) if(thPx[i].y - thPx[i-1].y < thH+2) thPx[i].y = thPx[i-1].y + thH + 2;
-    const floor = xRowTopPx + 3;           /* 标签底 = 线 - 3 → 线最多抬到日期行这里 */
-    const over = thPx.length? (thPx[thPx.length-1].y + thH + 2 - floor) : 0;
-    if(over>0){
-      thPx.forEach(o=>o.y -= over);
-      if(thPx.length && thPx[0].y - thH - 3 < 0){ let y = thH + 3; thPx.forEach(o=>{ o.y=y; y+=thH+2; }); }
-    }
-    thPx.forEach(o=>{ o.th.px = o.y; });
-  }
-  thresholds.forEach(th=>{
-    if(th.v===undefined||th.v===null) return;
-    const pct = (svgScale>0 && th.px!==undefined)? (th.px/svgScale)/H*100 : Y(th.v)/H*100;
-    marks += `<i class="th" style="top:${pct.toFixed(2)}%;color:${th.color}">${th.label}</i>`;
-  });
   const thBoxes = thresholds.filter(th=>th.v!==undefined&&th.v!==null&&isFinite(th.v)).map(th=>{
     const tw = txtW(th.label, isNarrow? 11.5 : 10.5);
     const rgt = cw>0? cw*0.91 : W*0.91;
-    const yl = (th.px!==undefined && svgScale>0)? th.px : Y(th.v)*svgScale;
-    return { x1: (isNarrow? 58 : rgt-tw)-4, x2: (isNarrow? 58+tw : rgt)+4,
-             y1: yl - Math.round((isNarrow?11.5:10.5)*1.05) - 5, y2: yl + 2 };
+    return { x1: (isNarrow? 44 : rgt-tw)-4, x2: (isNarrow? 44+tw : rgt)+4,
+             y1: Y(th.v)*svgScale - 18, y2: Y(th.v)*svgScale - 1 };
   });
-  const minY = P.t - 6, maxYBase = H - P.b - 11;
-  /* ② 可用高度受日期行限制：胶囊是 translateY(-50%) 挂在锚点上的，下限按真实像素算 */
-  const maxY = svgScale>0? Math.min(maxYBase, (xRowTopPx - 3 - pillH/2)/svgScale) : maxYBase;
+  const minY = P.t - 6, maxY = H - P.b - 11;
   endLabels.sort((a,b)=>a.y-b.y);
-  /* ③ 让开阈值标签（桌面两端标签都在右侧，会叠在一起） */
+  /* ① 让开阈值标签（桌面两端标签都在右侧，会叠在一起） */
   if(cw>0 && thBoxes.length) endLabels.forEach(l=>{
     const px = pillX(l) - 13, x2 = px + pillW(l.text), py = l.y*svgScale;
     thBoxes.forEach(bx=>{
@@ -3988,9 +3948,9 @@ function renderChart(){
       }
     });
   });
-  /* ④ 夹回图表范围 */
+  /* ② 夹回图表范围 */
   endLabels.forEach(l=>{ l.y = Math.max(minY, Math.min(maxY, l.y)); });
-  /* ⑤ 两个系列末值挨太近就错开：间距按真实像素（手机图表只有 ~94px 高，
+  /* ③ 两个系列末值挨太近就错开：间距按真实像素（手机图表只有 ~94px 高，
      沿用 SVG 单位的 18 会挤成 5px，两枚胶囊叠在一起）。 */
   const minGap = svgScale>0? 26/svgScale : 18;
   for(let i=1;i<endLabels.length;i++){
@@ -4005,7 +3965,7 @@ function renderChart(){
     marks += `<i class="pill" style="left:${(x/shellW*100).toFixed(2)}%;top:${(y/H*100).toFixed(2)}%;color:${l.color}">${l.text}</i>`;
   });
   svg.innerHTML = g;
-  if(cm) cm.innerHTML = marks;
+  const cm=document.getElementById('chartMarks'); if(cm) cm.innerHTML=marks;
   document.getElementById('legend').innerHTML = series.map(s=>
     `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('') +
     (MODE==='price'?'<span style="color:var(--mut2)">'+t('start100')+'</span>':'');

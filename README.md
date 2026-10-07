@@ -1,3 +1,5 @@
+<img src="docs/logo-dog.svg" width="84" alt="Logo（加密狗）">
+
 # Pons & StonkFun 收入与回购监控看板
 
 给社区看的一块实时数据面板，盯 **Pons（$PONS · Robinhood Chain）** 和 **StonkFun（$STONK · Solana）**

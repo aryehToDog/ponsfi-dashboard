@@ -1,0 +1,11 @@
+[Unit]
+Description=PonsPulse：拉取 GitHub 快照并发布到站点
+Documentation=https://github.com/aryehToDog/ponsfi-dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+ExecStart=/home/ubuntu/ponspulse/pull_publish.sh
+Nice=10

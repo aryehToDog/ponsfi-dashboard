@@ -68,12 +68,17 @@ work/看板维护说明.md   详细的维护与改动指南
 # 用现有数据快照重新渲染页面，不联网，最快
 python3 work/render_only.py
 
-# 完整刷新流程：拉数据 → 渲染 → 上线
+# 抓数据 + 渲染（不推线上，本地调试用）
+python3 work/ci_build.py --mode hourly
+
+# 旧的本机全链路（需要服务器凭据；已停用，保留作手动工具）
 python3 work/hourly_check.py
 ```
 
-自动化：本机 LaunchAgent `com.ponspulse.hourly` 每小时第 5 分钟跑一次 `work/hourly_check.py`，
-上线成功后调用 `work/git_sync.py` 把源文件推到 main、整站快照推到 snapshots 分支，并自动打版本标签。
+自动化：**抓取跑在 GitHub Actions 云上**（`.github/workflows/ponspulse.yml`，每小时第 5 分钟；
+每天 01:05 UTC 全量刷新一次），构建结果压回 `snapshots` 分支；
+线上服务器每 5 分钟拉取一次、原子替换首页 —— **不需要任何电脑开着**。
+细节见 `work/看板维护说明.md` 的「云端数据管道」一节。
 
 ### 版本
 
@@ -142,9 +147,14 @@ docs/       screenshots used in this README
 ### Quick start
 
 ```bash
-python3 work/render_only.py    # re-render from the latest data snapshot (offline)
-python3 work/hourly_check.py   # full refresh: fetch -> render -> deploy -> sync
+python3 work/render_only.py             # re-render from the latest data snapshot (offline)
+python3 work/ci_build.py --mode hourly  # fetch + render only (no deploy)
+python3 work/hourly_check.py            # legacy local pipeline (needs server credentials)
 ```
+
+Automation runs on **GitHub Actions** (`.github/workflows/ponspulse.yml`, every hour at :05 UTC,
+plus a full refresh daily at 01:05 UTC). Builds are pushed to the `snapshots` branch and the
+server pulls them every 5 minutes — no machine has to stay on.
 
 ### Versioning
 

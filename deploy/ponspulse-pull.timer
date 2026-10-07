@@ -1,0 +1,10 @@
+[Unit]
+Description=每 5 分钟检查一次 PonsPulse 快照
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=5min
+AccuracySec=20s
+
+[Install]
+WantedBy=timers.target

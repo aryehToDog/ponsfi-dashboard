@@ -17,13 +17,16 @@
 模式：
     hourly  小时级（hourly.py + 合并 + 渲染）—— 每小时第 5 分钟（UTC）
     daily   全量（build_monitor.py：DefiLlama 日线 / 收入榜 / 回购 / 小时级）—— 每天 01:05 UTC
-    auto    按 UTC 小时自动选：01 点走 daily，其余走 hourly
+    auto    按 UTC 小时自动选：01 点走 daily；另外，只要最近一次全量已经超过
+            24 小时（GitHub 定时被延迟/漏跑、或刚迁移过来还没跑过全量），下一个
+            整点就自动补一轮 daily —— 日线数据不会一直卡在旧日期；其余走 hourly
 
 状态文件（由 workflow 先从 snapshots 分支取出，跑完再压回去）：
     work/dashboard-data.json / work/hourly.json / work/sf-history.json /
     work/burn-history.json / work/burns.json / work/burn_events.json
 """
 import argparse
+import datetime
 import json
 import os
 import shutil
@@ -80,6 +83,26 @@ def merge_hourly():
     d["hourly"] = json.load(open(os.path.join(HERE, "hourly.json"), encoding="utf-8"))
     patch_official_stonk(d)
     atomic_json(d, dp)
+
+
+def daily_age_hours(path=None):
+    """最近一次全量（daily）构建距今多少小时。
+
+    读 dashboard-data.json 的顶层 generated（build_monitor.py 写入的 ISO 时间）。
+    读不到 / 解析失败 → 返回 None，调用方按「需要全量」处理（宁可多跑一次 daily，
+    也不要让日线数据一直停在旧日期 —— 2026-10-07 迁移当天就是这么欠了一轮）。
+    """
+    path = path or os.path.join(HERE, "dashboard-data.json")
+    try:
+        ts = json.load(open(path, encoding="utf-8")).get("generated")
+        if not isinstance(ts, str):
+            return None
+        when = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=datetime.timezone.utc)
+        return (datetime.datetime.now(datetime.timezone.utc) - when).total_seconds() / 3600.0
+    except Exception:
+        return None
 
 
 def publish_deploy():
@@ -139,7 +162,16 @@ def main():
     args = ap.parse_args()
     mode = args.mode
     if mode == "auto":
-        mode = "daily" if time.gmtime().tm_hour == 1 else "hourly"
+        if time.gmtime().tm_hour == 1:
+            mode = "daily"
+        else:
+            age = daily_age_hours()
+            if age is None or age > 24:
+                mode = "daily"
+                log("最近一次全量在 %s，超过 24 小时，本次自动补一轮全量" %
+                    ("？(读不到时间戳)" if age is None else "%.1f 小时前" % age))
+            else:
+                mode = "hourly"
     log("构建模式：%s（UTC %s）" % (mode, time.strftime("%Y-%m-%d %H:%M", time.gmtime())))
     os.makedirs(os.path.join(ROOT, "outputs"), exist_ok=True)   # 全新 checkout 里可能还没有
     if mode == "daily":

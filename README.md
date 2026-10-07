@@ -75,8 +75,8 @@ python3 work/ci_build.py --mode hourly
 python3 work/hourly_check.py
 ```
 
-自动化：**抓取跑在 GitHub Actions 云上**（`.github/workflows/ponspulse.yml`，每小时第 5 分钟；
-每天 01:05 UTC 全量刷新一次），构建结果压回 `snapshots` 分支；
+自动化：**抓取跑在 GitHub Actions 云上**（`.github/workflows/ponspulse.yml`，每小时第 23 分钟；
+每天 01:23 UTC 全量刷新一次），构建结果压回 `snapshots` 分支；
 线上服务器每 5 分钟拉取一次、原子替换首页 —— **不需要任何电脑开着**。
 细节见 `work/看板维护说明.md` 的「云端数据管道」一节。
 
@@ -152,8 +152,8 @@ python3 work/ci_build.py --mode hourly  # fetch + render only (no deploy)
 python3 work/hourly_check.py            # legacy local pipeline (needs server credentials)
 ```
 
-Automation runs on **GitHub Actions** (`.github/workflows/ponspulse.yml`, every hour at :05 UTC,
-plus a full refresh daily at 01:05 UTC). Builds are pushed to the `snapshots` branch and the
+Automation runs on **GitHub Actions** (`.github/workflows/ponspulse.yml`, every hour at :23 UTC,
+plus a full refresh daily at 01:23 UTC). Builds are pushed to the `snapshots` branch and the
 server pulls them every 5 minutes — no machine has to stay on.
 
 ### Versioning

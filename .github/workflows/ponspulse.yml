@@ -5,14 +5,14 @@
 #   · 腾讯云服务器在国内，GeckoTerminal / CoinGecko / StonkFun 官网被墙；
 #     GitHub Actions 的海外节点全部直连，链上 RPC、DefiLlama 也都不受影响。
 # 流程：抓取 + 渲染 → 压回 snapshots 分支（孤儿提交强推）→ 服务器每 5 分钟拉取上线。
-# 模式：01:05 UTC 全量 daily；其余整点 hourly；全量超过 24 小时没跑 → 下一个整点自动补 daily。
+# 模式：01:23 UTC 全量 daily；其余整点 hourly；全量超过 24 小时没跑 → 下一个整点自动补 daily。
 # 依赖：只有 python3 标准库，不需要 pip 安装任何东西。
 
 name: PonsPulse 数据刷新
 
 on:
   schedule:
-    - cron: "5 * * * *"        # 每小时第 5 分钟（UTC）
+    - cron: "23 * * * *"       # 每小时第 23 分钟（UTC；避开整点高峰 —— :00~:05 的 cron 最容易被延迟或跳过）
   workflow_dispatch:
     inputs:
       mode:

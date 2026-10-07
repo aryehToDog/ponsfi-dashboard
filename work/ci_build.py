@@ -15,8 +15,8 @@
     python3 work/ci_build.py --mode hourly --no-push # 本地调试
 
 模式：
-    hourly  小时级（hourly.py + 合并 + 渲染）—— 每小时第 5 分钟（UTC）
-    daily   全量（build_monitor.py：DefiLlama 日线 / 收入榜 / 回购 / 小时级）—— 每天 01:05 UTC
+    hourly  小时级（hourly.py + 合并 + 渲染）—— 每小时第 23 分钟（UTC）
+    daily   全量（build_monitor.py：DefiLlama 日线 / 收入榜 / 回购 / 小时级）—— 每天 01:23 UTC
     auto    按 UTC 小时自动选：01 点走 daily；另外，只要最近一次全量已经超过
             24 小时（GitHub 定时被延迟/漏跑、或刚迁移过来还没跑过全量），下一个
             整点就自动补一轮 daily —— 日线数据不会一直卡在旧日期；其余走 hourly

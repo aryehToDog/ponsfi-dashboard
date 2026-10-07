@@ -1,0 +1,60 @@
+# PonsPulse 数据刷新（云端拉取）
+#
+# 为什么跑在 GitHub 上（2026-10-07 迁移）：
+#   · 作者电脑不再需要开机跑脚本（以前靠 Mac 上的 LaunchAgent，睡着就断档）；
+#   · 腾讯云服务器在国内，GeckoTerminal / CoinGecko / StonkFun 官网被墙；
+#     GitHub Actions 的海外节点全部直连，链上 RPC、DefiLlama 也都不受影响。
+# 流程：抓取 + 渲染 → 压回 snapshots 分支（孤儿提交强推）→ 服务器每 5 分钟拉取上线。
+# 依赖：只有 python3 标准库，不需要 pip 安装任何东西。
+
+name: PonsPulse 数据刷新
+
+on:
+  schedule:
+    - cron: "5 * * * *"        # 每小时第 5 分钟（UTC）
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "auto / hourly / daily"
+        required: false
+        default: "auto"
+  push:
+    branches: [main]
+    paths:
+      - "work/**"
+      - ".github/workflows/ponspulse.yml"
+
+concurrency:
+  group: ponspulse-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出代码（main）
+        uses: actions/checkout@v4
+
+      - name: 恢复状态文件（上一次快照里的累计值）
+        run: |
+          set -u
+          git fetch --depth=1 origin snapshots || true
+          for f in work/dashboard-data.json work/hourly.json work/sf-history.json \
+                   work/burn-history.json work/burns.json work/burn_events.json; do
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              git show "FETCH_HEAD:$f" > "$f"
+              echo "restored $f"
+            fi
+          done
+          echo "状态恢复完成"
+
+      - name: 抓取 + 渲染 + 快照同步
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_MODE: ${{ github.event.inputs.mode || 'auto' }}
+          PONSPULSE_SF_DIRECT: "1"
+        run: python3 work/ci_build.py --mode "$INPUT_MODE" --push

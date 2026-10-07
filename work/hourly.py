@@ -201,9 +201,16 @@ def _sf_relays(target):
 
 
 def _sf_get(target):
-    """经海外中转 GET 官方接口 → 解析后的 JSON；全部线路失败返回 None。"""
+    """经海外中转 GET 官方接口 → 解析后的 JSON；全部线路失败返回 None。
+
+    PONSPULSE_SF_DIRECT=1 时先直连一次：海外节点（GitHub Actions）直连更快更稳，
+    国内（本机）不设这个变量，行为与以前完全一致。
+    """
     last = None
-    for url in _sf_relays(target):
+    urls = list(_sf_relays(target))
+    if os.environ.get("PONSPULSE_SF_DIRECT") == "1":
+        urls.insert(0, target)
+    for url in urls:
         for i in range(2):
             try:
                 req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",

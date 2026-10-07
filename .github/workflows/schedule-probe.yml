@@ -1,0 +1,11 @@
+# 临时探针（2026-10-07 排查定时不触发用）：只做 echo，确认结论后即删除。
+# 目的：判断本仓库的 schedule 事件到底会不会触发（与主 workflow 隔离测）。
+name: schedule-probe
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "schedule probe alive: $(date -u)"

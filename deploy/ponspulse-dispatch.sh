@@ -9,6 +9,10 @@
 #   GitHub 自带 schedule 一旦恢复，本脚本会自动「静默」——快照够新就不触发，不会重复跑。
 #
 # 依赖：curl + python3 标准库；token 存在 $BASE/.gh-token（600 权限，见 device-login.sh）。
+#
+# 2026-10-08 调整：阈值 75 分钟 → 45 分钟。STONK 小时柱改「只认实测、断档留空」后，
+#   采样必须 ≈ 每小时一次；45 分钟 + 10 分钟检查间隔 = 每 50 分钟上下触发一轮，
+#   保证相邻两次官方累计值采样落在同一/相邻整点，每小时都有实测值（不靠回填）。
 # 部署：systemd 定时器 ponspulse-dispatch.timer
 # 日志：/home/ubuntu/ponspulse/dispatch.log
 set -u
@@ -17,7 +21,7 @@ BASE="${PONSPULSE_BASE:-/home/ubuntu/ponspulse}"
 TOKEN_FILE="$BASE/.gh-token"
 STATE="$BASE/last_dispatch"
 LOG="$BASE/dispatch.log"
-STALE_MIN="${STALE_MIN:-75}"          # 快照超过这么久没更新 → 踢一脚（GitHub 定时正常时一小时一轮）
+STALE_MIN="${STALE_MIN:-45}"          # 快照超过这么久没更新 → 踢一脚（目标采样节奏：≈每小时一次）
 COOLDOWN_MIN="${COOLDOWN_MIN:-25}"    # 两次主动触发的最小间隔，防失败时连环踢
 REPO="aryehToDog/ponsfi-dashboard"
 WF="ponspulse.yml"

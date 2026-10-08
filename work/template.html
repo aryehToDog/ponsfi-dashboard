@@ -266,8 +266,6 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
 .tip .d{color:var(--mut);margin-bottom:4px;font-size:var(--fs-10)}
 .tip .r{display:flex;justify-content:space-between;gap:14px}
-.tip .r em.bf{font-style:normal;font-size:var(--fs-10);color:var(--mut2);font-weight:600;
-  border:1px dashed var(--line2);border-radius:var(--r-xs);padding:0 5px;margin-left:6px;align-self:center}
 
 /* ---------- 表格（日度明细）---------- */
 #tbl{width:100%;min-width:720px;border-collapse:separate;border-spacing:0;font-size:var(--fs-13)}
@@ -1832,12 +1830,10 @@ zh:{
   hourH1:'最近 1 小时', hourH6:'最近 6 小时', hourH24:'最近 24 小时', hourH72:'最近 72 小时',
   hourLive:'● 实时刷新', hourLiveOff:'● 页面快照（实时刷新失败）',
   hourNow:'当前小时', hourPick:'选中', hourOngoing:'进行中',
-  hourNoData:'还没攒到',
-  hourSpan:'断档回填 · 估算',
-  hourSpanNote:'其中 {n} 小时是官方累计值断档后按均值回填的（斜纹柱，估算值），其余为逐小时实测。',
+  hourNoData:'未采样',
   hourEst:'推算', hourChain:'链上', hourOfficial:'官方', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
   hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 两个主流池的每小时成交额（GeckoTerminal 小时线）。成交量放大说明短线资金在进场，缩下去说明热度在退——这是判断"有没有人在玩"的最快指标。',
-  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）；StonkFun 是<b>官方接口真值</b>——直接读 stonkfun.xyz 官方累计收入，逐小时做差，不再靠猜。<b>注意</b>：官方累计值是按批结算的，个别小时的柱子会忽高忽低，看 6h / 24h 合计更稳。',
+  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）；StonkFun 是<b>官方接口真值</b>——直接读 stonkfun.xyz 官方累计收入，逐小时做差，不再靠猜。<b>注意</b>：官方累计值是按批结算的，个别小时会忽高忽低，看 6h / 24h 合计更稳；某一小时没采到样就留空，不回填、不估算。',
   hourNoteBurn:'<b>销毁</b>：Pons 按小时统计打进死地址的 PONS，<b>链上可对账</b>（约每 15 分钟一笔）；StonkFun 用<b>官方累计销毁量</b>逐小时做差，和平台自己页面同一个数据源。',
   /* —— 市场占有率（v3.14）：DefiLlama DEX 同源口径 —— */
   secShare:'市场占有率 · 24 小时成交量份额',
@@ -2153,12 +2149,10 @@ en:{
   hourH1:'Last 1 hour', hourH6:'Last 6 hours', hourH24:'Last 24 hours', hourH72:'Last 72 hours',
   hourLive:'● live', hourLiveOff:'● page snapshot (live refresh failed)',
   hourNow:'Current hour', hourPick:'Selected', hourOngoing:'in progress',
-  hourNoData:'no data yet',
-  hourSpan:'gap backfill · est.',
-  hourSpanNote:'{n} h in this window are averaged backfill across a gap in the official counter (hatched bars, estimated); the rest are measured hour by hour.',
+  hourNoData:'not sampled',
   hourEst:'estimate', hourChain:'on-chain', hourOfficial:'official', hourEach:'One bar per hour: PONS left · StonkFun right',
   hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. Rising volume means short-term money is coming in; fading volume means interest is cooling off — the fastest read on whether anyone is trading.',
-  hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is <b>official truth</b>: we read stonkfun.xyz’s official cumulative revenue and difference it hour by hour. <b>Note</b>: the official counter settles in batches, so single hours can jump around — use the 6h / 24h totals for a steadier read.',
+  hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is <b>official truth</b>: we read stonkfun.xyz’s official cumulative revenue and difference it hour by hour. <b>Note</b>: the official counter settles in batches, so single hours can jump around — use the 6h / 24h totals for a steadier read. Hours with no sample are left blank — never back-filled or estimated.',
   hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one buy every 15 min). StonkFun uses the <b>official cumulative burn figure</b>, differenced per hour — the same source as the platform’s own page.',
   /* —— Market share (v3.14): DefiLlama DEX scope —— */
   secShare:'Market share · 24h trading volume',
@@ -3117,10 +3111,6 @@ function hourSeries(){
     out[k]=(HOUR_TAB==='burn')? src.map(function(v,i){ const c=(n.close||[])[i]; return (v==null||!c)? null : v*c; }) : src.slice();
   });
   out.burnSrc={pons:((h.pons||{}).burnSrc||''), stonk:((h.stonk||{}).burnSrc||'')};
-  /* v3.22：断档回填的小时（官方累计值断了一晚 → 按小时平均摊回，画斜纹柱 + 标「估算」） */
-  const st=(h.stonk||{});
-  out.spanStonk=(HOUR_TAB==='rev')? (st.spanR||st.span||[]) : (HOUR_TAB==='burn')? (st.spanB||st.span||[]) : [];
-  out.spanSet={}; out.spanStonk.forEach(function(b){ out.spanSet[b]=1; });
   out.gen=h.generated;
   return out;
 }
@@ -3130,7 +3120,7 @@ function hourTip(s,i){
   const pv=s.pons[i], sv=s.stonk[i], pu=s.rawPons[i], su=s.rawStonk[i];
   let out=hm;
   out+='\nPons  '+(pv==null?'—':fmtU(pv))+(HOUR_TAB==='burn'&&pu!=null? '（'+fmtN(pu,0)+' PONS）':'');
-  out+='\nStonkFun  '+(sv==null?'— 还没攒到':fmtU(sv))+(HOUR_TAB==='burn'&&su!=null? '（'+fmtN(su,0)+' STONK）':'');
+  out+='\nStonkFun  '+(sv==null?'—':fmtU(sv))+(HOUR_TAB==='burn'&&su!=null? '（'+fmtN(su,0)+' STONK）':'');
   return out;
 }
 function fmtDay(d){
@@ -3162,9 +3152,7 @@ function renderHourly(){
   const max=Math.max.apply(null, vals.concat([1]));
   const yv=function(v){ return padT+(1-v/max)*(CH-padT-padB); };
   const step=(W-padL-padR)/n, bw=Math.max(2.2, step*0.42);
-  let body='<defs><pattern id="hpHatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">'
-      +'<rect width="7" height="7" fill="var(--stonk)" opacity=".2"/>'
-      +'<line x1="0" y1="0" x2="0" y2="7" stroke="var(--stonk)" stroke-width="2.6" opacity=".85"/></pattern></defs>', marks='';
+  let body='', marks='';
   [1,0.5].forEach(function(f){
     const yy=yv(max*f).toFixed(1);
     body+='<line class="hourly-grid" x1="0" y1="'+yy+'" x2="'+W+'" y2="'+yy+'"/>';
@@ -3177,8 +3165,7 @@ function renderHourly(){
     let g='<g class="hourly-bar">';
     g+='<rect x="'+x.toFixed(1)+'" y="'+padT+'" width="'+step.toFixed(2)+'" height="'+(CH-padT-padB)+'" fill="transparent"/>';
     if(pv!=null) g+='<rect x="'+x.toFixed(1)+'" y="'+(CH-padB-h1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h1).toFixed(1)+'" rx="1.5" fill="var(--pons)" opacity=".92"/>';
-    const svFill=(s.spanSet && s.spanSet[ts])? 'url(#hpHatch)' : 'var(--stonk)';
-    if(sv!=null) g+='<rect x="'+(x+step-bw).toFixed(1)+'" y="'+(CH-padB-h2).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h2).toFixed(1)+'" rx="1.5" fill="'+svFill+'" opacity=".92"/>';
+    if(sv!=null) g+='<rect x="'+(x+step-bw).toFixed(1)+'" y="'+(CH-padB-h2).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h2).toFixed(1)+'" rx="1.5" fill="var(--stonk)" opacity=".92"/>';
     body+=g+'</g>';
   });
   body+='<rect id="hourHl" class="hourly-hl" x="0" y="'+padT+'" width="0" height="'+(CH-padT-padB)+'" rx="3" pointer-events="none"/>';
@@ -3237,7 +3224,7 @@ function renderHourly(){
       tipBox.innerHTML='<div class="t">'+fmtDay(new Date(s.hours[i]*1000))+(i===s.hours.length-1?' · '+esc(t('hourOngoing')):'')+'</div>'
         +'<div class="r p"><span>PONS</span><b>'+hourTxt(pv)+label(s.rawPons[i])+'</b></div>'
         +'<div class="r s"><span>STONK</span><b>'+(sv2==null? esc(t('hourNoData')) : hourTxt(sv2)+label(s.rawStonk[i]))+'</b>'
-        +((s.spanSet && s.spanSet[s.hours[i]])? '<em class="bf">'+esc(t('hourSpan'))+'</em>':'')+'</div>';
+        +'</div>';
       tipBox.style.display='block';
       const br=box.getBoundingClientRect();
       tipBox.style.left=Math.max(86, Math.min(br.width-86, ev.clientX-br.left))+'px';
@@ -3293,8 +3280,6 @@ function renderHourly(){
   }
   if(nt){
     let note=t(HOUR_TAB==='vol'? 'hourNoteVol' : HOUR_TAB==='rev'? 'hourNoteRev' : 'hourNoteBurn');
-    if(s.spanStonk && s.spanStonk.length)
-      note+=' '+esc(t('hourSpanNote').replace('{n}', s.spanStonk.length));
     nt.innerHTML=note;
   }
 }

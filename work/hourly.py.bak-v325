@@ -280,34 +280,45 @@ def sf_record(cur):
 
 
 def sf_series(buckets):
-    """官方累计值 → 每小时差值：(收入USD[], 销毁STONK[], 空, 空, 空)。
+    """官方累计值 → 每小时差值：(收入USD[], 销毁STONK[], 回填小时[])。
 
-    只认「实测小时」：相邻两次采样的整点差 ≤1（同一小时、或紧挨的两个小时）时，
-    这一跳的增量记在较早的那个整点；采样断档超过 1 个整点，中间小时**留空** ——
-    不回填、不估算（2026-10-08 作者要求：均值回填 + 斜纹柱用户看不懂，宁缺毋假；
-    采样密度由服务器兜底触发器保证：快照超时就用 workflow_dispatch 踢云端构建）。
-    最后三个返回值是 v3.22 斜纹柱的标记位，保留占位、恒为空（前端已不再使用）。
+    间隔 >2.5h 的那一跳以前是直接丢掉的 —— 电脑睡眠 / 接口抽风 / 中转挂掉一晚上，
+    第二天就有十几个小时的柱子全空（2026-10-07 用户反馈「小时级 STONK 数据都没了」）。
+    现在改成：这一跳的总量按小时平均摊回中间那几个小时，并记进 span；
+    前端把那几根柱子画成斜纹 + 标注「回填估算」，既不留白，也不假装是实测值。
     """
     hist = [h for h in sf_load_hist() if isinstance(h, dict) and h.get("ts")]
     hist.sort(key=lambda h: h["ts"])
     rev = {b: None for b in buckets}
     burn = {b: None for b in buckets}
+    span = set()          # 并集（前端不区分口径时用）
+    spanR, spanB = set(), set()
     for a, b in zip(hist, hist[1:]):
-        if b["ts"] - a["ts"] <= 0:
+        gap = b["ts"] - a["ts"]
+        if gap <= 0:
             continue
         ha = int(a["ts"] // 3600 * 3600)
         hb = int(b["ts"] // 3600 * 3600)
-        if (hb - ha) // 3600 > 1:       # 断档：中间小时没有实测 → 留空，不回填
-            continue
-        if ha not in rev:
-            continue
+        n = max(1, min(48, (hb - ha) // 3600))      # 这一跳覆盖了几个整点
         dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
         db = (b.get("burnTokens") or 0) - (a.get("burnTokens") or 0)
-        if dr > 0:
-            rev[ha] = round((rev[ha] or 0) + dr, 2)
-        if db > 0:
-            burn[ha] = round((burn[ha] or 0) + db, 2)
-    return ([rev[b] for b in buckets], [burn[b] for b in buckets], [], [], [])
+        for k in range(n):
+            hour = ha + k * 3600
+            if hour not in rev:
+                continue
+            if dr > 0:
+                rev[hour] = round((rev[hour] or 0) + dr / n, 2)
+                if n > 1:
+                    spanR.add(hour)
+            if db > 0:
+                burn[hour] = round((burn[hour] or 0) + db / n, 2)
+                if n > 1:
+                    spanB.add(hour)
+            if n > 1 and hour in spanR and hour in spanB:
+                span.add(hour)
+    keep = lambda st: sorted(h for h in st if h in rev)
+    return ([rev[b] for b in buckets], [burn[b] for b in buckets],
+            keep(span), keep(spanR), keep(spanB))
 
 
 def sf_daily():

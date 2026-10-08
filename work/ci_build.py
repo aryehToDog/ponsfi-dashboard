@@ -23,7 +23,8 @@
 
 状态文件（由 workflow 先从 snapshots 分支取出，跑完再压回去）：
     work/dashboard-data.json / work/hourly.json / work/sf-history.json /
-    work/burn-history.json / work/burns.json / work/burn_events.json
+    work/sf-ledger.json / work/stonk-page.json / work/burn-history.json /
+    work/burns.json / work/burn_events.json
 """
 import argparse
 import datetime
@@ -47,6 +48,7 @@ SNAPSHOT_FILES = [
     "work/hourly.json",
     "work/sf-history.json",
     "work/sf-ledger.json",
+    "work/stonk-page.json",
     "work/burn-history.json",
     "work/burns.json",
     "work/burn_events.json",
@@ -180,7 +182,9 @@ def main():
     else:
         run([sys.executable, os.path.join(HERE, "hourly.py")])
         merge_hourly()
-        run([sys.executable, os.path.join(HERE, "render_only.py")])
+    # v3.27 STONK 深度页数据（两种模式都跑；渲染统一放最后，保证 stonkPage 进 HTML）
+    run([sys.executable, os.path.join(HERE, "stonk_page.py")])
+    run([sys.executable, os.path.join(HERE, "render_only.py")])
     publish_deploy()
     if args.push:
         push_snapshot(mode)

@@ -34,6 +34,10 @@
 - **市场占有率** PONS 占 Robinhood Chain 全链 DEX 成交量的比例，STONK 在 Solana 上跟 pump.fun 的对比。
 - **收入排行** 这两个项目在 DefiLlama 全行业收入榜里的名次与变化。
 - **趋势图和日度明细** 日收入 / 回购曲线，加上最近 20 天的逐日数据表。
+- **STONK 深度页**（页头「STONK 深度页」按钮，或直接开 `?page=stonk`）单独一页把 $STONK 讲透：
+  供应与销毁明细（含最近销毁的链上记录）、回购飞轮（收入 → 买回 → 销毁，逐小时）、
+  需求与资金（买卖笔数、买盘占比、池子分布、持币分布）、估值与排名、体检评分卡、飞轮推演、
+  90 天价格走势。数据同样每小时更新，页内可切主题和语言。
 - **边角料** 数据源体检、指标说明、行情 BGM（涨跌自动切歌，带歌词）、共勉与点赞、打赏入口、访问量统计。
 
 中英双语跟随浏览器语言自动切换，深浅色跟随系统。
@@ -116,6 +120,10 @@ In order from the top:
 - **Market share**: PONS share of Robinhood Chain DEX volume, STONK vs pump.fun on Solana.
 - **Revenue ranking**: where the two projects sit on DefiLlama's protocol revenue leaderboard.
 - **Charts and daily table**: daily revenue / buyback curves plus 20 days of per-day detail.
+- **STONK deep dive** (header button, or open `?page=stonk` directly): a dedicated page for $STONK —
+  supply and burns with on-chain receipts, the buyback flywheel (revenue → buyback → burn, hourly),
+  demand and liquidity (trade counts, buy share, pool split, holder distribution), valuation and ranking,
+  a 12-point health card and a flywheel scenario table. Same hourly refresh; theme and language toggles stay available.
 - **Extras**: data-source health check, metric explainers, market-mood music player with lyrics, community quotes with likes, tip jar, page-view counter.
 
 Chinese / English switch follows browser language; light / dark follows the system.

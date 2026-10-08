@@ -9,6 +9,20 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.27「STONK 深度页」 · 2026-10-08
+     【为什么做这一版】作者要求给 STONK 做一个单独的深度页，把 stonk.fyi 的信息密度
+       搬进本站：供应与销毁、回购飞轮、需求与资金、估值排名、体检评分卡、飞轮推演。
+     【这一版改了什么】新增一个独立视图 + 一条数据管道，总览页零改动：
+       ① work/stonk_page.py（新）：StonkFun 官方 API（收入/买回/销毁/逐笔账本）
+          + GeckoTerminal（主池/日线/池子列表）+ RugCheck（流动性/税/风险/持仓分布），
+          每小时跟 CI 一起跑，产出 work/stonk-page.json 并注入 dashboard-data.json
+       ② 模板新增 #stkView 独立页：页头「STONK 深度页」按钮 / ?page=stonk / #stonk 直达；
+          首屏 hero + 安全徽章 + 一句话结论 + 7 个板块；主题/语言按钮页内可用
+       ③ 数据只认实测：持币人数变化与主池净流入用本站累积快照算，采不满就不下结论；
+          评分卡每项都带数值与阈值，灰=还没采样，不猜
+       ④ 配套：work/stonk-page.json 纳入快照回传与 CI 状态恢复（采样历史才能累积）
+     回退：cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.26「STONK 小时数据 · 官方逐笔账本」 · 2026-10-08
      【为什么做这一版】v3.25 只认实测采样后，STONK 小时收入/销毁大面积「未采样」——
        官方累计值每小时才取一条，构建错过或抽取抽风就断档，柱子留空、用户看不到数。
@@ -658,10 +672,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.26-2026-10-08">
+<meta name="dashboard-version" content="v3.27-2026-10-08">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.26 · 2026-10-08"
+VER = "v3.27 · 2026-10-08"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

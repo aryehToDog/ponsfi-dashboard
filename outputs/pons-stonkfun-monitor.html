@@ -9,6 +9,8 @@
           或紧挨的两小时才算数；断档超过 1 个整点的小时**留空**，不再摊平回填
        ② 模板：删除斜纹柱与「断档回填 · 估算」徽标、图下回填说明；无实测的小时
           hover/点选显示「未采样」；图下注释补一句「没采到样就留空，不回填、不估算」
+       ②b 配色统一：小时柱改用专属柱色（--hb-pons / --hb-stonk，浅深两套主题各自微调）
+          + 同款「上实下透」竖向渐变 —— 两列处理完全一致，图例圆点同步换色
        ③ 配套：服务器兜底触发器快照阈值 75 分钟 → 45 分钟（采样≈每小时一次），
           让「留空」只出现在极端断档时 —— 宁可空一格，不编数
      回退：cp work/template.html.bak-v325 work/template.html && cp work/hourly.py.bak-v325 work/hourly.py && python3 work/render_only.py
@@ -680,6 +682,7 @@ if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)
   --txt:#e9ecf3; --mut:#858ea1; --mut2:#737d90;
   --up:#2ee6a8; --down:#ff5c72; --warn:#ffb020;
   --pons:#8b7cff; --stonk:#2ee6a8;
+  --hb-pons:#9d90ff; --hb-stonk:#35eab2;            /* 小时柱专用（略亮一档，深色底更精神）*/
   --pons-dim:rgba(139,124,255,.55); --stonk-dim:rgba(46,230,168,.55);
   --accent:#8b7cff;
   --ok-bg:#0d2b22; --ok-line:#1c5443; --ok-txt:#7ff0c6;
@@ -702,6 +705,7 @@ if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)
   --txt:#0f1420; --mut:#5d6779; --mut2:#666f7f;
   --up:#0d9b73; --down:#dc2f4e; --warn:#b97a00;
   --pons:#6249e8; --stonk:#0d9b73;
+  --hb-pons:#6a52ec; --hb-stonk:#0f9d78;            /* 小时柱专用（略提一档饱和度，白底更清楚）*/
   --pons-dim:rgba(98,73,232,.45); --stonk-dim:rgba(13,155,115,.45);
   --accent:#6249e8;
   --ok-bg:#e9f8f2; --ok-line:#b9e6d5; --ok-txt:#0a7357;
@@ -725,6 +729,7 @@ if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)
   --txt:#0f1420; --mut:#5d6779; --mut2:#666f7f;
   --up:#0d9b73; --down:#dc2f4e; --warn:#b97a00;
   --pons:#6249e8; --stonk:#0d9b73;
+  --hb-pons:#6a52ec; --hb-stonk:#0f9d78;            /* 小时柱专用（略提一档饱和度，白底更清楚）*/
   --pons-dim:rgba(98,73,232,.45); --stonk-dim:rgba(13,155,115,.45);
   --accent:#6249e8;
   --ok-bg:#e9f8f2; --ok-line:#b9e6d5; --ok-txt:#0a7357;
@@ -3790,7 +3795,14 @@ function renderHourly(){
   const max=Math.max.apply(null, vals.concat([1]));
   const yv=function(v){ return padT+(1-v/max)*(CH-padT-padB); };
   const step=(W-padL-padR)/n, bw=Math.max(2.2, step*0.42);
-  let body='', marks='';
+  let body='<defs>'
+      +'<linearGradient id="hbPG" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="var(--hb-pons)" stop-opacity="1"/>'
+      +'<stop offset="1" stop-color="var(--hb-pons)" stop-opacity=".72"/></linearGradient>'
+      +'<linearGradient id="hbSG" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity="1"/>'
+      +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".72"/></linearGradient>'
+      +'</defs>', marks='';
   [1,0.5].forEach(function(f){
     const yy=yv(max*f).toFixed(1);
     body+='<line class="hourly-grid" x1="0" y1="'+yy+'" x2="'+W+'" y2="'+yy+'"/>';
@@ -3802,8 +3814,8 @@ function renderHourly(){
     const h1=(pv!=null)? (CH-padB-yv(pv)) : 0, h2=(sv!=null)? (CH-padB-yv(sv)) : 0;
     let g='<g class="hourly-bar">';
     g+='<rect x="'+x.toFixed(1)+'" y="'+padT+'" width="'+step.toFixed(2)+'" height="'+(CH-padT-padB)+'" fill="transparent"/>';
-    if(pv!=null) g+='<rect x="'+x.toFixed(1)+'" y="'+(CH-padB-h1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h1).toFixed(1)+'" rx="1.5" fill="var(--pons)" opacity=".92"/>';
-    if(sv!=null) g+='<rect x="'+(x+step-bw).toFixed(1)+'" y="'+(CH-padB-h2).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h2).toFixed(1)+'" rx="1.5" fill="var(--stonk)" opacity=".92"/>';
+    if(pv!=null) g+='<rect x="'+x.toFixed(1)+'" y="'+(CH-padB-h1).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h1).toFixed(1)+'" rx="1.5" fill="url(#hbPG)"/>';
+    if(sv!=null) g+='<rect x="'+(x+step-bw).toFixed(1)+'" y="'+(CH-padB-h2).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(1,h2).toFixed(1)+'" rx="1.5" fill="url(#hbSG)"/>';
     body+=g+'</g>';
   });
   body+='<rect id="hourHl" class="hourly-hl" x="0" y="'+padT+'" width="0" height="'+(CH-padT-padB)+'" rx="3" pointer-events="none"/>';
@@ -3904,8 +3916,8 @@ function renderHourly(){
   if(hl){
     const srcP=(HOUR_TAB==='vol')? '' : (HOUR_TAB==='rev'? t('hourEst') : t('hourChain'));
     const srcS=(HOUR_TAB==='vol')? '' : t('hourOfficial');
-    hl.innerHTML='<span class="lg"><i style="background:var(--pons)"></i>Pons <b>'+hourTxt(hourSum(s.pons,72))+'</b><em>72h'+(srcP?' · '+esc(srcP):'')+'</em></span>'
-      +'<span class="lg"><i style="background:var(--stonk)"></i>StonkFun <b>'+hourTxt(hourSum(s.stonk,72))+'</b><em>72h'+(srcS?' · '+esc(srcS):'')+'</em></span>'
+    hl.innerHTML='<span class="lg"><i style="background:var(--hb-pons)"></i>Pons <b>'+hourTxt(hourSum(s.pons,72))+'</b><em>72h'+(srcP?' · '+esc(srcP):'')+'</em></span>'
+      +'<span class="lg"><i style="background:var(--hb-stonk)"></i>StonkFun <b>'+hourTxt(hourSum(s.stonk,72))+'</b><em>72h'+(srcS?' · '+esc(srcS):'')+'</em></span>'
       + '<span class="lg"><em>'+esc(t('hourEach'))+'</em></span>';
   }
   if(sm){

@@ -46,6 +46,7 @@ SNAPSHOT_FILES = [
     "work/dashboard-data.json",
     "work/hourly.json",
     "work/sf-history.json",
+    "work/sf-ledger.json",
     "work/burn-history.json",
     "work/burns.json",
     "work/burn_events.json",

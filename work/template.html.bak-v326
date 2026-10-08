@@ -1836,8 +1836,8 @@ zh:{
   hourNoData:'未采样',
   hourEst:'推算', hourChain:'链上', hourOfficial:'官方', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
   hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 两个主流池的每小时成交额（GeckoTerminal 小时线）。成交量放大说明短线资金在进场，缩下去说明热度在退——这是判断"有没有人在玩"的最快指标。',
-  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）。StonkFun 按<b>官方买回流水逐笔折算</b>——官方每笔买回都带时间戳和金额（和平台页面同源），花掉的钱 ÷ 官方比例（约 60%，每次刷新按最近 3 天自动校准）＝ 当小时收入。<b>那个小时没买回就是 0；确实没抓到的小时才留空</b>，看 6h / 24h 合计更稳。',
-  hourNoteBurn:'<b>销毁</b>：Pons 按小时统计打进死地址的 PONS，<b>链上可对账</b>（约每 15 分钟一笔）；StonkFun 直接统计<b>官方销毁流水</b>——每一笔销毁的精确时间 + 数量都在里面，跟平台自己页面同一个数据源，<b>精确到笔</b>。',
+  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）；StonkFun 是<b>官方接口真值</b>——直接读 stonkfun.xyz 官方累计收入，逐小时做差，不再靠猜。<b>注意</b>：官方累计值是按批结算的，个别小时会忽高忽低，看 6h / 24h 合计更稳；某一小时没采到样就留空，不回填、不估算。',
+  hourNoteBurn:'<b>销毁</b>：Pons 按小时统计打进死地址的 PONS，<b>链上可对账</b>（约每 15 分钟一笔）；StonkFun 用<b>官方累计销毁量</b>逐小时做差，和平台自己页面同一个数据源。',
   /* —— 市场占有率（v3.14）：DefiLlama DEX 同源口径 —— */
   secShare:'市场占有率 · 24 小时成交量份额',
   shareLive:'● 每小时更新',
@@ -2155,8 +2155,8 @@ en:{
   hourNoData:'not sampled',
   hourEst:'estimate', hourChain:'on-chain', hourOfficial:'official', hourEach:'One bar per hour: PONS left · StonkFun right',
   hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. Rising volume means short-term money is coming in; fading volume means interest is cooling off — the fastest read on whether anyone is trading.',
-  hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is the <b>official buyback ledger, converted</b>: every official buyback carries its own timestamp and amount (same source as the platform page); spend ÷ the official ratio (~60%, recalibrated from the last 3 days on every refresh) = that hour’s revenue. <b>An hour with no buyback is a true 0; only hours we truly couldn’t capture stay blank</b>. Use the 6h / 24h totals for a steadier read.',
-  hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one every 15 min). StonkFun is tallied straight from the <b>official burn ledger</b> — the exact time and amount of every single burn, the same source as the platform’s own page, <b>accurate to the transaction</b>.',
+  hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is <b>official truth</b>: we read stonkfun.xyz’s official cumulative revenue and difference it hour by hour. <b>Note</b>: the official counter settles in batches, so single hours can jump around — use the 6h / 24h totals for a steadier read. Hours with no sample are left blank — never back-filled or estimated.',
+  hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one buy every 15 min). StonkFun uses the <b>official cumulative burn figure</b>, differenced per hour — the same source as the platform’s own page.',
   /* —— Market share (v3.14): DefiLlama DEX scope —— */
   secShare:'Market share · 24h trading volume',
   shareLive:'● hourly',

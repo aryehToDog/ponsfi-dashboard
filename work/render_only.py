@@ -9,6 +9,18 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.26「STONK 小时数据 · 官方逐笔账本」 · 2026-10-08
+     【为什么做这一版】v3.25 只认实测采样后，STONK 小时收入/销毁大面积「未采样」——
+       官方累计值每小时才取一条，构建错过或抽取抽风就断档，柱子留空、用户看不到数。
+     【这一版改了什么】数据管道重建（样式零改动）：
+       ① work/hourly.py 新增官方逐笔流水账本（stonkfun.xyz/api/v2/revenue/buybacks|burns）：
+          每笔买回/销毁都带时间戳，按小时精确归类 —— 有流水=精确求和、没流水=真 0；
+          账本没盖到的小时才留空。CI 每轮增量翻页 + 断点续传，自动回填到 72h 图全有数
+       ② STONK 收入 = 买回流水 ÷ 官方比例（约 60%，每次构建按最近 3 个完整日自动校准）
+       ③ 图下注释（中英）改白话：解释「买回折算」「精确到笔」，不再出现断档/估算字样
+       ④ 配套：work/sf-ledger.json 纳入快照回传与状态恢复（CI 与本地共用一本账）
+     回退：cp work/template.html.bak-v326 work/template.html && cp work/hourly.py.bak-v326 work/hourly.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.25「小时柱统一 · 不再回填」 · 2026-10-08
      【为什么做这一版】作者反馈小时监控「收入」里 STONK 断档时按均值摊回，出现一串
        一模一样高的柱子 + 斜纹「断档回填 · 估算」徽标 —— 用户看不懂什么意思，也分不清
@@ -646,10 +658,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.25-2026-10-08">
+<meta name="dashboard-version" content="v3.26-2026-10-08">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.25 · 2026-10-08"
+VER = "v3.26 · 2026-10-08"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

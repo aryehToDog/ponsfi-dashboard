@@ -45,7 +45,7 @@ jobs:
           set -u
           git fetch --depth=1 origin snapshots || true
           for f in work/dashboard-data.json work/hourly.json work/sf-history.json \
-                   work/burn-history.json work/burns.json work/burn_events.json; do
+                   work/sf-ledger.json work/burn-history.json work/burns.json work/burn_events.json; do
             if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
               git show "FETCH_HEAD:$f" > "$f"
               echo "restored $f"

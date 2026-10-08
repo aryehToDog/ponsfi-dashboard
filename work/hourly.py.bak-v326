@@ -6,11 +6,9 @@
        PONS  → robinhood / 0xed50bdee… (PONS/WETH)
        STONK → solana    / zxTpi4Bt…   (STONK/SOL)
   2. 销毁（每小时）→ Robinhood Chain eth_getLogs 筛 Transfer→0x…dEaD，按小时分桶（真链上）
-       STONK → StonkFun 官方逐笔销毁流水按小时归类（v3.26 起，精确到每一笔）；
-       账本没盖到的小时退回官方累计值差值、再退 burn-history 快照
+       STONK → StonkFun 官方接口的累计销毁量每小时差值（真值）；拿不到时退回 burn-history 快照累积
   3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 ÷ 80%（回购占比），明确标注为推算；
-       StonkFun → 官方逐笔买回流水按小时归类后 ÷ 官方比例（约 60%，按最近 3 个完整日自动校准）
-       （流水接口 stonkfun.xyz/api/v2/revenue/buybacks|burns；国内直连被墙、走海外中转）
+       StonkFun → 官方接口 stonkfun.xyz/api/revenue 的累计收入每小时差值（真值，国内直连被墙、走海外中转）
   4. 销毁里程碑（v3.15）→ burn-history 快照 + sf-history 累计值：算「已烧掉多少、按最近
        24h 速度还要几天过下一个 1%」，产出 hourly.json → milestone（前端「销毁里程碑」板块）
 """
@@ -33,11 +31,6 @@ STONK_SUPPLY = 999_969_797.91
 SF_API = "https://www.stonkfun.xyz/api/revenue"   # StonkFun 官方收入/回购/销毁（国内被墙，走海外中转）
 SF_DAILY_API = "https://www.stonkfun.xyz/api/v2/revenue/daily"   # 官方日线（v3.18 起用于日度对账）
 SF_HIST = os.path.join(HERE, "sf-history.json")    # 官方累计值快照（每小时一条）
-SF_LEDGER = os.path.join(HERE, "sf-ledger.json")    # 官方逐笔流水账本（买回 / 销毁），滚动保留 ~110h
-SF_BUYBACKS_API = "https://www.stonkfun.xyz/api/v2/revenue/buybacks?limit=100"
-SF_BURNS_API = "https://www.stonkfun.xyz/api/v2/revenue/burns?limit=100"
-SF_RATIO_FALLBACK = 0.5976     # 官方历史实测「买回 ÷ 收入」比例（2026-10-08）；每次构建用最近 3 个完整日自动校准
-SF_LEDGER_KEEP_H = 110         # 账本滚动窗口：72h 图 + 回填余量
 
 
 def atomic_dump(obj, path):
@@ -229,219 +222,6 @@ def _sf_get(target):
                 last = exc; time.sleep(1.5 + i)
     print("warn: sf api %s: %s" % (target, last), file=sys.stderr)
     return None
-
-
-# ---- 官方逐笔流水账本（v3.26）：买回 / 销毁都带时间戳，按小时精确归类 ----
-def _iso_ms(s):
-    dt = datetime.datetime.fromisoformat(str(s).replace("Z", "+00:00"))
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=datetime.timezone.utc)
-    return int(dt.timestamp() * 1000)
-
-
-def _sf_ledger_urls(target):
-    """流水接口的中转线路（和 _sf_relays 同序；这里保留 query —— cursor 翻页必须带参）。"""
-    u = urllib.parse.urlparse(target)
-    q = urllib.parse.quote(target, safe="")
-    tr = ("https://%s.translate.goog%s?" % (u.netloc.replace(".", "-"), u.path)
-          + (u.query + "&" if u.query else "")
-          + "_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en")
-    urls = [tr,
-            "https://api.cors.lol/?url=" + q,
-            "https://r.jina.ai/" + target,
-            "https://api.allorigins.win/raw?url=" + q,
-            "https://api.codetabs.com/v1/proxy?quest=" + q]
-    if os.environ.get("PONSPULSE_SF_DIRECT") == "1":
-        urls.insert(0, target)          # 海外节点（GitHub Actions）直连最快最稳
-    return urls
-
-
-def _sf_ledger_get(target):
-    """流水接口 → dict（rows/page）；所有线路都失败返回 None（这轮先不抓，下次再试）。"""
-    last = None
-    for url in _sf_ledger_urls(target):
-        for i in range(2):
-            try:
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
-                                                           "Accept": "application/json,text/plain,*/*",
-                                                           "Connection": "close"})
-                body = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
-                j = _sf_parse(body)
-                if isinstance(j, dict) and isinstance(j.get("rows"), list):
-                    return j
-                last = ValueError("bad payload: %s" % body[:80])
-            except Exception as exc:
-                last = exc; time.sleep(1.0 + i)
-    print("warn: sf ledger %s: %s" % (target.split("?")[0], last), file=sys.stderr)
-    return None
-
-
-def _sf_ledger_load():
-    try:
-        st = json.load(open(SF_LEDGER, encoding="utf-8"))
-        return st if isinstance(st, dict) else {}
-    except Exception:
-        return {}
-
-
-def _cov_merge(cov):
-    """覆盖区间合并（重叠或 1 秒内相邻视为连续）→ 升序 [[a,b],…]。"""
-    out = []
-    for a, b in sorted(cov):
-        if out and a <= out[-1][1] + 1000:
-            out[-1][1] = max(out[-1][1], b)
-        else:
-            out.append([a, b])
-    return out
-
-
-def _parse_buyback(r):
-    try:
-        ts = _iso_ms(r.get("createdAt"))
-        usd = float(r.get("spentValueUsd") or 0)
-        if ts <= 0 or usd <= 0:
-            return None
-        return [ts, round(usd, 6)]
-    except Exception:
-        return None
-
-
-def _parse_burn(r):
-    try:
-        ts = _iso_ms(r.get("createdAt"))
-        tok = float(r.get("amountTokens") or 0)
-        if ts <= 0 or tok <= 0:
-            return None
-        return [ts, round(tok, 6)]
-    except Exception:
-        return None
-
-
-def _sf_ledger_sync_stream(node, base, parse_row, budget, now_ms):
-    """单条流水（买回 / 销毁）增量同步。
-
-    策略（每轮构建跑一次）：
-      · 从最新一页往回拉，接到「账本里已有最新一条」为止 —— 补上最近这小时的流水；
-      · 账本还不够老（没盖满滚动窗口）时，顺着 pend 续点往更早翻，每轮最多 budget 页；
-      · 翻过的连续区间记进 cov：区间盖住的小时，没流水就是真 0（不是没采到）。
-    接口按游标严格降序翻页，连续翻页 = 连续覆盖，中间不会丢记录。
-    """
-    rows = node.setdefault("rows", [])          # [[ts_ms, 数值], …] 降序
-    cov = node.setdefault("cov", [])
-    pend = node.get("pend")
-    pre_max = rows[0][0] if rows else None
-    horizon = now_ms - SF_LEDGER_KEEP_H * 3600 * 1000
-    phase = "top" if rows else "deep"           # 首次（账本空）：直接当回填，一直往回挖
-    new, pages, fresh_top, net_fail = [], 0, False, False
-    cur = None
-    while pages < budget:
-        url = base + (("&cursor=" + urllib.parse.quote(cur, safe="")) if cur else "")
-        j = _sf_ledger_get(url)
-        if j is None:
-            net_fail = True
-            break
-        pages += 1
-        if cur is None:
-            fresh_top = True
-        rs = [p for p in (parse_row(r) for r in (j.get("rows") or [])) if p]
-        new.extend(rs)
-        lo = min((r[0] for r in rs), default=None)
-        nxt = (j.get("page") or {}).get("nextCursor") or None
-        if nxt is None:                         # 翻到官方流水最早的一页：没有更早的了
-            cur = None
-            break
-        if phase == "top" and pre_max is not None and lo is not None and lo <= pre_max:
-            if pend:                            # 顶部接上 → 转去补更早的欠账
-                phase, cur = "deep", pend
-            else:
-                cur = None
-                break
-        elif phase == "deep" and lo is not None and lo <= horizon:
-            cur = None
-            break                               # 已挖到滚动窗口之外 → 回填完成
-        else:
-            cur = nxt
-        if pages < budget:
-            time.sleep(0.3)
-    if net_fail:
-        pass                                    # 网络失败：pend 原样保留，下次继续
-    elif phase == "top":
-        if node.get("pend") is None and cur is not None:
-            node["pend"] = cur                  # 顶部没接上（极少见）：下次优先补
-    elif phase == "deep":
-        node["pend"] = cur                      # None=回填完成；否则下次接着翻
-    else:
-        node["pend"] = None
-    if new:
-        na = min(r[0] for r in new)
-        nb = max(r[0] for r in new)
-        if fresh_top:
-            nb = max(nb, now_ms)                # 从最新一页开始拉的 → 截至抓取时刻没有遗漏
-        rows.extend(new)
-        rows.sort(key=lambda r: r[0], reverse=True)
-        seen, dedup = set(), []
-        for r in rows:
-            k = (r[0], r[1])
-            if k in seen:
-                continue
-            seen.add(k)
-            dedup.append(r)
-        cut = now_ms - SF_LEDGER_KEEP_H * 3600 * 1000
-        node["rows"] = [r for r in dedup if r[0] >= cut]
-        node["cov"] = _cov_merge([[max(a, cut), b] for a, b in cov + [[na, nb]] if b >= cut])
-    return pages, net_fail
-
-
-def sf_ledger_sync(max_pages=None):
-    """同步官方逐笔流水账本（买回 + 销毁）→ sf-ledger.json；返回存量摘要（调试/回填也用）。"""
-    budget = int(max_pages or os.environ.get("PONSPULSE_LEDGER_MAX_PAGES") or 10)
-    now_ms = int(time.time() * 1000)
-    st = _sf_ledger_load()
-    st["v"] = 1
-    r1 = _sf_ledger_sync_stream(st.setdefault("buy", {"rows": [], "cov": [], "pend": None}),
-                                SF_BUYBACKS_API, _parse_buyback, budget, now_ms)
-    r2 = _sf_ledger_sync_stream(st.setdefault("burn", {"rows": [], "cov": [], "pend": None}),
-                                SF_BURNS_API, _parse_burn, budget, now_ms)
-    st["synced"] = int(time.time())
-    atomic_dump(st, SF_LEDGER)
-    return {"pages": r1[0] + r2[0], "failed": bool(r1[1] or r2[1]),
-            "buy": len(st["buy"].get("rows") or []), "burn": len(st["burn"].get("rows") or []),
-            "covBuy": st["buy"].get("cov") or [], "covBurn": st["burn"].get("cov") or []}
-
-
-def _led_covers(cov, hs_ms, he_ms, now_ms):
-    """该小时是否完整落在账本覆盖区间里（正在进行的最后一个小时按「到目前为止」算）。"""
-    for a, b in cov:
-        if a <= hs_ms and (b >= he_ms or (now_ms < he_ms and b >= hs_ms)):
-            return True
-    return False
-
-
-def sf_ledger_hours(buckets, ratio):
-    """账本 → 每小时序列 (收入USD[], 销毁STONK[])；覆盖不到的记 None（前端「未采样」）。
-
-    · 收入：官方买回流水 ÷ ratio（官方「买回 ÷ 收入」比例，约 60%，每次构建按最近 3 个完整日校准）
-    · 销毁：官方销毁流水逐笔求和（和平台自己页面同一个数据源）
-    · 覆盖到的小时：有流水＝精确求和，没流水＝真 0；覆盖不到＝None（不猜、不摊、不回填）
-    """
-    st = _sf_ledger_load()
-    now_ms = int(time.time() * 1000)
-    buy_h, burn_h = {}, {}
-    for r in (st.get("buy", {}).get("rows") or []):
-        h = r[0] // 3600000
-        buy_h[h] = (buy_h.get(h) or 0.0) + float(r[1])
-    for r in (st.get("burn", {}).get("rows") or []):
-        h = r[0] // 3600000
-        burn_h[h] = (burn_h.get(h) or 0.0) + float(r[1])
-    rev, burn = [], []
-    for b in buckets:
-        hs, he = b * 1000, (b + 3600) * 1000
-        key = hs // 3600000
-        rev.append(round(buy_h.get(key, 0.0) / ratio, 2)
-                   if _led_covers(st.get("buy", {}).get("cov") or [], hs, he, now_ms) else None)
-        burn.append(round(burn_h.get(key, 0.0), 2)
-                    if _led_covers(st.get("burn", {}).get("cov") or [], hs, he, now_ms) else None)
-    return rev, burn
 
 
 def sf_fetch():
@@ -805,37 +585,6 @@ def main():
     if sf_cur:
         sf_record(sf_cur)
     srev, sburn, sspan, sspanR, sspanB = sf_series(buckets)
-
-    # v3.26：官方逐笔流水账本（买回 / 销毁，带时间戳）→ 按小时精确归类，覆盖累计差值。
-    # 收入 = 买回流水 ÷ 官方比例（最近 3 个完整日校准；拿不到才用历史值兜底）。
-    sfday_now = None
-    try:
-        sfday_now = sf_official_daily()
-    except Exception as exc:
-        print("warn: sf official daily: %s" % exc, file=sys.stderr)
-    ratio = SF_RATIO_FALLBACK
-    if sfday_now and sfday_now.get("days"):
-        ds = sorted(sfday_now["days"])[-3:]
-        hold = sum(float(sfday_now["days"][d].get("hold") or 0) for d in ds)
-        revs = sum(float(sfday_now["days"][d].get("rev") or 0) for d in ds)
-        if revs > 0 and 0.40 <= hold / revs <= 0.85:
-            ratio = round(hold / revs, 4)
-    try:
-        led = sf_ledger_sync()
-        led_rev, led_burn = sf_ledger_hours(buckets, ratio)
-        led_fill = 0
-        for i in range(len(buckets)):
-            if led_rev[i] is not None:
-                srev[i] = led_rev[i]
-                led_fill += 1
-            if led_burn[i] is not None:
-                sburn[i] = led_burn[i]
-        out["stonk"]["ledger"] = {"buyRows": led["buy"], "burnRows": led["burn"],
-                                  "filled": led_fill, "ratio": ratio}
-        if led["failed"]:
-            out["stonk"]["ledger"]["failed"] = True
-    except Exception as exc:
-        print("warn: sf ledger: %s" % exc, file=sys.stderr)
     if any(v is not None for v in sburn):
         out["stonk"]["burn"], out["stonk"]["burnSrc"] = sburn, "official"
     else:
@@ -847,7 +596,7 @@ def main():
             out["stonk"]["burn"] = [None] * HOURS
             out["stonk"]["burnSrc"] = "none"
 
-    # 收入：Pons 用「小时回购支出 ÷ 80%」推算；StonkFun 用官方流水账本（买回 ÷ 官方比例）
+    # 收入：Pons 用「小时回购支出 ÷ 80%」推算；StonkFun 用官方累计值的每小时差值（真值）
     pv = []
     for b, c in zip(out["pons"]["burn"], out["pons"]["close"]):
         pv.append(round(b * c / BUYBACK_SHARE, 2) if (b and c) else None)
@@ -910,8 +659,12 @@ def main():
         print("warn: sf_daily: %s" % exc, file=sys.stderr)
         out["stonkDaily"] = (old.get("stonkDaily") if isinstance(old, dict) else None)
 
-    # 官方日线（v3.18）：STONK 日度与官网对账用；拿不到沿用上一份（账本同步时已抓过一次，直接复用）
-    out["sfDaily"] = sfday_now or (old.get("sfDaily") if isinstance(old.get("sfDaily"), dict) else None)
+    # 官方日线（v3.18）：STONK 日度与官网对账用；拿不到沿用上一份
+    try:
+        out["sfDaily"] = sf_official_daily() or (old.get("sfDaily") if isinstance(old.get("sfDaily"), dict) else None)
+    except Exception as exc:
+        print("warn: sfDaily: %s" % exc, file=sys.stderr)
+        out["sfDaily"] = old.get("sfDaily") if isinstance(old.get("sfDaily"), dict) else None
 
     # 市场占有率：拿不到就沿用上一份，绝不让整轮抓取失败
     try:
@@ -929,11 +682,9 @@ def main():
 
     atomic_dump(out, OUT)
     pb = [x for x in out["pons"]["burn"] if x]
-    lfill = ((out.get("stonk") or {}).get("ledger") or {}).get("filled")
-    print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s · STONK 账本覆盖 %s 小时"
+    print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s"
           % (HOURS, round(sum(pb), 1),
-             sum(x for x in out["pons"]["vol"] if x), sum(x for x in out["stonk"]["vol"] if x),
-             lfill if lfill is not None else "?"))
+             sum(x for x in out["pons"]["vol"] if x), sum(x for x in out["stonk"]["vol"] if x)))
     return out
 
 
@@ -948,10 +699,5 @@ if __name__ == "__main__":
         _old["milestone"] = milestone(_old)
         atomic_dump(_old, OUT)
         print(json.dumps(_old["milestone"], ensure_ascii=False)[:400])
-    elif "--ledger-only" in sys.argv:     # 调试/回填：只同步官方流水账本（PONSPULSE_LEDGER_MAX_PAGES 可加大页数）
-        _t0 = time.time()
-        _info = sf_ledger_sync()
-        _info["seconds"] = round(time.time() - _t0, 1)
-        print(json.dumps(_info, ensure_ascii=False))
     else:
         main()

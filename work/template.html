@@ -1664,8 +1664,10 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-sub{font-size:var(--fs-11);color:var(--mut);margin-top:4px}
 .stk-bar-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
-.stk-hero{display:grid;grid-template-columns:minmax(230px,1fr) 2.6fr;gap:20px;align-items:center;padding:18px 20px}
-@media (max-width:980px){.stk-hero{grid-template-columns:1fr;gap:14px}}
+/* v3.28：顶部概况收成一张卡 —— 上排「价格 + 8 格数据」，下排安全徽章尾条（原来徽章是单独一条悬在卡外） */
+.stk-hero{display:block;padding:0;overflow:hidden;margin-bottom:var(--sp-card)}
+.stk-hero-main{display:grid;grid-template-columns:minmax(230px,1fr) 2.6fr;gap:20px;align-items:center;padding:18px 20px}
+@media (max-width:980px){.stk-hero-main{grid-template-columns:1fr;gap:14px;padding:16px 16px 14px}}
 .stk-px{font-size:clamp(34px,6vw,46px);font-weight:800;letter-spacing:-1.6px;line-height:1;font-variant-numeric:tabular-nums}
 .stk-px .cur{font-size:.52em;opacity:.45;margin-right:2px}
 .stk-px-sub{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;font-size:var(--fs-11);color:var(--mut)}
@@ -1678,7 +1680,8 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-cell .v small{font-size:var(--fs-10);color:var(--mut);font-weight:500;margin-left:4px;letter-spacing:0}
 .stk-cell .v.up{color:var(--up)} .stk-cell .v.down{color:var(--down)}
 
-.stk-chips{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 var(--sp-card)}
+.stk-chips{display:flex;gap:8px;flex-wrap:wrap}
+.stk-hero .stk-chips{padding:12px 20px 14px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--panel2) 55%,var(--panel))}
 .stk-chip{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-11);padding:6px 12px;border-radius:var(--r-pill);
   border:1px solid var(--line);background:var(--panel);color:var(--mut);line-height:1.2}
 .stk-chip b{color:var(--txt);font-weight:700}
@@ -1830,6 +1833,21 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 }
 @media (max-width:680px){#stkView .sec-title{scroll-margin-top:64px}}
 @media (max-width:560px){.stk-chart{height:170px}}
+
+/* v3.28 手机端打磨：顶栏按钮 38px 命中区（与总览页一致）、价格加大更抓眼、
+   概况卡内边距收紧、安全徽章胶囊收小半号；窄屏指标名允许换行不再截成「…」 */
+@media (max-width:680px){
+  .stk-bar-r .tbtn{min-height:38px;padding:8px 12px;display:inline-flex;align-items:center;justify-content:center}
+  .stk-bar-r{width:100%}
+  .stk-bar-r .tbtn:last-child{flex:1 1 auto}
+  .stk-px{font-size:38px}
+  .stk-hero-main{padding:14px 14px 12px}
+  .stk-hero .stk-chips{padding:11px 14px 13px;gap:6px}
+  .stk-chip{padding:5px 10px}
+}
+@media (max-width:480px){
+  .stk-cell .k{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}
+}
 
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
@@ -5139,11 +5157,11 @@ function stkRender(){
   stkEntryLabel();
   if(!d){ root.innerHTML='<div class="card stk-card">'+esc(st('noData'))+'</div>'; return; }
   var h=d.hero||{}, sup=d.supply||{}, fw=d.flywheel||{}, dm=d.demand||{}, val=d.value||{},
-      sc=d.score||{}, md=d.model||{}, sf=d.safety||{}, hd=dm.holders||{}, lq=dm.liquidity||{};
+      sc=d.score||{}, md=d.model||{}, sf=d.safety||{};
   var gen=d.generated? new Date(d.generated*1000) : null;
   var out=[];
-  out.push(stkHeroHTML(h, fw, dm));
-  out.push(stkChipsHTML(sf, lq, hd));
+  /* v3.28：安全徽章并入 hero 卡尾条（stkHeroHTML 内统一渲染），顶部从三块收成两块 */
+  out.push(stkHeroHTML(h, fw, dm, sf));
   out.push(stkVerdictHTML(d));
   out.push('<nav class="stk-nav" id="stkNav">'
     + stkNavBtn('stk-s-supply', st('secSupply'))
@@ -5189,7 +5207,7 @@ function stkSecHead(id, icon, title, sub){
 }
 
 /* ---------- 首屏 ---------- */
-function stkHeroHTML(h, fw, dm){
+function stkHeroHTML(h, fw, dm, sf){
   var hd=(dm&&dm.holders)||{};
   /* v3.27.1 全站一个价：优先用总览页同一套数字（官方快照 + DefiLlama 实时刷新），
      取不到才退回本页快照 —— 两个页面永远显示同一个价格与市值。 */
@@ -5209,6 +5227,7 @@ function stkHeroHTML(h, fw, dm){
   ];
   var lastTxt = (h.lastBurn && h.lastBurn.t)? (LANG==='zh'? '最近销毁 ' : 'last burn ')+agoTxt(h.lastBurn.t)+(h.lastBurn.usd? ' · '+fmtU(h.lastBurn.usd) : '') : '';
   return '<div class="stk-hero card">'
+    + '<div class="stk-hero-main">'
     + '<div>'
     +   '<div class="stk-px"><span class="cur">$</span>'+(px!=null? px.toFixed(4):'—')+'</div>'
     +   '<div class="stk-px-sub">'
@@ -5226,19 +5245,22 @@ function stkHeroHTML(h, fw, dm){
         var extra=c[2]||'';
         return '<div class="stk-cell"><div class="k">'+esc(st(c[0]))+'</div><div class="v">'+(c[1]||'—')+(extra? '<small>'+esc(extra)+'</small>':'')+'</div></div>';
       }).join('')
-    + '</div></div>';
+    + '</div>'
+    + '</div>'
+    + stkChipsHTML(sf||{}, (dm&&dm.liquidity)||{}, hd)
+    + '</div>';
 }
 function stkChipsHTML(sf, lq, hd){
   var s=[];
-  if(sf.mintRevoked) s.push(['ok', st('chipMint')]);
-  if(sf.freezeRevoked) s.push(['ok', st('chipFreeze')]);
-  if(sf.taxPct===0) s.push(['ok', st('chipTax')]);
-  if(!sf.risks && !sf.rugged) s.push(['ok', st('chipRisk')]);
-  if(lq.total) s.push(['', st('chipLiq')(fmtU(lq.total), lq.pools||0)]);
+  if(sf.mintRevoked) s.push(['ok','shield', st('chipMint')]);
+  if(sf.freezeRevoked) s.push(['ok','shield', st('chipFreeze')]);
+  if(sf.taxPct===0) s.push(['ok','shield', st('chipTax')]);
+  if(!sf.risks && !sf.rugged) s.push(['ok','shield', st('chipRisk')]);
+  if(lq.total) s.push(['','volume', st('chipLiq')(fmtU(lq.total), lq.pools||0)]);
   var top10=(hd.top10_rug!=null? hd.top10_rug : hd.top10);
-  if(top10!=null) s.push([top10<30? 'ok':'warn', st('chipTop10')(top10.toFixed(1)+'%')]);
+  if(top10!=null) s.push([top10<30? 'ok':'warn','pie', st('chipTop10')(top10.toFixed(1)+'%')]);
   return '<div class="stk-chips">'+s.map(function(c){
-    return '<span class="stk-chip '+c[0]+'"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg><b>'+esc(c[1])+'</b></span>';
+    return '<span class="stk-chip '+c[0]+'">'+icn(c[1])+'<b>'+esc(c[2])+'</b></span>';
   }).join('')+'</div>';
 }
 

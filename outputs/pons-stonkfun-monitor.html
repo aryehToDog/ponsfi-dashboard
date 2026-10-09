@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.27.2「深度页收尾：图表天数按实际数据显示」 · 2026-10-09
+     价格走势 / 每天的收入与买回：标题里的天数按实际数据长度渲染（官方日线只有 ~24 天）。
+     回退：cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.27.1「STONK 深度页 · 全站一个价 + 手机端列数」 · 2026-10-08
      【为什么做这一版】作者反馈深度页「单价对不上、有些数据是空的」，手机端也太挤。
      【这一版改了什么】只有深度页，总览页零改动：
@@ -676,7 +680,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.27.1-2026-10-08">
+<meta name="dashboard-version" content="v3.27.2-2026-10-09">
 
 <html lang="zh-CN">
 <head>
@@ -2694,7 +2698,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal')};
-const DASH_VER = 'v3.27.1 · 2026-10-08';
+const DASH_VER = 'v3.27.2 · 2026-10-09';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {

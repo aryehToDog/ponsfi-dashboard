@@ -5610,7 +5610,7 @@ zh:{
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
   flRev7:'近 7 日收入', flBB7:'近 7 日买回', flShare:'买回 ÷ 收入', flVsVol:'买回 ÷ 24h 成交',
   flPx:'回购均价 vs 现价', flChg:'收入 7 日环比',
-  chartDaily:'每天的收入与买回（最近 30 天）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
+  chartDaily:'每天的收入与买回（最近 {n} 天）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
   chartHourly:'最近 72 小时', hourTabRev:'收入', hourTabBurn:'销毁', hourTabVol:'交易量',
   chartPrice:'价格走势（最近 {n} 天，STONK/SOL 日线收盘）',
   dBuy:'买', dSell:'卖', dBuyShare:'买盘笔数占比', dTraders:'买/卖家数', dNetflow:'主池净流入（24h）',
@@ -5661,7 +5661,7 @@ en:{
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
   flRev7:'Revenue, last 7d', flBB7:'Buybacks, last 7d', flShare:'Buyback ÷ revenue', flVsVol:'Buyback ÷ 24h volume',
   flPx:'Avg buyback price vs now', flChg:'Revenue, 7d change',
-  chartDaily:'Daily revenue and buybacks (last 30 days)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
+  chartDaily:'Daily revenue and buybacks (last {n} days)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
   chartHourly:'Last 72 hours', hourTabRev:'Revenue', hourTabBurn:'Burn', hourTabVol:'Volume',
   chartPrice:'Price (last {n} days, STONK/SOL daily close)',
   dBuy:'buys', dSell:'sells', dBuyShare:'Buy share', dTraders:'traders (buy/sell)', dNetflow:'Main pool net flow (24h)',
@@ -6005,7 +6005,7 @@ function stkFlyHTML(fw, h){
   }).join('')+'</div>';
   return '<div class="card stk-card stk-sec">'+grid
     + '<div style="height:14px"></div>'
-    + '<div class="stk-h3">'+esc(st('chartDaily'))+' <span style="opacity:.66">· '+esc(st('chartDailyHint'))+'</span></div>'
+    + '<div class="stk-h3">'+esc(st('chartDaily').replace('{n}', (fw.dates||[]).length || 0))+' <span style="opacity:.66">· '+esc(st('chartDailyHint'))+'</span></div>'
     + '<div class="stk-chart"><svg id="stkDChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkDTip"></div></div>'
     + '<div class="stk-axis"><span>'+esc(((fw.dates||[])[0]||''))+'</span><span>'+esc(((fw.dates||[])[(fw.dates||[]).length-1]||''))+'</span></div>'
     + '</div>'

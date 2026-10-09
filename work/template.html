@@ -1706,6 +1706,12 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 88%,transparent);color:var(--mut);cursor:pointer;
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .stk-nav button:hover{color:var(--txt);border-color:var(--line2)}
+/* v3.27.3：吸顶补底色（胶囊缝隙不再透出正文）+ 当前板块高亮 + 锚点跳转留出吸顶高度 */
+.stk-nav.stick{background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 97%,transparent),color-mix(in srgb,var(--bg) 78%,transparent));
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.stk-nav button.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 42%,transparent);
+  background:color-mix(in srgb,var(--accent) 13%,var(--panel));font-weight:700}
+#stkView .sec-title{scroll-margin-top:68px}
 
 .stk-card{padding:16px 18px}
 .stk-sec{margin-bottom:var(--sp-block)}
@@ -1749,7 +1755,8 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 
 .stk-pools{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
 .stk-pool{background:var(--panel2);display:grid;grid-template-columns:1.4fr 1fr 1fr 90px;gap:10px;align-items:center;padding:9px 12px;font-size:var(--fs-12)}
-@media (max-width:760px){.stk-pool{grid-template-columns:1.3fr 1fr;row-gap:2px}.stk-pool .dex{display:none}}
+/* v3.27.3：手机端一行池子拆两行 —— 名字整行，储备/成交左右对齐 */
+@media (max-width:760px){.stk-pool{grid-template-columns:1fr 1fr;row-gap:3px}.stk-pool .nm{grid-column:1/-1}.stk-pool .nm+.num{text-align:left}.stk-pool .dex{display:none}}
 .stk-pool .nm{font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
 .stk-pool .nm i{flex:0 0 auto;height:8px;border-radius:3px;background:var(--hb-stonk);display:inline-block}
 .stk-pool .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1812,6 +1819,13 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @media (max-width:560px){
   .stk-score,.stk-score.sc2{grid-template-columns:1fr}
 }
+/* v3.27.3 手机/平板：导航条滑动出现、停手收起（与总览导航同款）；手机图表降一点高度 */
+@media (max-width:1023px){
+  .stk-nav{transition:opacity .26s ease,transform .26s ease}
+  .stk-nav.hide{opacity:0;transform:translateY(-14px);pointer-events:none}
+}
+@media (max-width:680px){#stkView .sec-title{scroll-margin-top:64px}}
+@media (max-width:560px){.stk-chart{height:170px}}
 
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
@@ -5072,7 +5086,39 @@ function stkToggle(force){
 function stkGo(id){
   var el=document.getElementById(id); if(!el) return;
   try{ el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ el.scrollIntoView(); }
+  /* 手机端：把点中的胶囊滚进导航条可视区中间，不然它在屏幕外看不见 */
+  try{
+    var nav=document.getElementById('stkNav'), b=nav&&nav.querySelector('button[data-t="'+id+'"]');
+    if(nav&&b) nav.scrollLeft=Math.max(0, b.offsetLeft-(nav.clientWidth-b.offsetWidth)/2);
+  }catch(e){}
 }
+
+/* ---------- v3.27.3 板块导航：吸顶底色 / 当前板块高亮 / 手机端停手收起 ---------- */
+var STK_SECS=[], STK_SPY_T=null, STK_NAV_HIDE=null;
+function stkSpyPaint(){
+  var nav=document.getElementById('stkNav');
+  if(!nav || !document.body.classList.contains('stk-on')) return;
+  var stuck=nav.getBoundingClientRect().top<=9;
+  nav.classList.toggle('stick', stuck);
+  var cur=null, i;
+  for(i=0;i<STK_SECS.length;i++){
+    if(STK_SECS[i].getBoundingClientRect().top<=112) cur=STK_SECS[i].id; else break;
+  }
+  var bs=nav.children;
+  for(i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-t')===cur);
+  if(window.innerWidth>1023){ nav.classList.remove('hide'); return; }
+  nav.classList.remove('hide');
+  if(stuck){
+    clearTimeout(STK_NAV_HIDE);
+    STK_NAV_HIDE=setTimeout(function(){ if(nav.classList.contains('stick')) nav.classList.add('hide'); }, 1300);
+  }
+}
+window.addEventListener('scroll', function(){
+  if(!document.body.classList.contains('stk-on') || STK_SPY_T) return;
+  STK_SPY_T=(window.requestAnimationFrame||function(f){ return setTimeout(f,80); })(function(){
+    STK_SPY_T=null; try{ stkSpyPaint(); }catch(e){}
+  });
+},{passive:true});
 function stkEntryLabel(){
   var b=document.getElementById('stkEntryTxt');
   if(b) b.textContent=st('entry');
@@ -5120,14 +5166,18 @@ function stkRender(){
   out.push(stkNoteHTML(d));
   out.push('<div class="stk-last"><span>'+t('updatedAt')+(gen? gen.toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '—')+'</span><span>'+esc(d.srcNote||'')+'</span></div>');
   root.innerHTML=out.join('');
+  /* v3.27.3：深度页的板块标题是动态生成的，补 ic-in，否则图标被全局动画规则藏住（opacity:0） */
+  try{ [].forEach.call(root.querySelectorAll('.sec-title'), function(el){ el.classList.add('ic-in'); }); }catch(e){}
+  STK_SECS=[].slice.call(root.querySelectorAll('.sec-title[id]'));
   stkDraw();
+  stkSpyPaint();
 }
 function stkShortScoreName(){
   var d=stkBundle(); var sc=(d&&d.score)||{}; var tl=sc.tally||{};
   return st('secScore')+' '+(tl.bull||0)+'/'+((sc.items||[]).length||0);
 }
 function stkNavBtn(id, label){
-  return '<button type="button" onclick="stkGo(\''+id+'\')">'+esc(label)+'</button>';
+  return '<button type="button" data-t="'+id+'" onclick="stkGo(\''+id+'\')">'+esc(label)+'</button>';
 }
 function stkSecHead(id, icon, title, sub){
   return '<div class="sec-title" id="'+id+'"><svg class="ic" aria-hidden="true"><use href="#ic-'+icon+'"/></svg>'+esc(title)+'</div>'
@@ -5536,8 +5586,12 @@ function stkHover(svg, tip, n, cb){
   function show(ev){
     var i=at(ev);
     tip.innerHTML=cb(i);
-    tip.style.left=(((i+0.5)/n)*100)+'%';
     tip.classList.add('on');
+    /* v3.27.3：气泡贴到左右边缘时收进来 —— 手机端点两端柱子不再溢出卡片 */
+    var rr=svg.getBoundingClientRect(), rw=Math.max(1,rr.width);
+    var tw=Math.min(tip.offsetWidth||90, Math.max(70, rw-10));
+    var tx=Math.max(tw/2+2, Math.min(rw-tw/2-2, ((i+0.5)/n)*rw));
+    tip.style.left=tx.toFixed(1)+'px';
     var rs=svg.querySelectorAll('.sk-b');
     for(var k=0;k<rs.length;k++) rs[k].classList.toggle('on', +rs[k].getAttribute('data-i')===i);
   }

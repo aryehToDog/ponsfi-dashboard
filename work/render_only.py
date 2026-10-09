@@ -9,6 +9,19 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.27.3「深度页布局打磨 · 手机端适配」 · 2026-10-09
+     【为什么做这一版】作者反馈 STONK 深度页「UI 布局要优化，手机端同步适配」。
+     用无头浏览器在 1425/390/360 三个宽度实测出一批真实问题，逐条修：
+       ① 板块标题图标全隐藏：全局动画规则让 .sec-title 的图标先 opacity:0、滚进视野才点亮，
+          但深度页标题是 JS 动态生成的，从没被登记 —— 图标一直是空的。渲染后补 ic-in。
+       ② 点导航跳板块，标题被吸顶导航盖住：补 scroll-margin-top（桌面 68px / 手机 64px）。
+       ③ 吸顶导航胶囊缝隙透出正文：吸顶时补渐变底色 + 毛玻璃（同总览导航）。
+       ④ 手机端点柱子：气泡贴边会溢出卡片 → 位置按气泡宽度收进图表内。
+       ⑤ 手机端资金池行错位：名字占整行，储备/成交第二行左右对齐。
+       ⑥ 手机/平板导航条：滑动时出现、停手 1.3 秒自动收起（同总览导航）；顺手加当前板块高亮，
+          点中的胶囊自动滚到可视区中间。图表在手机上降到 170px。
+     回退：cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.27.2「深度页收尾：图表天数按实际数据显示」 · 2026-10-09
      价格走势 / 每天的收入与买回：标题里的天数按实际数据长度渲染（官方日线只有 ~24 天）。
      回退：cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py
@@ -689,10 +702,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.27.2-2026-10-09">
+<meta name="dashboard-version" content="v3.27.3-2026-10-09">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.27.2 · 2026-10-09"
+VER = "v3.27.3 · 2026-10-09"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

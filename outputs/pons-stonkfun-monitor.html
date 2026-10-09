@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.27.4「手机端头部按钮重叠修复」 · 2026-10-09
+     【为什么做这一版】作者手机截图反馈：头部「STONK 深度页」按钮文字压在「刷新数据」上。
+     无头浏览器实测（360/390/430px）：四个按钮被 flex:1 1 0 四等分，STONK 深度页内容
+     需 91px 但盒子只有 72px，white-space:nowrap 的文字溢出叠到隔壁按钮 —— v3.27 加
+     入口按钮后手机窄屏必现。修法（仅手机 ≤680px）：系统 / EN / 刷新 平分一行，
+     STONK 深度页整行独占（order 提到刷新之后），谁都不会再被压。
+     回退：cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.27.3「深度页布局打磨 · 手机端适配」 · 2026-10-09
      【为什么做这一版】作者反馈 STONK 深度页「UI 布局要优化，手机端同步适配」。
      用无头浏览器在 1425/390/360 三个宽度实测出一批真实问题，逐条修：
@@ -693,7 +701,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.27.3-2026-10-09">
+<meta name="dashboard-version" content="v3.27.4-2026-10-09">
 
 <html lang="zh-CN">
 <head>
@@ -2301,6 +2309,10 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
   .hdr-right .badge{flex:1 1 100%;text-align:center;justify-content:center}
   header .tbtn,#btnRefresh{min-height:38px;padding:8px 10px;flex:1 1 0;min-width:0;justify-content:center;
     white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  /* v3.27.4：「STONK 深度页」按钮内容比旧的三个按钮宽，四等分时文字溢出叠在刷新按钮上
+     （用户 2026-10-09 手机截图）。改 3+1：系统 / EN / 刷新 平分一行，STONK 深度页整行独占。 */
+  #btnRefresh{order:2}
+  header .stk-btn-entry{flex:1 1 100%;order:3}
   .q-like{min-height:38px;padding:6px 14px}
   /* 共勉长句：手机上整句完整显示，不再截成「…」（2026-10-06 用户反馈） */
   .qtext{display:block;overflow:visible;-webkit-line-clamp:unset;-webkit-box-orient:initial}
@@ -2725,7 +2737,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal')};
-const DASH_VER = 'v3.27.3 · 2026-10-09';
+const DASH_VER = 'v3.27.4 · 2026-10-09';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {

@@ -9,6 +9,14 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.27.4「手机端头部按钮重叠修复」 · 2026-10-09
+     【为什么做这一版】作者手机截图反馈：头部「STONK 深度页」按钮文字压在「刷新数据」上。
+     无头浏览器实测（360/390/430px）：四个按钮被 flex:1 1 0 四等分，STONK 深度页内容
+     需 91px 但盒子只有 72px，white-space:nowrap 的文字溢出叠到隔壁按钮 —— v3.27 加
+     入口按钮后手机窄屏必现。修法（仅手机 ≤680px）：系统 / EN / 刷新 平分一行，
+     STONK 深度页整行独占（order 提到刷新之后），谁都不会再被压。
+     回退：cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.27.3「深度页布局打磨 · 手机端适配」 · 2026-10-09
      【为什么做这一版】作者反馈 STONK 深度页「UI 布局要优化，手机端同步适配」。
      用无头浏览器在 1425/390/360 三个宽度实测出一批真实问题，逐条修：
@@ -702,10 +710,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.27.3-2026-10-09">
+<meta name="dashboard-version" content="v3.27.4-2026-10-09">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.27.3 · 2026-10-09"
+VER = "v3.27.4 · 2026-10-09"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

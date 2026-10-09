@@ -1605,6 +1605,10 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
   .hdr-right .badge{flex:1 1 100%;text-align:center;justify-content:center}
   header .tbtn,#btnRefresh{min-height:38px;padding:8px 10px;flex:1 1 0;min-width:0;justify-content:center;
     white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  /* v3.27.4：「STONK 深度页」按钮内容比旧的三个按钮宽，四等分时文字溢出叠在刷新按钮上
+     （用户 2026-10-09 手机截图）。改 3+1：系统 / EN / 刷新 平分一行，STONK 深度页整行独占。 */
+  #btnRefresh{order:2}
+  header .stk-btn-entry{flex:1 1 100%;order:3}
   .q-like{min-height:38px;padding:6px 14px}
   /* 共勉长句：手机上整句完整显示，不再截成「…」（2026-10-06 用户反馈） */
   .qtext{display:block;overflow:visible;-webkit-line-clamp:unset;-webkit-box-orient:initial}

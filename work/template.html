@@ -1796,6 +1796,23 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-btn-entry{display:inline-flex;align-items:center;gap:7px}
 .stk-btn-entry .ic{width:14px;height:14px}
 
+/* v3.27.1 手机端：列数收口（原来列数写在元素行内样式上，媒体查询压不过它） */
+.stk-grid.g2{grid-template-columns:repeat(2,1fr)}
+.stk-grid.g3{grid-template-columns:repeat(3,1fr)}
+.stk-grid.g4{grid-template-columns:repeat(4,1fr)}
+.stk-grid.g5{grid-template-columns:repeat(5,1fr)}
+.stk-grid.g6{grid-template-columns:repeat(6,1fr)}
+.stk-score.sc2{grid-template-columns:repeat(2,1fr)}
+.stk-mo.m3{grid-template-columns:repeat(3,1fr)}
+@media (max-width:980px){
+  .stk-grid,.stk-grid.g2,.stk-grid.g3,.stk-grid.g4,.stk-grid.g5,.stk-grid.g6{grid-template-columns:repeat(2,1fr)}
+  .stk-score,.stk-score.sc2{grid-template-columns:repeat(2,1fr)}
+  .stk-mo,.stk-mo.m3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){
+  .stk-score,.stk-score.sc2{grid-template-columns:1fr}
+}
+
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
 <script>
@@ -4993,6 +5010,16 @@ function st(k){
   if(v===undefined) v=STK_I18N.zh[k];
   return v===undefined? k : v;
 }
+function stkSiteInfo(){
+  try{
+    var b=(typeof DATA!=='undefined' && DATA) || (typeof BUNDLE!=='undefined' && BUNDLE) || {};
+    var m=(b.market||{}).stonkfun||{}, mt=((b.meta||{}).stonkfun)||{}, pr=(b.price||{}).stonkfun;
+    var px=(typeof pr==='number'&&pr>0)? pr : ((typeof m.price==='number'&&m.price>0)? m.price : null);
+    var mc=(typeof m.mcap==='number'&&m.mcap>0)? m.mcap : ((typeof mt.mcap==='number'&&mt.mcap>0)? mt.mcap : null);
+    var cg=(typeof m.change24h==='number')? m.change24h : null;
+    return {price:px, mcap:mc, chg:cg};
+  }catch(e){ return {price:null, mcap:null, chg:null}; }
+}
 function stkBoardTotal(){
   try{
     var b=(typeof DATA!=='undefined' && DATA) || (typeof BUNDLE!=='undefined' && BUNDLE) || {};
@@ -5110,13 +5137,18 @@ function stkSecHead(id, icon, title, sub){
 /* ---------- 首屏 ---------- */
 function stkHeroHTML(h, fw, dm){
   var hd=(dm&&dm.holders)||{};
-  var chg=(h.chg24!=null? h.chg24 : null);
+  /* v3.27.1 全站一个价：优先用总览页同一套数字（官方快照 + DefiLlama 实时刷新），
+     取不到才退回本页快照 —— 两个页面永远显示同一个价格与市值。 */
+  var site=stkSiteInfo();
+  var px=(site.price!=null? site.price : h.price);
+  var mc=(site.mcap!=null? site.mcap : h.mcap);
+  var chg=(site.chg!=null? site.chg : (h.chg24!=null? h.chg24 : null));
   var cells=[
-    ['kMcap', fmtU(h.mcap), ''],
+    ['kMcap', fmtU(mc), ''],
     ['kVol24', fmtU(h.vol24), (dm.turnover!=null? st('kTurnover')+' '+(dm.turnover*100).toFixed(1)+'%' : '')],
     ['kBurned', (h.burnPct!=null? (h.burnPct*100).toFixed(2)+'%' : '—'), (h.burnedTok!=null? (h.burnedTok/1e6).toFixed(2)+'M STONK' : '')],
     ['kHolders', nS(h.holders), (hd.d24h!=null? ((hd.d24h>=0?'+':'')+nS(hd.d24h)+' / 24h') : '')],
-    ['kDepth', fmtU(h.reserve), (h.reserve&&h.mcap? st('kOfMcap')+' '+(h.reserve/h.mcap*100).toFixed(1)+'%' : '')],
+    ['kDepth', fmtU(h.reserve), (h.reserve&&mc? st('kOfMcap')+' '+(h.reserve/mc*100).toFixed(1)+'%' : '')],
     ['kLiq', fmtU(((dm.liquidity)||{}).total), (((dm.liquidity)||{}).pools? (((dm.liquidity).pools)+' '+st('kPoolsN')) : '')],
     ['kBuyback', fmtU(fw.buybackDay), (fw.share!=null? ((fw.share*100).toFixed(0)+'% '+(LANG==='zh'?'的收入':'of revenue')) : '')],
     ['kBurnSpeed', (fw.burnVel!=null? fw.burnVel.toFixed(3)+'%' : '—'), (fw.burnDay? (fw.burnDay/1e6).toFixed(2)+'M '+st('kPerDay') : '')]
@@ -5124,7 +5156,7 @@ function stkHeroHTML(h, fw, dm){
   var lastTxt = (h.lastBurn && h.lastBurn.t)? (LANG==='zh'? '最近销毁 ' : 'last burn ')+agoTxt(h.lastBurn.t)+(h.lastBurn.usd? ' · '+fmtU(h.lastBurn.usd) : '') : '';
   return '<div class="stk-hero card">'
     + '<div>'
-    +   '<div class="stk-px"><span class="cur">$</span>'+(h.price!=null? h.price.toFixed(4):'—')+'</div>'
+    +   '<div class="stk-px"><span class="cur">$</span>'+(px!=null? px.toFixed(4):'—')+'</div>'
     +   '<div class="stk-px-sub">'
     +     '<span class="pill '+(chg!=null&&chg>=0?'up':'down')+'">'+(chg!=null? (chg>=0?'▲ ':'▼ ')+Math.abs(chg).toFixed(2)+'%' : '—')+' 24h</span>'
     +     (h.chg1h!=null? '<span>1h '+((h.chg1h>=0?'+':'')+h.chg1h.toFixed(2)+'%')+'</span>' : '')
@@ -5229,7 +5261,7 @@ function stkSupplyHTML(sup, h){
     [st('sAtNow'), fmtU(sup.burnedUsdNow), st('sAtNow')],
     [st('sBuybackN'), sup.buybackCount? nS(sup.buybackCount) : '—', sup.lastBuybackAt? st('sLastBuyback')+' '+agoTxt(Date.parse(sup.lastBuybackAt)) : '']
   ];
-  var grid='<div class="stk-grid" style="grid-template-columns:repeat(4,1fr)">'+cells.map(function(c){
+  var grid='<div class="stk-grid g4">'+cells.map(function(c){
     return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+'<small>'+esc(c[2]||'')+'</small></div></div>';
   }).join('')+'</div>';
   return '<div class="card stk-card stk-sec">'
@@ -5260,7 +5292,7 @@ function stkSafetyHTML(o){
   var top10=(o.hd.top10_rug||o.hd.top10);
   rows.push(row(top10!=null? top10<30 : null, zh?('前 10 大钱包占 '+(top10!=null? top10.toFixed(1)+'%':'—')):('Top 10 wallets hold '+(top10!=null? top10.toFixed(1)+'%':'—')), zh?'筹码太集中容易被砸盘，< 30% 算健康':'concentration drives dumps; under 30% is healthy'));
   rows.push(row(o.lq.total&&o.lq.pools? true:null, zh?('流动性分散在 '+(o.lq.pools||'—')+' 个池子'):('Liquidity across '+(o.lq.pools||'—')+' pools'), zh?'全市场流动性 '+fmtU(o.lq.total)+'，最大池占 '+((o.lq.topShare||0)*100).toFixed(0)+'%':'market-wide '+fmtU(o.lq.total)+', top pool '+((o.lq.topShare||0)*100).toFixed(0)+'%'));
-  return '<div class="stk-score" style="grid-template-columns:1fr 1fr">'+rows.join('')+'</div>';
+  return '<div class="stk-score sc2">'+rows.join('')+'</div>';
 }
 function stkBurnsHTML(h){
   var d=stkBundle()||{}; var list=d.burns||[];
@@ -5286,7 +5318,7 @@ function stkFlyHTML(fw, h){
     [st('flPx'), (fw.pxRatio!=null? fw.pxRatio.toFixed(2)+'x':''), LANG==='zh'?('回购均价 '+pxS(fw.avgPx7)):('avg buyback '+pxS(fw.avgPx7))],
     [st('flChg'), (fw.chg7!=null? pctS(fw.chg7):''), LANG==='zh'?'近 7 日 vs 前 7 日':'7d vs prior 7d']
   ];
-  var grid='<div class="stk-grid" style="grid-template-columns:repeat(6,1fr)">'+tiles.map(function(c,i){
+  var grid='<div class="stk-grid g6">'+tiles.map(function(c,i){
     var vcls='';
     if(i===5 && fw.chg7!=null) vcls=stkPctCls(fw.chg7);
     if(i===4 && fw.pxRatio!=null) vcls=fw.pxRatio>=1? 'up':'down';
@@ -5326,7 +5358,7 @@ function stkDemandHTML(dm){
     [st('kTurnover'), (dm.turnover!=null? (dm.turnover*100).toFixed(1)+'%':''), LANG==='zh'?'成交 ÷ 市值':'volume ÷ mcap'],
     [st('dNetflow'), (dm.net24h!=null? (dm.net24h>=0?'+':'')+fmtU(Math.abs(dm.net24h)) : st('dRecording')), (dm.net24h==null? st('dSnap').replace('{h}', (dm.snapHours||0)) : (LANG==='zh'?'正 = 主池被买走':'positive = bought out of the pool'))]
   ];
-  var cells='<div class="stk-grid" style="grid-template-columns:repeat(5,1fr)">'+tiles.map(function(c,i){
+  var cells='<div class="stk-grid g5">'+tiles.map(function(c,i){
     var cls='';
     if(i===4 && dm.net24h!=null) cls=(dm.net24h>=0?'up':'down');
     return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v '+cls+'">'+(c[1]||'—')+'<small>'+esc(c[2]||'')+'</small></div></div>';
@@ -5349,7 +5381,7 @@ function stkDemandHTML(dm){
     hbar='<div class="stk-hbar">'+segs.map(function(sg){ return '<i style="width:'+((sg[1]||0)).toFixed(2)+'%;background:'+sg[2]+'"></i>'; }).join('')+'</div>'
       + '<div class="stk-hlegend">'+segs.map(function(sg){ return '<span><em style="background:'+sg[2]+'"></em>'+esc(st(sg[0]))+' '+(sg[1]!=null? sg[1].toFixed(1)+'%':'—')+'</span>'; }).join('')+'</div>';
   }
-  var hchg='<div class="stk-grid" style="grid-template-columns:repeat(3,1fr);margin-top:12px">'
+  var hchg='<div class="stk-grid g3" style="margin-top:12px">'
     + [['h1h',hd.d1h],['h24h',hd.d24h],['h7d',hd.d7d]].map(function(r){
         var v=r[1];
         return '<div class="stk-cell"><div class="k">'+esc(st('hChange')+' · '+st(r[0]))+'</div><div class="v '+(v==null?'':(v>=0?'up':'down'))+'">'+(v==null? '—' : ((v>=0?'+':'')+nS(v)+' '+st('kHolders'))) +'</div></div>';
@@ -5362,7 +5394,7 @@ function stkDemandHTML(dm){
           }).join('')+'</div>' : '')
     +   '</div>'
     +   '<div class="card stk-card"><div class="stk-h3">'+esc(st('holders'))+'</div>'
-    +     '<div class="stk-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">'
+    +     '<div class="stk-grid g2" style="margin-bottom:12px">'
     +       '<div class="stk-cell"><div class="k">'+esc(st('kHolders'))+'</div><div class="v">'+nS(hd.count)+'</div></div>'
     +       '<div class="stk-cell"><div class="k">'+esc(st('hTop10'))+'</div><div class="v">'+(hd.top10!=null? hd.top10.toFixed(2)+'%':'—')+'</div></div>'
     +     '</div>'
@@ -5388,11 +5420,11 @@ function stkValueHTML(val, md){
       + '<span class="num">'+esc(r.c||'')+'</span><span class="dex"></span></div>';
   }).join('')+'</div>' : '';
   return '<div class="card stk-card stk-sec">'
-    + '<div class="stk-grid" style="grid-template-columns:repeat(3,1fr)">'+tiles.map(function(c){
+    + '<div class="stk-grid g3">'+tiles.map(function(c){
         return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+'<small>'+esc(c[2]||'')+'</small></div></div>';
       }).join('')+'</div>'
     + '<div style="height:14px"></div>'
-    + '<div class="stk-grid" style="grid-template-columns:repeat(4,1fr)">'
+    + '<div class="stk-grid g4">'
     +   '<div class="stk-cell"><div class="k">'+esc(st('vRank'))+'</div><div class="v">'+(rank? '#'+rank : '—')+'<small>'+esc(st('vRankOf').replace('{n}', nS(stkBoardTotal()||2822)))+'</small></div></div>'
     +   '<div class="stk-cell"><div class="k">'+esc(st('vRevTotal'))+'</div><div class="v">'+fmtU(pf.revTotal)+'</div></div>'
     +   '<div class="stk-cell"><div class="k">'+esc(st('vBuyTotal'))+'</div><div class="v">'+fmtU(pf.buybackTotal)+'</div></div>'
@@ -5451,7 +5483,7 @@ function stkModelHTML(md){
     +     [7,30].map(function(hz){ return '<button type="button" class="'+(STK_HZ===hz?'on':'')+'" onclick="stkSetH('+hz+')">'+hz+' '+esc(st('mDay'))+'</button>'; }).join('')
     +   '</div></div>'
     + '</div>'
-    + '<div class="stk-mo" id="stkMO" style="grid-template-columns:repeat(3,1fr)"></div>'
+    + '<div class="stk-mo m3" id="stkMO"></div>'
     + '<div class="stk-model-note">'+esc(st('mNote'))+'</div>'
     + '</div>';
 }
@@ -5661,12 +5693,10 @@ async function stkLive(){
     var a=((j||{}).data||{}).attributes||{};
     var px=parseFloat(a.base_token_price_usd);
     if(px){
-      d.hero.price=px;
-      var c=(a.price_change_percentage||{}).h24;
-      if(c!=null) d.hero.chg24=parseFloat(c);
+      /* 价格/市值/涨跌不在这里覆盖：统一由总览页那套（官方快照 + DefiLlama 实时）说了算。
+         这里只补 GT 独有的实时字段：24h 成交、主池储备、买卖笔数。 */
       var v24=parseFloat((a.volume_usd||{}).h24);
       if(v24) d.hero.vol24=v24;
-      var mc=parseFloat(a.market_cap_usd); if(mc) d.hero.mcap=mc;
       var rv=parseFloat(a.reserve_in_usd); if(rv) d.hero.reserve=rv;
       var tx=((a.transactions||{}).h24)||{};
       if(tx.buys!=null){ d.demand.buys=tx.buys; d.demand.sells=tx.sells; d.demand.buyers=tx.buyers; d.demand.sellers=tx.sellers;

@@ -69,16 +69,43 @@ def safe_get(url, tries=2, label=""):
 
 
 def gt_get(url, label="", tries=3):
-    """GeckoTerminal 专用：连续请求会被限流（HTTP 429），命中就多等一会儿再试。"""
+    """GeckoTerminal 专用：连续请求会被限流（HTTP 429），命中就多等一会儿再试。
+
+    2026-10-08 实测：CI 里 hourly.py 刚跑完会吃掉这一分钟的大部分配额，
+    本脚本的四次请求里最后那次（资金池列表）经常直接 429，等待时间太短会连败三次，
+    页面上「资金池分布」就空了。这里把 429 的退避拉长（20s/30s/40s）。"""
     last = None
     for i in range(tries):
         try:
             return H.get(url, tries=1)
         except Exception as exc:
             last = exc
-            print("warn: %s attempt %d: %s" % (label or url.split("?")[0], i + 1, exc), file=sys.stderr)
-            time.sleep(4 + 3 * i)
+            msg = str(exc)
+            wait = (20 + 10 * i) if "429" in msg else (5 + 4 * i)
+            print("warn: %s attempt %d: %s（%ds 后重试）" % (label or url.split("?")[0], i + 1, msg, wait), file=sys.stderr)
+            time.sleep(wait)
     return None
+
+
+def parse_gt_pools(src):
+    """把 GeckoTerminal 的代币池子列表裁成前端要的四个字段，按储备（流动性）从大到小。"""
+    out = []
+    for p in ((src or {}).get("data") or []):
+        a = p.get("attributes") or {}
+        rel = p.get("relationships") or {}
+        dex = ((rel.get("dex") or {}).get("data") or {}).get("id") or ""
+        liq = fnum(a.get("reserve_in_usd"))
+        if liq is None:
+            continue
+        out.append({
+            "name": (a.get("name") or "").strip(),
+            "dex": DEX_NAMES.get(dex, dex or "—"),
+            "liq": round(liq, 2),
+            "vol": round(fnum((a.get("volume_usd") or {}).get("h24")) or 0, 2),
+            "addr": a.get("address") or "",
+        })
+    out.sort(key=lambda x: x["liq"], reverse=True)
+    return out
 
 
 def iso_ms(s):
@@ -253,22 +280,12 @@ def main():
     buyback_share = fnum(tot.get("buybackShare")) or ((hourly.get("stonk") or {}).get("ledger") or {}).get("ratio") or 0.6
 
     # ---- 资金池：GT 列表（按储备排序）+ RugCheck 兜底 ----
-    pools = []
-    for p in (gt_pools.get("data") or []):
-        a = p.get("attributes") or {}
-        rel = p.get("relationships") or {}
-        dex = ((rel.get("dex") or {}).get("data") or {}).get("id") or ""
-        liq = fnum(a.get("reserve_in_usd"))
-        if liq is None:
-            continue
-        pools.append({
-            "name": (a.get("name") or "").strip(),
-            "dex": DEX_NAMES.get(dex, dex or "—"),
-            "liq": round(liq, 2),
-            "vol": round(fnum((a.get("volume_usd") or {}).get("h24")) or 0, 2),
-            "addr": a.get("address") or "",
-        })
-    pools.sort(key=lambda x: x["liq"], reverse=True)
+    pools = parse_gt_pools(gt_pools)
+    if not pools:
+        print("warn: 资金池列表为空（多半是 GT 限流），等 25 秒单独再要一次", file=sys.stderr)
+        time.sleep(25)
+        gt_pools = gt_get("%s/networks/solana/tokens/%s/pools?page=1" % (GT, MINT), label="gt-pools-retry", tries=3) or {}
+        pools = parse_gt_pools(gt_pools)
     stonk_quoted = [p for p in pools if p["name"].upper().endswith("/ STONK")]
 
     # ---- 价格历史（90 天，日线收盘） ----
@@ -300,12 +317,16 @@ def main():
     buyback_24h = dly["buyback"][-1] if dly["buyback"] else None
     burn_24h = dly["burn"][-1] if dly["burn"] else None
     vs_vol = (bb_day / vol24) if (bb_day and vol24) else None
-    depth_ratio = (reserve / mcap) if (reserve and mcap) else None
-    liq_ratio = (rug_liq / mcap) if (rug_liq and mcap) else None
-    buy_share = (buys / (buys + sells)) if (buys is not None and sells is not None and (buys + sells) > 0) else None
-    ps7 = (mcap / (rev7 * 365)) if (mcap and rev7) else None
     sf_px = fnum((dd.get("market") or {}).get("stonkfun", {}).get("price")) if isinstance(dd.get("market"), dict) else None
-    px_ratio = (price / avg_px7) if (price and avg_px7) else None
+    # v3.27.1 全站一个价：本页优先用总览页同源的官方价（取不到才退回 GT 主池价），市值也跟着
+    # 用同一个价重算 —— 深度页与总览页显示的价格/市值永远一致（以前一个走官方一个走池子，能差 3%）。
+    px_use = sf_px or price
+    mcap_use = (px_use * circ) if (px_use and circ) else mcap
+    depth_ratio = (reserve / mcap_use) if (reserve and mcap_use) else None
+    liq_ratio = (rug_liq / mcap_use) if (rug_liq and mcap_use) else None
+    buy_share = (buys / (buys + sells)) if (buys is not None and sells is not None and (buys + sells) > 0) else None
+    ps7 = (mcap_use / (rev7 * 365)) if (mcap_use and rev7) else None
+    px_ratio = (px_use / avg_px7) if (px_use and avg_px7) else None
     rug_ok = bool(rug)
     mint_rev = (mint_auth == "no") or (rug_ok and rug.get("mintAuthority") is None)
     freeze_rev = (freeze_auth == "no") or (rug_ok and rug.get("freezeAuthority") is None)
@@ -333,12 +354,12 @@ def main():
     payload = {
         "generated": now,
         "hero": {
-            "price": price, "chg24": fnum(chg.get("h24")), "chg1h": fnum(chg.get("h1")),
-            "mcap": mcap, "fdv": fdv, "vol24": vol24, "reserve": reserve,
+            "price": px_use, "chg24": fnum(chg.get("h24")), "chg1h": fnum(chg.get("h1")),
+            "mcap": mcap_use, "fdv": fdv, "vol24": vol24, "reserve": reserve,
             "holders": int(holders) if holders else None,
             "burnPct": burn_pct, "burnedTok": burned_tot, "burnedUsdNow": burned_usd_now,
             "lastBurn": burns_feed[0] if burns_feed else None,
-            "sfPrice": sf_px, "btcPair": None,
+            "sfPrice": sf_px, "gtPrice": price, "btcPair": None,
         },
         "supply": {
             "initial": supply0, "burned": burned_tot, "circ": circ,
@@ -386,7 +407,7 @@ def main():
             "createdAt": pa.get("pool_created_at"),
         },
         "value": {
-            "ps7": ps7, "annRev": (rev7 * 365) if rev7 else None, "mcap": mcap,
+            "ps7": ps7, "annRev": (rev7 * 365) if rev7 else None, "mcap": mcap_use,
             "rank": (dd.get("leaderboard") or {}).get("board", {}).get("total24h", {}).get("rank", {}) if isinstance(dd.get("leaderboard"), dict) else {},
             "rankNear": (((dd.get("leaderboard") or {}).get("board") or {}).get("total24h") or {}).get("near", {}) if isinstance(dd.get("leaderboard"), dict) else {},
             "rankUpdated": (dd.get("leaderboard") or {}).get("updated") if isinstance(dd.get("leaderboard"), dict) else None,
@@ -398,7 +419,7 @@ def main():
             "share": ((hourly.get("share") or {}).get("stonk") or None),
         },
         "score": {"items": items, "tally": tally},
-        "model": {"price": price, "supply": supply0, "circ": circ,
+        "model": {"price": px_use, "supply": supply0, "circ": circ,
                   "quoteDepth": main_quote_usd, "rev7": rev7, "share": buyback_share,
                   "poolName": (pa.get("name") or "STONK / SOL")},
         "safety": {
@@ -415,8 +436,8 @@ def main():
     H.atomic_dump(payload, OUT)
     dd["stonkPage"] = payload
     H.atomic_dump(dd, DD)
-    print("stonk-page: price=%s mcap=%s burned=%s holders=%s bulls=%s/%s snaps=%s" % (
-        price, mcap, burned_tot, holders, tally["bull"], len(items), len(snaps)))
+    print("stonk-page: price=%s (gt=%s) mcap=%s burned=%s holders=%s pools=%s bulls=%s/%s snaps=%s" % (
+        px_use, price, mcap_use, burned_tot, holders, len(pools), tally["bull"], len(items), len(snaps)))
     return 0
 
 

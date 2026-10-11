@@ -1667,7 +1667,7 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
    v3.27 · STONK 深度页（独立视图，页头按钮 / ?page=stonk 直达）
    说明：只加样式不动老页面 —— body.stk-on 时隐藏总览内容，显示 #stkView
    ========================================================================== */
-body.stk-on .wrap > :not(#stkView):not(.bgm):not(.tip-mini):not(.tip-modal):not(.toast):not(script){display:none !important}
+body.stk-on .wrap > :not(#stkView):not(.bgm):not(.tip-mini):not(.tip-modal):not(.toast):not(#secNav):not(script){display:none !important}
 #stkView{display:none}
 body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @keyframes stkIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -1725,30 +1725,17 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-vlines .dotm.g{background:var(--up)} .stk-vlines .dotm.w{background:var(--warn)} .stk-vlines .dotm.b{background:var(--down)}
 .stk-vlines b{color:var(--txt);font-weight:700}
 
-.stk-nav{position:sticky;top:8px;z-index:60;display:flex;gap:6px;overflow-x:auto;padding:6px 0 8px;margin-bottom:6px;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none}
-.stk-nav::-webkit-scrollbar{display:none}
-.stk-nav button{flex:0 0 auto;font-family:inherit;font-size:var(--fs-11);padding:6px 12px;border-radius:var(--r-pill);
-  border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 88%,transparent);color:var(--mut);cursor:pointer;
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-.stk-nav button:hover{color:var(--txt);border-color:var(--line2)}
-/* v3.27.3：吸顶补底色（胶囊缝隙不再透出正文）+ 当前板块高亮 + 锚点跳转留出吸顶高度 */
-.stk-nav.stick{background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 97%,transparent),color-mix(in srgb,var(--bg) 78%,transparent));
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-.stk-nav button.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 42%,transparent);
-  background:color-mix(in srgb,var(--accent) 13%,var(--panel));font-weight:700}
-#stkView .sec-title{scroll-margin-top:68px}
-/* v3.29.7：手机/平板（≤1023）深度页让开左上角打赏浮标（.tip-mini，底边≈47px）——吸顶导航下移，
-   锚点留白同步加大。1024+ 桌面端内容整体右移（左导航列），不会重叠，保持原样。 */
+/* v3.29.8：深度页导航并入全站侧边栏（#secNav 同一套：桌面左侧竖列 / 手机横滑胶囊），
+   原来那条横向胶囊条 .stk-nav 已删除；锚点留白按新导航重新校准。 */
+#stkView .sec-title{scroll-margin-top:80px}
+/* v3.29.7/8：手机/平板（≤1023）深度页让开左上角打赏浮标（.tip-mini，底边≈47px）——
+   吸顶导航下移，锚点留白同步加大。1024+ 桌面端导航在左侧留白里，不会重叠。 */
 @media (max-width:1023px){
-  body.stk-on .stk-nav{top:54px}
-  body.stk-on #stkView .sec-title{scroll-margin-top:104px}
+  body.stk-on #secNav,
+  body.stk-on.tb-on #secNav{top:54px}
+  body.stk-on #stkView .sec-title{scroll-margin-top:114px}
 }
-/* v3.29.6：长页骨架 —— 板块序号徽章 + 首屏 KPI 主次分层（4 个核心数字放大加底色） */
-#stkView .sec-title .sn{font-style:normal;flex:0 0 auto;font-size:var(--fs-10);font-weight:800;letter-spacing:.5px;
-  color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);
-  border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);border-radius:7px;
-  padding:2px 7px;line-height:1.25;font-variant-numeric:tabular-nums}
+/* v3.29.6（v3.29.8 保留）：首屏 KPI 主次分层（4 个核心数字放大加底色） */
 .stk-cell.xl{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 8%,var(--panel2)),var(--panel2) 72%)}
 .stk-cell.xl .v{font-size:var(--fs-20);letter-spacing:-.7px;margin-top:5px}
 @media (max-width:680px){.stk-cell.xl .v{font-size:var(--fs-16)}}
@@ -1792,6 +1779,69 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:var(--fs-11);color:var(--mut);margin-bottom:8px}
 .stk-legend span{display:inline-flex;align-items:center;gap:6px}
 .stk-legend em{width:9px;height:9px;border-radius:3px;display:inline-block}
+/* v3.29.8 价格走势：头部直接给最新收盘价 + 区间涨跌；图上三档价格刻度 + 十字线 + 末点脉冲 */
+.stk-phead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:2px 0 10px}
+.stk-phead .pxl{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;min-width:0}
+.stk-phead .pxn{font-size:clamp(24px,3.2vw,30px);font-weight:800;letter-spacing:-1px;line-height:1;font-variant-numeric:tabular-nums}
+.stk-phead .pxc{font-size:var(--fs-12);font-weight:800;padding:3px 10px;border-radius:var(--r-pill);font-variant-numeric:tabular-nums;line-height:1.35}
+.stk-phead .pxc.up{color:var(--up);background:color-mix(in srgb,var(--up) 13%,transparent)}
+.stk-phead .pxc.down{color:var(--down);background:color-mix(in srgb,var(--down) 13%,transparent)}
+.stk-phead .pxs{font-size:var(--fs-10);color:var(--mut2);font-variant-numeric:tabular-nums}
+.stk-pyax{position:absolute;inset:0;pointer-events:none;z-index:2}
+.stk-pyax span{position:absolute;left:0;transform:translateY(-50%);font-size:var(--fs-10);color:var(--mut2);
+  font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--panel) 82%,transparent);
+  padding:0 5px;border-radius:5px;line-height:1.55}
+.stk-ptag{position:absolute;right:0;transform:translateY(-50%);z-index:2;pointer-events:none;
+  font-size:var(--fs-10);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;
+  color:var(--hb-stonk);background:color-mix(in srgb,var(--hb-stonk) 13%,var(--panel));
+  border:1px solid color-mix(in srgb,var(--hb-stonk) 38%,transparent);padding:1px 7px;border-radius:6px}
+.stk-pcross{position:absolute;top:0;bottom:0;width:1px;z-index:2;pointer-events:none;opacity:0;
+  background:color-mix(in srgb,var(--mut) 46%,transparent);transition:opacity .12s ease}
+.stk-pcross.on{opacity:1}
+.stk-pdot{position:absolute;z-index:3;pointer-events:none;width:11px;height:11px;border-radius:50%;
+  background:var(--hb-stonk);border:2.5px solid var(--panel);transform:translate(-50%,-50%);opacity:0;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--hb-stonk) 20%,transparent);transition:opacity .12s ease}
+.stk-pdot.on{opacity:1}
+.sk-grid{stroke:color-mix(in srgb,var(--line2) 62%,transparent);stroke-width:1;stroke-dasharray:3 6}
+.sk-end-halo{fill:none;stroke:var(--hb-stonk);transform-box:fill-box;transform-origin:center;animation:skPulse 2.6s ease-out infinite}
+@keyframes skPulse{0%{transform:scale(.5);opacity:.5}65%{transform:scale(1.9);opacity:0}100%{transform:scale(1.9);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sk-end-halo{animation:none;opacity:.25}}
+.stk-pax span{flex:1 1 0;min-width:0;text-align:center;font-variant-numeric:tabular-nums}
+.stk-pax span:first-child{text-align:left}
+.stk-pax span:last-child{text-align:right}
+
+/* v3.29.8 钱包分层：整行可点，弹出该档买卖明细（手机没有 hover，点击看数） */
+.stk-flow-hint{display:flex;align-items:center;gap:6px;font-size:var(--fs-10);color:var(--mut2);margin:10px 2px 6px}
+.stk-flow .row.fclick{cursor:pointer;transition:background .15s ease,box-shadow .15s ease}
+.stk-flow .row.fclick:hover{background:color-mix(in srgb,var(--accent) 7%,var(--panel2))}
+.stk-flow .row.fclick:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:-2px}
+.stk-flow .row.fclick{position:relative}
+.stk-flow .row.fclick:after{content:'›';position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  color:var(--mut2);font-weight:800;font-size:var(--fs-13);line-height:1;pointer-events:none}
+.stk-flow .row.fclick .val{padding-right:17px}
+@media (max-width:760px){.stk-flow .row.fclick .val{padding-right:0}.stk-flow .row.fclick:after{display:none}}
+.stk-pop{position:fixed;z-index:200;width:236px;max-width:calc(100vw - 20px);padding:13px 14px 12px;
+  border-radius:var(--r-md);border:1px solid var(--line2);background:var(--panel);
+  box-shadow:0 22px 54px -18px rgba(0,0,0,.45);animation:stkPopIn .16s ease both}
+@keyframes stkPopIn{from{opacity:0;transform:translateY(5px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.stk-pop{animation:none}}
+.stk-pop .ph{display:flex;align-items:center;gap:7px;font-size:var(--fs-11);color:var(--mut);margin-bottom:8px}
+.stk-pop .ph em{font-style:normal;font-size:var(--fs-14);line-height:1}
+.stk-pop .ph b{color:var(--txt);font-size:var(--fs-12)}
+.stk-pop .ph .x{margin-left:auto;width:22px;height:22px;display:grid;place-items:center;border-radius:7px;
+  color:var(--mut2);cursor:pointer;font-size:var(--fs-13);line-height:1;border:1px solid transparent}
+.stk-pop .ph .x:hover{color:var(--txt);border-color:var(--line)}
+.stk-pop .pn{font-size:var(--fs-20);font-weight:800;letter-spacing:-.6px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stk-pop .pn.up{color:var(--up)} .stk-pop .pn.down{color:var(--down)}
+.stk-pop .pl{font-size:var(--fs-10);color:var(--mut2);margin:3px 0 10px}
+.stk-pop .pbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:10px;background:var(--panel2)}
+.stk-pop .pbar i{height:100%} .stk-pop .pbar i.b{background:var(--up)} .stk-pop .pbar i.s{background:var(--down)}
+.stk-pop .pg{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px}
+.stk-pop .pg div{min-width:0}
+.stk-pop .pg span{display:block;font-size:var(--fs-10);color:var(--mut2)}
+.stk-pop .pg b{font-size:var(--fs-12);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.stk-pop .pf{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:var(--fs-10);color:var(--mut2);line-height:1.5}
+#stkFlowBk{position:fixed;inset:0;z-index:190}
 
 .stk-pools{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
 .stk-pool{background:var(--panel2);display:grid;grid-template-columns:1.4fr 1fr 1fr 90px;gap:10px;align-items:center;padding:9px 12px;font-size:var(--fs-12)}
@@ -1903,11 +1953,7 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @media (max-width:560px){
   .stk-score,.stk-score.sc2{grid-template-columns:1fr}
 }
-/* v3.27.3 手机/平板：导航条滑动出现、停手收起（与总览导航同款）；手机图表降一点高度 */
-@media (max-width:1023px){
-  .stk-nav{transition:opacity .26s ease,transform .26s ease}
-  .stk-nav.hide{opacity:0;transform:translateY(-14px);pointer-events:none}
-}
+/* v3.29.8 手机/平板：导航条滑动出现、停手收起 —— 深度页复用侧边栏那套（见 #secNav 规则） */
 @media (max-width:680px){#stkView .sec-title{scroll-margin-top:64px}}
 @media (max-width:560px){.stk-chart{height:170px}}
 
@@ -2127,7 +2173,7 @@ const BUNDLE = /*__DATA__*/;
 /* ---------- v3.13 图标辅助（Phosphor Fill 实心 sprite，见 <body> 开头的 <symbol> 定义） ---------- */
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
-  activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal')};
+  activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
 const DASH_VER = /*__VER__*/ 'v1.0';
 
 /* ==================== 多语言 / i18n ==================== */
@@ -4682,14 +4728,34 @@ const NAV_ITEMS=[
   {id:'st-src',    ic:'db',       k:'navSrc'},
   {id:'st-guide',  ic:'book',     k:'navGuide'}
 ];
+/* v3.29.8：STONK 深度页并入同一套侧边栏 —— 深度页模式下换成这组板块（id 与 stkRender 一致） */
+const NAV_STK_ITEMS=[
+  {id:'top',         ic:'zap',      k:'navTop'},
+  {id:'stk-s-fly',   ic:'trend',    k:'secFly'},
+  {id:'stk-s-flow',  ic:'pie',      k:'secFlow'},
+  {id:'stk-s-demand',ic:'activity', k:'secDemand'},
+  {id:'stk-s-supply',ic:'flame',    k:'secSupply'},
+  {id:'stk-s-value', ic:'trophy',   k:'secValue'},
+  {id:'stk-s-rank',  ic:'medal',    k:'secRank'},
+  {id:'stk-s-score', ic:'shield',   k:'secScore'},
+  {id:'stk-s-model', ic:'refresh',  k:'secModel'},
+  {id:'stk-s-note',  ic:'book',     k:'secNote'}
+];
+function navItems(){ return document.body.classList.contains('stk-on')? NAV_STK_ITEMS : NAV_ITEMS; }
+/* 总览 ⇄ 深度页切换：换一套板块、清掉缓存、重建并重新定位高亮 */
+function navResync(){
+  NAV_ELS=null; NAV_CARD=null; NAV_NOW=null;
+  navBuild(); navReq();
+}
 let NAV_NOW=null, NAV_TICK=false, NAV_ELS=null, NAV_CARD=null, NAV_TBON=false, NAV_HIDE_T=null, NAV_STICK=false;
 function navReduce(){ try{ return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } }
 function navBuild(){
   const nav=document.getElementById('secNav'); if(!nav) return;
   nav.setAttribute('aria-label', t('navAria'));
   nav.innerHTML='<div class="nav-h" aria-hidden="true">'+esc(t('navTitle'))+'</div>'
-    +NAV_ITEMS.map(function(it){
-    const lab=t(it.k);
+    +navItems().map(function(it){
+    /* v3.29.8：深度页板块的文案在 STK_I18N 里（secFly 等），总览的走 I18N —— 谁的词典里有就用谁 */
+    const lab=(typeof STK_I18N!=='undefined' && STK_I18N[LANG] && STK_I18N[LANG][it.k]!==undefined)? st(it.k) : t(it.k);
     return '<button class="nav-i" type="button" data-nav="'+it.id+'" title="'+esc(lab)+'" aria-label="'+esc(lab)+'">'
       + '<span class="nav-dot">'+IC[it.ic]+'</span><span class="nav-t">'+esc(lab)+'</span></button>';
   }).join('');
@@ -4715,9 +4781,11 @@ function navSet(id){
 function navSpy(){
   NAV_TICK=false;
   const nav=document.getElementById('secNav'); if(!nav) return;
+  const items=navItems();
   /* 性能：板块元素、作者卡只查一次（它们是静态节点，语言切换/数据刷新都不会被替换），
-     滚动时每帧只做 getBoundingClientRect 这一种「读」，不查 DOM、不写样式（除高亮变化）。 */
-  if(!NAV_ELS) NAV_ELS=NAV_ITEMS.map(function(it){ return it.id==='top'? null : document.getElementById(it.id); });
+     滚动时每帧只做 getBoundingClientRect 这一种「读」，不查 DOM、不写样式（除高亮变化）。
+     深度页的板块是 stkRender 动态生成的，重建后会把 NAV_ELS 置空再重查（见 stkRender）。 */
+  if(!NAV_ELS) NAV_ELS=items.map(function(it){ return it.id==='top'? null : document.getElementById(it.id); });
   if(NAV_CARD===null) NAV_CARD=document.querySelector('.author')||false;
   const y=window.pageYOffset||document.documentElement.scrollTop||0;
   const vh=window.innerHeight, atBottom=(y+vh>=(document.documentElement.scrollHeight-6));
@@ -4728,14 +4796,14 @@ function navSpy(){
     for(let i=1;i<NAV_ELS.length;i++){
       const el=NAV_ELS[i]; if(!el) continue;
       const t=el.getBoundingClientRect().top;
-      if(t>=0 && t<=vh*0.6){ cur=NAV_ITEMS[i].id; break; }
+      if(t>=0 && t<=vh*0.6){ cur=items[i].id; break; }
     }
-    if(cur==='top') cur=NAV_ITEMS[NAV_ITEMS.length-1].id;
+    if(cur==='top') cur=items[items.length-1].id;
   }else{
     for(let i=1;i<NAV_ELS.length;i++){
       const el=NAV_ELS[i]; if(!el) continue;
       /* 判定线（视口坐标）：标题滚进上缘 132px 内就算「当前」（比锚点落位 80/114 略大，点完不会差一格） */
-      if(el.getBoundingClientRect().top<=132) cur=NAV_ITEMS[i].id;
+      if(el.getBoundingClientRect().top<=132) cur=items[i].id;
     }
   }
   navSet(cur);
@@ -4789,7 +4857,9 @@ function navShow(){
     if(focus) return;                                    /* 焦点还在导航上：不收 */
     const y=window.pageYOffset||document.documentElement.scrollTop||0;
     if(y<40) return;                                     /* 页面顶部：横条本来就该在 */
-    const stuck=(document.body.classList.contains('tb-on')?66:6)+2;
+    /* v3.29.8：吸顶阈值不再写死 6/66，改读导航自己的 CSS top —— 深度页是 54px（让开打赏浮标），
+       写死会永远判不到「已吸顶」，停手收起就失效（与 v3.29.7 修 stk-nav 同一个坑）。 */
+    const stuck=(parseFloat(getComputedStyle(nav).top)||6)+2;
     if(nav.getBoundingClientRect().top>stuck) return;    /* 还没吸顶：收起会留空档 */
     nav.classList.add('nav-hide');
   },1500);
@@ -5056,12 +5126,16 @@ zh:{
   flBuy:'买', flSell:'卖', flTrades:'笔',
   flEmpty:'采样中：云端每小时记一笔成交，攒满 24 小时后就显示各档净流入（刚上线的头几个小时数字会偏小）。',
   flNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal），转账 / OTC 不计；分层按钱包「当前」持币市值（链上余额 × 现价），窗口内刚清仓 / 刚建仓的钱包可能归错档；做市商没有公开标签，不单列（不硬造数据）。正数＝净买入，负数＝净卖出。',
+  flTap:'点一下任意一档，看这一档的成交明细', flPopNet:'净流入（窗口内）',
+  flPopVol:'成交额', flPopN:'成交笔数', flPopShare:'占采样成交', flPopSide:'买卖占比（买/卖）',
+  flPopFoot:'口径与上方总表一致：只统计 DEX 逐笔成交；正数＝净买入，负数＝净卖出。',
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
   flRev7:'近 7 日收入', flBB7:'近 7 日买回', flShare:'买回 ÷ 收入', flVsVol:'买回 ÷ 24h 成交',
   flPx:'回购均价 vs 现价', flChg:'收入 7 日环比',
   chartDaily:'每天的收入与买回（最近 {n} 天）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
   chartHourly:'最近 72 小时', hourTabRev:'收入', hourTabBurn:'销毁', hourTabVol:'交易量',
   chartPrice:'价格走势（最近 {n} 天，STONK/SOL 日线收盘）',
+  pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
   dBuy:'买', dSell:'卖', dBuyShare:'买盘笔数占比', dTraders:'买/卖家数', dNetflow:'主池净流入（24h）',
   dRecording:'记录中', dSnap:'已记录 {h} 小时，满 24 小时开始显示',
   pools:'资金池分布（按储备排序）', pool:'池子', liqT:'储备', volT:'24h 成交', dexT:'平台',
@@ -5121,12 +5195,16 @@ en:{
   flBuy:'buy', flSell:'sell', flTrades:'trades',
   flEmpty:'Sampling: the cloud records a batch every hour. Once 24h is collected, tier flows appear here (early numbers will look small).',
   flNote:'Method: DEX trades only (GeckoTerminal); transfers / OTC excluded. Tiers use each wallet’s current holdings (on-chain balance × spot price), so wallets that fully entered or exited within the window may be misclassified. Market makers have no public labels and are not shown as a separate tier (no fabricated data). Positive = net buying, negative = net selling.',
+  flTap:'Tap any tier to see its trade breakdown', flPopNet:'Net flow (window)',
+  flPopVol:'Volume', flPopN:'Trades', flPopShare:'of sampled volume', flPopSide:'Buy/sell split (buy/sell)',
+  flPopFoot:'Same basis as the table above: DEX trades only; positive = net buying, negative = net selling.',
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
   flRev7:'Revenue, last 7d', flBB7:'Buybacks, last 7d', flShare:'Buyback ÷ revenue', flVsVol:'Buyback ÷ 24h volume',
   flPx:'Avg buyback price vs now', flChg:'Revenue, 7d change',
   chartDaily:'Daily revenue and buybacks (last {n} days)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
   chartHourly:'Last 72 hours', hourTabRev:'Revenue', hourTabBurn:'Burn', hourTabVol:'Volume',
   chartPrice:'Price (last {n} days, STONK/SOL daily close)',
+  pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
   dBuy:'buys', dSell:'sells', dBuyShare:'Buy share', dTraders:'traders (buy/sell)', dNetflow:'Main pool net flow (24h)',
   dRecording:'recording', dSnap:'{h}h recorded — shows once 24h is covered',
   pools:'Pool distribution (by reserves)', pool:'Pool', liqT:'Liquidity', volT:'24h vol', dexT:'DEX',
@@ -5192,6 +5270,8 @@ function stkPctCls(v){ return v>0? 'up' : (v<0? 'down':''); }
 /* ---------- 打开 / 关闭 ---------- */
 function stkOpen(on, push){
   document.body.classList.toggle('stk-on', !!on);
+  /* v3.29.8：总览 ⇄ 深度页换一套侧边栏板块（#secNav 同一套导航，图标+文字） */
+  try{ navResync(); }catch(e){}
   if(on){
     try{ stkRender(); }catch(e){ console.error('stk render', e); }
     try{ stkLive(); }catch(e){}
@@ -5218,46 +5298,6 @@ function stkToggle(force){
   var on=(force===undefined)? !document.body.classList.contains('stk-on') : !!force;
   stkOpen(on);
 }
-function stkGo(id){
-  var el=document.getElementById(id); if(!el) return;
-  try{ el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ el.scrollIntoView(); }
-  /* 手机端：把点中的胶囊滚进导航条可视区中间，不然它在屏幕外看不见 */
-  try{
-    var nav=document.getElementById('stkNav'), b=nav&&nav.querySelector('button[data-t="'+id+'"]');
-    if(nav&&b) nav.scrollLeft=Math.max(0, b.offsetLeft-(nav.clientWidth-b.offsetWidth)/2);
-  }catch(e){}
-}
-
-/* ---------- v3.27.3 板块导航：吸顶底色 / 当前板块高亮 / 手机端停手收起 ---------- */
-var STK_SECS=[], STK_SPY_T=null, STK_NAV_HIDE=null;
-function stkSpyPaint(){
-  var nav=document.getElementById('stkNav');
-  if(!nav || !document.body.classList.contains('stk-on')) return;
-  /* v3.29.7：吸顶阈值不再写死 9px，改为读导航自己的 CSS top
-     （手机端深度页让开左上角打赏浮标后 top 是 54px，写死会永远判不到"已吸顶"，
-     补底色 .stick 与停手收起都会失效）。 */
-  var stkOff=(parseFloat(getComputedStyle(nav).top)||8)+1;
-  var stuck=nav.getBoundingClientRect().top<=stkOff;
-  nav.classList.toggle('stick', stuck);
-  var cur=null, i;
-  for(i=0;i<STK_SECS.length;i++){
-    if(STK_SECS[i].getBoundingClientRect().top<=112) cur=STK_SECS[i].id; else break;
-  }
-  var bs=nav.children;
-  for(i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-t')===cur);
-  if(window.innerWidth>1023){ nav.classList.remove('hide'); return; }
-  nav.classList.remove('hide');
-  if(stuck){
-    clearTimeout(STK_NAV_HIDE);
-    STK_NAV_HIDE=setTimeout(function(){ if(nav.classList.contains('stick')) nav.classList.add('hide'); }, 1300);
-  }
-}
-window.addEventListener('scroll', function(){
-  if(!document.body.classList.contains('stk-on') || STK_SPY_T) return;
-  STK_SPY_T=(window.requestAnimationFrame||function(f){ return setTimeout(f,80); })(function(){
-    STK_SPY_T=null; try{ stkSpyPaint(); }catch(e){}
-  });
-},{passive:true});
 function stkEntryLabel(){
   var b=document.getElementById('stkEntryTxt');
   if(b) b.textContent=st('entry');
@@ -5266,6 +5306,8 @@ function stkEntryLabel(){
 /* ---------- 整页渲染 ---------- */
 function stkRender(){
   var root=document.getElementById('stkRoot'); if(!root) return;
+  /* v3.29.8：整页重画会把锚点行一起换掉，开着的明细框先收起，避免浮在半空 */
+  try{ stkFlowPopClose(); }catch(e){}
   var d=stkBundle();
   var sub=document.getElementById('stkSub'); if(sub) sub.textContent=st('sub');
   var ttl=document.getElementById('stkTitleTxt'); if(ttl) ttl.textContent=st('title');
@@ -5284,15 +5326,15 @@ function stkRender(){
      赚钱飞轮 → 谁在买 → 盘面资金 → 币的底子（供应安全）→ 贵不贵 → 平台名单 → 自查评分 → 假设推演 → 口径说明。
      导航与板块标题从同一张 SECS 表生成（永远同步），标题带 01~09 序号做长页骨架。 */
   var SECS=[
-    {id:'stk-s-fly',   ic:'trend',   nav:st('secFly'),   t:st('secFly'),   sub:st('secFlySub')},
-    {id:'stk-s-flow',  ic:'pie',     nav:st('secFlow'),  t:st('secFlow'),  sub:st('secFlowSub')},
-    {id:'stk-s-demand',ic:'activity',nav:st('secDemand'),t:st('secDemand'),sub:st('secDemandSub')},
-    {id:'stk-s-supply',ic:'flame',   nav:st('secSupply'),t:st('secSupply'),sub:st('secSupplySub')},
-    {id:'stk-s-value', ic:'trophy',  nav:st('secValue'), t:st('secValue'), sub:st('secValueSub')},
-    {id:'stk-s-rank',  ic:'medal',   nav:st('secRank'),  t:st('secRank'),  sub:st('secRankSub')},
-    {id:'stk-s-score', ic:'shield',  nav:stkShortScoreName(), t:st('secScore'), sub:st('secScoreSub')},
-    {id:'stk-s-model', ic:'refresh', nav:st('secModel'), t:st('secModel'), sub:st('secModelSub')},
-    {id:'stk-s-note',  ic:'book',    nav:st('secNote'),  t:st('secNote'),  sub:''}
+    {id:'stk-s-fly',   ic:'trend',   t:st('secFly'),   sub:st('secFlySub')},
+    {id:'stk-s-flow',  ic:'pie',     t:st('secFlow'),  sub:st('secFlowSub')},
+    {id:'stk-s-demand',ic:'activity',t:st('secDemand'),sub:st('secDemandSub')},
+    {id:'stk-s-supply',ic:'flame',   t:st('secSupply'),sub:st('secSupplySub')},
+    {id:'stk-s-value', ic:'trophy',  t:st('secValue'), sub:st('secValueSub')},
+    {id:'stk-s-rank',  ic:'medal',   t:st('secRank'),  sub:st('secRankSub')},
+    {id:'stk-s-score', ic:'shield',  t:st('secScore'), sub:st('secScoreSub')},
+    {id:'stk-s-model', ic:'refresh', t:st('secModel'), sub:st('secModelSub')},
+    {id:'stk-s-note',  ic:'book',    t:st('secNote'),  sub:''}
   ];
   var body={};
   body['stk-s-fly']=stkFlyHTML(fw, h);
@@ -5304,29 +5346,25 @@ function stkRender(){
   body['stk-s-score']=stkScoreHTML(sc);
   body['stk-s-model']=stkModelHTML(md);
   body['stk-s-note']=stkNoteHTML(d);
-  out.push('<nav class="stk-nav" id="stkNav">'+SECS.map(function(scn){ return stkNavBtn(scn.id, scn.nav); }).join('')+'</nav>');
-  SECS.forEach(function(scn, i){
-    out.push(stkSecHead(scn.id, scn.ic, scn.t, scn.sub, ('0'+(i+1)).slice(-2)));
+  /* v3.29.8：板块导航统一交给全站侧边栏 #secNav（见 NAV_STK_ITEMS），这里不再生成胶囊条 */
+  SECS.forEach(function(scn){
+    out.push(stkSecHead(scn.id, scn.ic, scn.t, scn.sub));
     out.push(body[scn.id]);
   });
   out.push('<div class="stk-last"><span>'+t('updatedAt')+(gen? gen.toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '—')+'</span><span>'+esc(d.srcNote||'')+'</span></div>');
   root.innerHTML=out.join('');
   /* v3.27.3：深度页的板块标题是动态生成的，补 ic-in，否则图标被全局动画规则藏住（opacity:0） */
   try{ [].forEach.call(root.querySelectorAll('.sec-title'), function(el){ el.classList.add('ic-in'); }); }catch(e){}
-  STK_SECS=[].slice.call(root.querySelectorAll('.sec-title[id]'));
   stkDraw();
-  stkSpyPaint();
+  /* v3.29.8：本函数每次都会重建深度页 DOM（数据刷新也会），导航缓存的旧节点会失效——
+     置空后让 navSpy 重查新节点、重亮当前板块。 */
+  if(document.body.classList.contains('stk-on')){
+    NAV_NOW=null; NAV_ELS=null;
+    if(window.__navSpy){ try{ window.__navSpy(); }catch(e){} }
+  }
 }
-function stkShortScoreName(){
-  var d=stkBundle(); var sc=(d&&d.score)||{}; var tl=sc.tally||{};
-  return st('secScore')+' '+(tl.bull||0)+'/'+((sc.items||[]).length||0);
-}
-function stkNavBtn(id, label){
-  return '<button type="button" data-t="'+id+'" onclick="stkGo(\''+id+'\')">'+esc(label)+'</button>';
-}
-function stkSecHead(id, icon, title, sub, no){
+function stkSecHead(id, icon, title, sub){
   return '<div class="sec-title" id="'+id+'">'
-    + (no? '<i class="sn">'+no+'</i>' : '')
     + '<svg class="ic" aria-hidden="true"><use href="#ic-'+icon+'"/></svg>'+esc(title)+'</div>'
     + (sub? '<div class="rank-sub">'+esc(sub)+'</div>' : '');
 }
@@ -5548,8 +5586,15 @@ function stkFlyHTML(fw, h){
     + '</div>'
     + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartPrice').replace('{n}', ((stkBundle()||{}).priceHist||[]).length || 0))+'</span></div>'
-    +   '<div class="stk-chart"><svg id="stkPChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkPTip"></div></div>'
-    +   '<div class="stk-axis" id="stkPAx"><span></span><span></span></div>'
+    +   '<div class="stk-phead" id="stkPHead"></div>'
+    +   '<div class="stk-chart" id="stkPBox">'
+    +     '<svg id="stkPChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>'
+    +     '<div class="stk-pyax" id="stkPYax"></div>'
+    +     '<div class="stk-pcross" id="stkPCross"></div>'
+    +     '<div class="stk-pdot" id="stkPDot"></div>'
+    +     '<div class="stk-tip" id="stkPTip"></div>'
+    +   '</div>'
+    +   '<div class="stk-axis stk-pax" id="stkPAx"></div>'
     + '</div>';
 }
 
@@ -5652,14 +5697,25 @@ function stkFlowHTML(wf){
   var nmk={whale:'flWhale',shark:'flShark',dolphin:'flDolphin',fish:'flFish',na:'flNa'};
   var tiers=(wf.tiers||[]).filter(function(t){ return nmk[t.k] && (t.k!=='na' || (t.n||0)>0); });
   var maxAbs=0; tiers.forEach(function(t){ maxAbs=Math.max(maxAbs,Math.abs(t.net||0)); });
-  var rows=tiers.map(function(t){
+  var t0=0; tiers.forEach(function(t){ t0+=(t.buy||0)+(t.sell||0); });
+  var rows=tiers.map(function(t,i){
     var net=t.net||0;
     var half=maxAbs>0? Math.max(1.5,Math.abs(net)/maxAbs*50) : 0;
     var seg=(net>=0)
       ? '<i class="b" style="width:'+half.toFixed(2)+'%"></i>'
       : '<i class="s" style="width:'+half.toFixed(2)+'%"></i>';
     var small=st('flBuy')+' '+fmtU(t.buy)+' · '+st('flSell')+' '+fmtU(t.sell)+' · '+nS(t.n)+' '+esc(st('flTrades'));
-    return '<div class="row">'
+    /* v3.29.8：整行可点 —— 弹出该档明细（买入/卖出/净流入/笔数/占比），手机没有 hover 也能看数 */
+    var tv=(t.buy||0)+(t.sell||0);
+    var share=(t0>0)? (tv/t0*100) : null;
+    return '<div class="row fclick" role="button" tabindex="0" data-fli="'+i+'"'
+      + ' data-k="'+esc(t.k)+'" data-nm="'+esc(st(nmk[t.k]))+'" data-emo="'+emo[t.k]+'"'
+      + ' data-buy="'+((t.buy!=null)? t.buy:'')+'" data-sell="'+((t.sell!=null)? t.sell:'')+'"'
+      + ' data-net="'+((t.net!=null)? t.net:'')+'" data-n="'+((t.n!=null)? t.n:'')+'"'
+      + ' data-share="'+((share!=null)? share.toFixed(1):'')+'"'
+      + ' onclick="stkFlowPop(event, this)"'
+      + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();stkFlowPop(event, this);}"'
+      + ' aria-label="'+esc(st(nmk[t.k])+': '+(LANG==='zh'?'查看买卖明细':'view breakdown'))+'">'
       + '<span class="nm"><em>'+emo[t.k]+'</em>'+esc(st(nmk[t.k]))+'</span>'
       + '<span class="bar">'+seg+'</span>'
       + '<span class="val '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+fmtU(Math.abs(net))+'<small>'+small+'</small></span>'
@@ -5676,9 +5732,68 @@ function stkFlowHTML(wf){
     + '<div class="stk-grid g4">'+tiles.map(function(c){
         return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+((c[2])? '<small>'+esc(c[2])+'</small>':'')+'</div></div>';
       }).join('')+'</div>'
-    + '<div class="stk-flow" style="margin-top:12px">'+rows+'</div>'
+    + '<div class="stk-flow-hint"><svg class="ic" aria-hidden="true"><use href="#ic-eye"/></svg>'+esc(st('flTap'))+'</div>'
+    + '<div class="stk-flow" style="margin-top:2px">'+rows+'</div>'
     + '<div class="stk-model-note">'+esc(st('flNote'))+'</div>'
     + '</div>';
+}
+
+/* v3.29.8：钱包分层明细弹框 —— 点一行浮出数据框（总成交/买入/卖出/笔数/占比），点别处关闭。
+   手机没有 hover，点击是唯一可靠的入口；PC 上点空白/滚动/Esc 都会收起。 */
+var STK_FPOP=null;
+function stkFlowPop(ev, row){
+  if(ev){ try{ ev.stopPropagation(); }catch(e){} }
+  stkFlowPopClose();
+  if(!row) return;
+  function num(x){ var v=parseFloat(x); return isFinite(v)? v : null; }
+  var buy=num(row.getAttribute('data-buy')), sell=num(row.getAttribute('data-sell')),
+      net=num(row.getAttribute('data-net')), n=num(row.getAttribute('data-n')),
+      share=num(row.getAttribute('data-share'));
+  var nm=row.getAttribute('data-nm')||'', emo=row.getAttribute('data-emo')||'';
+  var tv=(buy!=null||sell!=null)? (buy||0)+(sell||0) : null;
+  var bp=(tv&&tv>0&&buy!=null)? Math.max(2,Math.min(98, buy/tv*100)) : null;
+  var pop=document.createElement('div');
+  pop.className='stk-pop'; pop.id='stkFlowPop';
+  pop.innerHTML=
+      '<div class="ph"><em>'+esc(emo)+'</em><b>'+esc(nm)+'</b><span class="x" role="button" tabindex="0" aria-label="'+(LANG==='zh'?'关闭':'close')+'" onclick="stkFlowPopClose(event)">×</span></div>'
+    + '<div class="pn '+((net==null||net>=0)?'up':'down')+'">'+(net==null? '—' : ((net>=0?'+':'-')+fmtU(Math.abs(net))))+'</div>'
+    + '<div class="pl">'+esc(st('flPopNet'))+'</div>'
+    + (bp!=null? '<div class="pbar"><i class="b" style="width:'+bp.toFixed(1)+'%"></i><i class="s" style="width:'+(100-bp).toFixed(1)+'%"></i></div>' : '')
+    + '<div class="pg">'
+    +   '<div><span>'+esc(st('flBuy'))+'</span><b>'+(buy==null?'—':fmtU(buy))+'</b></div>'
+    +   '<div><span>'+esc(st('flSell'))+'</span><b>'+(sell==null?'—':fmtU(sell))+'</b></div>'
+    +   '<div><span>'+esc(st('flPopVol'))+'</span><b>'+(tv==null?'—':fmtU(tv))+'</b></div>'
+    +   '<div><span>'+esc(st('flPopN'))+'</span><b>'+(n==null?'—':nS(n)+' '+esc(st('flTrades')))+'</b></div>'
+    +   '<div><span>'+esc(st('flPopShare'))+'</span><b>'+(share==null?'—':share.toFixed(1)+'%')+'</b></div>'
+    +   '<div><span>'+esc(st('flPopSide'))+'</span><b>'+(bp==null?'—':(bp.toFixed(0)+'% / '+(100-bp).toFixed(0)+'%'))+'</b></div>'
+    + '</div>'
+    + '<div class="pf">'+esc(st('flPopFoot'))+'</div>';
+  document.body.appendChild(pop);
+  /* 定位：贴着被点的行（视口坐标），上下左右都夹在屏幕内；小屏优先放下边缘 */
+  var r=row.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight;
+  var vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
+  var lx=(ev && ev.clientX)? ev.clientX-pw/2 : r.left+r.width/2-pw/2;
+  lx=Math.max(8,Math.min(vw-pw-8,lx));
+  var ly=r.bottom+8;
+  if(ly+ph>vh-8) ly=r.top-ph-8;
+  ly=Math.max(8,Math.min(vh-ph-8,ly));
+  pop.style.left=lx.toFixed(1)+'px'; pop.style.top=ly.toFixed(1)+'px';
+  var bk=document.createElement('div'); bk.id='stkFlowBk';
+  bk.addEventListener('click',function(){ stkFlowPopClose(); });
+  bk.addEventListener('touchmove',function(){ stkFlowPopClose(); },{passive:true});
+  document.body.appendChild(bk);
+  STK_FPOP=pop;
+  /* 点别处 / 滚动 / Esc 收起（backdrop 覆盖全屏，点哪都先落到它身上） */
+  window.addEventListener('scroll',stkFlowPopClose,{passive:true,once:true});
+  document.addEventListener('keydown',stkFlowEsc,true);
+}
+function stkFlowEsc(ev){ if(ev.key==='Escape'){ stkFlowPopClose(); } }
+function stkFlowPopClose(ev){
+  if(ev){ try{ ev.stopPropagation(); }catch(e){} }
+  document.removeEventListener('keydown',stkFlowEsc,true);
+  var p=document.getElementById('stkFlowPop'); if(p) p.remove();
+  var b=document.getElementById('stkFlowBk'); if(b) b.remove();
+  STK_FPOP=null;
 }
 
 /* ---------- 估值与位置 ---------- */
@@ -5913,31 +6028,65 @@ function stkDrawHour(withSum){
 function stkDrawPrice(){
   var d=stkBundle(); if(!d) return;
   var svg=document.getElementById('stkPChart'); if(!svg) return;
+  var head=document.getElementById('stkPHead'), yax=document.getElementById('stkPYax'),
+      cross=document.getElementById('stkPCross'), dot=document.getElementById('stkPDot'),
+      ax=document.getElementById('stkPAx');
   var ph=d.priceHist||[];
-  if(ph.length<3){ svg.innerHTML=''; return; }
-  var H=300, padT=26, padB=18, innerH=H-padT-padB;
+  if(ph.length<3){
+    svg.innerHTML='';
+    if(head) head.innerHTML='';
+    if(yax) yax.innerHTML='';
+    if(ax) ax.innerHTML='';
+    if(cross) cross.classList.remove('on');
+    if(dot) dot.classList.remove('on');
+    return;
+  }
+  function d2(ts){ var dt=new Date(ts*1000); return String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+  function d4(ts){ var dt=new Date(ts*1000); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+  var H=300, padT=20, padB=16, innerH=H-padT-padB;
   var lo=Infinity, hi=-Infinity;
   ph.forEach(function(r){ lo=Math.min(lo,r[1]); hi=Math.max(hi,r[1]); });
   if(!(hi>lo)){ hi=lo+0.0001; }
-  var pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+  var pad=(hi-lo)*0.10; lo=Math.max(0, lo-pad); hi+=pad;   /* 价格不可能为负：下限贴住 0，别让刻度出现负价 */
   var n=ph.length;
-  var pts=ph.map(function(r,i){
-    var x=i/(n-1)*1200, y=padT+innerH*(1-(r[1]-lo)/(hi-lo));
-    return [x,y];
-  });
+  function X(i){ return i/(n-1)*1200; }
+  function Y(v){ return padT+innerH*(1-(v-lo)/(hi-lo)); }
+  var pts=ph.map(function(r,i){ return [X(i),Y(r[1])]; });
   var line=pts.map(function(p,i){ return (i? 'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join(' ');
   var area=line+' L1200 '+(padT+innerH)+' L0 '+(padT+innerH)+' Z';
-  var last=pts[pts.length-1];
+  var lx=X(n-1), ly=Y(ph[n-1][1]);
+  var lastPx=ph[n-1][1], firstPx=ph[0][1];
+  var chg=(firstPx>0)? (lastPx/firstPx-1) : null;
+  /* v3.29.8：三档价格参考线（比原来的纯折线更容易读数） */
+  var gridVals=[hi,(hi+lo)/2,lo];
+  var grid=gridVals.map(function(v){
+    var gy=Y(v).toFixed(1);
+    return '<line class="sk-grid" x1="0" x2="1200" y1="'+gy+'" y2="'+gy+'"></line>';
+  }).join('');
   svg.innerHTML='<defs><linearGradient id="stkPG" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".28"></stop><stop offset="1" stop-color="var(--hb-stonk)" stop-opacity="0"></stop></linearGradient></defs>'
+    + '<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".30"></stop><stop offset="1" stop-color="var(--hb-stonk)" stop-opacity="0"></stop></linearGradient></defs>'
+    + grid
     + '<path d="'+area+'" fill="url(#stkPG)"></path>'
     + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></path>'
-    + '<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="6" fill="var(--hb-stonk)"></circle>';
-  var ax=document.getElementById('stkPAx');
-  if(ax && ax.children.length===2){
-    function ds(ts){ var dt=new Date(ts*1000); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
-    ax.children[0].textContent=ds(ph[0][0]); ax.children[1].textContent=ds(ph[ph.length-1][0]);
+    + '<circle class="sk-end-halo" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="9"></circle>'
+    + '<circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="5" fill="var(--hb-stonk)"></circle>';
+  /* 头部：最新收盘价直接摆出来（不用 hover），旁边挂区间涨跌 */
+  if(head){
+    head.innerHTML='<div class="pxl"><span class="pxn">'+pxS(lastPx)+'</span>'
+      + (chg!=null? '<span class="pxc '+stkPctCls(chg)+'" title="'+esc(st('pxPill'))+'">'+pctS(chg)+'</span>' : '')
+      + '</div>'
+      + '<div class="pxs">'+d4(ph[0][0])+' → '+d4(ph[n-1][0])+' · '+esc(st('pxRange').replace('{n}', String(n)))+'</div>';
   }
+  if(yax) yax.innerHTML=gridVals.map(function(v){
+    return '<span style="top:'+(Y(v)/300*100).toFixed(2)+'%">'+pxS(v)+'</span>';
+  }).join('');
+  /* X 轴：四档日期刻度（首 / 两个中间点 / 末） */
+  if(ax){
+    var ids=[0, Math.round((n-1)/3), Math.round((n-1)*2/3), n-1];
+    var uniq=[]; ids.forEach(function(i){ if(uniq.indexOf(i)<0) uniq.push(i); });
+    ax.innerHTML=uniq.map(function(i){ return '<span>'+d2(ph[i][0])+'</span>'; }).join('');
+  }
+  /* 悬停/触摸：十字线 + 跟随点 + 日期价格气泡 */
   var tip=document.getElementById('stkPTip');
   if(tip){
     function at(ev){
@@ -5946,12 +6095,22 @@ function stkDrawPrice(){
       return Math.max(0, Math.min(n-1, Math.round(cx/Math.max(1,r.width)*(n-1))));
     }
     function show(ev){
-      var i=at(ev), row=ph[i], dt=new Date(row[0]*1000);
-      tip.innerHTML='<b>'+dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+'</b> · '+pxS(row[1]);
-      tip.style.left=((i/Math.max(1,n-1))*100)+'%';
+      var i=at(ev), row=ph[i];
+      tip.innerHTML='<b>'+d4(row[0])+'</b> · '+pxS(row[1]);
       tip.classList.add('on');
+      var rr=svg.getBoundingClientRect(), rw=Math.max(1,rr.width);
+      var tw=Math.min(tip.offsetWidth||92, Math.max(70, rw-10));
+      var tx=Math.max(tw/2+2, Math.min(rw-tw/2-2, (i/Math.max(1,n-1))*rw));
+      tip.style.left=tx.toFixed(1)+'px';
+      var xp=(i/Math.max(1,n-1)*100), yp=(pts[i][1]/300*100);
+      if(cross){ cross.style.left=xp.toFixed(2)+'%'; cross.classList.add('on'); }
+      if(dot){ dot.style.left=xp.toFixed(2)+'%'; dot.style.top=yp.toFixed(2)+'%'; dot.classList.add('on'); }
     }
-    function hide(){ tip.classList.remove('on'); }
+    function hide(){
+      tip.classList.remove('on');
+      if(cross) cross.classList.remove('on');
+      if(dot) dot.classList.remove('on');
+    }
     svg.addEventListener('mousemove', show);
     svg.addEventListener('mouseleave', hide);
     svg.addEventListener('touchstart', show, {passive:true});

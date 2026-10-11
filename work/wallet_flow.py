@@ -172,6 +172,7 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
     """
     now = int(now or time.time())
     fetcher = trade_fetcher or _fetch_pool_trades
+    errs = []
     st = jload(state_path, {}) or {}
     tr = st.get("tr") or {}
     tiers = st.get("tiers") or {}
@@ -191,6 +192,7 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
             rows = fetcher(pool)
             got_any = True
         except Exception as exc:
+            errs.append("tr:%s:%s" % (pool[:6], str(exc)[:90]))
             print("warn: wallet-flow trades %s: %s" % (pool[:8], exc), file=sys.stderr)
             continue
         for a in rows:
@@ -207,6 +209,8 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
                 continue
             tr[fp] = [t, a["tx_from_address"], kind, round(u, 2)]
     if not got_any and not tr:
+        H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now,
+                       "dbg": {"empty": True, "tradesErr": errs[:5]}}, state_path)
         return None
 
     # ---- 2) 账本滚动窗口 + 安全上限 ----
@@ -215,9 +219,12 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
     if len(tr) > MAX_LEDGER:
         keep = sorted(tr.items(), key=lambda kv: kv[1][0], reverse=True)[:MAX_LEDGER]
         tr = dict(keep)
+    # 先把账本落盘：万一后面查余额/聚合异常，这一轮采到的成交也不至于白采
+    H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now, "dbg": {"stage": "trades"}}, state_path)
 
     # ---- 3) 分层（新钱包 + 过期钱包查链上余额；按最近活跃优先） ----
     wallets = {v[1] for v in tr.values()}
+    wf_dbg = {}
     if price:
         last_t = {}
         for v in tr.values():
@@ -231,6 +238,7 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
             hold = fetch_holdings(need)
             for w, amt in hold.items():
                 tiers[w] = [round(amt * price, 2), now]
+            wf_dbg = {"need": len(need), "ok": len(hold)}
             print("wallet-flow: checked %d wallets (%d ok)" % (len(need), len(hold)))
     tiers = {w: v for w, v in tiers.items() if w in wallets}
 
@@ -276,13 +284,14 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         "windowH": WINDOW_H,
         "coveragePct": round((1 - na_vol / vol) * 100, 1) if vol > 0 else None,
         "trades": sum(a["n"] for a in agg.values()),
-        "wallets": len({v[1] for t, v in tr.items() if t >= cutoff}),
+        "wallets": len({v[1] for v in tr.values() if v[0] >= cutoff}),
         "volume": round(vol, 2),
         "thresholds": {"whale": 1_000_000, "shark": 100_000, "dolphin": 10_000},
         "tiers": out_tiers,
         "srcNote": "GeckoTerminal 成交 + Solana RPC 余额（本站采样）",
     }
-    H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now}, state_path)
+    H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now,
+                   "dbg": {"tradesErr": errs[:5], "hold": wf_dbg}}, state_path)
     return result
 
 

@@ -1771,6 +1771,47 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-pool .num small{color:var(--mut);font-size:var(--fs-10);display:block}
 .stk-pool .dex{font-size:var(--fs-10);color:var(--mut);text-align:right}
 
+/* v3.29：飞轮名单（平台代币 Top10）+ 钱包分层净流入 */
+.stk-rank{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.stk-rank .row{background:var(--panel2);display:grid;grid-template-columns:30px minmax(0,1.6fr) minmax(96px,1fr) 108px;gap:10px;align-items:center;padding:8px 12px;font-size:var(--fs-12)}
+.stk-rank .rk{font-weight:800;color:var(--mut2);font-variant-numeric:tabular-nums;font-size:var(--fs-11)}
+.stk-rank .nm{display:flex;align-items:center;gap:8px;min-width:0}
+.stk-rank .ava{position:relative;flex:0 0 auto;width:22px;height:22px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--mut);background:color-mix(in srgb,var(--hb-stonk) 16%,var(--panel))}
+.stk-rank .ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stk-rank .tt{min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.stk-rank .tt b{font-size:var(--fs-12);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stk-rank .tt small{color:var(--mut);font-size:var(--fs-10);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stk-rank .wt{display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:0}
+.stk-rank .wt i{flex:0 0 auto;height:8px;border-radius:3px;background:var(--hb-stonk);display:inline-block}
+.stk-rank .wt b{font-variant-numeric:tabular-nums;font-size:var(--fs-11);color:var(--txt)}
+.stk-rank .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.stk-rank .num small{display:block;color:var(--mut);font-weight:500;font-size:var(--fs-10)}
+@media (max-width:760px){
+  .stk-rank .row{grid-template-columns:26px minmax(0,1fr) auto}
+  .stk-rank .rk{grid-row:1;grid-column:1}
+  .stk-rank .nm{grid-row:1;grid-column:2}
+  .stk-rank .num{grid-row:1;grid-column:3}
+  .stk-rank .wt{grid-row:2;grid-column:2/4;justify-content:flex-start}
+}
+.stk-flow{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.stk-flow .row{background:var(--panel2);display:grid;grid-template-columns:150px minmax(0,1fr) 150px;gap:12px;align-items:center;padding:9px 12px;font-size:var(--fs-12)}
+.stk-flow .nm{font-weight:700;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.stk-flow .nm em{font-style:normal;font-size:var(--fs-14);line-height:1}
+.stk-flow .bar{position:relative;height:16px;border-radius:5px;background:color-mix(in srgb,var(--line) 55%,var(--panel));overflow:hidden}
+.stk-flow .bar i{position:absolute;top:0;bottom:0}
+.stk-flow .bar i.b{left:50%;background:var(--up);border-radius:0 4px 4px 0}
+.stk-flow .bar i.s{right:50%;background:var(--down);border-radius:4px 0 0 4px}
+.stk-flow .bar:after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:color-mix(in srgb,var(--mut) 40%,transparent)}
+.stk-flow .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;min-width:0;line-height:1.3}
+.stk-flow .val.up{color:var(--up)} .stk-flow .val.down{color:var(--down)}
+.stk-flow .val small{display:block;font-weight:500;color:var(--mut);font-size:var(--fs-10);letter-spacing:0}
+@media (max-width:760px){
+  .stk-flow .row{grid-template-columns:minmax(0,1fr) auto}
+  .stk-flow .nm{grid-row:1;grid-column:1}
+  .stk-flow .val{grid-row:1;grid-column:2}
+  .stk-flow .bar{grid-row:2;grid-column:1/3}
+}
+
 .stk-hbar{display:flex;height:14px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
 .stk-hbar i{height:100%}
 .stk-hlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:var(--fs-10);color:var(--mut);margin-top:7px}
@@ -4947,7 +4988,9 @@ zh:{
   updated:'数据时间', source:'数据源',
   secSupply:'供应与安全', secSupplySub:'这枚币的底子：烧掉了多少、还剩多少、有没有后门',
   secFly:'飞轮 · 收入 → 回购 → 销毁', secFlySub:'平台赚的钱有多少真的变成了买盘，又烧掉了多少',
+  secRank:'飞轮名单 · 平台代币 Top 10', secRankSub:'手续费的一部分按市值权重分给它们做回购销毁；列入名单≠承诺对每枚都买',
   secDemand:'需求与资金', secDemandSub:'谁在买、买卖谁占上风、钱都停在哪几个池子里',
+  secFlow:'谁在买 · 24 小时钱包分层', secFlowSub:'按持币规模分四档，看每档是净买入还是净卖出（本站云端采样）',
   secValue:'估值与位置', secValueSub:'跟自己的收入比是贵还是便宜，在同行里排第几',
   secModel:'收入涨了会怎样', secModelSub:'自己选“收入每天涨多少、往后推几天”，下面自动算结果。这是一道算术题，不是价格预测。',
   secScore:'体检评分卡', secScoreSub:'每条都有数值和阈值：绿=健康、黄=留意、红=预警、灰=还没采样',
@@ -4964,6 +5007,18 @@ zh:{
   sSrc1:'回购销毁', sSrc2:'计价收入销毁', sSrc3:'手续费销毁（USD）',
   sTotal:'累计销毁', sAtBurn:'按当时的价', sAtNow:'按现价折算',
   sBuybackN:'累计买回笔数', sLastBuyback:'最近一次买回',
+  rkTitle:'当前名单与权重', rkMcap:'市值',
+  rkTotVal:'累计回购金额', rkTotN:'累计回购笔数', rkTotT:'曾进过名单的代币',
+  rkNote:'飞轮把平台手续费的一部分，按市值权重花在这些代币上（买回并销毁）。权重随市值变化；列入名单不等于承诺对每枚都回购。数据：StonkFun 官方接口，云端每小时更新。',
+  rkEmpty:'这一轮官方名单还没抓到（下轮自动补）',
+  flWhale:'巨鲸 ≥ $1M', flShark:'鲨鱼 $100K–$1M', flDolphin:'海豚 $10K–$100K', flFish:'小鱼 < $10K', flNa:'未识别',
+  flWin:'窗口（已采样）', flWinSub:'云端每小时记一笔，满 24 小时为完整窗口',
+  flCover:'识别覆盖', flCoverSub:'可分层成交额占比',
+  flVol:'采样成交额', flVolSub:'前 5 大资金池',
+  flPart:'参与钱包', flPartSub:'窗口内去重',
+  flBuy:'买', flSell:'卖', flTrades:'笔',
+  flEmpty:'采样中：云端每小时记一笔成交，攒满 24 小时后就显示各档净流入（刚上线的头几个小时数字会偏小）。',
+  flNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal），转账 / OTC 不计；分层按钱包「当前」持币市值（链上余额 × 现价），窗口内刚清仓 / 刚建仓的钱包可能归错档；做市商没有公开标签，不单列（不硬造数据）。正数＝净买入，负数＝净卖出。',
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
   flRev7:'近 7 日收入', flBB7:'近 7 日买回', flShare:'买回 ÷ 收入', flVsVol:'买回 ÷ 24h 成交',
   flPx:'回购均价 vs 现价', flChg:'收入 7 日环比',
@@ -4998,7 +5053,9 @@ en:{
   updated:'Data time', source:'Sources',
   secSupply:'Supply & safety', secSupplySub:'How much is burned, how much is left, and whether there are back doors',
   secFly:'Flywheel · revenue → buyback → burn', secFlySub:'How much of the revenue actually becomes buys, and how much is burned',
+  secRank:'Flywheel roster · top 10 tokens', secRankSub:'A cut of fees buys and burns them by market-cap weight; being listed is not a promise to buy',
   secDemand:'Demand & liquidity', secDemandSub:'Who is buying, who wins the tape, and where the money sits',
+  secFlow:'Who is buying · 24h wallet tiers', secFlowSub:'Wallets grouped by size; net buys vs sells per tier (sampled in the cloud)',
   secValue:'Valuation & position', secValueSub:'Cheap or expensive versus its own revenue — and its rank among peers',
   secModel:'What if revenue grows', secModelSub:'Pick a daily growth rate and a horizon; the numbers below are computed straight from them. This is arithmetic, not a price forecast.',
   secScore:'Health scorecard', secScoreSub:'Every cell has a value and a threshold: green healthy, amber watch, red warning, grey not sampled yet',
@@ -5015,6 +5072,18 @@ en:{
   sSrc1:'buyback burns', sSrc2:'quote-revenue burns', sSrc3:'fee burns (USD)',
   sTotal:'Total burned', sAtBurn:'at burn prices', sAtNow:'at today’s price',
   sBuybackN:'Buyback transactions', sLastBuyback:'Last buyback',
+  rkTitle:'Current roster and weights', rkMcap:'market cap',
+  rkTotVal:'Buybacks to date', rkTotN:'Buybacks executed', rkTotT:'Tokens that reached the roster',
+  rkNote:'A share of platform fees is spent on these tokens by market-cap weight (bought back and burned). Weights move with market cap; inclusion is not a commitment to buy. Source: official StonkFun API, updated hourly in the cloud.',
+  rkEmpty:'Official roster was not available this round — the next build catches up.',
+  flWhale:'Whale ≥ $1M', flShark:'Shark $100K–$1M', flDolphin:'Dolphin $10K–$100K', flFish:'Fish < $10K', flNa:'Unidentified',
+  flWin:'Window sampled', flWinSub:'Cloud samples hourly; 24h = full window',
+  flCover:'Classified coverage', flCoverSub:'of sampled volume',
+  flVol:'Sampled volume', flVolSub:'top 5 pools',
+  flPart:'Wallets', flPartSub:'unique in window',
+  flBuy:'buy', flSell:'sell', flTrades:'trades',
+  flEmpty:'Sampling: the cloud records a batch every hour. Once 24h is collected, tier flows appear here (early numbers will look small).',
+  flNote:'Method: DEX trades only (GeckoTerminal); transfers / OTC excluded. Tiers use each wallet’s current holdings (on-chain balance × spot price), so wallets that fully entered or exited within the window may be misclassified. Market makers have no public labels and are not shown as a separate tier (no fabricated data). Positive = net buying, negative = net selling.',
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
   flRev7:'Revenue, last 7d', flBB7:'Buybacks, last 7d', flShare:'Buyback ÷ revenue', flVsVol:'Buyback ÷ 24h volume',
   flPx:'Avg buyback price vs now', flChg:'Revenue, 7d change',
@@ -5166,7 +5235,9 @@ function stkRender(){
   out.push('<nav class="stk-nav" id="stkNav">'
     + stkNavBtn('stk-s-supply', st('secSupply'))
     + stkNavBtn('stk-s-fly', st('secFly'))
+    + stkNavBtn('stk-s-rank', st('secRank'))
     + stkNavBtn('stk-s-demand', st('secDemand'))
+    + stkNavBtn('stk-s-flow', st('secFlow'))
     + stkNavBtn('stk-s-value', st('secValue'))
     + stkNavBtn('stk-s-score', stkShortScoreName())
     + stkNavBtn('stk-s-model', st('secModel'))
@@ -5176,8 +5247,12 @@ function stkRender(){
   out.push(stkSupplyHTML(sup, h));
   out.push(stkSecHead('stk-s-fly','trend',st('secFly'),st('secFlySub')));
   out.push(stkFlyHTML(fw, h));
+  out.push(stkSecHead('stk-s-rank','medal',st('secRank'),st('secRankSub')));
+  out.push(stkRankHTML(d.flywheelRank));
   out.push(stkSecHead('stk-s-demand','activity',st('secDemand'),st('secDemandSub')));
   out.push(stkDemandHTML(dm));
+  out.push(stkSecHead('stk-s-flow','pie',st('secFlow'),st('secFlowSub')));
+  out.push(stkFlowHTML(d.walletFlow));
   out.push(stkSecHead('stk-s-value','trophy',st('secValue'),st('secValueSub')));
   out.push(stkValueHTML(val, md));
   out.push(stkSecHead('stk-s-score','shield',st('secScore'),st('secScoreSub')));
@@ -5476,6 +5551,79 @@ function stkDemandHTML(dm){
     +     '</div>'
     +     hbar + hchg
     +   '</div>'
+    + '</div>';
+}
+
+/* ---------- v3.29 飞轮名单：平台代币 Top 10（官方 /api/flywheel，云端每小时更新） ---------- */
+function stkRankHTML(fr){
+  if(!fr || !(fr.roster||[]).length){
+    return '<div class="card stk-card stk-sec"><div class="stk-empty">'+esc(st('rkEmpty'))+'</div></div>';
+  }
+  var maxW=0; fr.roster.forEach(function(r){ if(r.weight!=null) maxW=Math.max(maxW,r.weight); });
+  var rows=fr.roster.map(function(r){
+    var wpct=(r.weight!=null? (r.weight*100).toFixed(1)+'%' : '—');
+    var wpx=(maxW>0 && r.weight!=null)? Math.max(3,(r.weight/maxW)*56) : 3;
+    var initial=(r.sym||'?').slice(0,1).toUpperCase();
+    var img=(r.img && /^https:\/\//.test(r.img))? '<img src="'+esc(r.img)+'" alt="" loading="lazy" onerror="this.remove()">' : '';
+    var sub=[r.name, r.quote].filter(function(x){ return x; }).join(' · ');
+    return '<div class="row">'
+      + '<span class="rk">#'+r.rank+'</span>'
+      + '<span class="nm"><span class="ava">'+esc(initial)+img+'</span>'
+      +   '<span class="tt"><b>'+esc(r.sym)+'</b><small>'+esc(sub)+'</small></span></span>'
+      + '<span class="wt"><i style="width:'+wpx.toFixed(1)+'px"></i><b>'+wpct+'</b></span>'
+      + '<span class="num">'+fmtU(r.mcap)+'<small>'+esc(st('rkMcap'))+'</small></span>'
+      + '</div>';
+  }).join('');
+  var tiles=[
+    [st('rkTotVal'), fmtU(fr.totalValueUsd)],
+    [st('rkTotN'), fr.buybackCount!=null? nS(fr.buybackCount):'—'],
+    [st('rkTotT'), fr.targetCount!=null? nS(fr.targetCount):'—']
+  ];
+  return '<div class="card stk-card stk-sec">'
+    + '<div class="stk-h3">'+esc(st('rkTitle'))+'</div>'
+    + '<div class="stk-rank">'+rows+'</div>'
+    + '<div class="stk-grid g3" style="margin-top:12px">'+tiles.map(function(c){
+        return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+'</div></div>';
+      }).join('')+'</div>'
+    + '<div class="stk-model-note">'+esc(st('rkNote'))+'</div>'
+    + '</div>';
+}
+
+/* ---------- v3.29 钱包分层净流入（本站云端采样，账本滚动攒 24h） ---------- */
+function stkFlowHTML(wf){
+  if(!wf || !wf.trades){
+    return '<div class="card stk-card stk-sec"><div class="stk-empty">'+esc(st('flEmpty'))+'</div></div>';
+  }
+  var emo={whale:'🐋',shark:'🦈',dolphin:'🐬',fish:'🐟',na:'❓'};
+  var nmk={whale:'flWhale',shark:'flShark',dolphin:'flDolphin',fish:'flFish',na:'flNa'};
+  var tiers=(wf.tiers||[]).filter(function(t){ return nmk[t.k] && (t.k!=='na' || (t.n||0)>0); });
+  var maxAbs=0; tiers.forEach(function(t){ maxAbs=Math.max(maxAbs,Math.abs(t.net||0)); });
+  var rows=tiers.map(function(t){
+    var net=t.net||0;
+    var half=maxAbs>0? Math.max(1.5,Math.abs(net)/maxAbs*50) : 0;
+    var seg=(net>=0)
+      ? '<i class="b" style="width:'+half.toFixed(2)+'%"></i>'
+      : '<i class="s" style="width:'+half.toFixed(2)+'%"></i>';
+    var small=st('flBuy')+' '+fmtU(t.buy)+' · '+st('flSell')+' '+fmtU(t.sell)+' · '+nS(t.n)+' '+esc(st('flTrades'));
+    return '<div class="row">'
+      + '<span class="nm"><em>'+emo[t.k]+'</em>'+esc(st(nmk[t.k]))+'</span>'
+      + '<span class="bar">'+seg+'</span>'
+      + '<span class="val '+(net>=0?'up':'down')+'">'+(net>=0?'+':'-')+fmtU(Math.abs(net))+'<small>'+small+'</small></span>'
+      + '</div>';
+  }).join('');
+  var span=(wf.spanH!=null)? ((wf.spanH>=10? String(Math.round(wf.spanH)): wf.spanH.toFixed(1))+'h / 24h') : '—';
+  var tiles=[
+    [st('flWin'), span, st('flWinSub')],
+    [st('flCover'), (wf.coveragePct!=null? wf.coveragePct.toFixed(1)+'%':'—'), st('flCoverSub')],
+    [st('flVol'), fmtU(wf.volume), st('flVolSub')],
+    [st('flPart'), nS(wf.wallets), st('flPartSub')]
+  ];
+  return '<div class="card stk-card stk-sec">'
+    + '<div class="stk-grid g4">'+tiles.map(function(c){
+        return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+((c[2])? '<small>'+esc(c[2])+'</small>':'')+'</div></div>';
+      }).join('')+'</div>'
+    + '<div class="stk-flow" style="margin-top:12px">'+rows+'</div>'
+    + '<div class="stk-model-note">'+esc(st('flNote'))+'</div>'
     + '</div>';
 }
 

@@ -49,6 +49,7 @@ SNAPSHOT_FILES = [
     "work/sf-history.json",
     "work/sf-ledger.json",
     "work/stonk-page.json",
+    "work/wallet-flow.json",
     "work/burn-history.json",
     "work/burns.json",
     "work/burn_events.json",

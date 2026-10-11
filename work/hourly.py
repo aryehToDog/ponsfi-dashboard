@@ -36,6 +36,7 @@ SF_HIST = os.path.join(HERE, "sf-history.json")    # 官方累计值快照（每
 SF_LEDGER = os.path.join(HERE, "sf-ledger.json")    # 官方逐笔流水账本（买回 / 销毁），滚动保留 ~110h
 SF_BUYBACKS_API = "https://www.stonkfun.xyz/api/v2/revenue/buybacks?limit=100"
 SF_BURNS_API = "https://www.stonkfun.xyz/api/v2/revenue/burns?limit=100"
+SF_FLY_API = "https://www.stonkfun.xyz/api/flywheel"   # 飞轮名单（平台代币 Top10 市值权重，v3.29）
 SF_RATIO_FALLBACK = 0.5976     # 官方历史实测「买回 ÷ 收入」比例（2026-10-08）；每次构建用最近 3 个完整日自动校准
 SF_LEDGER_KEEP_H = 110         # 账本滚动窗口：72h 图 + 回填余量
 

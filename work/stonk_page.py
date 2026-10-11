@@ -22,6 +22,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 import hourly as H  # noqa: E402  —— 复用官方接口中转 / GeckoTerminal 抓取 / 原子写
+import wallet_flow as WF  # noqa: E402  —— 钱包分层净流入（v3.29，GT 成交采样 + 链上余额）
 
 OUT = os.path.join(HERE, "stonk-page.json")
 DD = os.path.join(HERE, "dashboard-data.json")
@@ -108,6 +109,46 @@ def parse_gt_pools(src):
     return out
 
 
+def parse_flywheel(sf_fly):
+    """StonkFun 飞轮名单 → 前端精简结构；拿不到就 None（前端隐藏该板块）。
+
+    字段口径（2026-10-11 实测 /api/flywheel）：
+      roster[]: rank / symbol / name / imageUrl / quoteSymbol / marketCapUsd / weight(小数)
+      totals:   totalValueUsd（名单代币总市值）/ buybackCount（累计回购笔数）/ targetCount
+    """
+    roster = []
+    for r in (sf_fly.get("roster") or []):
+        if not isinstance(r, dict) or not r.get("symbol"):
+            continue
+        try:
+            rank = int(fnum(r.get("rank")) or len(roster) + 1)
+        except Exception:
+            rank = len(roster) + 1
+        roster.append({
+            "rank": rank,
+            "sym": str(r.get("symbol")),
+            "name": str(r.get("name") or r.get("symbol")),
+            "img": r.get("imageUrl") or "",
+            "quote": r.get("quoteSymbol") or "SOL",
+            "mcap": fnum(r.get("marketCapUsd")),
+            "weight": fnum(r.get("weight")),
+        })
+    if not roster:
+        return None
+    roster.sort(key=lambda x: x["rank"])
+    totals = sf_fly.get("totals") or {}
+    return {
+        "enabled": bool(sf_fly.get("enabled", True)),
+        "topCount": int(fnum(sf_fly.get("topCount")) or len(roster)),
+        "sharePct": fnum(sf_fly.get("sharePct")),
+        "roster": roster,
+        "totalValueUsd": fnum(totals.get("totalValueUsd")),
+        "buybackCount": int(fnum(totals.get("buybackCount")) or 0) or None,
+        "targetCount": int(fnum(totals.get("targetCount")) or 0) or None,
+        "pending": bool(sf_fly.get("marketDataPending")),
+    }
+
+
 def iso_ms(s):
     try:
         return H._iso_ms(s)
@@ -183,6 +224,7 @@ def main():
     sf_tot = H._sf_get(H.SF_API) or {}
     sf_daily = H._sf_get(H.SF_DAILY_API) or {}
     sf_burns = H._sf_ledger_get(H.SF_BURNS_API) or {}
+    sf_fly = H._sf_get(H.SF_FLY_API) or {}
 
     # ---- GeckoTerminal 主池 ----
     pa = ((gt_pool.get("data") or {}).get("attributes") or {})
@@ -351,6 +393,15 @@ def main():
              "risk": sum(1 for i in items if i["s"] == "risk"),
              "na": sum(1 for i in items if i["s"] == "na")}
 
+    # ---- 钱包分层净流入（v3.29）：本站采样，账本文件滚动攒 24h ----
+    pool_addrs = [p.get("addr") for p in sorted(pools, key=lambda x: x.get("vol") or 0, reverse=True)
+                  if p.get("addr")]
+    wf = None
+    try:
+        wf = WF.sample(pool_addrs, px_use)
+    except Exception as exc:
+        print("warn: wallet-flow: %s" % (exc,), file=sys.stderr)
+
     payload = {
         "generated": now,
         "hero": {
@@ -430,6 +481,8 @@ def main():
         },
         "priceHist": ph,
         "snaps": snaps,
+        "flywheelRank": parse_flywheel(sf_fly),
+        "walletFlow": wf,
         "srcNote": "StonkFun 官方 API + GeckoTerminal + RugCheck + DefiLlama",
     }
 

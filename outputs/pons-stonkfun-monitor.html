@@ -1,5 +1,17 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.4「返回总览不再被小头像/顶栏遮挡」 · 2026-10-11
+     【为什么做这一版】作者反馈：从 STONK 深度页点「返回总览」，顶部小头像 + 打赏按钮 +
+       渐隐顶栏会残留悬浮，盖住总览页头（附截图）。根因是深度页里总览内容被
+       display:none，量名片位置的函数读到全 0 的坐标；若这个错误数值在深度页期间
+       被写进缓存（数据刷新/窗口变化都会触发），返回总览时滚动位置本来就是 0，
+       不会产生 scroll 事件去纠正，于是残留。
+     【这一版改了什么】只动前端过渡逻辑，数据与版式零改动：
+       ① 量名片位置时加护栏：名片不可见（宽高为 0）就跳过，保留上次有效值；
+       ② 总览/深度页互切后强制重新量一次并重绘小头像/顶栏状态（isNaN 安全）；
+       ③ renderAll 里挂的 __miniMeasure 改为「重新量 + 重绘」，数据刷新后同步更稳。
+     回退：cp work/template.html.bak-v3294 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.0「飞轮名单 + 钱包分层净流入」 · 2026-10-11
      【为什么做这一版】作者参考 stonkfun 官方飞轮页与「大户/散户每日净流入」类看板，
        要求把平台代币回购名单、以及按钱包规模分层的 24h 资金流搬进 STONK 深度页；
@@ -741,7 +753,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.0-2026-10-11">
+<meta name="dashboard-version" content="v3.29.4-2026-10-11">
 
 <html lang="zh-CN">
 <head>
@@ -2836,7 +2848,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal')};
-const DASH_VER = 'v3.29.0 · 2026-10-11';
+const DASH_VER = 'v3.29.4 · 2026-10-11';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -5912,6 +5924,10 @@ function stkOpen(on, push){
     }catch(e){}
   }
   try{ window.scrollTo(0,0); }catch(e){}
+  /* v3.29.4：切换总览/深度页后，重画一次小头像与顶栏状态。
+     原来的问题：返回总览时若滚动位置本来就是 0，scrollTo 不产生 scroll 事件，
+     小头像/顶栏就带着深度页里算错的数值残留，盖住页头。 */
+  requestAnimationFrame(function(){ try{ if(window.__miniMeasure) window.__miniMeasure(); }catch(e){} });
   var b=document.getElementById('stkEntry'); if(b) b.classList.toggle('on', !!on);
 }
 function stkToggle(force){
@@ -6734,8 +6750,13 @@ applyTheme(curTheme());
      滚动时只算数字（原来每帧两次 getBoundingClientRect，是第二处强制同步布局）。 */
   var cTop=0, cH=1, bLeft=0, bTop=0, bW=IMG;
   function measure(){
+    var rc=card.getBoundingClientRect();
+    /* v3.29.4：深度页里 .wrap 子元素整体 display:none，此时名片量出来是全 0；
+       若把 0 写进 cTop/cH，返回总览后小头像/顶栏状态会算错并残留（盖住页头）。
+       量不到就提前返回，保留上一次在总览里量到的有效值。 */
+    if(!rc.height||!rc.width) return;
     var y=window.pageYOffset||document.documentElement.scrollTop||0;
-    var rc=card.getBoundingClientRect(), rb=big.getBoundingClientRect();
+    var rb=big.getBoundingClientRect();
     cTop=rc.top+y; cH=rc.height||1;
     bLeft=rb.left; bTop=rb.top+y; bW=rb.width||IMG;
     sx=null;                                    /* 起点重新采样 */
@@ -6762,7 +6783,7 @@ applyTheme(curTheme());
   function req(){ if(!ticking){ ticking=true; requestAnimationFrame(frame); } }
   function remeasure(){ measure(); req(); }
   measure();
-  window.__miniMeasure=measure;               /* 数据落地后高度可能变，由 renderAll 再量一次 */
+  window.__miniMeasure=remeasure;             /* 数据落地后高度可能变，由 renderAll 再量一次并重绘 */
   window.addEventListener('scroll',req,{passive:true});
   window.addEventListener('resize',remeasure);
   window.addEventListener('load',remeasure);

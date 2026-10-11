@@ -5168,6 +5168,10 @@ function stkOpen(on, push){
     }catch(e){}
   }
   try{ window.scrollTo(0,0); }catch(e){}
+  /* v3.29.4：切换总览/深度页后，重画一次小头像与顶栏状态。
+     原来的问题：返回总览时若滚动位置本来就是 0，scrollTo 不产生 scroll 事件，
+     小头像/顶栏就带着深度页里算错的数值残留，盖住页头。 */
+  requestAnimationFrame(function(){ try{ if(window.__miniMeasure) window.__miniMeasure(); }catch(e){} });
   var b=document.getElementById('stkEntry'); if(b) b.classList.toggle('on', !!on);
 }
 function stkToggle(force){
@@ -5990,8 +5994,13 @@ applyTheme(curTheme());
      滚动时只算数字（原来每帧两次 getBoundingClientRect，是第二处强制同步布局）。 */
   var cTop=0, cH=1, bLeft=0, bTop=0, bW=IMG;
   function measure(){
+    var rc=card.getBoundingClientRect();
+    /* v3.29.4：深度页里 .wrap 子元素整体 display:none，此时名片量出来是全 0；
+       若把 0 写进 cTop/cH，返回总览后小头像/顶栏状态会算错并残留（盖住页头）。
+       量不到就提前返回，保留上一次在总览里量到的有效值。 */
+    if(!rc.height||!rc.width) return;
     var y=window.pageYOffset||document.documentElement.scrollTop||0;
-    var rc=card.getBoundingClientRect(), rb=big.getBoundingClientRect();
+    var rb=big.getBoundingClientRect();
     cTop=rc.top+y; cH=rc.height||1;
     bLeft=rb.left; bTop=rb.top+y; bW=rb.width||IMG;
     sx=null;                                    /* 起点重新采样 */
@@ -6018,7 +6027,7 @@ applyTheme(curTheme());
   function req(){ if(!ticking){ ticking=true; requestAnimationFrame(frame); } }
   function remeasure(){ measure(); req(); }
   measure();
-  window.__miniMeasure=measure;               /* 数据落地后高度可能变，由 renderAll 再量一次 */
+  window.__miniMeasure=remeasure;             /* 数据落地后高度可能变，由 renderAll 再量一次并重绘 */
   window.addEventListener('scroll',req,{passive:true});
   window.addEventListener('resize',remeasure);
   window.addEventListener('load',remeasure);

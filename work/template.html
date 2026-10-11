@@ -1738,6 +1738,14 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-nav button.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 42%,transparent);
   background:color-mix(in srgb,var(--accent) 13%,var(--panel));font-weight:700}
 #stkView .sec-title{scroll-margin-top:68px}
+/* v3.29.6：长页骨架 —— 板块序号徽章 + 首屏 KPI 主次分层（4 个核心数字放大加底色） */
+#stkView .sec-title .sn{font-style:normal;flex:0 0 auto;font-size:var(--fs-10);font-weight:800;letter-spacing:.5px;
+  color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 26%,transparent);border-radius:7px;
+  padding:2px 7px;line-height:1.25;font-variant-numeric:tabular-nums}
+.stk-cell.xl{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 8%,var(--panel2)),var(--panel2) 72%)}
+.stk-cell.xl .v{font-size:var(--fs-20);letter-spacing:-.7px;margin-top:5px}
+@media (max-width:680px){.stk-cell.xl .v{font-size:var(--fs-16)}}
 
 .stk-card{padding:16px 18px}
 .stk-sec{margin-bottom:var(--sp-block)}
@@ -5016,7 +5024,7 @@ zh:{
   secScore:'体检评分卡', secScoreSub:'每条都有数值和阈值：绿=健康、黄=留意、红=预警、灰=还没采样',
   secNote:'口径与来源',
   kMcap:'市值', kVol24:'24 小时成交', kBurned:'已销毁', kHolders:'持币地址', kDepth:'主池深度',
-  kLiq:'全市场流动性', kBuyback:'日均回购（7 日）', kBurnSpeed:'销毁速度',
+  kLiq:'全市场流动性', kBuyback:'日回购', kBurnSpeed:'销毁速度',
   kTurnover:'换手', kOfMcap:'占市值', kPoolsN:'个资金池', kOfSupply:'占供应', kPerDay:'/天',
   kAcross:'按 7 日均值', kToNext1:'距下一个 1%',
   chipMint:'已放弃增发权限', chipFreeze:'已放弃冻结权限', chipTax:'买卖 0% 税', chipRisk:'风控库无风险标记',
@@ -5081,7 +5089,7 @@ en:{
   secScore:'Health scorecard', secScoreSub:'Every cell has a value and a threshold: green healthy, amber watch, red warning, grey not sampled yet',
   secNote:'Method & sources',
   kMcap:'Market cap', kVol24:'24h volume', kBurned:'Burned', kHolders:'Holders', kDepth:'Main pool depth',
-  kLiq:'Market-wide liquidity', kBuyback:'Buyback / day (7d)', kBurnSpeed:'Burn speed',
+  kLiq:'Market-wide liquidity', kBuyback:'Daily buyback', kBurnSpeed:'Burn speed',
   kTurnover:'Turnover', kOfMcap:'of mcap', kPoolsN:'pools', kOfSupply:'of supply', kPerDay:'/day',
   kAcross:'7-day average', kToNext1:'to next 1%',
   chipMint:'Mint authority renounced', chipFreeze:'Freeze authority renounced', chipTax:'0% transfer tax', chipRisk:'No risk flags',
@@ -5259,35 +5267,35 @@ function stkRender(){
   /* v3.28：安全徽章并入 hero 卡尾条（stkHeroHTML 内统一渲染），顶部从三块收成两块 */
   out.push(stkHeroHTML(h, fw, dm, sf));
   out.push(stkVerdictHTML(d));
-  out.push('<nav class="stk-nav" id="stkNav">'
-    + stkNavBtn('stk-s-supply', st('secSupply'))
-    + stkNavBtn('stk-s-fly', st('secFly'))
-    + stkNavBtn('stk-s-rank', st('secRank'))
-    + stkNavBtn('stk-s-demand', st('secDemand'))
-    + stkNavBtn('stk-s-flow', st('secFlow'))
-    + stkNavBtn('stk-s-value', st('secValue'))
-    + stkNavBtn('stk-s-score', stkShortScoreName())
-    + stkNavBtn('stk-s-model', st('secModel'))
-    + stkNavBtn('stk-s-note', st('secNote'))
-    + '</nav>');
-  out.push(stkSecHead('stk-s-supply','flame',st('secSupply'),st('secSupplySub')));
-  out.push(stkSupplyHTML(sup, h));
-  out.push(stkSecHead('stk-s-fly','trend',st('secFly'),st('secFlySub')));
-  out.push(stkFlyHTML(fw, h));
-  out.push(stkSecHead('stk-s-rank','medal',st('secRank'),st('secRankSub')));
-  out.push(stkRankHTML(d.flywheelRank));
-  out.push(stkSecHead('stk-s-demand','activity',st('secDemand'),st('secDemandSub')));
-  out.push(stkDemandHTML(dm));
-  out.push(stkSecHead('stk-s-flow','pie',st('secFlow'),st('secFlowSub')));
-  out.push(stkFlowHTML(d.walletFlow));
-  out.push(stkSecHead('stk-s-value','trophy',st('secValue'),st('secValueSub')));
-  out.push(stkValueHTML(val, md));
-  out.push(stkSecHead('stk-s-score','shield',st('secScore'),st('secScoreSub')));
-  out.push(stkScoreHTML(sc));
-  out.push(stkSecHead('stk-s-model','refresh',st('secModel'),st('secModelSub')));
-  out.push(stkModelHTML(md));
-  out.push(stkSecHead('stk-s-note','book',st('secNote'),''));
-  out.push(stkNoteHTML(d));
+  /* v3.29.6：板块顺序按「看这枚币的决策路径」重排 ——
+     赚钱飞轮 → 谁在买 → 盘面资金 → 币的底子（供应安全）→ 贵不贵 → 平台名单 → 自查评分 → 假设推演 → 口径说明。
+     导航与板块标题从同一张 SECS 表生成（永远同步），标题带 01~09 序号做长页骨架。 */
+  var SECS=[
+    {id:'stk-s-fly',   ic:'trend',   nav:st('secFly'),   t:st('secFly'),   sub:st('secFlySub')},
+    {id:'stk-s-flow',  ic:'pie',     nav:st('secFlow'),  t:st('secFlow'),  sub:st('secFlowSub')},
+    {id:'stk-s-demand',ic:'activity',nav:st('secDemand'),t:st('secDemand'),sub:st('secDemandSub')},
+    {id:'stk-s-supply',ic:'flame',   nav:st('secSupply'),t:st('secSupply'),sub:st('secSupplySub')},
+    {id:'stk-s-value', ic:'trophy',  nav:st('secValue'), t:st('secValue'), sub:st('secValueSub')},
+    {id:'stk-s-rank',  ic:'medal',   nav:st('secRank'),  t:st('secRank'),  sub:st('secRankSub')},
+    {id:'stk-s-score', ic:'shield',  nav:stkShortScoreName(), t:st('secScore'), sub:st('secScoreSub')},
+    {id:'stk-s-model', ic:'refresh', nav:st('secModel'), t:st('secModel'), sub:st('secModelSub')},
+    {id:'stk-s-note',  ic:'book',    nav:st('secNote'),  t:st('secNote'),  sub:''}
+  ];
+  var body={};
+  body['stk-s-fly']=stkFlyHTML(fw, h);
+  body['stk-s-flow']=stkFlowHTML(d.walletFlow);
+  body['stk-s-demand']=stkDemandHTML(dm);
+  body['stk-s-supply']=stkSupplyHTML(sup, h);
+  body['stk-s-value']=stkValueHTML(val, md);
+  body['stk-s-rank']=stkRankHTML(d.flywheelRank);
+  body['stk-s-score']=stkScoreHTML(sc);
+  body['stk-s-model']=stkModelHTML(md);
+  body['stk-s-note']=stkNoteHTML(d);
+  out.push('<nav class="stk-nav" id="stkNav">'+SECS.map(function(scn){ return stkNavBtn(scn.id, scn.nav); }).join('')+'</nav>');
+  SECS.forEach(function(scn, i){
+    out.push(stkSecHead(scn.id, scn.ic, scn.t, scn.sub, ('0'+(i+1)).slice(-2)));
+    out.push(body[scn.id]);
+  });
   out.push('<div class="stk-last"><span>'+t('updatedAt')+(gen? gen.toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '—')+'</span><span>'+esc(d.srcNote||'')+'</span></div>');
   root.innerHTML=out.join('');
   /* v3.27.3：深度页的板块标题是动态生成的，补 ic-in，否则图标被全局动画规则藏住（opacity:0） */
@@ -5303,8 +5311,10 @@ function stkShortScoreName(){
 function stkNavBtn(id, label){
   return '<button type="button" data-t="'+id+'" onclick="stkGo(\''+id+'\')">'+esc(label)+'</button>';
 }
-function stkSecHead(id, icon, title, sub){
-  return '<div class="sec-title" id="'+id+'"><svg class="ic" aria-hidden="true"><use href="#ic-'+icon+'"/></svg>'+esc(title)+'</div>'
+function stkSecHead(id, icon, title, sub, no){
+  return '<div class="sec-title" id="'+id+'">'
+    + (no? '<i class="sn">'+no+'</i>' : '')
+    + '<svg class="ic" aria-hidden="true"><use href="#ic-'+icon+'"/></svg>'+esc(title)+'</div>'
     + (sub? '<div class="rank-sub">'+esc(sub)+'</div>' : '');
 }
 
@@ -5317,15 +5327,19 @@ function stkHeroHTML(h, fw, dm, sf){
   var px=(site.price!=null? site.price : h.price);
   var mc=(site.mcap!=null? site.mcap : h.mcap);
   var chg=(site.chg!=null? site.chg : (h.chg24!=null? h.chg24 : null));
+  /* v3.29.6：首屏分主次 —— 前 4 格是核心（x 类放大 + 底色）：市值 / 日回购 / 已销毁 / 销毁速度；
+     回购值改用「最近一个完整日」（与结论卡同口径），7 日均挪到小字；后 4 格为次层明细。 */
+  var lastBB=(fw.buyback&&fw.buyback.length)? fw.buyback[fw.buyback.length-1] : null;
+  var lastDate=(fw.dates&&fw.dates.length)? fw.dates[fw.dates.length-1] : '';
   var cells=[
-    ['kMcap', fmtU(mc), ''],
+    ['kMcap', fmtU(mc), '', 1],
+    ['kBuyback', (lastBB!=null? fmtU(lastBB):'—'), ((lastDate? lastDate+' · ':'')+(fw.buybackDay? (LANG==='zh'?'7 日均 ':'7d avg ')+fmtU(fw.buybackDay) : '')), 1],
+    ['kBurned', (h.burnPct!=null? (h.burnPct*100).toFixed(2)+'%' : '—'), (h.burnedTok!=null? (h.burnedTok/1e6).toFixed(2)+'M STONK' : ''), 1],
+    ['kBurnSpeed', (fw.burnVel!=null? fw.burnVel.toFixed(3)+'%' : '—'), (fw.burnDay? (fw.burnDay/1e6).toFixed(2)+'M '+st('kPerDay') : ''), 1],
     ['kVol24', fmtU(h.vol24), (dm.turnover!=null? st('kTurnover')+' '+(dm.turnover*100).toFixed(1)+'%' : '')],
-    ['kBurned', (h.burnPct!=null? (h.burnPct*100).toFixed(2)+'%' : '—'), (h.burnedTok!=null? (h.burnedTok/1e6).toFixed(2)+'M STONK' : '')],
     ['kHolders', nS(h.holders), (hd.d24h!=null? ((hd.d24h>=0?'+':'')+nS(hd.d24h)+' / 24h') : '')],
     ['kDepth', fmtU(h.reserve), (h.reserve&&mc? st('kOfMcap')+' '+(h.reserve/mc*100).toFixed(1)+'%' : '')],
-    ['kLiq', fmtU(((dm.liquidity)||{}).total), (((dm.liquidity)||{}).pools? (((dm.liquidity).pools)+' '+st('kPoolsN')) : '')],
-    ['kBuyback', fmtU(fw.buybackDay), (fw.share!=null? ((fw.share*100).toFixed(0)+'% '+(LANG==='zh'?'的收入':'of revenue')) : '')],
-    ['kBurnSpeed', (fw.burnVel!=null? fw.burnVel.toFixed(3)+'%' : '—'), (fw.burnDay? (fw.burnDay/1e6).toFixed(2)+'M '+st('kPerDay') : '')]
+    ['kLiq', fmtU(((dm.liquidity)||{}).total), (((dm.liquidity)||{}).pools? (((dm.liquidity).pools)+' '+st('kPoolsN')) : '')]
   ];
   var lastTxt = (h.lastBurn && h.lastBurn.t)? (LANG==='zh'? '最近销毁 ' : 'last burn ')+agoTxt(h.lastBurn.t)+(h.lastBurn.usd? ' · '+fmtU(h.lastBurn.usd) : '') : '';
   return '<div class="stk-hero card">'
@@ -5345,7 +5359,7 @@ function stkHeroHTML(h, fw, dm, sf){
     + '<div class="stk-grid">'
     + cells.map(function(c){
         var extra=c[2]||'';
-        return '<div class="stk-cell"><div class="k">'+esc(st(c[0]))+'</div><div class="v">'+(c[1]||'—')+(extra? '<small>'+esc(extra)+'</small>':'')+'</div></div>';
+        return '<div class="stk-cell'+(c[3]?' xl':'')+'"><div class="k">'+esc(st(c[0]))+'</div><div class="v">'+(c[1]||'—')+(extra? '<small>'+esc(extra)+'</small>':'')+'</div></div>';
       }).join('')
     + '</div>'
     + '</div>'

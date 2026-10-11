@@ -1,5 +1,16 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.28.1「深度页『飞轮推演』改白话」 · 2026-10-11
+     【为什么做这一版】作者反馈「飞轮推演」和里面的术语（地板价 / 天花板价 / 恒定乘积）
+       用户看不懂，要求用大白话讲清楚这块在算什么。
+     【这一版改了什么】只改深度页该板块的文案，算法与数据管道零改动：
+       ① 板块名：飞轮推演 → 收入涨了会怎样（导航胶囊同名自动跟随）；
+       ② 六格指标白话化：这段时间的收入 / 拿去回购的钱 / 烧掉的 STONK / 流通量减少 /
+          保守估算价（只看销毁）/ 乐观估算价（买盘全进池）；
+       ③ 格子小字中文化（原来残留英文 "vs now"）、底部说明改成白话运算步骤 + 免责；
+       ④ 中英双语同步改。
+     回退：cp work/template.html.bak-v3281 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.28.0「STONK 深度页 · 顶部布局重整 + 手机端打磨」 · 2026-10-09
      【为什么做这一版】作者反馈深度页「整体布局都调整一下，顺便适配手机端」（附手机截图，
        红框圈出首屏那条安全徽章）。
@@ -715,7 +726,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.28.0-2026-10-09">
+<meta name="dashboard-version" content="v3.28.1-2026-10-11">
 
 <html lang="zh-CN">
 <head>
@@ -2769,7 +2780,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal')};
-const DASH_VER = 'v3.28.0 · 2026-10-09';
+const DASH_VER = 'v3.28.1 · 2026-10-11';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -5667,7 +5678,7 @@ zh:{
   secFly:'飞轮 · 收入 → 回购 → 销毁', secFlySub:'平台赚的钱有多少真的变成了买盘，又烧掉了多少',
   secDemand:'需求与资金', secDemandSub:'谁在买、买卖谁占上风、钱都停在哪几个池子里',
   secValue:'估值与位置', secValueSub:'跟自己的收入比是贵还是便宜，在同行里排第几',
-  secModel:'飞轮推演', secModelSub:'一个输入推出来的算术结果，不是预测',
+  secModel:'收入涨了会怎样', secModelSub:'自己选“收入每天涨多少、往后推几天”，下面自动算结果。这是一道算术题，不是价格预测。',
   secScore:'体检评分卡', secScoreSub:'每条都有数值和阈值：绿=健康、黄=留意、红=预警、灰=还没采样',
   secNote:'口径与来源',
   kMcap:'市值', kVol24:'24 小时成交', kBurned:'已销毁', kHolders:'持币地址', kDepth:'主池深度',
@@ -5698,10 +5709,10 @@ zh:{
   vRankOf:'共 {n} 个协议', vNear:'榜上邻居', vPlatform:'平台累计',
   vRevTotal:'累计收入', vBuyTotal:'累计买回', vVolTotal:'平台累计成交量', vLaunches:'发射项目数',
   scoreTitle:'体检评分卡',
-  mRev:'期内收入', mBuy:'期内买回', mBurn:'销毁 STONK', mCut:'供应减少',
-  mFloor:'地板价（只算供应）', mCeil:'天花板价（AMM 无卖出）',
-  mGrowth:'收入日增速', mHorizon:'推演时长', mDay:'天',
-  mNote:'怎么算：收入按近 7 日均值 × 每天的增速复利；买回 = 收入 × 官方买回比例（约 60%）；销毁量 = 买回金额 ÷ 现价。地板价＝市值不变、供应变少的算术结果；天花板价＝把这些买盘全部砸进主池、且没有任何人卖出时的恒定乘积模型结果（按 1% 手续费）。真实价格一定落在两者之间，且随时可能反向。',
+  mRev:'这段时间的收入', mBuy:'拿去回购的钱', mBurn:'烧掉的 STONK', mCut:'流通量减少',
+  mFloor:'保守估算价（只看销毁）', mCeil:'乐观估算价（买盘全进池）',
+  mGrowth:'假设收入每天涨', mHorizon:'往后推多久', mDay:'天',
+  mNote:'这是一道算术题，不是价格预测。怎么算：以最近 7 天的平均收入为起点，按你选的“每天涨多少”逐日累加；其中约 60% 拿去回购；回购金额 ÷ 现价 = 烧掉的币。保守估算＝假设市值保持不动、只有币变少了，价格会到多少；乐观估算＝假设这些买盘全部打进交易池、期间没有任何人卖出，池子能给出的价格上限。真实价格由买卖双方决定：可能比保守估算更低，也可能够不到乐观估算。',
   noteLi1:'价格、成交量、买卖笔数：GeckoTerminal 主池（STONK / SOL）；全市场流动性、转账税、风险标记：RugCheck。',
   noteLi2:'收入 / 买回 / 销毁 / 累计值：StonkFun 官方 API（和 stonkfun.xyz 同一个口径，官方买回比例为 {r}）。',
   noteLi3:'持币人数与持仓分布：GeckoTerminal 代币信息（CoinGecko 口径）。持币人数变化与主池净流入是本站自己的采样，只认实测、不估算。',
@@ -5718,7 +5729,7 @@ en:{
   secFly:'Flywheel · revenue → buyback → burn', secFlySub:'How much of the revenue actually becomes buys, and how much is burned',
   secDemand:'Demand & liquidity', secDemandSub:'Who is buying, who wins the tape, and where the money sits',
   secValue:'Valuation & position', secValueSub:'Cheap or expensive versus its own revenue — and its rank among peers',
-  secModel:'Flywheel projection', secModelSub:'Arithmetic from one input — not a forecast',
+  secModel:'What if revenue grows', secModelSub:'Pick a daily growth rate and a horizon; the numbers below are computed straight from them. This is arithmetic, not a price forecast.',
   secScore:'Health scorecard', secScoreSub:'Every cell has a value and a threshold: green healthy, amber watch, red warning, grey not sampled yet',
   secNote:'Method & sources',
   kMcap:'Market cap', kVol24:'24h volume', kBurned:'Burned', kHolders:'Holders', kDepth:'Main pool depth',
@@ -5749,10 +5760,10 @@ en:{
   vRankOf:'of {n} protocols', vNear:'Neighbours on the board', vPlatform:'Platform totals',
   vRevTotal:'Revenue', vBuyTotal:'Buybacks', vVolTotal:'Platform volume', vLaunches:'Launches',
   scoreTitle:'Health scorecard',
-  mRev:'Revenue in window', mBuy:'Buybacks in window', mBurn:'STONK burned', mCut:'Supply cut',
-  mFloor:'Floor (supply only)', mCeil:'Ceiling (AMM, no sellers)',
-  mGrowth:'Revenue growth / day', mHorizon:'Horizon', mDay:'d',
-  mNote:'How it is computed: revenue compounds from the 7-day average at your chosen daily growth; buybacks = revenue × the official share (~60%); burned = buyback USD ÷ price. The floor keeps market cap constant with fewer tokens. The ceiling pushes every buyback into the main pool with the constant-product rule (1% fee) and zero sellers. Real prices land in between, and can always go the other way.',
+  mRev:'Revenue over the period', mBuy:'Spent on buybacks', mBurn:'STONK burned', mCut:'Supply reduction',
+  mFloor:'Conservative price (burn only)', mCeil:'Optimistic price (all buys, no sellers)',
+  mGrowth:'Assume revenue grows / day', mHorizon:'How far ahead', mDay:'d',
+  mNote:'This is arithmetic, not a price forecast. How it works: start from the 7-day average revenue and add your chosen daily growth day by day; about 60% of that revenue goes to buybacks; buyback USD ÷ price = tokens burned. The conservative price assumes market cap stays flat and only supply shrinks. The optimistic price assumes every buyback dollar goes into the trading pool with no sellers at all. Real prices are decided by buyers and sellers: they can land below the conservative figure, or never reach the optimistic one.',
   noteLi1:'Price, volume and trade counts: GeckoTerminal main pool (STONK / SOL). Market-wide liquidity, transfer tax, risk flags: RugCheck.',
   noteLi2:'Revenue / buybacks / burns / lifetime totals: the official StonkFun API (same numbers as stonkfun.xyz; official buyback share {r}).',
   noteLi3:'Holder count and distribution: GeckoTerminal token info (CoinGecko basis). Holder change and main-pool net flow are sampled by this dashboard — measured only, never estimated.',
@@ -6300,12 +6311,12 @@ function stkModelPaint(){
   function tile(k,v,s,cls){
     return '<div><div class="k">'+esc(k)+'</div><div class="v '+(cls||'')+'">'+v+'</div><div class="s">'+esc(s||'')+'</div></div>';
   }
-  el.innerHTML = tile(st('mRev'), fmtU(revSum), (STK_G>0? ('+'+STK_G+'%/d × '+STK_HZ+'d') : (LANG==='zh'?'按当前速度':'flat')))
-    + tile(st('mBuy'), fmtU(buy), (LANG==='zh'?'收入的 ':'')+((share*100).toFixed(0))+'%')
+  el.innerHTML = tile(st('mRev'), fmtU(revSum), (STK_G>0? (LANG==='zh'? ('每天 +'+STK_G+'% · 连着 '+STK_HZ+' 天') : ('+'+STK_G+'%/day · over '+STK_HZ+'d')) : (LANG==='zh'?'收入不涨不跌':'flat revenue')))
+    + tile(st('mBuy'), fmtU(buy), (LANG==='zh'? '≈ 收入的 ' : '~')+((share*100).toFixed(0))+'%'+(LANG==='zh'?'':' of revenue'))
     + tile(st('mBurn'), (burnTok/1e6).toFixed(2)+'M', LANG==='zh'?'按现价折算':'at today’s price')
-    + tile(st('mCut'), (cut!=null? (cut*100).toFixed(2)+'%':''), LANG==='zh'?'流通量被烧掉的比例':'share of circulating burned')
-    + tile(st('mFloor'), floor? pxS(floor):'—', floor? ('vs now '+pctS(floor/price-1)) : '', floor&&floor>price?'up':'')
-    + tile(st('mCeil'), ceil? pxS(ceil):'—', ceil? ('vs now '+pctS(ceil/price-1)) : '', ceil&&ceil>price?'up':'');
+    + tile(st('mCut'), (cut!=null? (cut*100).toFixed(2)+'%':''), LANG==='zh'?'烧掉的币占流通量':'share of circulating burned')
+    + tile(st('mFloor'), floor? pxS(floor):'—', floor? ((LANG==='zh'?'比现价 ':'vs now ')+pctS(floor/price-1)) : '', floor&&floor>price?'up':'')
+    + tile(st('mCeil'), ceil? pxS(ceil):'—', ceil? ((LANG==='zh'?'比现价 ':'vs now ')+pctS(ceil/price-1)) : '', ceil&&ceil>price?'up':'');
 }
 
 /* ---------- 口径说明 ---------- */

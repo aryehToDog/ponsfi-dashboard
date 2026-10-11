@@ -9,6 +9,17 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.7「手机端两处修复」 · 2026-10-11
+     【为什么做这一版】作者反馈两个手机端 bug（附截图）：
+       ① STONK 深度页：左上角打赏浮标（.tip-mini）和吸顶导航条（.stk-nav）重叠；
+       ② 钱包分层板块的行内文字互相压字（币名压住右侧数值，看不清）。
+     【这一版改了什么】纯 CSS、只动手机端（≤760px），结构与数据零改动：
+       ① body.stk-on 时吸顶导航下移到 top:54px 让开浮标，锚点 scroll-margin 同步
+          加大到 104px（避免点击导航后标题被导航条盖住）；
+       ② 钱包分层行（.stk-flow .row）改纵向堆叠：币名一行、数值+买卖笔数一行
+          （两端对齐、放不下自动换行）、占比条一行——任何宽度都不可能再压字。
+     回退：cp work/template.html.bak-v3297 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.6「STONK 深度页信息架构重整」 · 2026-10-11
      【为什么做这一版】作者反馈 STONK 深度页「抓不到重心、数据层级乱」。诊断：
        9 个板块同样式平铺、没有顺序逻辑；首屏 8 个指标等权；导航与板块如果
@@ -788,10 +799,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.6-2026-10-11">
+<meta name="dashboard-version" content="v3.29.7-2026-10-11">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.6 · 2026-10-11"
+VER = "v3.29.7 · 2026-10-11"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

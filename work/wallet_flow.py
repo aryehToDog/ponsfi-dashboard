@@ -41,6 +41,10 @@ BATCH = 50                  # 每次 RPC 批量的钱包数
 WINDOW_H = 24               # 展示窗口
 MAX_LEDGER = 60000          # 账本安全上限（防异常膨胀）
 POOL_N = 5                  # 只采成交量前 5 的资金池（约占全市场 ~97% 成交额）
+RPC_TIMEOUT = 15            # 单次 RPC 请求超时（秒）——2026-10-11 教训：默认 30s × 重试会拖垮整条管道
+HOLDINGS_BUDGET_S = 240     # 每轮构建查余额的总预算：查不完的钱包留给下一小时（有 48h 缓存）
+MAX_CHECK_PER_RUN = 800     # 单轮最多查的钱包数（按最近活跃排序，优先查新鲜的）
+TRADES_BUDGET_S = 150       # 拉成交的总预算：拉不完的资金池直接跳过（下轮再补）
 TIER_ORDER = [("whale", 1_000_000), ("shark", 100_000), ("dolphin", 10_000), ("fish", 0)]
 
 
@@ -57,7 +61,7 @@ def _fingerprint(tx_hash, pool, kind, usd):
     return hashlib.md5(raw.encode()).hexdigest()[:14]
 
 
-def _rpc_post(endpoint, calls, timeout=30):
+def _rpc_post(endpoint, calls, timeout=RPC_TIMEOUT):
     body = json.dumps(calls).encode()
     req = urllib.request.Request(endpoint, data=body, headers={
         "Content-Type": "application/json",
@@ -68,27 +72,47 @@ def _rpc_post(endpoint, calls, timeout=30):
         return json.loads(resp.read().decode("utf-8", "replace"))
 
 
-def fetch_holdings(wallets):
-    """批量查这些钱包的 STONK 余额 → {wallet: tokens}。查不到的 wallet 不在结果里。"""
+def fetch_holdings(wallets, budget_s=HOLDINGS_BUDGET_S, deadline=None):
+    """批量查这些钱包的 STONK 余额 → {wallet: tokens}。查不到的 wallet 不在结果里。
+
+    带时间预算（默认 240s）：查不完的留给下一小时继续（余额有 48h 缓存，覆盖很快补齐）。
+    2026-10-11 实测教训：个别公共 RPC 会「连接上但不回包」，30s 超时 × 3 尝试 × N 批次
+    能把整条云端管道拖到超时；这里改成 15s 超时 + 每个批次最多 2 轮、节点优选，
+    再加全局预算兜底。
+    """
     out = {}
-    todo = sorted(wallets)
+    todo = list(wallets)[:MAX_CHECK_PER_RUN]
+    t0 = time.time()
+    if deadline is not None:
+        budget_s = min(budget_s, max(0.0, deadline - t0))
+    order = list(RPC_ENDPOINTS)          # 本轮内优选用过的节点
     for i in range(0, len(todo), BATCH):
+        if time.time() - t0 > budget_s:
+            print("wallet-flow: holdings 预算用尽（%.0fs），%d 个钱包留给下一轮"
+                  % (budget_s, len(todo) - i), file=sys.stderr)
+            break
         chunk = todo[i:i + BATCH]
         calls = [{"jsonrpc": "2.0", "id": j, "method": "getTokenAccountsByOwner",
                   "params": [w, {"mint": MINT}, {"encoding": "jsonParsed"}]}
                  for j, w in enumerate(chunk)]
         got = None
         last = None
-        for attempt in range(3):
-            for ep in RPC_ENDPOINTS:
+        for attempt in range(2):
+            for ep in order:
                 try:
                     got = _rpc_post(ep, calls)
-                    break
                 except Exception as exc:
                     last = exc
+                    continue
+                if order[0] != ep:       # 这个节点能用 → 本轮后续批次优先用它
+                    order.remove(ep)
+                    order.insert(0, ep)
+                break
             if isinstance(got, list):
                 break
-            time.sleep(2 + 2 * attempt)
+            if time.time() - t0 > budget_s:
+                break
+            time.sleep(1.5 + 1.5 * attempt)
         if not isinstance(got, list):
             print("warn: wallet-flow holdings batch failed: %s" % (last,), file=sys.stderr)
             continue
@@ -104,21 +128,23 @@ def fetch_holdings(wallets):
                 except Exception:
                     pass
             out[chunk[j]] = amt
-        time.sleep(0.4)
+        time.sleep(0.3)
     return out
 
 
 def _fetch_pool_trades(pool):
-    """一页成交（最多 300 笔，新→旧）。GT 限流（429）时多等一会儿再重试。"""
+    """一页成交（最多 300 笔，新→旧）。超时 20s；GT 限流（429）时多等一会儿再重试。"""
     url = "%s/networks/solana/pools/%s/trades" % (GT, pool)
     last = None
     for i in range(3):
         try:
-            data = H.get(url, tries=1)
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "curl/8", "Accept": "application/json", "Connection": "close"})
+            data = json.load(urllib.request.urlopen(req, timeout=20))
             break
         except Exception as exc:
             last = exc
-            wait = (18 + 8 * i) if "429" in str(exc) else (4 + 3 * i)
+            wait = (15 + 6 * i) if "429" in str(exc) else (3 + 3 * i)
             print("warn: wallet-flow trades %s attempt %d: %s（%ds 后重试）"
                   % (pool[:8], i + 1, exc, wait), file=sys.stderr)
             time.sleep(wait)
@@ -154,9 +180,13 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
     if not isinstance(tiers, dict):
         tiers = {}
 
-    # ---- 1) 采样 + 入账（窗口内去重） ----
+    # ---- 1) 采样 + 入账（窗口内去重；总量预算内） ----
     got_any = False
+    t_wf = time.time()
     for pool in pool_addrs[:POOL_N]:
+        if time.time() - t_wf > TRADES_BUDGET_S:
+            print("wallet-flow: trades 预算用尽，剩余资金池跳过（下轮再补）", file=sys.stderr)
+            break
         try:
             rows = fetcher(pool)
             got_any = True
@@ -186,11 +216,17 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         keep = sorted(tr.items(), key=lambda kv: kv[1][0], reverse=True)[:MAX_LEDGER]
         tr = dict(keep)
 
-    # ---- 3) 分层（新钱包 + 过期钱包查链上余额） ----
+    # ---- 3) 分层（新钱包 + 过期钱包查链上余额；按最近活跃优先） ----
     wallets = {v[1] for v in tr.values()}
     if price:
+        last_t = {}
+        for v in tr.values():
+            w0, t0v = v[1], v[0]
+            if w0 not in last_t or t0v > last_t[w0]:
+                last_t[w0] = t0v
         need = [w for w in wallets
                 if w not in tiers or (now - int((tiers[w] or [0, 0])[1] or 0)) > TIER_TTL_H * 3600]
+        need.sort(key=lambda w: last_t.get(w, 0), reverse=True)
         if need:
             hold = fetch_holdings(need)
             for w, amt in hold.items():

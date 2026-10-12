@@ -805,7 +805,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.13-2026-10-12">
+<meta name="dashboard-version" content="v3.29.14-2026-10-12">
 
 <html lang="zh-CN">
 <head>
@@ -1322,12 +1322,18 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 @media(max-width:900px){.lyric{flex:1 1 100%}.ly-in{max-width:none}}
 
 /* ---------- 刷新反馈 + 手机端点击 ---------- */
-@keyframes pxflash{
-  0%{transform:scale(1)}
-  30%{transform:scale(1.075);color:var(--up)}
-  100%{transform:scale(1)}
-}
-.price .p.flash{animation:pxflash 1.4s cubic-bezier(.22,1,.36,1)}
+/* v3.29.14：价格改「骨架 → 一次成型」——px-boot 期间数字隐去、留一根微光条；
+   实时价落地后一次性淡入。撤掉旧版「放大变绿闪一下」的 pxflash。 */
+.price .p,.stk-px{position:relative}
+.price .p .pxv,.stk-px .pxv{transition:opacity .28s ease}
+html.px-boot .price .p .pxv,html.px-boot .stk-px .pxv,html.px-boot .stk-px .cur{opacity:0}
+.price .p::after,.stk-px::after{content:"";position:absolute;left:0;top:50%;width:4.4em;max-width:72%;height:.62em;
+  border-radius:.31em;transform:translateY(-50%);opacity:0;pointer-events:none;transition:opacity .28s ease;
+  background:linear-gradient(90deg,var(--line) 25%,color-mix(in srgb,var(--line) 35%,var(--panel)) 50%,var(--line) 75%);
+  background-size:400% 100%}
+html.px-boot .price .p::after,html.px-boot .stk-px::after{opacity:1;animation:pxskel 1.15s ease-in-out infinite}
+@keyframes pxskel{0%{background-position:100% 0}100%{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){html.px-boot .price .p::after,html.px-boot .stk-px::after{animation:none;opacity:.6}}
 header button{transition:opacity .2s ease,transform .15s ease}
 header button.busy{opacity:.55}
 header button.busy .ic{animation:icspin .9s linear infinite}
@@ -2855,6 +2861,10 @@ try{
   var _h=localStorage.getItem('ponsCardsH-'+_bk);
   if(_h) document.documentElement.style.setProperty('--cards-h', _h+'px');
 }catch(e){}
+/* v3.29.14：首屏价格「骨架 → 一次成型」——不再先显示快照价、再由闪烁动画换成实时价。
+   px-boot 期间数字隐去、留一根微光条；实时价落地后由 pxReveal() 揭开。2.8 秒兜底自带，不依赖主脚本。 */
+document.documentElement.classList.add("px-boot");
+window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove("px-boot");},2800);
 </script>
 </head>
 <body>
@@ -3053,7 +3063,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.13 · 2026-10-12';
+const DASH_VER = 'v3.29.14 · 2026-10-12';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -4764,7 +4774,7 @@ function renderCards(){
           <div class="pmeta"><span class="pch">${p.chain}</span><span class="pbn">${t('burned')}${(s.burnPct*100).toFixed(1)}% (${fmtN(s.burnAmt/1e6,1)}M ${p.ticker})</span></div>
         </div>
         <div class="price">
-          <div class="p mono" id="px-${p.id}">$${fmtN(s.psv,4)}</div>
+          <div class="p mono" id="px-${p.id}"><span class="pxv">$${fmtN(s.psv,4)}</span></div>
           <div class="m">${t('mcap')}${fmtU(s.mcap)}</div>
           <div class="pill ${dd>=0?'up':'down'}">${t('fromAth')}${pct(dd)}</div>
         </div>
@@ -5902,11 +5912,13 @@ async function loadLive(){
   const priceP = loadPrices().then(function(n){
     if(n){
       renderAll();          /* 先用最新价重画一遍（其余字段仍是内嵌快照值） */
-      flashPrices();
+      pxReveal();           /* v3.29.14：实时价落地 → 揭开骨架、一次性淡入 */
       setSrc(true, n);
+    } else {
+      pxReveal();           /* 价格源没有数据：直接揭开快照值，不让骨架无限转 */
     }
     return n;
-  }).catch(function(){ return 0; });
+  }).catch(function(){ pxReveal(); return 0; });
 
   /* v3.9 主数据与重数据拆成两条流水线。
      以前是「日度口径 → 成交额 → 4.2MB 排行榜」一路 await 串下来，
@@ -5933,7 +5945,7 @@ async function loadLive(){
   try{
     setSrc(ok, priceOk);
     renderAll();
-    if(priceOk) flashPrices();
+    pxReveal();             /* 幂等兜底：无论走哪条分支都不留骨架 */
   } finally {
     /* 任何一步出错也要放掉「刷新中」，否则按钮会一直禁用 */
     BUSY = false;
@@ -5946,15 +5958,10 @@ function setSrc(ok, priceOk){
   if(ok || priceOk){ b.textContent = t('liveAt') + time; b.className='badge live'; }
   else  { b.textContent = t('offline');        b.className='badge off'; }
 }
-function flashPrices(){
-  PROJECTS.forEach(p=>{
-    const el=document.getElementById('px-'+p.id);
-    if(!el) return;
-    el.classList.remove('flash');
-    void el.offsetWidth;
-    el.classList.add('flash');
-    setTimeout(()=>el.classList.remove('flash'), 1600);
-  });
+/* v3.29.14：揭开首屏价格骨架（幂等）。head 里还有个 2.8s 兜底会做同样的事。 */
+function pxReveal(){
+  try{ clearTimeout(window.__pxBootT); }catch(e){}
+  document.documentElement.classList.remove('px-boot');
 }
 /* ---------- 浏览量：本站自建计数（/api/hits），第三方看不到数据 ---------- */
 let PV_DATA = null;
@@ -6346,7 +6353,7 @@ function stkHeroHTML(h, fw, dm, sf){
   return '<div class="stk-hero card">'
     + '<div class="stk-hero-main">'
     + '<div>'
-    +   '<div class="stk-px"><span class="cur">$</span>'+(px!=null? px.toFixed(4):'—')+'</div>'
+    +   '<div class="stk-px"><span class="cur">$</span><span class="pxv">'+(px!=null? px.toFixed(4):'—')+'</span></div>'
     +   '<div class="stk-px-sub">'
     +     '<span class="pill '+(chg!=null&&chg>=0?'up':'down')+'">'+(chg!=null? (chg>=0?'▲ ':'▼ ')+Math.abs(chg).toFixed(2)+'%' : '—')+' 24h</span>'
     +     (h.chg1h!=null? '<span>1h '+((h.chg1h>=0?'+':'')+h.chg1h.toFixed(2)+'%')+'</span>' : '')

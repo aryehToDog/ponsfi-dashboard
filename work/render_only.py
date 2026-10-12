@@ -9,6 +9,19 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.15「PONS 小时收入换算修正」 · 2026-10-12
+     【为什么做这一版】作者发现「72 小时监控里 PONS 收入」与「每日明细里的 PONS 日收入」
+       对不上、差距很大。排查结论：日明细的日收入（DefiLlama）是对的；错的是小时监控的换算——
+       旧口径假设「收入 = 链上回购支出 ÷ 80%」，但 2026-10-09 起回购动用了金库，链上回购额
+       已是当日收入的 4~5 倍，固定 ÷0.8 把小时收入放大了约 5 倍（24h $310K vs 真实 $47K）。
+     【这一版改了什么】只改换算与文案，数据源不动：
+       ① hourly.py：PONS 小时收入 = 回购支出 × 校准比率（每次构建按最近 3 个完整日 DefiLlama
+          日线的 Σ收入 ÷ Σ回购 自动校准，实测 ≈0.25；健康带 0.05~1.5，取不到回退旧值/常量）；
+          dailySupp 的「回购」列同步按 收入÷比率 还原；hourly.json 新增 ponsRevRatio 字段；
+       ② template.html：实时刷新重算 PONS 收入的三处 JS 改乘校准比率（缺字段时默认 0.25）；
+          收入图注/口径说明/来源说明中英文同步改写，并注明「回购数 ≠ 收入、旧 80% 口径已失效」。
+     回退：cp work/template.html.bak-v32915 work/template.html && cp work/hourly.py.bak-v32915 work/hourly.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.8「深度页导航合并 + 价格图重做 + 分层明细框」 · 2026-10-11
      【为什么做这一版】作者反馈三项：
        ① 深度页行情看板里点数据条（钱包分层）时应该弹出数据框，直接看到交易量数值；
@@ -814,10 +827,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.14-2026-10-12">
+<meta name="dashboard-version" content="v3.29.15-2026-10-12">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.14 · 2026-10-12"
+VER = "v3.29.15 · 2026-10-12"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

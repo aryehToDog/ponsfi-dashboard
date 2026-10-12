@@ -565,12 +565,12 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
 /* ==========================================================================
    v3.21 页面导航（#secNav）· 图标 + 文字常显
    —— v3.20 只有小图标，用户反馈「不知道图标什么意思」→ 改为图标+文字常显，不再靠悬停。
-   ≥1024px：左侧一条固定宽度的导航列（122px），点击即平滑滚到对应板块：
+   ≥1024px：左侧一条固定宽度的导航列（134px），点击即平滑滚到对应板块：
       · 1024~1689：内容整体右移、左对齐到导航列右侧（导航列绝不压卡片）；
       · ≥1690：两侧留白够宽，导航列贴到内容左侧的留白里，不再占内容宽度。
    <1024px：标题下方横滑胶囊条；滑动时出现、停手约 1.5 秒后自动收起。
    ========================================================================== */
-:root{--nav-w:122px;--nav-gap:13px}
+:root{--nav-w:134px;--nav-gap:13px}
 #secNav{position:fixed;left:max(9px,calc(50vw - 700px - var(--nav-w) - var(--nav-gap)));top:50%;
   transform:translateY(-50%);z-index:100;width:var(--nav-w);
   display:flex;flex-direction:column;gap:2px;padding:7px 6px;border-radius:16px;
@@ -588,7 +588,10 @@ a.author-cta,a.author-me,a.author-mini,.foot a,header button,.tab{touch-action:m
   transition:color .16s ease,background .16s ease,box-shadow .16s ease}
 .nav-i .nav-dot{display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .nav-i .nav-dot .ic{width:14px;height:14px}
-.nav-i .nav-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* v3.29.9：作者反馈侧边栏文字「显示不全」（长标题被省略号截断）——
+   栏目名改用短标签（见 NAV_STK_ITEMS 的 nk），这里再放开一行折行兜底：
+   万一以后还有长文案，宁可折成两行也不截断。 */
+.nav-i .nav-t{flex:1 1 auto;min-width:0;line-height:1.35;overflow-wrap:break-word}
 .nav-i:hover{color:var(--txt);background:color-mix(in srgb,var(--accent) 10%,transparent);box-shadow:none}
 .nav-i.on{color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 32%,transparent)}
@@ -1733,6 +1736,9 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @media (max-width:1023px){
   body.stk-on #secNav,
   body.stk-on.tb-on #secNav{top:54px}
+  /* v3.29.9：导航吸在 54px 让开打赏浮标后，比它在文档流里的位置低了约 36px，
+     会压住紧跟其后的深度页头部（实测重叠 24px）——把内容整体下移，头部从导航底边下方开始。 */
+  body.stk-on #stkView{margin-top:46px}
   body.stk-on #stkView .sec-title{scroll-margin-top:114px}
 }
 /* v3.29.6（v3.29.8 保留）：首屏 KPI 主次分层（4 个核心数字放大加底色） */
@@ -4728,17 +4734,19 @@ const NAV_ITEMS=[
   {id:'st-src',    ic:'db',       k:'navSrc'},
   {id:'st-guide',  ic:'book',     k:'navGuide'}
 ];
-/* v3.29.8：STONK 深度页并入同一套侧边栏 —— 深度页模式下换成这组板块（id 与 stkRender 一致） */
+/* v3.29.8：STONK 深度页并入同一套侧边栏 —— 深度页模式下换成这组板块（id 与 stkRender 一致）
+   v3.29.9：nk ＝ 侧边栏专用的短标签（板块标题仍然用 k 的长文案）——
+   飞轮/谁在买/飞轮名单/收入推演这四项原名太长，122px 的导航列里会被截断。 */
 const NAV_STK_ITEMS=[
   {id:'top',         ic:'zap',      k:'navTop'},
-  {id:'stk-s-fly',   ic:'trend',    k:'secFly'},
-  {id:'stk-s-flow',  ic:'pie',      k:'secFlow'},
+  {id:'stk-s-fly',   ic:'trend',    k:'secFly',    nk:'navFly'},
+  {id:'stk-s-flow',  ic:'pie',      k:'secFlow',   nk:'navFlow'},
   {id:'stk-s-demand',ic:'activity', k:'secDemand'},
   {id:'stk-s-supply',ic:'flame',    k:'secSupply'},
   {id:'stk-s-value', ic:'trophy',   k:'secValue'},
-  {id:'stk-s-rank',  ic:'medal',    k:'secRank'},
+  {id:'stk-s-rank',  ic:'medal',    k:'secRank',   nk:'navRank'},
   {id:'stk-s-score', ic:'shield',   k:'secScore'},
-  {id:'stk-s-model', ic:'refresh',  k:'secModel'},
+  {id:'stk-s-model', ic:'refresh',  k:'secModel',  nk:'navModel'},
   {id:'stk-s-note',  ic:'book',     k:'secNote'}
 ];
 function navItems(){ return document.body.classList.contains('stk-on')? NAV_STK_ITEMS : NAV_ITEMS; }
@@ -4755,7 +4763,10 @@ function navBuild(){
   nav.innerHTML='<div class="nav-h" aria-hidden="true">'+esc(t('navTitle'))+'</div>'
     +navItems().map(function(it){
     /* v3.29.8：深度页板块的文案在 STK_I18N 里（secFly 等），总览的走 I18N —— 谁的词典里有就用谁 */
-    const lab=(typeof STK_I18N!=='undefined' && STK_I18N[LANG] && STK_I18N[LANG][it.k]!==undefined)? st(it.k) : t(it.k);
+    const dict=(typeof STK_I18N!=='undefined' && STK_I18N[LANG])? STK_I18N[LANG] : null;
+    /* v3.29.9：有短标签（nk）就用短标签，侧边栏不再截断；板块标题不受影响 */
+    const kk=(it.nk && dict && dict[it.nk]!==undefined)? it.nk : it.k;
+    const lab=(dict && dict[kk]!==undefined)? st(kk) : t(kk);
     return '<button class="nav-i" type="button" data-nav="'+it.id+'" title="'+esc(lab)+'" aria-label="'+esc(lab)+'">'
       + '<span class="nav-dot">'+IC[it.ic]+'</span><span class="nav-t">'+esc(lab)+'</span></button>';
   }).join('');
@@ -5102,6 +5113,7 @@ zh:{
   secModel:'收入涨了会怎样', secModelSub:'自己选“收入每天涨多少、往后推几天”，下面自动算结果。这是一道算术题，不是价格预测。',
   secScore:'体检评分卡', secScoreSub:'每条都有数值和阈值：绿=健康、黄=留意、红=预警、灰=还没采样',
   secNote:'口径与来源',
+  navFly:'回购飞轮', navFlow:'谁在买', navRank:'飞轮名单', navModel:'收入推演',
   kMcap:'市值', kVol24:'24 小时成交', kBurned:'已销毁', kHolders:'持币地址', kDepth:'主池深度',
   kLiq:'全市场流动性', kBuyback:'日回购', kBurnSpeed:'销毁速度',
   kTurnover:'换手', kOfMcap:'占市值', kPoolsN:'个资金池', kOfSupply:'占供应', kPerDay:'/天',
@@ -5171,6 +5183,7 @@ en:{
   secModel:'What if revenue grows', secModelSub:'Pick a daily growth rate and a horizon; the numbers below are computed straight from them. This is arithmetic, not a price forecast.',
   secScore:'Health scorecard', secScoreSub:'Every cell has a value and a threshold: green healthy, amber watch, red warning, grey not sampled yet',
   secNote:'Method & sources',
+  navFly:'Flywheel', navFlow:'Who buys', navRank:'Roster', navModel:'What-if',
   kMcap:'Market cap', kVol24:'24h volume', kBurned:'Burned', kHolders:'Holders', kDepth:'Main pool depth',
   kLiq:'Market-wide liquidity', kBuyback:'Daily buyback', kBurnSpeed:'Burn speed',
   kTurnover:'Turnover', kOfMcap:'of mcap', kPoolsN:'pools', kOfSupply:'of supply', kPerDay:'/day',

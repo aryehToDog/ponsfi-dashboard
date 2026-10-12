@@ -8,9 +8,10 @@
   2. 销毁（每小时）→ Robinhood Chain eth_getLogs 筛 Transfer→0x…dEaD，按小时分桶（真链上）
        STONK → StonkFun 官方逐笔销毁流水按小时归类（v3.26 起，精确到每一笔）；
        账本没盖到的小时退回官方累计值差值、再退 burn-history 快照
-  3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 × 校准比率（v3.29.15 起，
-       每次构建按最近 3 个完整日的 DefiLlama 日线自动校准：Σ收入 ÷ Σ回购，实测 ≈0.25；
-       旧口径「÷0.8」自 2026-10-09 回购动用金库后已高估收入 4~5 倍，弃用），明确标注为推算；
+  3. 收入（每小时）→ Pons 给一列「链上推算」＝ 小时回购支出 × 校准比率（v3.29.15 起弃用
+       固定 ÷0.8；v3.29.16 起逐日校准：历史日各取当天官方日线「收入÷回购」，当天取
+       「当天官方部分值÷当天链上回购」并以最近 3 日加权比率的 [0.5×, 2.5×] 夹住），
+       明确标注为推算；
        StonkFun → 官方逐笔买回流水按小时归类后 ÷ 官方比例（约 60%，按最近 3 个完整日自动校准）
        （流水接口 stonkfun.xyz/api/v2/revenue/buybacks|burns；国内直连被墙、走海外中转）
   4. 销毁里程碑（v3.15）→ burn-history 快照 + sf-history 累计值：算「已烧掉多少、按最近
@@ -776,43 +777,85 @@ def milestone(ho):
     return out
 
 
-def pons_rev_ratio(old):
-    """PONS 小时收入换算比率：ratio = Σ收入 ÷ Σ回购（DefiLlama 最近 3 个完整日）。
+def ts_day(ts):
+    return datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+
+
+def pons_rev_ratios(old, hold_by_day):
+    """PONS 小时收入换算比率（v3.29.16 起逐日校准）。
 
     为什么不再固定 ÷0.8：官方「80% 收入用于回购」是历史口径；2026-10-09 起回购动用了
-    金库，链上回购额已是当日收入的 4~5 倍，固定 0.8 会把收入放大 4~5 倍（本比率 ≈0.25）。
-    回退顺序：DL 日线校准 → 旧 hourly.json 的 ponsRevRatio → PONS_RATIO_FALLBACK。
+    金库，链上回购额已是当日收入的 2~5 倍，固定 0.8 会把收入放大数倍。
+
+    返回 (by_day, live, src)：
+      · by_day {YYYY-MM-DD: ratio}：各完整日取官方日线「收入 ÷ 回购」；官方回购还没出
+        （滞后约 1 天）时改用链上回购（hold_by_day）。这样小时柱按天求和 ≈ 每日明细表。
+      · live：当天所用比率 —— 官方已出当天部分值且链上有当天回购时，取「当天官方收入 ÷
+        当天链上回购」，并用最近 3 日加权比率 R3 的 [0.5×, 2.5×] 夹住（防上游异常）；
+        拿不到就退回 R3。
+      · 兜底顺序：R3 → 旧 hourly.json 的 ponsRevRatio → PONS_RATIO_FALLBACK。
     """
-    cut = int(time.time()) // 86400 * 86400      # 今日 00:00 UTC：只用完整日
-
-    def tail3(dt):
-        rows = get(DL_FEES_API % ("pons", dt)).get("totalDataChart") or []
-        vals = []
-        for ts, v in rows:
-            try:
-                ts, v = int(ts), float(v)
-            except (TypeError, ValueError):
-                continue
-            if ts < cut:
-                vals.append(v)
-        return vals[-3:]
-
+    now = int(time.time())
+    today = ts_day(now)
+    dl = {}
     try:
-        rs, hs = tail3("dailyRevenue"), tail3("dailyHoldersRevenue")
-        if len(rs) >= 3 and len(hs) >= 3 and sum(hs) > 0:
-            ratio = sum(rs) / sum(hs)
-            if PONS_RATIO_BAND[0] <= ratio <= PONS_RATIO_BAND[1]:
-                return round(ratio, 4), "dl-3d"
+        for dt, bag in (("dailyRevenue", "rev"), ("dailyHoldersRevenue", "hold")):
+            for ts, v in (get(DL_FEES_API % ("pons", dt)).get("totalDataChart") or []):
+                try:
+                    ts, v = int(ts), float(v)
+                except (TypeError, ValueError):
+                    continue
+                dl.setdefault(ts_day(ts), {})[bag] = v
     except Exception as exc:
-        print("warn: pons ratio: %s" % exc, file=sys.stderr)
-    if isinstance(old, dict):
-        try:
-            prev = float(old.get("ponsRevRatio"))
-            if PONS_RATIO_BAND[0] <= prev <= PONS_RATIO_BAND[1]:
-                return round(prev, 4), "stale"
-        except (TypeError, ValueError):
-            pass
-    return PONS_RATIO_FALLBACK, "fallback"
+        print("warn: pons ratios: %s" % exc, file=sys.stderr)
+
+    days = sorted(d for d in dl if d < today)
+    by_day = {}
+    for d in days[-6:]:
+        row = dl[d]
+        hold = row.get("hold") or hold_by_day.get(d)
+        if row.get("rev") and hold:
+            r = row["rev"] / hold
+            if PONS_RATIO_BAND[0] <= r <= PONS_RATIO_BAND[1]:
+                by_day[d] = round(r, 4)
+
+    # R3：最近 ≤3 个完整日的加权比率（越近权重越大）
+    r3 = None
+    use = days[-3:]
+    weights = [0.2, 0.3, 0.5][-len(use):] if use else []
+    num = den = 0.0
+    for d, wt in zip(use, weights):
+        row = dl.get(d) or {}
+        hold = row.get("hold") or hold_by_day.get(d)
+        if row.get("rev") and hold:
+            num += wt * row["rev"]
+            den += wt * hold
+    if den > 0:
+        cand = num / den
+        if PONS_RATIO_BAND[0] <= cand <= PONS_RATIO_BAND[1]:
+            r3 = cand
+
+    src, live = "dl-3d", r3
+    row = dl.get(today) or {}
+    hold_today = hold_by_day.get(today)
+    if row.get("rev") and hold_today:
+        cand = row["rev"] / hold_today
+        if r3:
+            cand = min(max(cand, 0.5 * r3), 2.5 * r3)
+        if PONS_RATIO_BAND[0] <= cand <= PONS_RATIO_BAND[1]:
+            live, src = cand, "today-live"
+    if live is None:
+        src, live = "stale", None
+        if isinstance(old, dict):
+            try:
+                prev = float(old.get("ponsRevRatio"))
+                if PONS_RATIO_BAND[0] <= prev <= PONS_RATIO_BAND[1]:
+                    live = prev
+            except (TypeError, ValueError):
+                pass
+        if live is None:
+            live, src = PONS_RATIO_FALLBACK, "fallback"
+    return by_day, round(live, 4), src
 
 
 def main():
@@ -826,9 +869,6 @@ def main():
         pass
 
     out = {"generated": int(now), "hours": buckets, "pons": {}, "stonk": {}}
-    # PONS 小时收入换算比率（收入÷回购）：DefiLlama 日线校准，取不到按旧值/常量兜底
-    pons_ratio, pons_ratio_src = pons_rev_ratio(old)
-    out["ponsRevRatio"], out["ponsRevRatioSrc"] = pons_ratio, pons_ratio_src
     for key, node in (("pons", out["pons"]), ("stonk", out["stonk"])):
         try:
             vol, close = gecko_series(key, buckets)
@@ -895,11 +935,23 @@ def main():
             out["stonk"]["burn"] = [None] * HOURS
             out["stonk"]["burnSrc"] = "none"
 
-    # 收入：Pons 用「小时回购支出 × 校准比率」推算（比率按 DL 最近 3 个完整日校准，v3.29.15）；
+    # 收入：Pons 用「小时回购支出 × 校准比率」推算（v3.29.16 逐日校准：
+    # 历史日各用当天官方日线比率、当天用实时比率，兜底链上/旧值）；
     # StonkFun 用官方流水账本（买回 ÷ 官方比例）
+    hold_by_day = {}
+    for b, c, t0 in zip(out["pons"]["burn"], out["pons"]["close"], buckets):
+        if b and c:
+            d0 = ts_day(t0)
+            hold_by_day[d0] = hold_by_day.get(d0, 0.0) + b * c
+    ratio_by_day, pons_ratio, pons_ratio_src = pons_rev_ratios(old, hold_by_day)
+    out["ponsRevRatio"], out["ponsRevRatioSrc"] = pons_ratio, pons_ratio_src
+    out["ponsRevRatioByDay"] = ratio_by_day
     pv = []
-    for b, c in zip(out["pons"]["burn"], out["pons"]["close"]):
-        pv.append(round(b * c * pons_ratio, 2) if (b and c) else None)
+    for b, c, t0 in zip(out["pons"]["burn"], out["pons"]["close"], buckets):
+        if b and c:
+            pv.append(round(b * c * ratio_by_day.get(ts_day(t0), pons_ratio), 2))
+        else:
+            pv.append(None)
     out["pons"]["rev"], out["pons"]["revEst"] = pv, True
     out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
     out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
@@ -907,7 +959,7 @@ def main():
     out["stonk"]["span"], out["stonk"]["spanR"], out["stonk"]["spanB"] = sspan, sspanR, sspanB
 
     # 日度补充（v3.9.1）：DefiLlama 日度会晚 1~2 天出数，缺的那几天用更快的源补上 ——
-    #   PONS ＝链上（收入＝回购支出×校准比率，与小时级同一口径；回购＝收入÷比率）
+    #   PONS ＝链上（收入＝回购支出×逐日校准比率，与小时级同一口径；回购＝链上回购量×价格）
     #   STONK＝官方接口累计快照差值
     #   差几个小时就标几个小时（front-end 会写明「链上·8h」这种），绝不拿半天冒充整天。
     #   前端只在「待更新」的格子里用它，不混进 DefiLlama 序列。
@@ -920,7 +972,7 @@ def main():
             day = datetime.datetime.utcfromtimestamp(b).strftime("%Y-%m-%d")
             d = supp["pons"].setdefault(day, {"rev": 0.0, "hold": 0.0, "hours": 0})
             d["rev"] += rev
-            d["hold"] += rev / pons_ratio
+            d["hold"] += (out["pons"]["burn"][i] or 0) * (out["pons"]["close"][i] or 0)
             d["hours"] += 1
         for day, d in supp["pons"].items():
             d["rev"] = round(d["rev"], 2)

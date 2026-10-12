@@ -9,6 +9,17 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.16「PONS 收入逐日校准」 · 2026-10-12
+     【为什么做这一版】v3.29.15 修掉 ÷0.8 的 5 倍高估后继续优化：小时柱按天求和与
+       每日明细仍有 ±30% 偏差 —— 单一 3 日平均比率跟不上逐日变化的回购/收入比
+       （10-09~10-11 逐日比率为 0.34 / 0.23 / 0.19；10-12 因成交量翻倍回升到 ~0.50）。
+     【这一版改了什么】只改换算口径与文案：
+       ① hourly.py：逐日校准 —— 历史各天取当天官方日线「收入÷回购」；当天取
+          「当天官方部分值 ÷ 当天链上回购」，并用最近 3 日加权比率 [0.5×, 2.5×] 夹住；
+          官方回购滞后时用链上回购兜底；hourly.json 新增 ponsRevRatioByDay；
+       ② template.html：实时重算按「小时所属日期」选比率；中英文案同步（逐日校准）。
+     回退：cp work/template.html.bak-v32916 work/template.html && cp work/hourly.py.bak-v32916 work/hourly.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.15「PONS 小时收入换算修正」 · 2026-10-12
      【为什么做这一版】作者发现「72 小时监控里 PONS 收入」与「每日明细里的 PONS 日收入」
        对不上、差距很大。排查结论：日明细的日收入（DefiLlama）是对的；错的是小时监控的换算——
@@ -827,10 +838,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.15-2026-10-12">
+<meta name="dashboard-version" content="v3.29.16-2026-10-12">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.15 · 2026-10-12"
+VER = "v3.29.16 · 2026-10-12"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

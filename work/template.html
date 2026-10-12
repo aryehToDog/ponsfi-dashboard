@@ -1332,7 +1332,25 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .hourly-marks i.x.l{transform:none}
 .hourly-marks i.x.r{transform:translateX(-100%)}
 .hourly-marks i.y{left:4px}
-@media(max-width:680px){.hourly-marks i.x[data-alt]{display:none}}
+/* v3.29.10：手机端 72 小时柱子太挤（1200 压到 ~350px、每根柱只剩 ~2px）——
+   改成横向滑动的长图（每小时 16px），默认停在最新（最右）；配「峰值」小签与滑动提示。
+   桌面端维持整屏总览，不受影响。 */
+.hourly-chartwrap{position:relative}
+.hourly-peak,.hourly-swipe{position:absolute;z-index:4;pointer-events:none;
+  padding:3px 9px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--panel2) 88%,transparent);
+  border:1px solid var(--line);box-shadow:var(--card-shadow);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  font-size:var(--fs-10);color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hourly-peak{left:8px;top:8px}
+.hourly-peak b{font-family:var(--font-num);color:var(--txt);margin-left:3px}
+.hourly-swipe{right:8px;top:8px;transition:opacity .3s ease}
+.hourly-swipe.off{opacity:0}
+@media(min-width:681px){.hourly-peak,.hourly-swipe{display:none}}
+@media(max-width:680px){
+  .hourly-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;overscroll-behavior-x:contain}
+  .hourly-scroll::-webkit-scrollbar{display:none}
+  .hourly-marks i.y{display:none}   /* 纵轴刻度不再压在柱子上，改左上角「峰值」小签 */
+}
 .hourly-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 5;opacity:.8}
 .hourly-bar{cursor:default;transition:opacity .15s ease}
 .hourly-bar:hover{opacity:.66}
@@ -1847,6 +1865,9 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-pop .pg span{display:block;font-size:var(--fs-10);color:var(--mut2)}
 .stk-pop .pg b{font-size:var(--fs-12);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .stk-pop .pf{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);font-size:var(--fs-10);color:var(--mut2);line-height:1.5}
+/* v3.29.10：悬停模式（桌面）—— 不铺遮罩、不挡鼠标，鼠标移开那一行就收起 */
+.stk-pop.hov{pointer-events:none}
+.stk-pop.hov .ph .x{display:none}
 #stkFlowBk{position:fixed;inset:0;z-index:190}
 
 .stk-pools{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
@@ -2073,8 +2094,14 @@ try{
   <div class="tabs" id="hourlyTabs"></div>
   <div class="hourly-box">
     <div class="hourly-legend" id="hourlyLegend"></div>
-    <svg id="hourlyChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>
-    <div class="hourly-marks" id="hourlyMarks" aria-hidden="true"></div>
+    <div class="hourly-chartwrap">
+      <div class="hourly-scroll" id="hourlyScroll">
+        <svg id="hourlyChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>
+        <div class="hourly-marks" id="hourlyMarks" aria-hidden="true"></div>
+      </div>
+      <div class="hourly-peak" id="hourlyPeak" hidden></div>
+      <div class="hourly-swipe" id="hourlySwipe" hidden></div>
+    </div>
     <div class="hourly-now" id="hourlyNow"></div>
     <div class="hourly-tipbox" id="hourlyTipBox"></div>
   </div>
@@ -2199,6 +2226,7 @@ zh:{
   hourNow:'当前小时', hourPick:'选中', hourOngoing:'进行中',
   hourNoData:'未采样',
   hourEst:'推算', hourChain:'链上', hourOfficial:'官方', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
+  hourPeak:'峰值', hourSwipe:'← 左右滑动看更早',
   hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 两个主流池的每小时成交额（GeckoTerminal 小时线）。成交量放大说明短线资金在进场，缩下去说明热度在退——这是判断"有没有人在玩"的最快指标。',
   hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 ÷ 80%（Pons 公开口径：80% 收入用于回购）。StonkFun 按<b>官方买回流水逐笔折算</b>——官方每笔买回都带时间戳和金额（和平台页面同源），花掉的钱 ÷ 官方比例（约 60%，每次刷新按最近 3 天自动校准）＝ 当小时收入。<b>那个小时没买回就是 0；确实没抓到的小时才留空</b>，看 6h / 24h 合计更稳。',
   hourNoteBurn:'<b>销毁</b>：Pons 按小时统计打进死地址的 PONS，<b>链上可对账</b>（约每 15 分钟一笔）；StonkFun 直接统计<b>官方销毁流水</b>——每一笔销毁的精确时间 + 数量都在里面，跟平台自己页面同一个数据源，<b>精确到笔</b>。',
@@ -2518,6 +2546,7 @@ en:{
   hourNow:'Current hour', hourPick:'Selected', hourOngoing:'in progress',
   hourNoData:'not sampled',
   hourEst:'estimate', hourChain:'on-chain', hourOfficial:'official', hourEach:'One bar per hour: PONS left · StonkFun right',
+  hourPeak:'peak', hourSwipe:'← swipe for earlier hours',
   hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. Rising volume means short-term money is coming in; fading volume means interest is cooling off — the fastest read on whether anyone is trading.',
   hourNoteRev:'<b>Revenue</b>: the Pons column is an <b>on-chain estimate</b> — hourly buyback spend ÷ 80% (Pons’ published buyback share). StonkFun is the <b>official buyback ledger, converted</b>: every official buyback carries its own timestamp and amount (same source as the platform page); spend ÷ the official ratio (~60%, recalibrated from the last 3 days on every refresh) = that hour’s revenue. <b>An hour with no buyback is a true 0; only hours we truly couldn’t capture stay blank</b>. Use the 6h / 24h totals for a steadier read.',
   hourNoteBurn:'<b>Burns</b>: Pons is counted hour by hour on Robinhood Chain from transfers into the dead address — <b>verifiable on-chain</b> (roughly one every 15 min). StonkFun is tallied straight from the <b>official burn ledger</b> — the exact time and amount of every single burn, the same source as the platform’s own page, <b>accurate to the transaction</b>.',
@@ -3557,6 +3586,36 @@ function renderHourly(){
   });
   if(svg) svg.innerHTML=body;
   const mk=document.getElementById('hourlyMarks'); if(mk) mk.innerHTML=marks;
+  /* v3.29.10：手机端横向滑动 —— 每小时 16px 的长图，默认停在最新（最右）；
+     滑动位置跨标签页保留；「峰值」小签替代被挤掉的纵轴刻度。 */
+  const sc=document.getElementById('hourlyScroll'), pk=document.getElementById('hourlyPeak'), sw2=document.getElementById('hourlySwipe');
+  let mob=false; try{ mob=window.matchMedia('(max-width:680px)').matches; }catch(e){}
+  if(sc){
+    if(mob){
+      const SW=Math.round(n*16);
+      svg.style.width=SW+'px'; if(mk) mk.style.width=SW+'px';
+      sc.scrollLeft=Math.max(0, (window.__hourScroll!=null? window.__hourScroll : SW));
+      if(pk){ pk.innerHTML=esc(t('hourPeak'))+'<b>'+fmtU(max)+'</b>'; pk.hidden=!(max>0); }
+      if(sw2){
+        sw2.textContent=t('hourSwipe');
+        sw2.hidden=!(sc.scrollWidth-sc.clientWidth>12);
+        sw2.classList.remove('off');
+      }
+      if(!sc.__wire){
+        sc.__wire=1;
+        sc.addEventListener('scroll',function(){
+          window.__hourScroll=sc.scrollLeft;
+          const m=sc.scrollWidth-sc.clientWidth;
+          if(sw2 && !sw2.hidden && m>12 && sc.scrollLeft<m-16) sw2.classList.add('off');
+        },{passive:true});
+      }
+    } else {
+      svg.style.width=''; if(mk) mk.style.width='';
+      if(pk) pk.hidden=true;
+      if(sw2) sw2.hidden=true;
+      window.__hourScroll=null;
+    }
+  }
 
   /* 当前小时读数卡：不点也能看到；手机点柱子 → 直接切成那一小时的数据
      （v3.21.1 起不再把卡收起 —— 收起后它在手机上是「隐形但占位」，会留一大块空白） */
@@ -3584,7 +3643,7 @@ function renderHourly(){
   const tipBox=document.getElementById('hourlyTipBox');
   const hlEl=svg? svg.querySelector('#hourHl') : null;
   if(svg && tipBox){
-    const box=svg.parentElement;
+    const box=svg.closest('.hourly-box')||svg.parentElement;   /* v3.29.10：svg 外层多了滚动容器 */
     const fine=function(){ try{ return !window.matchMedia('(max-width:680px)').matches; }catch(e){ return true; } };
     const label=function(raw){ return (HOUR_TAB==='burn'&&raw!=null)? ' <em>'+fmtN(raw,0)+'</em>' : ''; };
     const mark=function(i){ if(hlEl){ hlEl.setAttribute('x',(padL+i*step).toFixed(1));
@@ -3617,9 +3676,27 @@ function renderHourly(){
     window.__hourReset=function(){ hideTip(); buildNow(null); };
     svg.onmousemove=function(ev){ if(Date.now()-(window.__hourTouch||0)<800) return; hoverAt(ev); };
     svg.onclick=function(ev){ if(Date.now()-(window.__hourTouch||0)<800) return; hoverAt(ev); };
-    /* 手机：触屏没有 hover —— 点一下柱子＝把那一小时的数据写进图下的读数卡 */
+    /* 手机：触屏没有 hover —— 轻点柱子＝把那一小时的数据写进图下的读数卡；
+       v3.29.10：图表可横向滑动，手指拖动（>8px）算滑动、不触发选中。 */
+    let tS=null;
     svg.ontouchstart=function(ev){
-      if(ev.touches && ev.touches[0]){ window.__hourTouch=Date.now(); selectAt({clientX:ev.touches[0].clientX}); }
+      if(ev.touches && ev.touches[0]){
+        const t=ev.touches[0];
+        tS={x:t.clientX,y:t.clientY,t:Date.now(),mv:false};
+        window.__hourTouch=Date.now();
+      }
+    };
+    svg.ontouchmove=function(ev){
+      if(tS && ev.touches && ev.touches[0]){
+        const t=ev.touches[0];
+        if(Math.abs(t.clientX-tS.x)>8 || Math.abs(t.clientY-tS.y)>8) tS.mv=true;
+      }
+    };
+    svg.ontouchend=function(ev){
+      const st=tS; tS=null;
+      if(!st || st.mv || Date.now()-st.t>700) return;
+      const t=ev.changedTouches && ev.changedTouches[0];
+      if(t) selectAt({clientX:t.clientX});
     };
     svg.onmouseleave=function(){ hideTip(); buildNow(null); };
     /* 点图表以外的地方 / 页面划走 → 收起提示框，读数卡回到「当前小时」 */
@@ -5138,7 +5215,7 @@ zh:{
   flBuy:'买', flSell:'卖', flTrades:'笔',
   flEmpty:'采样中：云端每小时记一笔成交，攒满 24 小时后就显示各档净流入（刚上线的头几个小时数字会偏小）。',
   flNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal），转账 / OTC 不计；分层按钱包「当前」持币市值（链上余额 × 现价），窗口内刚清仓 / 刚建仓的钱包可能归错档；做市商没有公开标签，不单列（不硬造数据）。正数＝净买入，负数＝净卖出。',
-  flTap:'点一下任意一档，看这一档的成交明细', flPopNet:'净流入（窗口内）',
+  flTap:'鼠标划过任意一档看明细，手机轻点一下', flPopNet:'净流入（窗口内）',
   flPopVol:'成交额', flPopN:'成交笔数', flPopShare:'占采样成交', flPopSide:'买卖占比（买/卖）',
   flPopFoot:'口径与上方总表一致：只统计 DEX 逐笔成交；正数＝净买入，负数＝净卖出。',
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
@@ -5208,7 +5285,7 @@ en:{
   flBuy:'buy', flSell:'sell', flTrades:'trades',
   flEmpty:'Sampling: the cloud records a batch every hour. Once 24h is collected, tier flows appear here (early numbers will look small).',
   flNote:'Method: DEX trades only (GeckoTerminal); transfers / OTC excluded. Tiers use each wallet’s current holdings (on-chain balance × spot price), so wallets that fully entered or exited within the window may be misclassified. Market makers have no public labels and are not shown as a separate tier (no fabricated data). Positive = net buying, negative = net selling.',
-  flTap:'Tap any tier to see its trade breakdown', flPopNet:'Net flow (window)',
+  flTap:'Hover any tier for details (tap on mobile)', flPopNet:'Net flow (window)',
   flPopVol:'Volume', flPopN:'Trades', flPopShare:'of sampled volume', flPopSide:'Buy/sell split (buy/sell)',
   flPopFoot:'Same basis as the table above: DEX trades only; positive = net buying, negative = net selling.',
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
@@ -5727,6 +5804,7 @@ function stkFlowHTML(wf){
       + ' data-net="'+((t.net!=null)? t.net:'')+'" data-n="'+((t.n!=null)? t.n:'')+'"'
       + ' data-share="'+((share!=null)? share.toFixed(1):'')+'"'
       + ' onclick="stkFlowPop(event, this)"'
+      + ' onmouseenter="stkFlowHoverIn(this)" onmouseleave="stkFlowHoverOut(this)"'
       + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();stkFlowPop(event, this);}"'
       + ' aria-label="'+esc(st(nmk[t.k])+': '+(LANG==='zh'?'查看买卖明细':'view breakdown'))+'">'
       + '<span class="nm"><em>'+emo[t.k]+'</em>'+esc(st(nmk[t.k]))+'</span>'
@@ -5754,10 +5832,11 @@ function stkFlowHTML(wf){
 /* v3.29.8：钱包分层明细弹框 —— 点一行浮出数据框（总成交/买入/卖出/笔数/占比），点别处关闭。
    手机没有 hover，点击是唯一可靠的入口；PC 上点空白/滚动/Esc 都会收起。 */
 var STK_FPOP=null;
-function stkFlowPop(ev, row){
+function stkFlowPop(ev, row, hover){
   if(ev){ try{ ev.stopPropagation(); }catch(e){} }
   stkFlowPopClose();
   if(!row) return;
+  var hoverMode=!!hover;
   function num(x){ var v=parseFloat(x); return isFinite(v)? v : null; }
   var buy=num(row.getAttribute('data-buy')), sell=num(row.getAttribute('data-sell')),
       net=num(row.getAttribute('data-net')), n=num(row.getAttribute('data-n')),
@@ -5791,18 +5870,46 @@ function stkFlowPop(ev, row){
   if(ly+ph>vh-8) ly=r.top-ph-8;
   ly=Math.max(8,Math.min(vh-ph-8,ly));
   pop.style.left=lx.toFixed(1)+'px'; pop.style.top=ly.toFixed(1)+'px';
-  var bk=document.createElement('div'); bk.id='stkFlowBk';
-  bk.addEventListener('click',function(){ stkFlowPopClose(); });
-  bk.addEventListener('touchmove',function(){ stkFlowPopClose(); },{passive:true});
-  document.body.appendChild(bk);
+  if(!hoverMode){
+    var bk=document.createElement('div'); bk.id='stkFlowBk';
+    bk.addEventListener('click',function(){ stkFlowPopClose(); });
+    bk.addEventListener('touchmove',function(){ stkFlowPopClose(); },{passive:true});
+    document.body.appendChild(bk);
+  }
+  pop.setAttribute('data-row', row.getAttribute('data-fli')||'');
+  if(hoverMode){ pop.classList.add('hov'); pop.setAttribute('data-hov','1'); }
   STK_FPOP=pop;
   /* 点别处 / 滚动 / Esc 收起（backdrop 覆盖全屏，点哪都先落到它身上） */
   window.addEventListener('scroll',stkFlowPopClose,{passive:true,once:true});
   document.addEventListener('keydown',stkFlowEsc,true);
 }
+/* v3.29.10：桌面端鼠标悬停即出数据框、移开即消失（触屏仍走点击，见 stkFlowPop）。
+   进 / 出都走同一次「对账」：延时后重新看当前真正悬停的是哪一行 ——
+   悬停谁就显示谁，没有任何一行被悬停就收起。
+   这样快速划过一排、或从这行直接滑到那行，都不会残留上一个数据框。 */
+var STK_FPH_T=null;
+function stkFlowHoverOK(){ try{ return window.matchMedia('(hover:hover) and (pointer:fine)').matches; }catch(e){ return true; } }
+function stkFlowHoverSync(ms){
+  if(!stkFlowHoverOK()) return;
+  clearTimeout(STK_FPH_T);
+  STK_FPH_T=setTimeout(function(){
+    try{
+      if(document.getElementById('stkFlowBk')) return;      /* 点击模式的弹框优先 */
+      var rows=document.querySelectorAll('.stk-flow .row.fclick'), hov=null;
+      for(var i=0;i<rows.length;i++){ if(rows[i].matches && rows[i].matches(':hover')){ hov=rows[i]; break; } }
+      var p=document.getElementById('stkFlowPop');
+      if(hov){
+        if(!p || p.getAttribute('data-row')!==(hov.getAttribute('data-fli')||'')) stkFlowPop(null, hov, true);
+      } else if(p && p.getAttribute('data-hov')==='1'){ stkFlowPopClose(); }
+    }catch(e){}
+  }, ms||70);
+}
+function stkFlowHoverIn(row){ stkFlowHoverSync(70); }
+function stkFlowHoverOut(row){ stkFlowHoverSync(110); }
 function stkFlowEsc(ev){ if(ev.key==='Escape'){ stkFlowPopClose(); } }
 function stkFlowPopClose(ev){
   if(ev){ try{ ev.stopPropagation(); }catch(e){} }
+  clearTimeout(STK_FPH_T);
   document.removeEventListener('keydown',stkFlowEsc,true);
   var p=document.getElementById('stkFlowPop'); if(p) p.remove();
   var b=document.getElementById('stkFlowBk'); if(b) b.remove();

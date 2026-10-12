@@ -805,7 +805,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.10-2026-10-12">
+<meta name="dashboard-version" content="v3.29.11-2026-10-12">
 
 <html lang="zh-CN">
 <head>
@@ -2496,7 +2496,9 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
    v3.27 · STONK 深度页（独立视图，页头按钮 / ?page=stonk 直达）
    说明：只加样式不动老页面 —— body.stk-on 时隐藏总览内容，显示 #stkView
    ========================================================================== */
-body.stk-on .wrap > :not(#stkView):not(.bgm):not(.tip-mini):not(.tip-modal):not(.toast):not(#secNav):not(script){display:none !important}
+/* v3.29.11：深度页不再显示左上角打赏浮标（.tip-mini 一并隐藏），
+   头部到导航之间不再需要为它留位置；打赏弹窗 .tip-modal 保留，供页脚入口调用 */
+body.stk-on .wrap > :not(#stkView):not(.bgm):not(.tip-modal):not(.toast):not(#secNav):not(script){display:none !important}
 #stkView{display:none}
 body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @keyframes stkIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -2557,15 +2559,13 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 /* v3.29.8：深度页导航并入全站侧边栏（#secNav 同一套：桌面左侧竖列 / 手机横滑胶囊），
    原来那条横向胶囊条 .stk-nav 已删除；锚点留白按新导航重新校准。 */
 #stkView .sec-title{scroll-margin-top:80px}
-/* v3.29.7/8：手机/平板（≤1023）深度页让开左上角打赏浮标（.tip-mini，底边≈47px）——
-   吸顶导航下移，锚点留白同步加大。1024+ 桌面端导航在左侧留白里，不会重叠。 */
+/* v3.29.11：深度页不再显示打赏浮标，v3.29.7/9 为「让开浮标」加的
+   导航下移 54px + 内容下移 46px 一并退役 —— 回到普通页的 6px 吸顶。
+   深度页不出现顶部固定栏（.topbar 在 stk-on 下整体隐藏），所以 tb-on 的 66px 档位也不需要。
+   锚点留白回到 #stkView .sec-title 默认值（桌面/平板 80px、手机 64px）。 */
 @media (max-width:1023px){
   body.stk-on #secNav,
-  body.stk-on.tb-on #secNav{top:54px}
-  /* v3.29.9：导航吸在 54px 让开打赏浮标后，比它在文档流里的位置低了约 36px，
-     会压住紧跟其后的深度页头部（实测重叠 24px）——把内容整体下移，头部从导航底边下方开始。 */
-  body.stk-on #stkView{margin-top:46px}
-  body.stk-on #stkView .sec-title{scroll-margin-top:114px}
+  body.stk-on.tb-on #secNav{top:6px}
 }
 /* v3.29.6（v3.29.8 保留）：首屏 KPI 主次分层（4 个核心数字放大加底色） */
 .stk-cell.xl{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 8%,var(--panel2)),var(--panel2) 72%)}
@@ -2795,8 +2795,10 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 /* v3.28 手机端打磨：顶栏按钮 38px 命中区（与总览页一致）、价格加大更抓眼、
    概况卡内边距收紧、安全徽章胶囊收小半号；窄屏指标名允许换行不再截成「…」 */
 @media (max-width:680px){
-  .stk-bar-r .tbtn{min-height:38px;padding:8px 12px;display:inline-flex;align-items:center;justify-content:center}
-  .stk-bar-r{width:100%}
+  /* v3.29.11：深度页页头收紧 —— 打赏浮标/让位留白退役后，头部与导航的节奏重新校准 */
+  .stk-bar{gap:10px;margin-bottom:14px}
+  .stk-bar-r .tbtn{min-height:38px;padding:7px 11px;display:inline-flex;align-items:center;justify-content:center}
+  .stk-bar-r{width:100%;gap:6px}
   .stk-bar-r .tbtn:last-child{flex:1 1 auto}
   .stk-px{font-size:38px}
   .stk-hero-main{padding:14px 14px 12px}
@@ -3015,7 +3017,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.10 · 2026-10-12';
+const DASH_VER = 'v3.29.11 · 2026-10-12';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {

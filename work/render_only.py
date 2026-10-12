@@ -814,10 +814,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.11-2026-10-12">
+<meta name="dashboard-version" content="v3.29.12-2026-10-12">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.11 · 2026-10-12"
+VER = "v3.29.12 · 2026-10-12"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

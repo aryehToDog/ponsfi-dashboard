@@ -1944,6 +1944,37 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-mo .v{font-size:var(--fs-14);font-weight:800;margin-top:4px;letter-spacing:-.2px;font-variant-numeric:tabular-nums}
 .stk-mo .s{font-size:var(--fs-10);color:var(--mut);margin-top:2px}
 .stk-model-note{font-size:var(--fs-11);color:var(--mut);margin-top:10px;line-height:1.6}
+/* v3.29.12 收入推演重做：三步叙事（你的假设 → 这段的账 → 两个价格边界），把"不是预测"摆在明面上 */
+.stk-model .sm-step+.sm-step{margin-top:16px;padding-top:13px;border-top:1px solid var(--line)}
+.stk-model .sm-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.stk-model .sm-no{flex:0 0 auto;width:18px;height:18px;border-radius:50%;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line2));background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:var(--fs-10);font-weight:800;font-variant-numeric:tabular-nums}
+.stk-model .sm-t{font-size:var(--fs-13);font-weight:800;letter-spacing:-.1px}
+.stk-model .sm-hint{font-size:var(--fs-10);color:var(--mut2)}
+.stk-model .sm-flag{margin-left:auto;font-size:var(--fs-10);font-weight:600;color:var(--wn-txt);background:var(--wn-bg);border:1px solid var(--wn-line);border-radius:var(--r-pill);padding:2px 9px;white-space:nowrap}
+.stk-model .stk-model-ctl{margin-bottom:0}
+.stk-model .sm-bounds{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stk-model .sm-bcard{position:relative;border:1px solid var(--line);border-radius:var(--r-md);background:var(--panel2);padding:11px 12px 10px 14px;overflow:hidden}
+.stk-model .sm-bcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line2)}
+.stk-model .sm-bcard.lo::before{background:color-mix(in srgb,var(--up) 78%,transparent)}
+.stk-model .sm-bcard.hi::before{background:color-mix(in srgb,var(--warn) 78%,transparent)}
+.stk-model .sm-btag{position:absolute;top:10px;right:10px;font-size:var(--fs-10);color:var(--mut);background:var(--panel);border:1px solid var(--line2);border-radius:var(--r-pill);padding:1px 7px}
+.stk-model .sm-bk{font-size:var(--fs-10);color:var(--mut)}
+.stk-model .sm-bv{font-size:var(--fs-16);font-weight:800;letter-spacing:-.3px;font-variant-numeric:tabular-nums;margin-top:3px}
+.stk-model .sm-bs{font-size:var(--fs-11);font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums}
+.stk-model .sm-bcard.lo .sm-bs{color:var(--up)}
+.stk-model .sm-bcard.hi .sm-bs{color:var(--warn)}
+.stk-model .sm-bd{font-size:var(--fs-10);color:var(--mut2);margin-top:7px;padding-top:6px;border-top:1px dashed var(--line);line-height:1.5}
+.stk-model .sm-range{margin-top:12px}
+.stk-model .sm-rbar{position:relative;height:8px;border-radius:var(--r-pill);border:1px solid var(--line);margin:0 2px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 32%,transparent),color-mix(in srgb,var(--warn) 42%,transparent))}
+.stk-model .sm-rbar i{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;border:2px solid var(--panel);box-sizing:border-box}
+.stk-model .sm-rbar i.now{left:0;transform:translate(0,-50%);background:var(--accent)}
+.stk-model .sm-rbar i.ceil{left:100%;transform:translate(-100%,-50%);background:var(--warn)}
+.stk-model .sm-rlab{display:flex;justify-content:space-between;gap:12px;margin-top:5px;font-size:var(--fs-10);color:var(--mut)}
+.stk-model .sm-rlab b{color:var(--txt);font-variant-numeric:tabular-nums}
+.stk-model .sm-rcap{font-size:var(--fs-10);color:var(--mut2);margin-top:6px;line-height:1.55}
+.stk-model .stk-model-note b{color:var(--txt);font-weight:700}
+.stk-model .stk-model-note>div+div{margin-top:3px}
+@media (max-width:560px){.stk-model .sm-bounds{grid-template-columns:1fr}.stk-model .sm-rlab{flex-direction:column;gap:2px}}
 
 .stk-note{font-size:var(--fs-11);color:var(--mut);line-height:1.75}
 .stk-note b{color:var(--txt)}
@@ -5189,7 +5220,7 @@ zh:{
   secDemand:'需求与资金', secDemandSub:'谁在买、买卖谁占上风、钱都停在哪几个池子里',
   secFlow:'谁在买 · 24 小时钱包分层', secFlowSub:'按持币规模分四档，看每档是净买入还是净卖出（本站云端采样）',
   secValue:'估值与位置', secValueSub:'跟自己的收入比是贵还是便宜，在同行里排第几',
-  secModel:'收入涨了会怎样', secModelSub:'自己选“收入每天涨多少、往后推几天”，下面自动算结果。这是一道算术题，不是价格预测。',
+  secModel:'收入涨了会怎样', secModelSub:'自己选“收入每天涨多少、推几天”，下面一步步算：这段时间的账 → 价格的下限参考与理论天花板。',
   secScore:'体检评分卡', secScoreSub:'每条都有数值和阈值：绿=健康、黄=留意、红=预警、灰=还没采样',
   secNote:'口径与来源',
   navFly:'回购飞轮', navFlow:'谁在买', navRank:'飞轮名单', navModel:'收入推演',
@@ -5238,9 +5269,16 @@ zh:{
   vRevTotal:'累计收入', vBuyTotal:'累计买回', vVolTotal:'平台累计成交量', vLaunches:'发射项目数',
   scoreTitle:'体检评分卡',
   mRev:'这段时间的收入', mBuy:'拿去回购的钱', mBurn:'烧掉的 STONK', mCut:'流通量减少',
-  mFloor:'保守估算价（只看销毁）', mCeil:'乐观估算价（买盘全进池）',
-  mGrowth:'假设收入每天涨', mHorizon:'往后推多久', mDay:'天',
-  mNote:'这是一道算术题，不是价格预测。怎么算：以最近 7 天的平均收入为起点，按你选的“每天涨多少”逐日累加；其中约 60% 拿去回购；回购金额 ÷ 现价 = 烧掉的币。保守估算＝假设市值保持不动、只有币变少了，价格会到多少；乐观估算＝假设这些买盘全部打进交易池、期间没有任何人卖出，池子能给出的价格上限。真实价格由买卖双方决定：可能比保守估算更低，也可能够不到乐观估算。',
+  mStep1:'你的假设', mStep1Sub:'改一改，下面两段马上重算',
+  mStep2:'这段时间平台的账', mStep2Sub:'按你选的增速，一天一天累出来',
+  mStep3:'价格的两个边界', mNotForecast:'算术结果 · 不是价格预测',
+  mFloor:'保守估算价', mFloorTag:'下限参考', mFloorSub:'假设市值不变、只有币变少——只靠销毁托住的参照价',
+  mCeil:'乐观估算价', mCeilTag:'理论上限', mCeilSub:'假设回购的钱全打进池子、期间没人卖——算术天花板，现实几乎到不了',
+  mGrowth:'假设收入每天涨', mHorizon:'往后推多久', mDay:'天', mNow:'现价',
+  mRangeCap:'左边是现价，右边是算术上的天花板。两个边界只是两种极端假设的结果——真实价格可能更低，也几乎到不了右边。',
+  mNoteHow:'怎么算的：', mNote1:'以最近 7 天的平均收入为起点，按你选的增速逐日累加 = 这段时间的收入；其中约 60% 拿去回购，回购金额 ÷ 现价 = 烧掉的 STONK。',
+  mNoteLo:'保守估算：', mNote2:'假设市值保持不变、只有币变少（只看销毁）。',
+  mNoteHi:'乐观估算：', mNote3:'假设回购资金全部打进交易池、期间没有任何人卖出，这是算得出来的价格上限。',
   noteLi1:'价格、成交量、买卖笔数：GeckoTerminal 主池（STONK / SOL）；全市场流动性、转账税、风险标记：RugCheck。',
   noteLi2:'收入 / 买回 / 销毁 / 累计值：StonkFun 官方 API（和 stonkfun.xyz 同一个口径，官方买回比例为 {r}）。',
   noteLi3:'持币人数与持仓分布：GeckoTerminal 代币信息（CoinGecko 口径）。持币人数变化与主池净流入是本站自己的采样，只认实测、不估算。',
@@ -5259,7 +5297,7 @@ en:{
   secDemand:'Demand & liquidity', secDemandSub:'Who is buying, who wins the tape, and where the money sits',
   secFlow:'Who is buying · 24h wallet tiers', secFlowSub:'Wallets grouped by size; net buys vs sells per tier (sampled in the cloud)',
   secValue:'Valuation & position', secValueSub:'Cheap or expensive versus its own revenue — and its rank among peers',
-  secModel:'What if revenue grows', secModelSub:'Pick a daily growth rate and a horizon; the numbers below are computed straight from them. This is arithmetic, not a price forecast.',
+  secModel:'What if revenue grows', secModelSub:'Pick a daily growth rate and a horizon — the window’s ledger, a lower-bound price and a theoretical ceiling, computed step by step.',
   secScore:'Health scorecard', secScoreSub:'Every cell has a value and a threshold: green healthy, amber watch, red warning, grey not sampled yet',
   secNote:'Method & sources',
   navFly:'Flywheel', navFlow:'Who buys', navRank:'Roster', navModel:'What-if',
@@ -5308,9 +5346,16 @@ en:{
   vRevTotal:'Revenue', vBuyTotal:'Buybacks', vVolTotal:'Platform volume', vLaunches:'Launches',
   scoreTitle:'Health scorecard',
   mRev:'Revenue over the period', mBuy:'Spent on buybacks', mBurn:'STONK burned', mCut:'Supply reduction',
-  mFloor:'Conservative price (burn only)', mCeil:'Optimistic price (all buys, no sellers)',
-  mGrowth:'Assume revenue grows / day', mHorizon:'How far ahead', mDay:'d',
-  mNote:'This is arithmetic, not a price forecast. How it works: start from the 7-day average revenue and add your chosen daily growth day by day; about 60% of that revenue goes to buybacks; buyback USD ÷ price = tokens burned. The conservative price assumes market cap stays flat and only supply shrinks. The optimistic price assumes every buyback dollar goes into the trading pool with no sellers at all. Real prices are decided by buyers and sellers: they can land below the conservative figure, or never reach the optimistic one.',
+  mStep1:'Your assumptions', mStep1Sub:'change these and the next two blocks recalculate',
+  mStep2:'The platform’s ledger over the window', mStep2Sub:'built day by day from your growth rate',
+  mStep3:'Two price bounds', mNotForecast:'Arithmetic · not a price forecast',
+  mFloor:'Conservative price', mFloorTag:'Lower bound', mFloorSub:'market cap stays flat, only supply shrinks — the reference from burns alone',
+  mCeil:'Optimistic price', mCeilTag:'Theoretical ceiling', mCeilSub:'all buyback money hits the pool with no sellers — an arithmetic ceiling reality rarely reaches',
+  mGrowth:'Assume revenue grows / day', mHorizon:'How far ahead', mDay:'d', mNow:'Now',
+  mRangeCap:'Left is today’s price, right is the arithmetic ceiling. Both bounds come from two extreme assumptions — real prices can land lower and will rarely reach the right end.',
+  mNoteHow:'How it’s computed: ', mNote1:'start from the 7-day average revenue and add your chosen growth day by day = revenue over the window; about 60% funds buybacks; buyback USD ÷ price = STONK burned.',
+  mNoteLo:'Conservative: ', mNote2:'market cap stays flat and only supply shrinks (burn only).',
+  mNoteHi:'Optimistic: ', mNote3:'every buyback dollar goes into the trading pool and nobody sells — the arithmetic ceiling.',
   noteLi1:'Price, volume and trade counts: GeckoTerminal main pool (STONK / SOL). Market-wide liquidity, transfer tax, risk flags: RugCheck.',
   noteLi2:'Revenue / buybacks / burns / lifetime totals: the official StonkFun API (same numbers as stonkfun.xyz; official buyback share {r}).',
   noteLi3:'Holder count and distribution: GeckoTerminal token info (CoinGecko basis). Holder change and main-pool net flow are sampled by this dashboard — measured only, never estimated.',
@@ -5989,17 +6034,36 @@ function stkScoreHTML(sc){
 /* ---------- 飞轮推演 ---------- */
 var STK_G=10, STK_HZ=7;
 function stkModelHTML(md){
-  return '<div class="card stk-card stk-sec">'
-    + '<div class="stk-model-ctl">'
-    +   '<div><span class="k">'+esc(st('mGrowth'))+'</span><div class="stk-seg" id="stkSegG">'
-    +     [0,5,10,20,35].map(function(g){ return '<button type="button" class="'+(STK_G===g?'on':'')+'" onclick="stkSetG('+g+')">'+g+'%</button>'; }).join('')
-    +   '</div></div>'
-    +   '<div><span class="k">'+esc(st('mHorizon'))+'</span><div class="stk-seg" id="stkSegH">'
-    +     [7,30].map(function(hz){ return '<button type="button" class="'+(STK_HZ===hz?'on':'')+'" onclick="stkSetH('+hz+')">'+hz+' '+esc(st('mDay'))+'</button>'; }).join('')
-    +   '</div></div>'
+  return '<div class="card stk-card stk-sec stk-model">'
+    + '<div class="sm-step">'
+    +   '<div class="sm-head"><span class="sm-no">1</span><span class="sm-t">'+esc(st('mStep1'))+'</span><span class="sm-hint">'+esc(st('mStep1Sub'))+'</span></div>'
+    +   '<div class="stk-model-ctl">'
+    +     '<div><span class="k">'+esc(st('mGrowth'))+'</span><div class="stk-seg" id="stkSegG">'
+    +       [0,5,10,20,35].map(function(g){ return '<button type="button" class="'+(STK_G===g?'on':'')+'" onclick="stkSetG('+g+')">'+g+'%</button>'; }).join('')
+    +     '</div></div>'
+    +     '<div><span class="k">'+esc(st('mHorizon'))+'</span><div class="stk-seg" id="stkSegH">'
+    +       [7,30].map(function(hz){ return '<button type="button" class="'+(STK_HZ===hz?'on':'')+'" onclick="stkSetH('+hz+')">'+hz+' '+esc(st('mDay'))+'</button>'; }).join('')
+    +     '</div></div>'
+    +   '</div>'
     + '</div>'
-    + '<div class="stk-mo m3" id="stkMO"></div>'
-    + '<div class="stk-model-note">'+esc(st('mNote'))+'</div>'
+    + '<div class="sm-step">'
+    +   '<div class="sm-head"><span class="sm-no">2</span><span class="sm-t">'+esc(st('mStep2'))+'</span><span class="sm-hint">'+esc(st('mStep2Sub'))+'</span></div>'
+    +   '<div class="stk-mo" id="stkMO"></div>'
+    + '</div>'
+    + '<div class="sm-step">'
+    +   '<div class="sm-head"><span class="sm-no">3</span><span class="sm-t">'+esc(st('mStep3'))+'</span><span class="sm-flag">'+esc(st('mNotForecast'))+'</span></div>'
+    +   '<div class="sm-bounds" id="stkPB"></div>'
+    +   '<div class="sm-range">'
+    +     '<div class="sm-rbar"><i class="now"></i><i class="ceil"></i></div>'
+    +     '<div class="sm-rlab" id="stkRLab"></div>'
+    +     '<div class="sm-rcap">'+esc(st('mRangeCap'))+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="stk-model-note">'
+    +   '<div><b>'+esc(st('mNoteHow'))+'</b>'+esc(st('mNote1'))+'</div>'
+    +   '<div><b>'+esc(st('mNoteLo'))+'</b>'+esc(st('mNote2'))+'</div>'
+    +   '<div><b>'+esc(st('mNoteHi'))+'</b>'+esc(st('mNote3'))+'</div>'
+    + '</div>'
     + '</div>';
 }
 function stkSetG(g){ STK_G=g; stkModelPaint(); }
@@ -6018,15 +6082,35 @@ function stkModelPaint(){
   var cut=circ? burnTok/circ : null;
   var floor=(circ&&burnTok<circ)? price*circ/(circ-burnTok) : null;
   var ceil=(Q>0&&price>0)? price*Math.pow((Q+buy*0.99)/Q,2) : null;
-  function tile(k,v,s,cls){
-    return '<div><div class="k">'+esc(k)+'</div><div class="v '+(cls||'')+'">'+v+'</div><div class="s">'+esc(s||'')+'</div></div>';
+  function tile(k,v,s){
+    return '<div><div class="k">'+esc(k)+'</div><div class="v">'+v+'</div><div class="s">'+esc(s||'')+'</div></div>';
   }
   el.innerHTML = tile(st('mRev'), fmtU(revSum), (STK_G>0? (LANG==='zh'? ('每天 +'+STK_G+'% · 连着 '+STK_HZ+' 天') : ('+'+STK_G+'%/day · over '+STK_HZ+'d')) : (LANG==='zh'?'收入不涨不跌':'flat revenue')))
     + tile(st('mBuy'), fmtU(buy), (LANG==='zh'? '≈ 收入的 ' : '~')+((share*100).toFixed(0))+'%'+(LANG==='zh'?'':' of revenue'))
     + tile(st('mBurn'), (burnTok/1e6).toFixed(2)+'M', LANG==='zh'?'按现价折算':'at today’s price')
-    + tile(st('mCut'), (cut!=null? (cut*100).toFixed(2)+'%':''), LANG==='zh'?'烧掉的币占流通量':'share of circulating burned')
-    + tile(st('mFloor'), floor? pxS(floor):'—', floor? ((LANG==='zh'?'比现价 ':'vs now ')+pctS(floor/price-1)) : '', floor&&floor>price?'up':'')
-    + tile(st('mCeil'), ceil? pxS(ceil):'—', ceil? ((LANG==='zh'?'比现价 ':'vs now ')+pctS(ceil/price-1)) : '', ceil&&ceil>price?'up':'');
+    + tile(st('mCut'), (cut!=null? (cut*100).toFixed(2)+'%':''), LANG==='zh'?'烧掉的币占流通量':'share of circulating burned');
+  /* v3.29.12：价格不再是并排的第 5、6 格 —— 拆成「两个边界」主卡 + 一条"现价→上限"的示意横条 */
+  var fp=(floor&&price)? floor/price-1 : null, cp=(ceil&&price)? ceil/price-1 : null;
+  var cmpNow=(LANG==='zh'?'比现价 ':'vs now ');
+  var pb=document.getElementById('stkPB');
+  if(pb){
+    pb.innerHTML =
+      '<div class="sm-bcard lo"><span class="sm-btag">'+esc(st('mFloorTag'))+'</span>'
+      + '<div class="sm-bk">'+esc(st('mFloor'))+'</div>'
+      + '<div class="sm-bv">'+(floor? pxS(floor):'—')+'</div>'
+      + '<div class="sm-bs">'+(fp!=null? esc(cmpNow+pctS(fp)):'')+'</div>'
+      + '<div class="sm-bd">'+esc(st('mFloorSub'))+'</div></div>'
+      + '<div class="sm-bcard hi"><span class="sm-btag">'+esc(st('mCeilTag'))+'</span>'
+      + '<div class="sm-bk">'+esc(st('mCeil'))+'</div>'
+      + '<div class="sm-bv">'+(ceil? pxS(ceil):'—')+'</div>'
+      + '<div class="sm-bs">'+(cp!=null? esc(cmpNow+pctS(cp)):'')+'</div>'
+      + '<div class="sm-bd">'+esc(st('mCeilSub'))+'</div></div>';
+  }
+  var rlab=document.getElementById('stkRLab');
+  if(rlab){
+    rlab.innerHTML = '<span>'+esc(st('mNow'))+' <b>'+(price? pxS(price):'—')+'</b>'+(floor? (' · '+esc(st('mFloorTag'))+' '+pxS(floor)) : '')+'</span>'
+      + '<span>'+esc(st('mCeilTag'))+' <b>'+(ceil? pxS(ceil):'—')+'</b>'+(cp!=null? ' ('+pctS(cp)+')':'')+'</span>';
+  }
 }
 
 /* ---------- 口径说明 ---------- */

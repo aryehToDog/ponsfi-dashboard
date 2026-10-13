@@ -439,6 +439,14 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .pv .pv-k{color:var(--mut2)}
 .pv i{font-style:normal;color:var(--line2);margin:0 1px}
 .warnline{stroke-dasharray:4 4}
+/* v3.29.17 备案信息：工信部要求页脚悬挂 ICP 备案号（链接 beian.miit.gov.cn），低调不抢视线 */
+.foot-beian{display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--line)}
+.foot .foot-beian a{display:inline-flex;align-items:center;gap:6px;padding:3px 0;
+  font-size:var(--fs-10);letter-spacing:.3px;font-weight:500;color:var(--mut2);border-bottom:0;
+  transition:color .2s ease}
+.foot .foot-beian a:hover{color:var(--txt);border-bottom:0}
+.foot-beian .ic{width:12px;height:12px;flex:0 0 auto;opacity:.8}
 
 /* ---------- 作者名片 ---------- */
 .author{position:relative;z-index:60;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
@@ -2224,7 +2232,13 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
     <div class="guide" id="guide"></div>
   </div>
 
-  <div class="foot" id="foot"></div>
+  <div class="foot" id="foot">
+    <div id="footMain"></div>
+    <!-- v3.29.17 备案信息：静态写在 HTML 里（不依赖 JS，便于备案核查），链接指向工信部备案系统首页 -->
+    <div class="foot-beian">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" title="ICP 备案号 · 工业和信息化部政务服务平台"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg><span>皖ICP备2026035096号-1</span></a>
+    </div>
+  </div>
 
   <!-- ===== v3.27 · STONK 深度页（独立视图）=====
        入口：页头「STONK 深度页」按钮 / 网址 ?page=stonk / #stonk
@@ -5196,7 +5210,7 @@ function renderAll(){
   if(window.__navSpy){ try{ window.__navSpy(); }catch(e){} }   /* v3.20：数据落地后刷新导航高亮 */
   document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')
     + (DATA.priceAt? t('priceLive')(new Date(DATA.priceAt).toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit'})) : '');
-  document.getElementById('foot').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
+  document.getElementById('footMain').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
       + '<div class="foot-meta"><span class="dash-ver" title="'+t('verTip')+'">'+DASH_VER+'</span>'
       + '<span class="pv" id="pvStat" title="'+t('pvTip')+'"></span></div>';
   paintViews();

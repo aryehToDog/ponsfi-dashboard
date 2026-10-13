@@ -1,5 +1,19 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.17「ICP 备案号上页脚」 · 2026-10-13
+     【为什么做这一版】ponsfi.xyz 的 ICP 备案 2026-10-13 审核通过（皖ICP备2026035096号-1）。
+       按工信部要求，备案通过的网站在开通时须在页脚悬挂备案号并链接到备案系统首页
+       （https://beian.miit.gov.cn/），否则会被责令限期改正；公安联网备案也需在 30 日内完成。
+     【这一版改了什么】只动页脚呈现，数据管道零改动：
+       ① template.html：页脚 #foot 拆成 #footMain（原 JS 渲染区）+ 静态 .foot-beian 备案行，
+          备案号写死在 HTML 里（不依赖 JS / 不需要等接口，任何抓取方式都能看到），
+          链接指向 https://beian.miit.gov.cn/，新窗口打开并带 rel="noopener"，
+          小盾牌图标 + 弱化字色（--mut2），上方一条细分割线，手机端自动换行不溢出；
+       ② render_only.py：本 Banner 与 dashboard-version / VER 升到 v3.29.17。
+     后续：公安联网备案（beian.mps.gov.cn，数据码 d08071cb2ff066dc013d879f6264f20f）通过后，
+       同样在 .foot-beian 里加一行「皖公网安备XXXXXXXX号」链接 https://beian.mps.gov.cn。
+     回退：cp work/template.html.bak-v32917 work/template.html && cp work/render_only.py.bak-v32917 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.16「PONS 收入逐日校准」 · 2026-10-12
      【为什么做这一版】v3.29.15 修掉 ÷0.8 的 5 倍高估后继续优化：小时柱按天求和与
        每日明细仍有 ±30% 偏差 —— 单一 3 日平均比率跟不上逐日变化的回购/收入比
@@ -829,7 +843,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.16-2026-10-12">
+<meta name="dashboard-version" content="v3.29.17-2026-10-13">
 
 <html lang="zh-CN">
 <head>
@@ -1271,6 +1285,14 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .pv .pv-k{color:var(--mut2)}
 .pv i{font-style:normal;color:var(--line2);margin:0 1px}
 .warnline{stroke-dasharray:4 4}
+/* v3.29.17 备案信息：工信部要求页脚悬挂 ICP 备案号（链接 beian.miit.gov.cn），低调不抢视线 */
+.foot-beian{display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--line)}
+.foot .foot-beian a{display:inline-flex;align-items:center;gap:6px;padding:3px 0;
+  font-size:var(--fs-10);letter-spacing:.3px;font-weight:500;color:var(--mut2);border-bottom:0;
+  transition:color .2s ease}
+.foot .foot-beian a:hover{color:var(--txt);border-bottom:0}
+.foot-beian .ic{width:12px;height:12px;flex:0 0 auto;opacity:.8}
 
 /* ---------- 作者名片 ---------- */
 .author{position:relative;z-index:60;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
@@ -3056,7 +3078,13 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
     <div class="guide" id="guide"></div>
   </div>
 
-  <div class="foot" id="foot"></div>
+  <div class="foot" id="foot">
+    <div id="footMain"></div>
+    <!-- v3.29.17 备案信息：静态写在 HTML 里（不依赖 JS，便于备案核查），链接指向工信部备案系统首页 -->
+    <div class="foot-beian">
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" title="ICP 备案号 · 工业和信息化部政务服务平台"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg><span>皖ICP备2026035096号-1</span></a>
+    </div>
+  </div>
 
   <!-- ===== v3.27 · STONK 深度页（独立视图）=====
        入口：页头「STONK 深度页」按钮 / 网址 ?page=stonk / #stonk
@@ -3087,7 +3115,7 @@ const BUNDLE = {"generated": "2026-10-06T01:00:02.162929Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.16 · 2026-10-12';
+const DASH_VER = 'v3.29.17 · 2026-10-13';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -6028,7 +6056,7 @@ function renderAll(){
   if(window.__navSpy){ try{ window.__navSpy(); }catch(e){} }   /* v3.20：数据落地后刷新导航高亮 */
   document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')
     + (DATA.priceAt? t('priceLive')(new Date(DATA.priceAt).toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit'})) : '');
-  document.getElementById('foot').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
+  document.getElementById('footMain').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
       + '<div class="foot-meta"><span class="dash-ver" title="'+t('verTip')+'">'+DASH_VER+'</span>'
       + '<span class="pv" id="pvStat" title="'+t('pvTip')+'"></span></div>';
   paintViews();

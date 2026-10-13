@@ -9,6 +9,20 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.17「ICP 备案号上页脚」 · 2026-10-13
+     【为什么做这一版】ponsfi.xyz 的 ICP 备案 2026-10-13 审核通过（皖ICP备2026035096号-1）。
+       按工信部要求，备案通过的网站在开通时须在页脚悬挂备案号并链接到备案系统首页
+       （https://beian.miit.gov.cn/），否则会被责令限期改正；公安联网备案也需在 30 日内完成。
+     【这一版改了什么】只动页脚呈现，数据管道零改动：
+       ① template.html：页脚 #foot 拆成 #footMain（原 JS 渲染区）+ 静态 .foot-beian 备案行，
+          备案号写死在 HTML 里（不依赖 JS / 不需要等接口，任何抓取方式都能看到），
+          链接指向 https://beian.miit.gov.cn/，新窗口打开并带 rel="noopener"，
+          小盾牌图标 + 弱化字色（--mut2），上方一条细分割线，手机端自动换行不溢出；
+       ② render_only.py：本 Banner 与 dashboard-version / VER 升到 v3.29.17。
+     后续：公安联网备案（beian.mps.gov.cn，数据码 d08071cb2ff066dc013d879f6264f20f）通过后，
+       同样在 .foot-beian 里加一行「皖公网安备XXXXXXXX号」链接 https://beian.mps.gov.cn。
+     回退：cp work/template.html.bak-v32917 work/template.html && cp work/render_only.py.bak-v32917 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.16「PONS 收入逐日校准」 · 2026-10-12
      【为什么做这一版】v3.29.15 修掉 ÷0.8 的 5 倍高估后继续优化：小时柱按天求和与
        每日明细仍有 ±30% 偏差 —— 单一 3 日平均比率跟不上逐日变化的回购/收入比
@@ -838,10 +852,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.16-2026-10-12">
+<meta name="dashboard-version" content="v3.29.17-2026-10-13">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.16 · 2026-10-12"
+VER = "v3.29.17 · 2026-10-13"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

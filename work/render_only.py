@@ -9,6 +9,22 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.18「收入排行 0 值自愈」 · 2026-10-14
+     【为什么做这一版】2026-10-14 09:08 作者发现「收入排行」里 StonkFun 的 24 小时
+       显示 $0、全站第 #2388 名、「比一个月前下滑 2381 位」—— 看着像坏了。
+       排查结论：DefiLlama 总榜接口当天把 stonkfun.total24h 记成 0（同一时刻它自己的
+       单协议接口是 $219,831；上游按「领取时点」记账，当日行还没落库就会这样），
+       而我们的看板照单全收 → 数值、名次、环比全被算歪。
+     【这一版改了什么】只改排行榜的取数与本地缓存，数据管道与其它板块零改动：
+       ① leaderboard.py：新增 patch_zero_targets —— 总榜里目标协议某口径为 0 时，
+          读单协议接口 summary/fees/{slug} 补上；仍是 0 就退到它日线里最后一个非零值；
+          补完再排序（名次跟着修正），board.fixed 记录兜底了哪些字段，日志同步打印；
+       ② template.html：前端刷新路径加同一套 patchZeroTargets（规则与 Python 一致）；
+          本地缓存加 rankCacheBroken 自检 —— 旧缓存里出现「24h=0 但 7 日有值」这种坏
+          数据直接作废重拉，打开页面就自动修好，不用手动点「更新排行」；
+       ③ 其它模块、文案、样式不动。
+     回退：cp work/leaderboard.py.bak-v32918 work/leaderboard.py && cp work/template.html.bak-v32918 work/template.html && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.17「ICP 备案号上页脚」 · 2026-10-13
      【为什么做这一版】ponsfi.xyz 的 ICP 备案 2026-10-13 审核通过（皖ICP备2026035096号-1）。
        按工信部要求，备案通过的网站在开通时须在页脚悬挂备案号并链接到备案系统首页
@@ -852,10 +868,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.17-2026-10-13">
+<meta name="dashboard-version" content="v3.29.18-2026-10-14">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.17 · 2026-10-13"
+VER = "v3.29.18 · 2026-10-14"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

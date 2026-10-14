@@ -25,6 +25,8 @@ DATA = os.path.join(HERE, "dashboard-data.json")
 
 API = ("https://api.llama.fi/overview/fees?dataType=dailyRevenue"
        "&excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true")
+# 单协议接口：总榜偶发把某协议 24h 记成 0 时，用它兜底（见 patch_zero_targets）
+SUMMARY = "https://api.llama.fi/summary/fees/{slug}?dataType=dailyRevenue"
 
 # (看板内的 id, DefiLlama slug, 显示名)  —— Pons 主协议是 V2（V1 已停）
 TARGETS = [("pons", "pons-v2", "Pons"), ("stonkfun", "stonkfun", "StonkFun")]
@@ -74,6 +76,44 @@ def _row(p, rank, field, me=False):
     }
 
 
+def patch_zero_targets(protocols):
+    """总榜偶发把某协议的 24h（或 7d/30d）记成 0 —— 单协议接口却是对的。
+
+    实例（2026-10-14 09:08 北京）：总榜 stonkfun.total24h = 0 → 页面上
+    StonkFun 显示「24 小时 #2388 $0、下滑 2381 位」，而它自己的单协议接口
+    同一时刻是 $219,831。原因是上游按「领取时点」记账，当日行还没落库时
+    24h 就是 0。这里对两个目标协议做兜底：
+      ① 总榜值为 0 → 读单协议接口的 total24h/total7d/total30d；
+      ② 单协议接口也是 0 → 退到它日线里**最后一个非零值**（至少同量级、不骗人）；
+    补完的值直接写回 protocols，排序/名次跟着一起修正。
+    """
+    by_slug = {p.get("slug"): p for p in protocols}
+    fixed = {}
+    for tid, slug, _nm in TARGETS:
+        p = by_slug.get(slug)
+        if not p:
+            continue
+        need = [f for f, _label in METRICS if not (p.get(f) or 0)]
+        if not need:
+            continue
+        try:
+            s = get(SUMMARY.format(slug=slug)) or {}
+        except Exception:
+            s = {}
+        for f in need:
+            v = s.get(f) or 0
+            src = "summary"
+            if v <= 0:
+                for _ts, val in reversed(s.get("totalDataChart") or []):
+                    if val and val > 0:
+                        v, src = val, "chart"
+                        break
+            if v > 0:
+                p[f] = v
+                fixed.setdefault(tid, {})[f] = {"v": round(v, 2), "src": src}
+    return fixed
+
+
 def build_board(protocols):
     """把原始协议数组裁成看板要用的结构。前端刷新排行时用的是同一套逻辑。"""
     total = len(protocols)
@@ -110,7 +150,11 @@ def build_board(protocols):
 
 def fetch_board():
     j = get(API)
-    b = build_board(j.get("protocols") or [])
+    protocols = j.get("protocols") or []
+    fixed = patch_zero_targets(protocols)
+    b = build_board(protocols)
+    if fixed:
+        b["fixed"] = fixed
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     # updated   = 上游自己给的时间（没有就用我们的抓取时间）
     # fetchedAt = 我们这次真正抓到的时刻，页面据此判断"这份榜单是不是旧的"
@@ -135,6 +179,9 @@ def main():
         r7 = board["board"]["total7d"]["rank"].get(tid)
         r30 = board["board"]["total30d"]["rank"].get(tid)
         print(f"  {nm:9s} 24h #{r24}  7日 #{r7}  30日 #{r30}")
+    for tid, fields in (board.get("fixed") or {}).items():
+        for f, info in fields.items():
+            print(f"  [兜底] {tid}.{f} 总榜为 0，已用单协议接口补：{info['v']}（{info['src']}）")
     print(f"  体积 {len(json.dumps(board, ensure_ascii=False))} 字节")
     return 0
 

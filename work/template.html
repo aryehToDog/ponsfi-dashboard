@@ -3143,12 +3143,55 @@ function buildRankBoard(protocols){
   return {total:total, board:board, updated:new Date().toISOString(), source:'defillama.com/revenue'};
 }
 
+/* 总榜偶发把某协议的 24h 记成 0（上游按「领取时点」记账，当日行还没落库）。
+   实测 2026-10-14 09:08：总榜 stonkfun.total24h = 0 → 页面显示「24 小时 #2388 $0、
+   下滑 2381 位」，而它自己的单协议接口同一时刻是 $219,831。
+   这里对两个目标协议兜底（规则与 leaderboard.py 完全一致）：
+   总榜为 0 → 读单协议接口；单协议接口也是 0 → 退到它日线里最后一个非零值。
+   补好的值写回 protocols 之后再排序，名次跟着一起修正。 */
+async function patchZeroTargets(protocols){
+  const bySlug={}; protocols.forEach(function(p){ if(p && p.slug) bySlug[p.slug]=p; });
+  for(const tid of RANK_TARGET_IDS){
+    const slug=RANK_SLUGS[tid], p=bySlug[slug];
+    if(!p) continue;
+    const need=RANK_METRICS.filter(function(m){ return !(p[m.k]>0); });
+    if(!need.length) continue;
+    let s=null;
+    try{ s=await fetchJSON('https://api.llama.fi/summary/fees/'+slug+'?dataType=dailyRevenue', 12000); }catch(e){}
+    if(!s) continue;
+    need.forEach(function(m){
+      let v=s[m.k]||0;
+      if(v<=0){
+        const ch=s.totalDataChart||[];
+        for(let i=ch.length-1;i>=0;i--){ if(ch[i] && ch[i][1]>0){ v=ch[i][1]; break; } }
+      }
+      if(v>0) p[m.k]=v;
+    });
+  }
+  return protocols;
+}
+
+/* 缓存自检：本地缓存里若出现「24h 是 0、但 7 日有值」这种坏数据，直接作废重拉 */
+function rankCacheBroken(d){
+  try{
+    const b=(d||{}).board||{};
+    for(const tid of RANK_TARGET_IDS){
+      const me=function(m){ const rows=(m&&m.near&&m.near[tid])||[];
+        return rows.find(function(x){ return x.me; }); };
+      const a=me(b.total24h), c=me(b.total7d);
+      if(a && c && !(a.v>0) && (c.v>0)) return true;
+    }
+  }catch(e){}
+  return false;
+}
+
 /* 实时刷新：整包 4.2MB 太重，浏览器只下压缩后的 ~860KB，并且缓存 6 小时 */
 async function loadLeaderboard(force){
   let cache=null;
   try{ cache=JSON.parse(localStorage.getItem('pons-rank')||'null'); }catch(e){}
-  if(cache && cache.d && !force && (Date.now()-cache.t)<6*3600*1000){ DATA.leaderboard=cache.d; return 1; }
+  if(cache && cache.d && !force && !rankCacheBroken(cache.d) && (Date.now()-cache.t)<6*3600*1000){ DATA.leaderboard=cache.d; return 1; }
   const j=await fetchJSON('https://api.llama.fi/overview/fees?dataType=dailyRevenue&excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true');
+  await patchZeroTargets(j.protocols||[]);   /* 先补 0 值再排序，名次才不会算错 */
   const d=buildRankBoard(j.protocols||[]);
   if(j.updated) d.updated=j.updated;
   DATA.leaderboard=d;

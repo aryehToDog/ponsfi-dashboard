@@ -1,0 +1,2354 @@
+# 看板维护说明
+
+线上地址：**https://stonk1000x.top**（主）· https://ponsfi.xyz（备用，内容同步）
+
+## 域名与部署（2026-10-06：stonk1000x.top 上线）
+
+| 域名 | 角色 | 接入方式 | 状态 |
+|---|---|---|---|
+| `stonk1000x.top` / `www.stonk1000x.top` | **主域名**（分享用） | Cloudflare 隧道 | ✅ 2026-10-06 上线 |
+| `ponsfi.xyz` / `www.ponsfi.xyz` | 备用，内容与主域名完全同步 | Cloudflare 隧道 | 可用（部分钱包仍有误报，申诉跟进中） |
+
+- 两个域名指向同一台服务器、同一个隧道（`1b33f509-392d-4737-ae3a-16ae6b3eddab`）；
+  nginx `server_name` 与隧道 ingress 都含两个域名 → 内容天然同步，无需分别部署。
+- `stonk1000x.top` 在 DNSPod（腾讯云）注册，2027-10-06 到期；NS 已改为 Cloudflare
+  （`julio.ns.cloudflare.com` / `maya.ns.cloudflare.com`），zone 状态「活动」；
+  `@` 与 `www` 两条 CNAME 指向 `1b33f509-….cfargotunnel.com`（已代理）。
+- ⚠️ `.top` 为中国注册局：需在腾讯云完成**实名认证**（未实名约 5 天后被注册局暂停解析）。
+- 本机 cloudflared 证书（`~/.cloudflared/cert.pem`）现对应 `stonk1000x.top`；
+  `ponsfi.xyz` 的旧证书备份在 `~/Documents/Codex/cert-ponsfi-xyz-old-20261006.pem`，
+  以后要管 ponsfi.xyz 的解析：换回旧证书或重新 `cloudflared tunnel login` 选它。
+
+## 生成流程
+
+```
+work/template.base.html     ← 干净母版（不含名片、不含主题）
+        │
+        ├─ rebuild_template.py   注入：作者名片 + 主题系统（深/浅色令牌）
+        ▼
+work/template.html          ← 真正的模板（改样式改这里的上游）
+        │
+        ├─ build_monitor.py      联网抓 DefiLlama/CoinGecko → work/dashboard-data.json
+        │  （或 render_only.py   不联网，用现有 json 直接渲染）
+        │     ├─ leaderboard.py  顺带抓「全站收入榜」，裁成 ~7KB 的 leaderboard 字段
+        │     └─ buyback.py      顺带抓「链上销毁量 + 全站回购榜 + 同行市值/成交额」→ burn 字段（v2.9）
+        ▼
+outputs/pons-stonkfun-monitor.html
+        │
+        ├─ （旧链路，2026-10-07 已停用）deploy/deploy.sh 推到服务器 /var/www/pons-dashboard/
+        └─ （现在）GitHub Actions 云端构建 → 压回 snapshots 分支 → 服务器每 5 分钟拉取上线
+                    详见下面「云端数据管道」一节
+```
+
+**改东西的顺序**：改 `template.base.html` 或 `rebuild_template.py` → 跑 `rebuild_template.py` → 跑
+`render_only.py`（或联网的 `build_monitor.py`）→ `bash deploy/push.sh`。
+
+⚠️ `rebuild_template.py` 是 v1.5 之前的生成器，**现在不要再跑**：它只会从 `template.base.html`
+重新生成，会把 v1.3 之后加的板块（收入排行 / 回购销毁 / BGM / 歌词 / 共勉 / 浏览计数…）全部抹掉。
+从 v1.3 起 `work/template.html` 就是唯一母版，**直接改它**（改前先 `cp work/template.html work/template.html.bak-xxx`）。
+真要从 base 重建：`PONSFI_ALLOW_REBUILD=yes python3 work/rebuild_template.py`（脚本已加保险，默认拒绝执行）。
+
+## 云端数据管道（2026-10-07：抓取搬到 GitHub Actions，本机不再跑脚本）
+
+> 一句话：**抓取在 GitHub 云上跑（海外节点，数据源全部直连），服务器每 5 分钟拉一份最新页面。**
+> 作者电脑可以关机；腾讯云服务器（上海）也不需要翻墙。
+
+### 为什么改
+
+- 旧方案：Mac 上的 LaunchAgent → `work/hourly_check.py` → scp 上传。电脑一睡眠/关机，
+  小时级数据就断档（曾断 14 小时）；桌面还得常年挂一个 Terminal 守护窗口。
+- 服务器在上海：GeckoTerminal / CoinGecko / StonkFun 官网（Vercel）都被墙，
+  常见中转到服务器也大多不通（实测 translate.goog / jina / codetabs 全挂，
+  只有 allorigins 偶尔可用）——所以「服务器自己抓」这条路走不通。
+- GitHub Actions 的 ubuntu runner 在海外，以上源**全部直连**；顺带天然满足
+  「每次上线都同步到 GitHub」的长期要求。
+
+### 新链路（三段）
+
+```
+GitHub Actions（.github/workflows/ponspulse.yml）
+  · 每小时第 23 分钟（UTC）跑 hourly；每天 01:23 UTC（= 北京 09:23）跑 daily 全量
+    （分钟选 :23 是有意的：GitHub 在整点前后负载最高，:00~:05 的定时最容易被延迟甚至跳过 ——
+     2026-10-07 刚迁移当天 :05 连着 3 个整点都没触发，所以挪到低峰分钟）
+  · 先 git fetch snapshots，把状态文件（sf-history / burn-history /
+    dashboard-data / hourly / burns / burn_events）取回工作区
+  · python3 work/ci_build.py --mode auto --push
+      hourly：work/hourly.py → 合并进 dashboard-data.json
+      daily ：work/build_monitor.py（DefiLlama 日线 / 收入榜 / 回购 / 小时级）
+      两种模式最后都跑：work/stonk_page.py（STONK 深度页数据，v3.27 起）→ work/render_only.py
+      auto  ：UTC 01 点走 daily；另外，最近一次全量超过 24 小时（定时被延迟 / 漏跑、
+              或刚迁移还没跑过全量）时，下一个整点也自动补一轮 daily —— 日线数据不会
+              一直卡在旧日期（2026-10-07 迁移当天就靠这条兜底补上了一轮）
+  · 产物 + 状态打成孤儿提交，强推回 snapshots 分支（仓库永远只留最新一份）
+        │
+        ▼
+GitHub 仓库 snapshots 分支（公开，可随时下载最新页面 / 数据快照）
+        │
+        ▼
+腾讯云服务器（/home/ubuntu/ponspulse/，systemd 定时器每 5 分钟）
+  pull_publish.sh：git fetch --depth=1 origin snapshots →
+  原子替换 /var/www/pons-dashboard/index.html（先写 .new 再 mv，失败不动旧文件）
+        │
+        ▼
+https://stonk1000x.top（Cloudflare 隧道 → nginx → 静态页；ponsfi.xyz 同步）
+```
+
+### 关键文件 / 常用命令
+
+| 是什么 | 在哪 | 怎么查 |
+|---|---|---|
+| 云端任务定义 | `.github/workflows/ponspulse.yml` | GitHub 仓库 → Actions → 「PonsPulse 数据刷新」 |
+| 云端构建脚本 | `work/ci_build.py` | 本地也能跑（不带 `--push` 只写 outputs/，不碰线上） |
+| 服务器发布器 | `/home/ubuntu/ponspulse/pull_publish.sh` | 日志 `/home/ubuntu/ponspulse/pull.log` |
+| 服务器快照仓库 | `/home/ubuntu/ponspulse/repo`（只拉 snapshots 分支） | `cd 进去 git log --oneline -1` |
+| 服务器定时器 | `ponspulse-pull.timer`（systemd） | `systemctl list-timers ponspulse-pull.timer` |
+| 发布器源码（版本库） | `deploy/pull_publish.sh`、`deploy/ponspulse-pull.service`、`deploy/ponspulse-pull.timer` | 改完用 scp 覆盖服务器上同名文件即可 |
+| 服务器兜底触发器 | `/home/ubuntu/ponspulse/dispatch.sh`（源码 `deploy/ponspulse-dispatch.sh`） | 日志 `/home/ubuntu/ponspulse/dispatch.log`；`systemctl list-timers ponspulse-dispatch.timer` |
+| 触发用 token | `/home/ubuntu/ponspulse/.gh-token`（600 权限，不在版本库里） | 失效时重跑 `deploy/device-login.sh` 重新授权 |
+
+服务器上手动操作速查：
+- 立刻拉一次最新快照：`sudo systemctl start ponspulse-pull.service`
+- 暂停自动拉取：`sudo systemctl disable --now ponspulse-pull.timer`（恢复：`enable --now`）
+- 看最近发布记录：`tail -n 20 /home/ubuntu/ponspulse/pull.log`（会打印发布的 commit 号）
+- 看兜底触发记录：`tail -n 20 /home/ubuntu/ponspulse/dispatch.log`
+- 立刻手动踢一轮云端构建：`sudo systemctl start ponspulse-dispatch.service`（快照够新时它会静默跳过）
+- 重新授权触发 token：`bash /home/ubuntu/ponspulse/device-login.sh`（屏幕出现 8 位码 → 打开
+  https://github.com/login/device 输入 → Authorize；15 分钟内有效）
+
+### 本机（Mac）这边（2026-10-07 已停用）
+
+- 已停用两个 LaunchAgent：`com.ponspulse.hourly`、`com.ponspulse.daily-check`，
+  plist 改名为 `~/Library/LaunchAgents/*.plist.paused-20261007`，守护终端窗口已关。
+- 想恢复本机方案：把 plist 名字改回去 → `launchctl load <plist>`；**同时先停掉服务器 timer**。
+
+### 首日验证与观察（2026-10-07）
+
+- ✅ push 触发链全链路验证通过：push → Actions（hourly / daily 两种模式都跑过）→
+  snapshots 快照 → 服务器 5 分钟内拉取发布；服务器 git 通道不通时自动改走
+  api.github.com 整包下载（当天已实测兜底可用）。
+- 🔎 GitHub 自带 schedule：10-07 首日 0 次触发属于 GitHub 侧调度延迟；
+  10-08 复查已恢复，但**被严重节流**——主 workflow 实测约每 4~6 小时才跑一次
+  （13:38 / 20:01 / 00:16 / 06:21 UTC），远达不到每小时。`schedule-probe.yml` 探针
+  已无存在意义，10-08 删除。结论：**采样密度靠服务器兜底触发保证**（见下），
+  GitHub 的 cron 保留不动，谁先跑都行。
+- ⚠️ 两套链路只能开一套：本机 `hourly_check.py` 会把自己本地的数据 scp 上线，
+  和云端链路互相覆盖（数据会来回横跳）。
+- `work/hourly_check.py`、`work/git_sync.py` 等脚本保留 —— 作为手动/调试工具仍可用。
+
+### 兜底触发（2026-10-07 加：GitHub 定时不触发时不让数据停更）
+
+```
+服务器 systemd 定时器 ponspulse-dispatch.timer（每 10 分钟）
+  dispatch.sh：查 snapshots 快照多旧（api.github.com）
+    · 快照 < 45 分钟 → 什么都不做（GitHub 定时够勤时这里自动静默，不会重复跑）
+    · 快照 ≥ 45 分钟 → POST workflow_dispatch（.gh-token，mode=auto）踢云端构建
+    · 同一次触发后 25 分钟内不重复踢（防失败时连环踢）
+      （阈值 10-08 由 75 分钟收紧到 45 分钟：把采样目标钉在「约每小时一次」）
+        │
+        ▼
+  GitHub Actions 照常跑（抓取 + 渲染）→ 压回 snapshots → 服务器 5 分钟内发布上线
+```
+
+- 设计要点：**兜底而不抢班** —— 只按「快照新鲜度」决定要不要插手，和 GitHub 自带
+  schedule、push 触发都不冲突（谁先跑都行，重复跑也只是多一份同样的快照）。
+- token 权限：OAuth（GitHub CLI 应用）`repo + workflow`，只在服务器上；服务器被入侵时
+  最坏影响也就是动这个仓库。失效判断：dispatch.log 里出现 `HTTP 401/403` → 跑
+  `device-login.sh` 重新授权。
+- 2026-10-08 实测：token 已装（设备码流程在本机跑通 → scp 到服务器 `.gh-token`，600 权限）；
+  16:15 强制触发验证 —— 快照超时 → workflow_dispatch **HTTP 204**，云端 2 分钟跑完、
+  服务器 5 分钟内发布上线。兜底链路从此闭环，不依赖本机。
+- 只读诊断：`curl -s -H "Authorization: Bearer $(cat /home/ubuntu/ponspulse/.gh-token)" \
+  "https://api.github.com/repos/aryehToDog/ponsfi-dashboard/actions/runs?per_page=5"`。
+
+### 口径与断档兜底（和以前一致）
+
+- 每个数据源单独 try：拿不到就沿用上一份旧值，页面不会开天窗、也不会报假数。
+- StonkFun 官方接口：海外节点直连（`PONSPULSE_SF_DIRECT=1`）；国内跑时不设这个变量，
+  行为与以前完全一致（走 translate.goog 等中转）。
+- 官方快照断档（>2.5 小时才接上）：小时增量按小时均摊回填，前端画斜纹柱标「估算」。
+- GitHub Actions 若整体停摆：页面停留在最后一份快照（内容仍自洽）；
+  排查顺序：仓库 Actions 页有没有新 run → snapshots 分支时间 → 服务器 pull.log。
+
+## 作者名片
+
+- 位置：页面最顶部（吸顶）+ 页脚
+- 文案/链接在 `rebuild_template.py` 顶部的 `X_URL / NAME / HANDLE / BIO`
+- 头像：`work/avatar_160.jpg`（160x160，12.9 KB，base64 内嵌进 HTML）
+  - 必须内嵌：国内直连 `pbs.twimg.com` 会被墙，外链头像会裂图
+- 页脚另有 GitHub 名片（v3.24 起，2026-10-07）：头像 + `@aryehToDog`
+  （链接 github.com/aryehToDog）+「Star」按钮（链接开源仓库 ponsfi-dashboard）；
+  GitHub 头像（80px，2.4 KB）同样 base64 内嵌，避免国内直连裂图。
+  中英文案都在 `work/template.html` 的 `FOOT_AUTHOR`（搜 `aryehToDog` 可定位）。
+
+## 主题系统（自动适配深色 / 浅色）
+
+- 令牌定义在 `rebuild_template.py` 的 `DARK` / `LIGHT` 两段，浅色写了两遍（手动切换 + 跟随系统）
+- 右上角按钮三态循环：`◐ 系统` → `☀ 浅色` → `☾ 深色`，存在 localStorage 的 `pons-theme`
+- 默认「跟随系统」：系统深色就深色，系统浅色就浅色
+- 想让它**永远深色**：点按钮切到「深色」；或把 `rebuild_template.py` 里默认值 `||"auto"` 改成 `||"dark"`
+- 所有颜色走 CSS 变量，图表颜色也用 `var(--pons)` / `var(--stonk)`，切主题不用重绘
+- SVG 里颜色一律用 `style="stroke:var(--x)"`，**不能**用 `stroke="var(--x)"`（演示属性不支持 var()）
+
+## 主题令牌一览
+
+| 变量 | 深色 | 浅色 | 用途 |
+|---|---|---|---|
+| `--bg` | #0a0c11 | #f5f7fb | 页面底色 |
+| `--panel` `--panel2` `--panel3` | #11141c / #161a24 / #1c2230 | #fff / #f7f9fd / #eef2f9 | 卡片层级 |
+| `--line` `--line2` `--grid` | #212736 / #2c3446 / #1a1f2b | #e6eaf2 / #d3dae7 / #e9edf5 | 描边 / 网格 |
+| `--txt` `--mut` `--mut2` | #e9ecf3 / #858ea1 / #606a7d | #0f1420 / #5d6779 / #8a93a6 | 正文 / 次要 / 最弱 |
+| `--up` `--down` `--warn` | #2ee6a8 / #ff5c72 / #ffb020 | #0d9b73 / #dc2f4e / #b97a00 | 涨 / 跌 / 警告 |
+| `--ok-bg/-line/-txt` 等 | 深底淡彩 | 浅底淡彩 | 状态条三态 |
+
+## 收入排行板块（v1.3 新增）
+
+看板里「收入排行 · 在整个行业里的位置」这一块，数据来自 DefiLlama 全站收入榜
+（`https://api.llama.fi/overview/fees?dataType=dailyRevenue`，约 2,455 个协议、原始 4.2MB）。
+
+- **裁剪**：`work/leaderboard.py` 把 4.2MB 裁成 ~7KB，只留
+  - 每个口径（24h / 7日 / 30日）的榜首 Top10
+  - 两个目标协议的名次 + 上下各 4 名（已经在 Top10 里时改成「身后 8 名」）
+- **快照**：结果写进 `work/dashboard-data.json` 的 `leaderboard` 字段，跟着面板一起发布
+  - 只想更新排行、不重新抓收入：`python3 work/leaderboard.py` 再跑 `render_only.py`
+  - ⚠️ Pons 的主协议 slug 是 **`pons-v2`**（`pons-v1` 已停用，24h 只剩几千美元）
+- **页面刷新**：浏览器打开时若本地缓存超过 6 小时，会自己拉一次全站榜（gzip 后约 860KB，
+  缓存在 localStorage 的 `pons-rank`）；也可以点板块里的「↻ 更新排行」强制拉
+- **前端裁剪逻辑**：`template.base.html` 里的 `buildRankBoard()` 与 `leaderboard.py` 的
+  `build_board()` 是同一套规则，改了一个要同步改另一个，否则快照和刷新结果会不一致
+
+## 名次卡怎么读
+
+| 元素 | 含义 |
+|---|---|
+| 大号 `#22` | 当前所选口径下的全站名次 |
+| `前 1%` | 百分位（名次 ÷ 协议总数） |
+| 对数刻度轴 | 左边是 #1（收入最高），右边是 #总数；标记越靠左越好，刻度是指数级的 |
+| 三口径小卡 | 24 小时 / 7 日 / 30 日 各自的名次与收入额 |
+| 环比那一行 | 30 日口径名次 → 现在名次（升 / 降多少位） |
+| 紫色提示条 | 再涨多少「每日收入」就能超过上一名（同口径对比） |
+
+## 浏览量统计（v1.4 新增）
+
+页脚最下面一行「👁 总浏览 / 今日 / 今日访客」是**自己服务器上的计数器**，不接第三方统计。
+
+```
+访客浏览器 ── /api/hits ──▶ nginx 反代 ──▶ 127.0.0.1:8788 (pons-counter 服务)
+                                              └─▶ /var/lib/pons-counter/counts.json
+```
+
+- 服务代码：`deploy/counter/counter.py`（纯 Python 标准库）+ `deploy/counter/pons-counter.service`（systemd）
+- 服务器路径：`/opt/pons-counter/counter.py`，数据在 `/var/lib/pons-counter/counts.json`
+- nginx：`/etc/nginx/conf.d/pons-dashboard.conf` 里的 `location = /api/hits`（备份 `.bak-pv`）
+- 计数规则：每次打开页面 +1 次浏览；**同一天同一 IP 只算 1 个访客**；存的是加盐哈希，不存原始 IP；
+  爬虫 / 探针（bot、spider、curl、wget、监控 UA）不计入；每天保留最近 400 天
+- 本地 `file://` 打开**不计数**（只在 http/https 下才请求接口）
+- 计数服务挂了页面不会报错，只是页脚不显示这一块
+
+常用命令（在服务器上）：
+
+```bash
+systemctl status pons-counter          # 看服务状态
+curl https://ponsfi.xyz/api/stats      # 只读看数字（不计数）
+sudo systemctl restart pons-counter    # 重启
+sudo rm /var/lib/pons-counter/counts.json && sudo systemctl restart pons-counter   # 清零重来
+sudo journalctl -u pons-counter -n 30  # 看日志
+```
+
+改动计数服务后重新安装：把 `deploy/counter/` 三个文件传上去，`sudo bash install.sh`。
+
+## 行情 BGM（v1.5 起多曲轮换 · v2.1 跌档三首 · v2.4 涨档两首）
+
+- 涨档：`audio/up.mp3`《逍遥仙》→ `audio/up-bufan.mp3`《不凡》→ 来回轮换
+- 跌档：`audio/down-meng.mp3`《梦的翅膀受了伤》→ `audio/down.mp3`《兄弟抱一下》→ 来回轮换
+  （进跌档先放第一首；一首放完自动切下一首，靠 `ended` 事件驱动）
+- 曲目表写在 `rebuild_template.py` 的 `BGM_TRACKS` 里，想加歌就往对应档位的数组里加一项：
+  `{ src:'audio/xxx.mp3', name:'i18n 里的曲名 key' }`，并在 `template.base.html` 的 i18n 里补这个 key
+- 轮换游标 `bgmRot`：每档记住"下一首该放第几首"；切档（涨↔跌）不会打断同档正在放的那首
+- 只有一首的档位 `loop=true`（单曲循环）；两首及以上的档位 `loop=false`（放完换下一首）
+- mp3 放服务器 `/var/www/pons-dashboard/audio/`，本机留一份在 `deploy/audio/`（zip 备份里不含 mp3）
+- 文件缺失/加载失败 → 自动回落到内置原创占位旋律（Web Audio 合成），不会静音报错
+- 播放器详情面板会显示「第 1/2 首」和当前曲名，方便确认在放哪首
+
+换歌步骤：把 mp3 传到 `/var/www/pons-dashboard/audio/`（名字对上曲目表）→ 不需要改代码；
+要改曲名或曲目顺序，才需要改 `BGM_TRACKS` + i18n 后重新 build & 部署。
+
+## 横幅歌词（v1.6 新增 · v1.7 校对与收起）
+
+作者名片中间那块空白，现在会跟着 BGM 显示「正在播放」的歌词：当前行居中高亮、上下行渐隐，
+下面一条细进度条跟着播放进度走；窄屏（≤900px）自动铺满一整行。
+
+- **歌词文件**：跟音频同目录同名，放服务器 `/var/www/pons-dashboard/audio/`，本机留一份在 `deploy/audio/`
+  - `up.lrc`（逍遥仙）· `up-bufan.lrc`（不凡）· `down-meng.lrc`（梦的翅膀受了伤）· `down.lrc`（兄弟抱一下）· `down-wuren.lrc`（无人之岛）
+  - 格式：标准 LRC `[mm:ss.xx]歌词`；`作词/作曲/编曲` 等元数据行会被自动过滤
+  - mp3 和 lrc 的**文件名必须成对**（`up.mp3` ↔ `up.lrc`）
+- **加新歌**：mp3 + lrc 一起传到 `audio/` → 在 `BGM_TRACKS` 里那一项补 `lrc:'audio/xxx.lrc'` → 重新 build & 部署
+- **引擎位置**：`rebuild_template.py` 的 `BGM_JS` 里，`lyricParse / lyricNote / lyricMount / lyricSeek / lyricOnTrack / lyricRelang`
+  - 取词时机：**真正出声之后**才 fetch（`go()` 里调 `lyricOnTrack`），自动播放被浏览器拦下时不加载
+  - 歌词是异步来的，到位时可能已经唱到中段 → `lyricMount` 会按 `audio.currentTime` 直接归位，不从第一行滚过去
+  - 切换/停播会作废在途请求（`lyTok` 令牌 + `bgmCur===band` 双重校验），不会出现「没在放歌却显示歌词」
+  - 找不到 lrc / 解析为空 / mp3 缺失走占位旋律 → 单行提示「纯音乐 · 暂无歌词」
+- **音源短于歌词时间轴会自动降级**：例如《梦的翅膀受了伤》现在只有 19.38 秒试听片段，而歌词时间轴到 3:57，
+  硬套会出现「永远是第一句、进度条不动」→ 引擎改成显示「♪ 试听片段 · 歌词暂不同步」。
+  **换成完整版 mp3（同名覆盖 `audio/down-meng.mp3`）后歌词自动恢复同步，不用改代码。**
+- 状态文案在 `template.base.html` 的 i18n 里（中英都要写）：`lyIdle / lyLoading / lyNoLyric / lyClip`
+- 样式在 `rebuild_template.py` 的 `CSS_BODY` 末尾（`.lyric / .ly-in / .ly-window / .ly-track / .ly-line / .ly-bar`），
+  行高固定 18px、窗口 54px（3 行），JS 里的 `LY_LH` 要跟 CSS 对齐
+- 切语言时 `setLang()` 会调 `lyricRelang()`：有歌词不动，只有提示文案跟着换语言
+- ⚠️ `.lrc` 走的是 nginx 的 `/audio/` 缓存（7 天）+ Cloudflare：**改了歌词内容但文件名没变时，可能被缓存挡住**。
+  换歌词内容时建议改个文件名（如 `down-v2.lrc`）并在 `BGM_TRACKS` 里同步，或在腾讯云/Cloudflare 清一次缓存。
+
+### v1.7 的三处修正（改歌词/改交互必看）
+
+1. **歌词版本必须跟 mp3 是同一版录音**
+   - 线上原用的 `deploy/audio/down.lrc` 来自网易云「兄弟抱一下 **2021 版**」，而本站 mp3 是
+     **庞龙《美好》专辑版**（`afinfo` / ID3 里 `TALB=美好`）—— 两版编曲完全不同：2021 版 2:40 就唱完了，
+     还多一段原版没有的段落，所以看着「怎么都对不上」。
+   - 现在曲目表里改用 `audio/down-v2.lrc`（与专辑版逐句对齐）。
+   - **校对方法（不靠耳朵）**：`afconvert -f WAVE -d LEI16@22050 -c 1 x.mp3 /tmp/x.wav` 转成 wav，
+     再用 python 逐 0.1~0.5 秒算 RMS 画能量包络 → 副歌处必然最响、主歌处必然掉下去，
+     拿歌词里的「副歌/主歌」时间点去对，一眼就能看出偏没偏。
+   - 仍有个别句对不齐时，在 `BGM_TRACKS` 那一项加 `lrcOffset: 1.2`（秒）：**正数＝歌词提前，负数＝延后**。
+2. **没有歌词可显示时整块收起**（`.lyric.hidden{display:none}`）
+   - 待命 / 加载中 / 纯音乐 / 试听片段 → 全部走 `lyricClear()`：清空 + 淡出 + 从排版里收掉，
+     作者名片自动变回紧凑布局（手机上省一行高度），不再出现「点右下角播放」这类空话。
+   - `lyricShow()` 只在真的挂上歌词（`lyricMount`）时调用。
+3. **BGM 详情面板：点别处 / 滑动 / 滚轮自动收起**
+   - 监听 `pointerdown / mousedown / touchstart / touchmove / wheel / scroll`，
+     目标在 `#bgm` 里就放过（点面板自己不算），否则 `bgmDetHide()`。
+   - ⚠️ 坑：`scroll`/`wheel` 的事件目标是 **window（不是 Node）**，直接 `r.contains(ev.target)`
+     会抛 TypeError、监听器静默中断 → 必须写成 `ev.target.nodeType && r.contains(ev.target)`。
+
+### v1.8 的改动（BGM 面板改说人话）
+
+用户反馈「右上角『跌档』、『≥ +3% 涨档 · ≤ −3% 跌档』、『综合情绪 = 按市值加权（7 日涨跌 × 0.65 + 24h 涨跌 × 0.35）』看不懂」→ 只改文案与排版，播放逻辑一行没动。
+
+| 位置 | 旧 | 新 |
+| --- | --- | --- |
+| 右上角徽章 | 涨档 / 跌档 / 横盘 | **涨了 / 跌了 / 不涨不跌** |
+| 大号百分比 | 只有一个数，不知道是什么 | 前面加小标题 **「两家平均涨跌」** |
+| 图例 | 一行公式黑话 | 三行大白话：谁的盘子大谁说了算 / 涨跌各放什么歌 / 什么时候才换歌 |
+| 逐币明细 | 长文案挤一行，手机溢出 | 放不下自动换行右对齐（`.bgm-prow` 加 `flex-wrap`） |
+| 面板底部 | 曲目信息 **｜** 公式 | 只留 第几首 / 真歌还是占位 / 最短播放时长 |
+
+- **改文案**：`template.base.html` 的 i18n，key 是 `bgm*`（`bgmBandUp/Down/Flat`、`bgmLab`、`bgmLegend`、`bgmRule`、`bgmMin`、`bgmPlaceholder`、`bgmReal`、`bgmSev7`、`bgmSev24`…），**中英各一份，必须同步**。
+- **图例里的 `\n` 要配合 CSS `white-space:pre-line`**（写在 `rebuild_template.py` 的 `BGM_CSS` 里）。
+- ⚠️ 坑：`t(k)` 找不到 key 时**原样返回 key 字符串**。所以删掉 `bgmHow` 这类 key 时，必须同步删掉 JS 里的引用，否则页面上会直接显示「bgmHow」。
+- **排版位置**：`BGM_CSS`（样式）与 `bgmPaint()`（渲染）都在 `rebuild_template.py`；`template.base.html` 里那份 `<style>` 是死代码，改了不生效。
+
+### v1.9 新增：共勉栏（六句话轮播 + 点赞）· 2026-10-03
+
+> ⚠️ v2.0 起这块已经搬进作者名片、去掉轮播（见文末「v2.0」一节）；点赞服务端的部分没变。
+
+指标说明下面、页脚上面多了一块「共勉」：
+
+- **六句话每 8 秒换一句**：只淡换文字，卡片 / 点赞按钮都不动；鼠标停在卡片上暂停，切到别的标签页也暂停。
+- **点赞按钮固定在右侧**：不随句子变化消失。**只加不减、可以连点**。
+  - 点下去：心形短暂变实心 + 数字蹦一下 + 冒一个「+1」+ 一把撒花粒子（canvas 手绘，零依赖、无第三方库）
+  - 连点先在本地累加（`QPend`），攒成一批再发：5 连点 = `d=1` + `d=4` 两个请求，不是 5 个
+  - 撒花在 `prefers-reduced-motion:reduce` 下自动跳过
+- **六个句子共用同一个累计数**（不是每句一个数，也不是本地假数）
+  - 前端：`rebuild_template.py` 的 `QUOTE_JS`（`qPaint / qLike / qFlush / qConfetti`）
+  - 后端：`deploy/counter/counter.py` 里的 `/likes`（只读）与 `/likes?d=N`（+N，**只认正数**，单次 ≤ 20）
+  - nginx：`/etc/nginx/conf.d/pons-dashboard.conf` 的 `location = /api/likes` → `127.0.0.1:8788/likes`
+  - 数据：`/var/lib/pons-counter/counts.json` 里的 `likes` / `likeDays`
+- 改文案：`template.base.html` 的 i18n `secQuote / quotes[] / qLike / qLikes / qThanks / qLikeTip / qRotTip`，**中英各一份**。
+
+**想手动改赞数**（接口只加不减，所以只能直接改数据文件）：
+```bash
+sudo systemctl stop pons-counter
+sudo python3 -c "import json;p='/var/lib/pons-counter/counts.json';d=json.load(open(p));d['likes']=100;d['likeDays']={'2026-10-03':100};json.dump(d,open(p,'w'))"
+sudo chown www-data:www-data /var/lib/pons-counter/counts.json
+sudo systemctl start pons-counter
+```
+
+**注意**：`likeDays` 是按北京时间的每天新增；`likes` 才是总数（页面上显示的是它）。
+
+### v2.0 改动：共勉搬进作者名片 + 默认口径改成 24h / 日收入 · 2026-10-03
+
+作者名片中间原来空着一块，v2.0 把「共勉」整块搬了进去，并和歌词共用同一个位置。
+
+**结构**（`rebuild_template.py` 的 `AUTHOR_HTML`）：
+```
+.author
+ ├─ .author-me        头像 + 名字 + @handle（点进 X）
+ ├─ .qbox#qbox        共勉：一句 + 心形点赞胶囊      ← v2.0 新增位置
+ ├─ .lyric#lyric      歌词（放歌时出现）
+ └─ .author-acts      关注按钮 + 打赏按钮
+```
+样式在 `QUOTE_CSS`（`.qbox / .qtext / .q-like`），逻辑在 `QUOTE_JS`，两边都在 `rebuild_template.py`。
+
+**1. 每次刷新只显示一句、不轮播**
+- `qPick()` 从 i18n 的 `quotes[]` 里随机挑一条；`localStorage['pons-q-last']` 记着上一条，下次刷新不会重复。
+- 想换句子：改 `template.base.html` 的 `quotes[]`（中英各 6 句，**序号要一一对应**，切语言就是同一句换语言）。
+- 已经是死代码、不用再碰的：`secQuote / qRotTip`（轮播时代的文案，留档用）。
+
+**2. 共勉 ↔ 歌词 互斥（同一时间只站一个人）**
+| 用户动作 | 触发 | 结果 |
+| --- | --- | --- |
+| 歌曲开始 / 歌词挂上 | `lyricShow()` | `qBoxHideNow()`：共勉淡出 420ms 后整块收掉 |
+| 暂停 | 不触发任何一个 | 歌词停在原地不动，共勉**不**抢回来 |
+| 关掉音乐 / 这首没歌词（试听片段、纯音乐） | `lyricClear()` → `lyricHide()` | `qBoxShowSoon()`：350ms 后共勉淡入回来 |
+| 切歌 | 先 `lyricClear()` 再 `lyricShow()` | 两个定时器互相抵消，中间不闪 |
+
+- 两个延时都在 `QUOTE_JS` 里：`qBoxHideNow` 的 420ms（淡出后再 `display:none`）、`qBoxShowSoon` 的 350ms。
+- ⚠️ 两个钩子挂在 `BGM_JS` 的 `lyricShow / lyricHide` 开头，用 `typeof ... === 'function'` 兜住——因为 `BGM_JS` 比 `QUOTE_JS` 先执行（页面初始化时的 `lyricPaintIdle()` 发生在共勉函数定义之前）。
+
+**3. 点赞**（服务端与 v1.9 相同：`/api/likes` 只加不减、单次 ≤ 20）
+- 按钮就是 `#qLike`（心形 + 数字），六句话共用一个数。
+- 服务器没接住时数字**不掉**，6 秒后自动重试（`QRetryT`），避免"点了又缩回去"的观感。
+- 想看真实计数：`curl -s https://ponsfi.xyz/api/likes`。
+
+**4. 默认口径：先看最近的**
+- `template.base.html` 里两行：`let MODE = 'rev';`（趋势图 = 日收入，原来 `rev7`）、`let RANK_BY='total24h';`（排行榜 = 24 小时，原来 `total7d`）。
+- 想改回去只改这两行；P/S 卡片仍是 7 日 / 30 日两档，属于估值口径，不跟这两个联动。
+
+**v2.0.1 补丁（2026-10-03，只上线了十几分钟就修掉的问题）**
+
+症状：作者名片里共勉只占一半宽度、右边留一大片空白，长句被挤成两行；歌词块明明没显示却一直占着位置。
+
+根因（**踩过的坑，别再踩**）：`QUOTE_JS` 里的状态量原来用 `let` 声明（`QBoxT / QRetryT / QN / QPend…`）。
+- **函数声明会提升，`let` 不会** —— `qBoxShowSoon()` 在 `BGM_JS` 结尾的初始化（`lyricPaintIdle()`）时就被回调到了，而那时 `let QBoxT` 还在"暂时性死区"（TDZ），抛 `Cannot access 'QBoxT' before initialization`；
+- 这个异常被初始化外面那层 `try{ lyricPaintIdle(); }catch(e){}` **静默吞掉**，于是 `lyricHide()` 后半段（620ms 后加 `hidden` 收起歌词块）根本没执行 → 歌词块永久占位。
+
+修法：把这几个量改成 `var`（初始化为 undefined，不进 TDZ）。教训：
+1. **跨模块（BGM_JS ↔ QUOTE_JS）被回调的函数，内部引用的状态量一律用 `var`**，别用 `let`；
+2. 初始化包 `try/catch` 时至少 `console.warn` 一下，不然这类错误完全无声。
+
+同时顺手做的观感调整：共勉正文 12.5px → 13px（一行能塞下最长那句）；点赞胶囊常驻**粉色心形 + 淡粉底**、`margin-left:auto` 靠右贴齐，和右边的「关注 / 打赏」连成一组，不再吊在句子后面。
+
+### v2.1 新增：《无人之岛》进跌档（跌幅歌单现在是三首）· 2026-10-03
+
+跌档轮换顺序：`梦的翅膀受了伤（19 秒试听）→ 兄弟抱一下 → 无人之岛 → 回到第一首`。
+
+**以后再加一首歌，只需要动三处：**
+
+1. **文件**：音频丢进 `deploy/audio/`（文件名用小写英文，别用中文），再传到服务器
+   `/var/www/pons-dashboard/audio/`（`sudo chown www-data:www-data` 一下）。
+2. **挂上去**：`rebuild_template.py` 的 `BGM_TRACKS.down` 数组里补一条：
+   `{ src:'audio/down-xxx.m4a', lrc:'audio/down-xxx.lrc', name:'bgmDownName4' }`
+   （没歌词就把 `lrc` 写成空字符串 `''`）。
+3. **歌名**：`template.base.html` 的 i18n 里补对应的 `bgmDownName4`（**中英各一份**，Key 不能少，否则页面上直接显示 `bgmDownName4` 这串字）。
+
+**不用改的地方**：轮换逻辑是通用的（`bgmRot` + `list.length` 取模），面板上的「第 N 首（共 M 首）」是按数组长度自动算的。
+
+**没有 .lrc 会怎样**：歌词块整块收起（v1.7 的行为），作者名片中间自动换回共勉 —— 这是设计好的，不是坏掉了。
+顺带：`bgmRule` / `bgmLegend` 里写了"几首"和歌名，加歌时记得顺手改这两句文案（中英都要）。
+
+**音频格式**：本次的《无人之岛》原始后缀是 `.aac`，实际是 M4A（AAC in MP4，`ftyp M4A`）—— 直接改名成 `.m4a` 就能用。
+服务器 nginx 的 mime.types 给的是 `audio/x-m4a`，Chrome / Safari / Firefox 都能直接播（实测 `readyState=4`、`duration=285.3s`、无 decode 错误）。
+想验证某个文件浏览器到底能不能解，用无头 Chrome 跑一句：`new Audio(url)` 看 `readyState` 能不能到 4。
+
+⚠️ nginx 对 `/audio/` 缓存 7 天 —— **换歌词或换文件一定要改文件名**，否则用户拿到的是缓存里的旧文件。
+
+### v2.2：《无人之岛》歌词上线 · 2026-10-03
+
+- 歌词文件 `audio/down-wuren.lrc`（42 句，从 [00:16]「黑色的背后是黎明」到最后 [04:21]）。
+- **原始 lrc 里前 16 秒是制作人员名单**（词/曲/编曲/缩混/监制/录音室/企划营销…），直接放上去会当成歌词一行行滚过去，
+  已经在文件里删掉；同时把解析器的过滤正则补全：`缩混|配唱|录音室|混音室|企划|母带|宣发|出品|发行`。
+  以后遇到"带 credits 的 lrc"，先看前 20 秒有没有 `某某：某某` 这种行。
+- **时间轴核过**：把 m4a 用 `afconvert` 解成 WAV（WAVE_FORMAT_EXTENSIBLE，Python 的 `wave` 读不了，要自己解 chunk），
+  算每秒能量包络：副歌「如果云层是天空的一封信」正好踩在 **01:12** 的能量大跳点（2037 → 11151），后面几句也都对得上
+  → **不需要 `lrcOffset`**。
+- ⚠️ **别用 file:// 测歌词**：`fetch('audio/xxx.lrc')` 在 file:// 下会被浏览器拦掉（`--allow-file-access-from-files` 也救不了 fetch），
+  症状是"歌词永远 0 行"。要测就起一个本地 http：`python3 -m http.server 8899 --directory <预览目录>`，
+  而且**必须在同一条命令里**起服务 + 跑无头浏览器（后台进程活不过单条命令，会被沙箱回收）。
+  线上是同源 https，走普通静态文件，和 `up.lrc` / `down-v2.lrc` 一模一样，没有这个问题。
+- nginx 给 `.lrc` 的 Content-Type 是 `application/octet-stream`，不影响：前端是 `fetch().text()`，不看 MIME。
+
+### v2.3：数据源滞后讲明白 · 2026-10-03
+
+**起因**：用户截图问「STONK 的 10-02 / 10-03 怎么没数据，是不是 bug」。
+
+**结论：不是 bug，是 DefiLlama 还没出数。** 排查记录：
+
+| 协议 | 源站最新一天 | 数值 |
+|---|---|---|
+| stonkfun 日收入 | 2026-10-01 | $909,663 |
+| pons 日收入 | 2026-10-03 | $194,596 |
+
+两家各自出数、不同步是常态（DefiLlama 对中小协议普遍滞后 1~2 天）。
+
+#### 以后遇到"某天没数"，先 curl，别急着改代码
+```bash
+curl -s "https://api.llama.fi/summary/fees/stonkfun?dataType=dailyRevenue" | tail -c 400
+curl -s "https://api.llama.fi/summary/fees/pons?dataType=dailyRevenue"      | tail -c 400
+curl -s "https://api.llama.fi/summary/fees/stonkfun?dataType=dailyHoldersRevenue" | tail -c 400
+```
+- 源站没出 → 等它出，看板刷新后自动补上，**不要改代码**；
+- 源站有、看板没有 → 才是真 bug，去查 `work/daily_check.py` / `build_monitor.py`。
+
+#### 这一版加的四个派生值（都在 `stats()` 里）
+| 变量 | 含义 | 怎么算 |
+|---|---|---|
+| `lag` | 数据滞后几天 | `rows.length - 1 - last`（`last` = 收入最后一根有数的下标） |
+| `lastDate` | 收入最后一天 | 表头橙色胶囊「数据源最新 10-01」用它（`lag>0` 才显示） |
+| `holdLast` / `holdLastDate` | 回购最后一天 | `dailyRevenue` 和 `dailyHoldersRevenue` 是两个接口，各自判断 |
+| `winFrom` / `winTo` | 7 日均的实际窗口 | 「近 7 日均」那行的小字 `09-25 ~ 10-01` 用它 |
+
+#### 三处提示（中英都有）
+1. 表格单元格：没数的那天 → 灰色小字「**待更新**」/ `pending`，`title` 是 `pendingTip`（解释不是看板坏了）
+2. 表头徽章：`.lagtag` 橙色胶囊「数据源最新 MM-DD」，源站正常时不出现
+3. 卡片 + 7 日均行：卡片名字后「数据滞后 N 天」；7 日均行下方小字标窗口
+
+**回购列单独判断**：例如 10-03 的 PONS —— 收入源站已出，回购还没出 → 回购格显示「待更新」而不是「—」。
+（回购列里 `—` 的含义从此明确为"当天确实没有回购"，不再是"不知道"。）
+
+#### i18n 新增 key（中英各一份，删的时候要成对删）
+`pendingCell` / `pendingTip` / `srcLatest` / `lagBadge` / `lagTip`
+
+⚠️ `t(k)` 找不到 key 会**原样返回 key 字符串**，所以删 i18n 必须同步删 JS 引用。
+
+#### CSS
+`.lagtag` / `#tbl td.pend` / `#tbl .win` 都注入在 `rebuild_template.py` 的
+`/* ---------- 响应式 ---------- */` 之前。改母版 `template.base.html` 后必须重跑 `rebuild_template.py`。
+
+### v2.4：《不凡》进涨档 · 2026-10-03
+
+- 涨档从单曲变成两首轮换：**《逍遥仙》→《不凡》（王铮亮）→ 循环**（`bgmRot.up` 已有的轮换逻辑，加歌就行）。
+- 音频 `audio/up-bufan.mp3`（3:31.85，128 kbps，跟本地这份 mp3 同版）；歌词 `audio/up-bufan.lrc`（30 句）。
+- **时间轴怎么来的（重要）**：用户给的 lrc 只有 `[mm:ss]` 秒级，而且带一行「不凡 - 王铮亮」标题和 `词：/曲：` 署名。
+  做法是去网易云按歌名+歌手搜到同一版（时长 211,802 ms，和本地 mp3 的 211.85 s 对得上），
+  拉官方 lrc（毫秒级）后：① 丢掉所有署名行（作词/作曲/编曲/制作人/和声/混音/混音师/录音棚/录音室/混音室/出品公司/发行）
+  ② 丢掉空文本行（`[02:26.893][01:25.421]` 这种只有时间没有词的）③ 只保留真歌词 30 句。
+- **官方歌词里 1:31~2:19 和 2:32~3:05 两段本来就没有词**（纯音乐段），不是漏抓 ——
+  两份独立来源（用户下载的 + 网易云官方）时间轴逐句只差 ±0.5 秒，可以确认。
+  → 这两段播放时画面会停在上一句，属正常。
+- ⚠️ **加歌必查清单**（下次直接照做）：
+  1. `afinfo xxx.mp3` 看时长，跟 lrc 最后一句对一下（差太多就是版本不对，像《兄弟抱一下》那次）
+  2. lrc 前 20 秒通常是署名行，先看有没有 `某某：某某`
+  3. 想更准就去网易云搜同版拉毫秒级 lrc：`music.163.com/api/search/get/web?s=歌名 歌手&type=1` → 拿到 id 后
+     `music.163.com/api/song/lyric?id=xxx&lv=1&kv=1&tv=-1`（记得带 `User-Agent`）
+  4. 沙箱里 `afconvert` 解不了 mp3（`ExtAudioFileSetProperty ('cfmt') failed`）—— 要在**沙箱外**跑才能解码成 WAV
+- 顺带把歌词解析器的署名过滤正则补全了：新增 `制作助理 / 出品公司 / 混音师 / 录音棚 / 录音师 / 母带师 / 封面 / 视觉`。
+- 涨档的 `bgmTrackNo()` 现在会显示「第 1 首（共 2 首）」；面板规则文案（中英）也同步改了。
+
+### v2.5：只读声明（MetaMask / OKX 误报）· 2026-10-03
+
+**现象**：用户从 X 打开 `ponsfi.xyz`，被拦两次 —— MetaMask「This website might be harmful」、
+OKX Wallet「你访问的网站存在钓鱼风险」。
+
+**查证：是误报，站点本身没问题。**
+- MetaMask 的官方黑名单 `github.com/MetaMask/eth-phishing-detect` → `src/config.json` 的 `blacklist`
+  （共约 10 万条）里**确实有 `ponsfi.xyz`**，警告就是它弹的。fuzzylist / whitelist 里没有。
+- urlscan.io 查历史：`ponsfi.xyz` 只有 2026-10-03 当天两次扫描（都是本站自己），
+  **没有前持有者的钓鱼记录** → 属于「新注册域名 + 加密关键词 + .xyz」被自动收录的典型误伤。
+- 本站不连接钱包、不请求签名、不发起交易，纯静态读公开数据。
+
+**这一版加了什么**：标题下面一行「只读声明」（中英各一份，i18n key = `safeLine`）
+> 🔒 只读数据面板 · 不连接钱包 · 不请求签名 · 不发起任何交易 ｜ 数据全部来自公开接口
+
+`.safe-line` 的样式在 `template.base.html` 的 `<style>` 里；`renderStatic()` 用 `innerHTML` 填 `safeTxt`（文案里带 `<b>`）。
+
+**误报申诉入口（都是官方）**
+| 平台 | 入口 | 备注 |
+|---|---|---|
+| MetaMask | https://chainpatrol.io/report | 它的黑名单来自 ChainPatrol（MetaMask 页上「report a detection problem」也是往这走） |
+| MetaMask | https://github.com/MetaMask/eth-phishing-detect | 提 PR 把域名从 blacklist 删掉；README 写明用 `yarn remove:blocklist`，`git log -S "域名"` 能查什么时候加的 |
+| OKX Wallet | 拦截页上的「误报快捷反馈」 · https://www.okx.com/web3/security | — |
+| Google | https://safebrowsing.google.com/safebrowsing/report_error/?url=… | 顺手交一份，防桌面 Chrome 红屏 |
+
+**给访客的临时办法**：钱包内置浏览器点「继续访问 / Proceed anyway」；分享时提醒用系统浏览器（Safari / Chrome）打开，那边不拦。
+**上线后要复查**：过几天用无头浏览器或钱包再开一次，确认警告消失；没消失就再提一次申诉（附上 v2.5 的只读声明截图）。
+
+### v2.6：误报申诉全部提交 · 2026-10-03
+
+**四份申诉已全部提交完成**（申诉邮箱统一用 `（邮箱已隐去）`，与域名 Cloudflare 账号一致；站长名 `arych_kun`）
+
+| # | 渠道 | 状态 | 凭证 |
+|---|---|---|---|
+| 1 | **MetaMask 官方黑名单** | ✅ 已提交（Open） | issue **#299330**，账号 `aryehToDog`，自动打 label `blocklist removal`，自动 @ MetaMask/user-safety |
+| 2 | **ChainPatrol** | ✅ 已在审核队列 | 提交后返回「Dispute already exists for this asset.」→ 该域名已有争议记录 |
+| 3 | **Google 安全浏览** | ✅ 提交成功 | 页面回显「提交成功。」（未留邮箱） |
+| 4 | **SEAL (Eclipse Appeal Form)** | ✅ 提交成功 | 页面回显「Your request to appeal has been received, and maintainers have been notified.」 |
+| 5 | **OKX Wallet** | ⏳ 用户自行提交 | Google 表单 `URL Quick Feedback`，登录 `（邮箱已隐去）`；**DESCRIPTIONS 上限 500 字符** |
+
+**入口速查（下次直接照抄）**
+- MetaMask 专用模板：`github.com/MetaMask/eth-phishing-detect/issues/new?template=02-blocklist-removal.yaml`
+  - 字段只有三个：①域名（一行一个）②理由 ③勾「不是重复提交」
+  - 提交前先查重：`github.com/MetaMask/eth-phishing-detect/issues?q=ponsfi`
+- ChainPatrol：`https://app.chainpatrol.io/dispute`（URL + 邮箱 + 说明）
+- Google：`https://safebrowsing.google.com/safebrowsing/report_error/?url=https%3A%2F%2Fponsfi.xyz%2F`
+  （举报类型选「此网页很安全」；带**隐形 reCAPTCHA**，一般不弹人机验证）
+- SEAL：`https://securityalliance.typeform.com/to/n5306AVV`（两页：项目名/URL/补充说明 → 姓名/邮箱）
+
+**MetaMask issue 正文用过的措辞**（下次直接复用）
+> read-only public data dashboard · does NOT connect wallets / request signatures / initiate transactions ·
+> no dApp, no contract interaction, no user input · static page over HTTPS, data from DefiLlama public API ·
+> registered 2026-10-02, no previous owner, no prior abuse · happy to add a DNS TXT record to prove ownership ·
+> ChainPatrol dispute also submitted
+
+**后续跟进**
+- MetaMask 用户安全团队会在 issue 内回复，GitHub 会给 `aryehToDog` 发通知；有回复可代为跟进
+- 过 3–5 天复查：MetaMask / OKX 插件警告是否消失；没消失就在 issue 里补充说明或再提一次
+- 复查工具：ChainPatrol 查询 `https://app.chainpatrol.io/search?content=ponsfi.xyz`
+
+**截图存档**（`outputs/`）
+- `申诉-MetaMask-issue299330-已提交.png`
+- `申诉-ChainPatrol-已提交.png`
+- `申诉-Google-提交成功.png`
+- `申诉-SEAL-提交成功.png`
+
+⚠️ 申诉期间站点内容不要再大改（ICP 备案也在管局审核中）。
+
+### v2.7：找到真凶（仿冒站 ponsfi.top）+ MetaMask 官方名单改名 PR · 2026-10-03
+
+**关键发现：黑名单上的其实是仿冒站，不是我们的域名**
+
+| 域名 | GoPlus 判定 | ScamSniffer 公开黑名单 | MetaMask 官方名单 eth-phishing-detect |
+|---|---|---|---|
+| `ponsfi.xyz`（我们的） | `phishing_site: 0`（未标记） | 不在 | **在**（config.json 第 102047 行） |
+| `ponsfi.top`（仿冒者） | `phishing_site: 1`（钓鱼） | 在（第 3880 行） | 在（**保留，正确**） |
+
+- 有人注册了高度相似的 `ponsfi.top` 做钓鱼（目前该域名无 DNS 解析、打不开）。币安钱包拦截页署名「GoPlus + ScamSniffer」，大概率是它／相似度匹配把我们带上了。
+- 关键教训：**不要只看自己域名查不到就以为没被拉黑** —— MetaMask 那份名单里有 `ponsfi.xyz`，钱包警告就是从它来的。
+
+**本轮新提交（v2.6 之后）**
+
+| # | 渠道 | 状态 | 凭证 |
+|---|---|---|---|
+| 6 | **MetaMask 官方名单改名 PR** | ✅ Open | PR **#299334**，分支 `remove-ponsfi-xyz-false-positive`，commit `aa87e62`，**只删 1 行** |
+| 7 | **ScamSniffer**（币安拦截页署名供应商） | ✅ Open | issue **#827** |
+
+**PR 复现步骤（2.9MB 的文件不要用网页编辑器改，用「上传法」）**
+1. fork 仓库 → 在 fork 上打开 `https://github.com/<你>/eth-phishing-detect/upload/main/src`（带路径的上传页）
+2. 点「Choose your files」，选本地已改好的 `config.json`（用脚本删掉 `"ponsfi.xyz",` 这一行，改完要 `json.load` 验证能解析）
+3. Commit summary 填说明 → 勾「Create a new branch for this commit and start a pull request」→ 分支名 → Propose changes
+4. ⚠️ 最容易翻车的一步：如果 PR 落在自己 fork 内部（`aryehToDog/eth-phishing-detect/pull/1`）就白做了 —— 必须用**跨仓库对比地址**重新发起：
+   `https://github.com/MetaMask/eth-phishing-detect/compare/main...aryehToDog:<branch>?expand=1`
+
+**复查命令（3–5 天后跑一次）**
+```bash
+curl -s "https://raw.githubusercontent.com/MetaMask/eth-phishing-detect/main/src/config.json" | grep -o '[^"]*ponsfi[^"]*' | sort -u
+# 只剩 ponsfi.top 即代表我们的域名已从 MetaMask 黑名单移除（PR 合并后生效）
+curl -s "https://api.gopluslabs.io/api/v1/phishing_site?url=ponsfi.xyz"   # 期望 phishing_site: 0
+```
+
+**用户侧还需要做的（只能本人操作）**
+- **币安钱包**：无公开申诉入口 → 走币安 App「在线客服」提工单（附 PR #299334 / issue #827 链接），或在拦截页点「仍要继续」
+- **OKX 钱包**：误报反馈在钱包拦截页内（App 里点一下），无网页表单
+- 分享时强调：**只认 `ponsfi.xyz`**，`ponsfi.top` 是仿冒站，别点
+
+**截图存档**：`outputs/申诉-MetaMask-PR-已提交.png`、`outputs/申诉-ScamSniffer-已提交.png`
+
+### v2.10：GoPlus 误报回归（新拦截源）+ 官方反馈渠道申诉成功 · 2026-10-04
+
+**背景**：用户从 Chrome / 钱包内置浏览器打开 `ponsfi.xyz`，仍被币安钱包（署名 GOPLUS + ScamSniffer）
+和 OKX Wallet 拦截 —— 复查发现 **GoPlus 判定出现回归**（v2.7 记录为 0，2026-10-04 实测变成 1）。
+
+**五家供应商最新判定（2026-10-04 22:00 实测）**
+
+| 供应商 | 判定 | 说明 |
+|---|---|---|
+| **GoPlus** | ⚠️ `phishing_site: 1`（回归） | 币安/OKX 拦截页的直接来源；新域名+关键词疑似被自动收录 |
+| MetaMask `eth-phishing-detect` | ❌ 仍在名单（`ponsfi.xyz`） | PR **#299334** 仍 open；10-04 01:48 UTC 已礼貌催更；CI（Socket Security）已通过，等人工合并 |
+| ScamSniffer | ✅ 干净（名单里只有 `ponsfi.top`） | issue #827 open、0 评论 |
+| ChainPatrol | ✅ `NOT_FOUND`（两家域名都查不到） | 它此前的 "Confirmed Threat" 只是交叉引用 MetaMask 名单，自身库里没有 |
+| Google 安全浏览 | ✅ `ponsfi.xyz` 全 false 无标记 | 对比测试：`ponsfi.top` 有 true 标记；桌面 Chrome 红屏与此无关 |
+
+**GoPlus 申诉入口（这次挖到的，下次照抄）**
+- 入口页：`https://console.gopluslabs.io/feedback?type=phishing`（免费反馈中心）
+  - 另有 `console.gopluslabs.io/manual-review` = **付费**人工复核；两个路径藏在官网 robots.txt 的 Disallow 里
+- 真·接口域名是 `api.gopluslabs.io`（注意：POST 到 `console.gopluslabs.io/api/...` 会被 nginx 405）
+  - 提交：`POST https://api.gopluslabs.io/api/v1/feedback/saveInfo`
+    body：`{"typeKey":"phishing","address":"https://ponsfi.xyz","description":"…","porblemSource":"…","feedBackFileIds":[]}`
+  - 免登录、无验证码（前端代码确认 `/api/v1/feedback` 不挂 Authorization，也无需签名头）
+- 备用渠道：`service@gopluslabs.io`（官方邮箱）· X [@GoPlusSecurity](https://x.com/GoPlusSecurity) DM
+
+**已提交（2026-10-04 22:29 北京时间）**：返回 `{"code":1,"message":"ok","result":"问题反馈成功"}`
+- 说明要点：只读数据面板 / 不连钱包不签名不发起交易 / 域名 2026-10-02 新注册无前持有者 / ChainPatrol·ScamSniffer·Google 三家均无标记 / 仿冒站是 `ponsfi.top`（请保留）/ 可随时加 DNS TXT 记录验证归属
+
+**后续（自动化每天盯着）**
+1. 等 GoPlus 人工复审（一般 1~3 个工作日）→ 每天查 `api.gopluslabs.io/api/v1/phishing_site?url=ponsfi.xyz`，变回 `0` 即完成；
+2. 若 3 个工作日无变化：发 `service@gopluslabs.io` 邮件 + X DM 催办；
+3. GoPlus 清除后 1~3 天，币安/OKX 本地缓存陆续放行（以各 App 实测为准）。
+
+> **盯守方式（2026-10-04 晚定稿）**：全部改走本机 **launchd 纯脚本**（`com.ponspulse.appeal-check`，
+> 每天 09:55 跑 `~/.codex/ponspulse/appeal_check.py`），**不经过任何大模型心跳** ——
+> 心跳任务此前会把会话模型强制切换，纯脚本不碰模型。脚本逻辑：
+> MetaMask 名单移除 xyz / PR 合并 / issue 有新回复 / GoPlus 清除 → 弹一次 macOS 通知；
+> GoPlus 到 2026-10-09 仍未清除 → 提醒一次催办（邮件 service@gopluslabs.io）；
+> 连续 10 天无进展 → 提醒一次。其余时间静默。
+> 状态：`~/.codex/ponspulse/appeal-check-state.json` · 日志：`~/.codex/ponspulse/appeal-check.log`。
+
+**用户侧（只能本人操作，不急）**
+- OKX：钱包拦截页里点「误报反馈」提交一次；
+- 币安：App 在线客服提一单（可附 PR #299334 / ScamSniffer issue #827 链接）；
+- 分享口径不变：**只认 `ponsfi.xyz`**，`ponsfi.top` 是仿冒站。
+
+### 申诉复查（深挖）：MetaMask ≡ SEAL 同源 + 队列分析 · 2026-10-05
+
+**复查方式**：直接查 GitHub API（PR #299334 的 state/events/comments、同类历史 PR 的最终归宿）、
+SEAL 公开名单（`security-alliance/blocklists`），并对比两边名单数据。
+
+**六个关键结论**
+1. **MetaMask 黑名单和 SEAL 黑名单是同一套数据，分钟级同步。** SEAL `domain.txt` 101,441 条里
+   101,384 条（99.9%）与 MM blacklist 重合；当天 MM 同步删除的 4 条（eth-compliance.app 等）在
+   SEAL 也同步消失。→ **一边解除 = 两边一起干净**，不用多头申诉；SEAL 仓库是只读镜像
+   （无 issues/discussions），其官网申诉 10-03 已通过 Eclipse Appeal Form 提交过（见 v2.6）。
+2. **PR #299334 没有异常**：仍 open；0 review、0 标签、0 维护者回复。10-04 01:48Z 的
+   「closed → reopened」经 events API 证实是**本账号（aryehToDog）79 秒内的误触**，非维护者操作、非被拒。
+3. **历史同类 PR 最终全部解除（已抽查验证）**：compoundmarkets.com（#289580，维护者回复
+   “scheduled for unblocking” 后关闭）、cryptoscribe.to（#268858）、scoreinvest.fr（#286335）、
+   astarfi.com（#294261）——现在**全部**已从名单消失。→ 这条路走得通，且多数是
+   「维护者内部解除后关 PR」，public PR 显示 not-merged 属正常流程。
+4. **当前是排队，不是卡死**：维护者最后处理人工 PR 记录在 09-18；之后 09-27~10-03 的
+   4 个人工请求（space-sim / btassethub / mmv-tools / 我们）都还在队列里。
+5. **PR 可干净合并**：diff 仅 1 行删除（+0/−1，只删 `"ponsfi.xyz",`）；当前 main 上该行上下文
+   （okx-vote512 → portal-veniceai 相邻 6 行）与提交时一致（行号因机器人同步漂移，不影响）→
+   无冲突；CI 只有 Socket Security 两项，均 success。
+6. **其它渠道同步状态**：ScamSniffer #827 open / 0 评论（其同类误报历史 1~4 天处理，如 #807 一天、
+   #762 四天）；GoPlus 仍 `phishing_site: 1`（10-09 由脚本提醒催办 service@gopluslabs.io）；
+   Google 安全浏览 / ChainPatrol 干净。
+
+**本日动作**：不重复催办（避免刷屏）；维持每天 09:55 全自动盯守（launchd 纯脚本）；10 天无进展由脚本提醒再礼貌 ping。
+**预期**：参照历史节奏，维护者活跃时 1~3 天处理；当前这批积压待维护者回队后批量清。
+
+### v2.8：品牌图标（标签页的「地球」换成正式 logo）· 2026-10-04
+
+- 起因：浏览器标签页一直是默认「地球」—— 因为原来写的是 `<link rel="icon" href="data:,">`（空图标）
+- 现在：深色圆角方块 + 紫(#8b7cff)→绿(#2ee6a8) 渐变的「P」字标（紫=Pons、绿=StonkFun）
+- 源文件：`work/brand/logo.svg` + `logo-16/32/180/512.png`；改完跑 `python3 work/brand/embed_icon.py` 重新内嵌
+- 顺带补 `<meta name="theme-color" content="#0a0c11">`，手机浏览器地址栏跟着变深色
+
+### v2.9：回购与销毁板块（把 Hyperleaf 那套数据搬进来，而且更准）· 2026-10-04
+
+来源需求：用户看到 `hyperleaf.finance/app/buybacks`，想把里面 **PONS + STONK** 的回购/销毁数据并进自己的看板。
+
+**位置**：收入排行 → **回购与销毁 · 真金白银烧掉多少**（`#st-burn`）→ 趋势图
+
+**三块内容**
+
+1. **两张销毁卡**（链上现读，带区块浏览器链接）
+   - PONS：死地址 `0x…dEaD` 余额 = 319.56M（占总量 **31.96%**）—— Robinhood Chain RPC `balanceOf`
+   - STONK：初始 10 亿 − 当前总供应 = 196.75M（**19.67%**）—— Solana RPC `getTokenSupply`
+   - 比 Hyperleaf 更准：他们 PONS 那一栏的销毁量是空的
+2. **回购强度榜**：DefiLlama `overview/fees?dataType=dailyHoldersRevenue`，全站 **1087** 个协议按 30 天回购金额排
+   - Pons V1 **#3**（$16.96M）、StonkFun **#5**（$14.43M）
+   - 剔除 `category=Chain`（公链的「销毁」是烧 gas，不是回购）；只留前 7 名 + 我们自己两名
+3. **「回购能不能托住价格」三方对照**（StonkFun / Pons / pump.fun 同一把尺子）
+   - 回购 ÷ 成交额（近 7 日）· 回购 ÷ 市值（年化）
+   - 结论用数据说话：**回购是慢变量 —— 决定底部，不决定短期涨跌**（StonkFun 回购力度是 pump.fun 的 9 倍，价格却在跌；pump.fun 比值最低，价格在高位）
+
+**数据管道**：`work/buyback.py`（新增）
+
+- `fetch_chain()` 链上烧毁量 · `fetch_peers()` 全站回购榜 · `fetch_market()` CoinGecko 市值/成交额 + pump.fun 的 7 日/30 日回购序列
+- 已接进 `build_monitor.py`（try/except 包住，抓失败就沿用上一份快照）→ **每天心跳自动带上**
+- 单独刷新：`python3 work/buyback.py`（写回 `dashboard-data.json` 的 `burn` 字段）
+- 前端读 `DATA.burn`：`burnOf()`（销毁量）/ `burnStats()`（7 日·30 日回购、回购÷成交、年化收益率）/ `renderBurn()`
+- 中文英文案都在 `template.html` 的 `I18N.zh / I18N.en`（key 前缀 `burn*` / `secBurn`），缺一个语言就会原样显示 key
+
+**踩过的坑（改这块必看）**
+
+- 卡片上「已销毁 %」以前写死在 `PROJECTS` 里，现在改读链上实时值（`s.burnAmt` / `burnOf(p).pct`）
+- ⚠️ CSS 顺序坑：`.bb-row` 的手机端覆盖必须写在新样式**之后**。写在前面会被基础规则（4 列）盖掉，名字被挤成「Hyperli…」
+- ⚠️ 无头截图验深色模式时，切 `data-theme` 撞上 `transition: color .25s` 会让人误判「文字不见了」—— 那是过渡没跑完的假象；验证时先注入 `*{transition:none!important}` 再看计算样式
+
+**验收截图**：`outputs/回购与销毁-浅色预览.png`、`-深色预览.png`、`-手机预览.png`
+
+## v3.0「24 小时回购」（2026-10-04）
+
+**为什么做**：用户提了三件事 —— ① 数据看着有点滞后 ② 30 天回购离我太远，我要看 24 小时
+③ 回购榜和三方对照表都补上 24 小时口径（参考 ponsfamily.com/analytics、stonkfun.xyz/revenue、hyperleaf.finance/app/buybacks）。
+
+**改了什么**
+
+1. **回购强度榜加「近 24 小时 / 近 30 天」切换，默认 24 小时**
+   - 排序用 `peers.rows[].r24 / r30`，金额用 `h24 / d30`；切换只重渲染，不重新请求
+   - 榜单里 **Pons / StonkFun 两行用链上口径覆盖**（DefiLlama 会晚 1~2 天），其余协议走 DefiLlama
+2. **三方对照表新增第一列「24 小时回购」**（Pons 链上现读 · STONK 链上快照 · pump.fun 用 DefiLlama 24h）
+3. **两张销毁卡新增「近 24 小时回购」高亮小卡**：金额 + 笔数 + 来源标记（⚡链上现读 / 链上快照 / 数据源最近一日）
+4. **前端新增 `loadChainBurn()`（真·实时）**
+   - 打开页面 / 点「刷新数据」时，浏览器直连 `https://rpc.mainnet.chain.robinhood.com`：
+     `eth_blockNumber` → 用 `bn-60000` 自校准出块速度（实测 ~0.102 秒/块）→ 反推 24 小时前的块高
+     （最多修正 3 轮，容差 45 秒）→ `eth_getLogs` 筛 `Transfer(_, 0x…dEaD)` 求和
+   - 顺带 `eth_call` 把「已销毁 / 总量 / 占比」也刷成当下值
+   - **RPC 的 CORS 是 `*`，实测浏览器直连可用**；读不通就静默沿用快照，状态写在板块副标题里
+   - 失败不影响其它数据：链上读数是 fire-and-forget，不打乱 DefiLlama / CoinGecko 的渲染节奏
+5. **口径说明讲明白写在榜单下方**：哪些是实时、哪些会晚 1~2 天，不再让人猜（用户上一轮就是被这个搞糊涂的）
+
+**数据来源分工（重要）**
+
+| 数字 | 来源 | 时效 |
+| --- | --- | --- |
+| PONS 近 24h 回购 | Robinhood Chain RPC `eth_getLogs` | 实时（每次打开页面） |
+| PONS 累计销毁 | 同上 `balanceOf(0x…dEaD)` | 实时 |
+| STONK 近 24h 销毁 | `work/burn-history.json` 供应量差值（每小时最多一条快照） | 攒满 24h 后生效 |
+| STONK 累计销毁 | Solana RPC `getTokenSupply` | 快照（每日心跳） |
+| 全站回购榜 / 收入 / 价格 | DefiLlama / CoinGecko | 可能晚 1~2 天（不是我们能改的） |
+
+**踩过的坑**
+
+- ⚠️ 命名必须一致：写的是 `burn24hLive`，读的却是 `burn24live` —— 页面看着"同步成功"，标签却还是"链上快照"。
+  改这块时**读写两端一起 grep**：`burn24hLive` / `burn24h` / `burn24hTxs` / `burn24hSrc`
+- ⚠️ 手机端：新的 24h 小卡里塞了「金额 + 笔数 + 来源」，`.burn-kv span` 是 `nowrap`，会把卡片撑破 →
+  已在 `<680px` 里放开 `.burn-kv span.live{white-space:normal}`，并让 `.bb-tbl th` 折两行（5 列不用横向滚）
+- ⚠️ 验证手机端别用 `--window-size=390`：新版无头 Chrome 的最小视口是 500px，量不出真机效果。
+  用 **iframe 包一层**（`<iframe src=... style="width:390px">`）再截图，媒体查询才会按 390px 生效
+- 线上验收命令：`curl -s "https://ponsfi.xyz/?v=30" | grep -o 'dashboard-version" content="[^"]*"'`
+
+**验收截图**：`outputs/回购v3-浅色预览.png`、`-深色预览.png`、`-手机预览.png`
+
+## v3.3「小时级监控 + 全局顺序重排」（2026-10-04）
+
+**用户要的**：加小时级监控（交易量 / 收入 / 销毁，只留两三天），配趋势图，3 个 tab 切换，
+要实时更新；顺手让我（PM 角色）把整个看板的板块顺序重新排一遍。
+
+**做了什么**
+
+1. **新板块「小时监控 · 最近 72 小时」**（就在项目卡下面）：
+   - 交易量：`GeckoTerminal /ohlcv/hour`（PONS/WETH `0xed50bdee…`、STONK/SOL `zxTpi4Bt…`）。
+     **CORS 是 `*`，浏览器能直连**，所以打开页面/点刷新都会重拉最近 24h。
+   - 销毁：Robinhood Chain `eth_getLogs` 筛 `Transfer→0x…dEaD`，按小时分桶（真链上）。
+     浏览器里现读最近 3 小时来「保鲜」，其余来自快照。
+   - 收入：**没有任何公开小时级收入源**（DefiLlama 只到日级、官方看板走 Dune 不开放、
+     试过 `?dataType=hourlyRevenue` 直接是 Internal Error）。Pons 用「链上回购支出 ÷ 80%」推算，
+     页面上明确写了「推算」二字；StonkFun 从今天起靠我们自己的快照累积。
+2. **数据管线**：`work/hourly.py` → `work/hourly.json`（8KB）→ 合并进 `dashboard-data.json` 的
+   `hourly` 字段 → `render_only.py` 内嵌进页面。
+   链上按小时分桶的做法：用 `blk_at()` 二分找到锚点块号，块号↔时间做**分段线性映射**，
+   然后每 6 小时一段 `getLogs`（12 次），把日志按块号反推小时。
+3. **每小时自动跑**：`work/hourly_check.py` + LaunchAgent `com.ponspulse.hourly`
+   （每小时第 5 分钟）：刷数据 → 重新渲染 → scp+ssh 推上线，日志 `work/hourly-check.log`。
+   （**2026-10-07 起本机这套已停用**，改为 GitHub Actions 云端管道 + 服务器 5 分钟拉取，
+   见上文「云端数据管道」；本段保留作历史记录。）
+4. **修了一个真 bug（重要）**：链上/快照读回的「近 24 小时回购」是**代币数量**，
+   原来看板拿它当美元显示 —— Pons 显示 `$1.09M`，实际是 1,081,506 PONS ≈ **$45 万**。
+   现在 `b24usd()` 统一按币价折美元；拿不到币价就返回 null（显示「—」），不报假数。
+5. **章节顺序重排**（先结论后证据）：
+   项目卡 → 小时监控 → 现在该做什么（规则引擎）→ 回购与销毁 → 收入排行 → 趋势图 → 明细 → 指标说明。
+
+**踩过的坑 / 注意**
+
+- Solana 公共 RPC（`api.mainnet-beta.solana.com`）**会 429 限流 `getTransaction`**，
+  所以 STONK 的小时级销毁拿不到历史，只能用供应量快照往后攒 —— 别以为是代码写错了。
+- Robinhood RPC 偶发 `IncompleteRead`，所有 RPC 调用都要带重试（`hourly.py` 里 `jrpc(tries=5)`）。
+- `hourly.py` 跑一次约 2 分钟（要扫 72 小时的链上日志），适合挂定时任务，不要放进页面同步流程。
+
+---
+
+## v3.2「专业术语回归 + 「?」可点」（2026-10-04）
+
+**用户报的两件事 + 顺手修一处**
+
+1. KPI 卡里的 `市值÷年收入 (7日 / 30日)` 看着不像专业术语 → 指标名改回行业说法
+   `P/S 年化 (7日)` / `P/S 年化 (30日)`。**只改名字**，解释仍放在下面「指标说明」里（中英同步）。
+   注意：`gPsT / gPsF / gPsL` 那套说明文案里的「市值÷年收入」保留 —— 说明就该说人话。
+2. KPI 卡上的 `?` 以前只能鼠标悬停看 `title` 提示，手机上等于没有 → 全部改成可点链接，
+   点了跳到「指标说明」里对应的那一条：
+   `P/S (7日/30日) → #gloss-ps`、`回购力度 → #gloss-bp`、`回购折合一年 / 日换手率 → #gloss-to`
+   - `item()` 加了第 7 个参数 `anchor` → 渲染成 `id="gloss-xxx"`；五个条目分别是
+     `gloss-ps / gloss-730 / gloss-bp / gloss-to / gloss-mom`
+   - 顶部有固定栏（`.topbar` 60px + `.tip-mini`），所以给 `.gitem` 加了 `scroll-margin-top:78px`，
+     否则跳过去会被挡住
+   - `.gitem:target` 加了一条 1.9s 的 `gflash` 动画（外圈高亮淡出），让人一眼看到是哪一条
+   - `html{scroll-behavior:smooth}`，跳转是平滑的
+   - `.kv .qi` 从 `cursor:help` 改成 `cursor:pointer` + hover 变主题色，提示「这个可以点」
+3. 顺手修：回购力度榜里「你关注的」徽章被拉成整行（用户截图）。
+   原因：`.bb-name` 是 `flex-direction:column`，flex 子项默认 `align-items:stretch`，
+   徽章 `<em>` 是独立子项 → 被撑满整行。
+   修法：`align-items:flex-start` + 把「名字 + 徽章」包进同一个 `<b>`（`.bb-name b{font-weight:inherit}`），
+   链名 `<i>` 仍是第二行。
+
+**验收**：无头 Chrome `--dump-dom` 核对 —— 15 个 `?` 都是 `<a class="qi" href="#gloss-...">`、
+5 个锚点全部存在、榜单行已是 `<b>Pons V1 <em class="rr-me">你关注的</em></b><i>Launchpad</i>`。
+
+---
+
+## v3.1「两列口径 + 全站白话」（2026-10-04）
+
+**用户报的问题**：截图圈了榜单里的小字 ——「近 24 小时」这个 tab 里每行右边写着「近 30 天 $24.87M」，
+切到「近 30 天」又写着「近 24 小时 $646.1K」，看起来就像 tab 和数字串了。
+（数据本身没串：右边大号数字一直是当前 tab 的口径；串的是那行「另一个周期」的小字。）
+
+**怎么修的**
+
+1. 榜单改成真表格：表头 `协议 | ● 近 24 小时 | 近 30 天`，两个周期各占一列、数字并排，
+   当前 tab 那列加粗高亮、表头带 ●；**名次跟着当前 tab 走**，标题里写明「名次按「近 24 小时」这一列排」。
+   手机上两列也放得下（30px + 名字 + 74px + 80px），表头单独一行。
+2. 顺手修掉一个真不一致：原来在「30 天」tab 里，Pons 的 24 小时那一格取的是 DefiLlama 值（$402K，晚 2 天），
+   现在两列都走 `burnPeerVal()` → 自家两家永远是链上现读数（$1.09M）。同一天不会再出现两个数。
+3. 全站白话（中英同步，公式和数字一个没改）：
+   `P/S 年化 → 市值÷年收入`、`回购年化收益率 → 折合一年能买回`、`环比 → 比上一个 7 天`、
+   `口径 → 说明/统计方式`、`回购强度榜 → 回购力度榜`、`协议 → 项目`、`筹码 → 币`、
+   `规则阈值 → 红线怎么定的`、`参照系 → 参照`、`日度明细 → 每天的明细`。
+
+**踩过的坑（这次差点翻车）**
+
+- ⚠️ 用脚本批量改 i18n 字符串时，**搜索串和替换串的引号必须一一对应**：有一次搜索串带了结尾的 `',`、
+  替换串漏了，直接把一行 JS 字符串截断（`node --check` 才抓出来）。
+  改完 i18n 一定跑一遍语法检查：
+  `python3 - <<'EOF'` 抽出 `<script>` 内容 → `node --check`
+- ⚠️ 英文文案里出现 `days'` 这种撇号会截断单引号字符串，改成 `Judging by the last 30 days, ...` 绕开
+- ⚠️ 改完 `.bb-row` 的 grid 列数，手机端那行 `@media(max-width:680px)` 的覆盖值也要同步改，否则会出现横向溢出
+
+**验收截图**：`outputs/回购v31-24小时页.png`、`回购v31-30天页.png`、`回购v31-手机.png`
+
+**第二轮白话（同一版的收尾）**
+
+- 又扫了一遍全站文案，把剩下的硬词也换了：`环比 → 对比上周`、`资金优先级 → 优先买哪家`、
+  `筹码 → 流通的币`、`回购强度榜 → 回购力度榜`、`协议 → 项目`（榜单表头也改成「项目」）。
+  中英各一轮，共约 30 处，公式与数字仍未改动。
+- 这一轮改完**没有重新出截图**，改用 DOM 验收（更快、更准）：用无头 Chrome 的 `--dump-dom`
+  把渲染后的 DOM 抓下来，直接检查表头是不是
+  `<span></span><span>项目</span><span class="on">近 24 小时</span><span>近 30 天</span>`、
+  每行是不是 `bb-row` + 两个 `bb-v` 格子。
+  命令：`/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --dump-dom file://...`
+- ⚠️ **无头 Chrome 截这个页面会出空白**（同一台机器上截最简单的测试页是正常的，所以跟页面本体有关，
+  疑似入场动画/显示开关；没深究）。别以为是页面坏了 —— 核对结构用 `--dump-dom`，核对观感直接开浏览器看。
+- ⚠️ 无头 Chrome 跑完**不会自己退出**（会一直挂着），用 python `subprocess` + `timeout` 包一层再 kill。
+
+
+
+## v3.3.1（2026-10-04）：小时图「当前小时常驻卡 + 悬停/点击即读」+ 汇总卡去椭圆
+
+**用户诉求**：小时图画完以后「点击也没有、鼠标放上去也没有」，看不到具体数字；
+1h/6h/24h/72h 汇总卡的数值被套了个椭圆框，显得很怪。
+
+**做法**
+- `renderHourly()` 里新增 `#hourlyNow` 常驻卡（`.hourly-box` 右上角、绝对定位）：
+  标题「当前小时 · 10/4 13:00」（那一小时还没走完会再标「进行中」）+ 两行 PONS / STONK 数值，
+  不点不悬停也一直显示。
+- 悬停提示从「原生 `<title>`」换成自绘 `#hourlyTipBox`：`svg.onmousemove` 用
+  `getBoundingClientRect()` 反算第几根柱子 → `#hourHl` 高亮整列 + 弹该小时两家数值，
+  `svg.onmouseleave` 隐藏。**触屏没有 hover**，所以把处理函数抽成 `hoverAt`，
+  `svg.onclick` / `svg.ontouchstart` 也走它（手机点一下柱子同样能看数）。
+- 手机端（`@media(max-width:680px)`）把 `.hourly-now` 从绝对定位改成 `position:static`
+  通栏长条：绝对定位会压住右侧最新几根柱子（恰恰是最重要的那几根）。
+- 汇总卡去椭圆：根因是数字用了全局药丸类 `.pv`（`border-radius:999px;border:…`）——
+  组件类名撞车。改成 `.pair.p / .pair.s` 结构（`<b>数字</b><i>代币名</i>`，
+  `display:inline-flex;white-space:nowrap`），两家并列一行、数字与代币名字号一致（13.5px），
+  仅靠紫/绿颜色区分；窄屏换行时「数字+名字」不会被拆开。
+
+**验收（无头 Chrome 的 DOM 核对，这次踩了新坑）**
+- 沙箱里直接跑 Chrome 会 SIGABRT（rc=-6）——要 `require_escalated` 提权跑。
+- 提权后又卡住不退出（页面会真联网拉 GeckoTerminal / 链上数据，virtual-time 等不到）：
+  加 `--host-resolver-rules="MAP * ~NOTFOUND"` 让网络请求即时失败，再把 stdout 重定向到文件、
+  超时后 kill 进程读文件（`/tmp/dom_check4.py` 这个套路，可复用）。
+- 核对点：`#hourlyNow` 里有「当前小时 · …」+ 两行数值；`#hourlySum` 里是
+  `$143.5K PONS $817.9K STONK` 并列结构；`#hourlyChart` 里 72 个 `hourly-bar` + `#hourHl`。
+- 线上验收：服务器 md5 与本地一致（`ebf3a5f7595af0d64d1da27cfcbafb67`），
+  `https://ponsfi.xyz/?v=332` 返回 v3.3.1；替换前的线上文件备份在服务器 `/tmp/index-v33.bak`。
+
+## v3.3.2（2026-10-04）：小时汇总卡 PONS / STONK 改上下两行
+
+- 反馈：两家数字并排一行时挨太近、不好区分（v3.3.1 去椭圆时顺手改成的并排一行不理想）。
+- 改法：`.hourly-sum .v` 由行内 `flex-wrap` 改成 `flex-direction:column;align-items:flex-start;row-gap:1px`，
+  `.pair` 结构不动（`<b>`数字 + `<i>`代币名，`white-space:nowrap`），每家各占一行；
+  仍无椭圆框、字号一致（13.5px）、只靠紫 / 绿区分。
+- 验收：本地 md5 `b858d09e21a0494e59f45f2eec88b18f` = 服务器；`https://ponsfi.xyz/?v=333` 返回 v3.3.2。
+
+## v3.4（2026-10-04）：StonkFun 官方小时数据接入（收入 / 销毁升级为官方真值）
+
+**起因**：用户希望能拿到 StonkFun 官方的小时级收入与销毁（stonkfun.xyz/revenue 页面上的那套数据），
+补进看板的「小时监控」板块 —— 之前的做法是「收入靠快照攒、销毁靠 Solana 供应量差值」，都不算真值。
+
+**关键障碍与破解**
+- `www.stonkfun.xyz` 部署在 Vercel（ns1/ns2.vercel-dns.com），国内直连（含上海服务器）全部超时 —— 被墙。
+- 破解：走海外中转 `https://api.allorigins.win/raw?url=<编码后的官方接口>`（备用 `api.codetabs.com/v1/proxy`），
+  能稳定读到页面与接口。注意 urlencode 必须 `safe=""`，否则路径里的 `/` 不会被编码。
+- 挖到官方接口：`GET https://www.stonkfun.xyz/api/revenue`（`?range=30d` 也行，偶发 500 需重试），
+  返回 `totals`：`totalRevenueUsd` / `totalBuybackUsd` / `buybackCount` / `stonkBurnedTokens` /
+  `stonkBurnedUsd` / `platformTokenPriceUsd`（另带只覆盖最近几小时的 buybacks / revenue 数组，不能回填历史）。
+
+**做法（无历史 → 自己攒差值）**
+- `work/hourly.py` 新增：`sf_fetch()`（中转接力抓官方 totals）、`sf_record()`（每小时存一条快照到
+  `work/sf-history.json`，同小时更新末条、跨小时追加、只留最近 400 条）、
+  `sf_series()`（相邻两条快照做差 = 每小时真实收入 / 真实销毁；间隔 >2.5h 的那一跳不落桶，避免误导）。
+- 收入：StonkFun 直接用官方差值（`revEst=False, revSrc="official"`）；Pons 维持「链上回购 ÷ 80%」推算。
+- 销毁：StonkFun 优先官方差值（`burnSrc="official"`），快照还没攒够时退回旧的供应量差值法（`"snapshot"`）。
+- 快照机制意味着：**接入的那一刻起才往后累积**，头 1~2 小时图上还是空的，属正常现象（页面会显示「还没攒到」）。
+
+**页面文案同步**
+- 小时图来源标签从「两币共用一个」改成「每个币各自标注」：PONS 收入=推算 / 销毁=链上；STONK 两者=官方
+  （新增 i18n 键 `hourOfficial`，中英双语）。
+- 小时图下方三条说明（交易量 / 收入 / 销毁）全部改写：删掉「市面上没有任何公开的小时级收入源」「只能靠快照」
+  这类已过时的说法，改为「StonkFun 直接读官方接口累计值、逐小时做差」。
+
+**验收**
+- 本地跑 `python3 work/hourly.py`：官方接口返回正常，`work/sf-history.json` 建立第一条快照；
+  `hourly.json` 里 `stonk.revSrc="official-pending"`、`burnSrc="snapshot"`（等第二条快照到位后自动切 official）。
+- 渲染后抽 `<script>` 跑 `node --check` 通过。
+- 上线：本地 md5 `9fc7fd1a77d96185766c8f45dac50600` = 服务器；`https://ponsfi.xyz/?v=340` 返回 v3.4。
+- 每小时自动任务（`work/hourly_check.py` + LaunchAgent `com.ponspulse.hourly`，每小时第 5 分钟跑）
+  会自动带上新逻辑，官方快照随之往后累积。
+  （**2026-10-07 起本机这套已停用**：云端管道接管，见「云端数据管道」一节。）
+
+**上线后发现的两个问题（当日已修）**
+
+1）**每小时任务一直在偷偷失败（macOS 权限）**
+   - 现象：`work/hourly-check.err.log` 里反复出现
+     `python3: can't open file '.../work/hourly_check.py': [Errno 1] Operation not permitted`。
+   - 原因：macOS 的隐私保护（TCC）不允许 launchd 直接拉起的进程读 `~/Documents`。
+     每日任务之所以没事，是因为它的 plist 用 `/usr/bin/open -g -a Terminal.app <命令文件>` 中转 ——
+     Terminal 早就被授权过访问 Documents，Python 是被 Terminal 拉起来的，于是有权限。
+   - 第一版修法（能用但会堆窗口）：plist 每小时 `open -g -a Terminal.app` 开一个新窗口跑
+     `outputs/每小时刷新.command`。实测坑：**Terminal 默认「shell 退出后不关窗」**，
+     即使脚本在末尾用 `osascript` 按 tty 关自己那个窗口，对「跑完只剩空壳」的窗口也是**静默无效**
+     （`close` 返回 0 但不关；且 Terminal 的 `count of windows` 会把一堆已死窗口算进来，
+     数字忽大忽小 —— 别用它判断关没关）。所以每小时开窗口 = 一天堆一屏，弃用。
+   - 最终修法（守护模式，桌面只多一个窗口）：
+     · `outputs/看板刷新守护.command` —— Terminal 里常驻一个循环：算好到下一个 :05 的秒数、
+       `sleep`、跑一次 `work/hourly_check.py`、回到循环；日志 `work/hourly-daemon.log`。
+       开头有去重保护：`/tmp/ponsfi-hourly.pid` 里的进程还活着就直接退出（每轮刷新 pid 文件）。
+     · `~/Library/Application Support/PonsPulse/hourly-watchdog.sh` —— 看门狗：
+       pid 文件存在、进程活着、且文件 3 小时内更新过 → 什么都不做；否则
+       `open -g -a Terminal.app <守护.command>` 重新拉起来。
+       （放 `~/Library` 下是因为 launchd 读不了 `~/Documents`；看门狗只做 pgrep/open，不需要读 Documents。
+        注意：**别用 `pgrep -f 看板刷新守护.command` 判断存活** ——
+        命令串里就带着这个路径，会自己匹配自己，永远以为还活着。）
+     · plist `com.ponspulse.hourly`：`RunAtLoad=true` + `StartInterval=1800`，跑上面那个看门狗脚本。
+       （旧 plist 备份在 `~/Library/LaunchAgents/com.ponspulse.hourly.plist.bak-20261004`）
+     · 重新加载：`launchctl bootout gui/$(id -u)/com.ponspulse.hourly` 再 `launchctl bootstrap gui/$(id -u) <plist>`。
+   - 验证：`work/hourly-daemon.log` 出现「守护启动（pid …）」；到整点 :05 后出现
+     「开始刷新 … / 本轮结束」；`zsh outputs/看板刷新守护.command` 再来一次会打印
+     「已有守护在跑（pid …），本窗口退出」。
+
+2）**海外中转不稳（5xx 抽风）**
+   - 现象：`sf_fetch()` 全部通道失败，报 `HTTP Error 522`，那一小时就没留下快照（差值断档）。
+   - 实测（2026-10-04）：`api.cors.lol`、`r.jina.ai` 正常；`api.allorigins.win`、`api.codetabs.com` 经常 500/520/522。
+   - 修法：`sf_fetch()` 改成 4 条通道依次接力 ——
+     `api.cors.lol`（原样 JSON）→ `r.jina.ai`（前面会带 "Title/URL Source/Markdown Content" 前缀，
+     用 `_sf_parse()` 取第一个 `{` 起解析）→ `allorigins` → `codetabs`，每条各试 2 次，超时 45s。
+   - 注意：jina 的返回**不是纯 JSON**，必须过 `_sf_parse()`，直接 `json.loads` 会炸。
+
+**首日实况（2026-10-04 当天记录，以后对比用）**
+- 15:21 第一条官方快照；16:08 第二条 → 15:00 桶出现第一根 STONK 柱：$3,321 收入 / 10,428 枚销毁
+  （只有 47 分钟样本，且官方收入计数是按批结算的，偏小属正常）。
+- 17:08 第三条 → 16:00 桶：$27,753 收入 / 84,636 枚销毁（57 分钟样本）。
+  折算 ≈ $29K/小时 ≈ $70 万/天，和 DefiLlama 的 StonkFun 日收入（约 $75 万/天）**口径吻合**
+  —— 官方接口 / 我们页面 / DefiLlama 三方对得上。
+- 官方 `totalRevenueUsd` 是**按批结算**的（同一分钟内 buyback 在涨、revenue 可能不动），
+  所以单根小时柱会忽高忽低；小时图说明里已加提示「看 6h / 24h 合计更稳」。
+- 差值归桶口径：差值算在**较早那条快照所在的小时**（「16:00 那根柱子 = 16 点这一小时」），
+  已用合成快照做过单元验证。
+
+**守护窗口的日常维护**
+- `work/hourly-daemon.log` 里每出现一行「守护启动（pid …）」= 守护被重新拉起过
+  （多半是 Terminal 窗口被手动关了；看门狗 30 分钟内自动开回来，属正常自愈）。
+  当天出现过 16:21、16:51 两次重启，之后 17:05 正常跑完一轮。
+- 只要日志里 :05 的「开始刷新 / 本轮结束」还在按小时出现，就不用管那个窗口。
+
+---
+
+## v3.7（2026-10-04）：全站圆点升级「实时状态灯」
+
+**起因**：用户希望主卡项目名前的两个彩色圆点「一直闪、有实时感」，并确认下面图表
+（收入排行 / 回购与销毁 / 对比表 / 总结卡）里的同款圆点也一并加上。
+
+**做法**：动画直接加在公共 `.dot` 类上，一次覆盖全站 6 处渲染点（rank 卡 / burn 卡 /
+销毁对比表 / 主卡 / 对比表头 / 总结卡），共约 13 个圆点：
+
+- 呼吸：`dotBreath 2.8s`，核心点微缩放（1 → 1.18），保留原有 `box-shadow:0 0 10px currentColor` 光晕；
+- 雷达圈：`::before` / `::after` 两个伪元素同色扩散（scale 1 → 2.7、透明度 .5 → 0），
+  相位差 1.4s，形成连续心跳；
+- 颜色自动跟随 `currentColor`（= 各代币主色，紫 PONS / 绿 STONK / 灰 pump.fun），无需逐处配置；
+- `prefers-reduced-motion: reduce` 时自动静态（无障碍）；
+- 全部只动 `transform` / `opacity`（合成器动画），一屏十几个点也不掉帧。
+
+**同版第二件事：指标说明默认折叠**
+
+- 原「指标说明 · 每个数字怎么读」整块默认收起（页面更长的问题顺势解决）；
+  标题行即开关：`role=button` + 键盘回车/空格可用，右侧有「点击展开 / 收起」胶囊
+  与旋转箭头，展开过程 0.5s 缓动（JS 先量 `scrollHeight` 再设 `max-height`，展开结束后
+  解除上限，语言切换/数据刷新导致内容变高不会被裁）。
+- **「?」直达**：点卡片里的「?」不再原地跳（跳进折叠区会看不到），改为
+  「自动展开 → 平滑滚动到对应 `#gloss-xx` → 闪一下高亮」；直接带锚点打开页面
+  （如 `ponsfi.xyz/#gloss-ps`）也会自动展开定位。
+- 新增 i18n：`guideExpand` / `guideCollapse`（中英），`renderStatic()` 里同步刷新提示词。
+
+**v3.7.1 修复（同日）**：折叠→再展开出现布局错位 —— 原因是展开结束时把容器放开成
+`overflow:visible`，随后折叠只把盒子高度收到 0，内容仍画在盒外、与下方区块重叠。
+修法：容器**始终 `overflow:hidden`**（过渡期间严格裁剪），只保留「展开后 max-height:none」
+以适配内容增高；已用无头浏览器做「开→合→再开→再合」循环回归（高度/提示词/后续区块位置全部复位）。
+
+**v3.7.3 打磨（同日）**：折叠过渡按「丝滑」重做 —— 高度时长 0.62s、曲线
+`cubic-bezier(.4,0,.2,1)`（缓入缓出）；内容块淡入 + 上移 7px 入场（延迟 0.1s 与高度同步），
+收起先快速淡出（0.26s）再合上高度；`prefers-reduced-motion` 下全部停用。
+无头浏览器采样验证：展开 0→1033→1222、收起 1160→464→113→9→0，双向均有连续中间帧。
+
+**v3.7.4 增强（同日）**：点「?」定位过去后，目标卡片改为「紫色描边 + 呼吸光圈脉冲 3 次 ≈ 4 秒」
+（原来是 1.9 秒的单次淡出闪光，不够显眼）；脉冲结束由 JS 在 4.3s 后移除类名自动复位；
+`prefers-reduced-motion` 下只保留静态描边不脉冲。
+
+**验收**：`render_only.py` 渲染后内嵌 `@keyframes dotPing`；线上 `?v=370` 返回 v3.7；
+点用浏览器打开主卡与下方图表，圆点呈现「呼吸 + 双圈扩散」，开启系统减弱动态效果后静止。
+
+**注意**：`.dot` 现在自带 `position:relative;display:inline-block`——此前该类的可用性依赖
+父级 flex（flex 子项会被块化）；这是补齐而不是改变，非 flex 场景（如销毁对比表）原本就
+靠行内样式兜底，不受影响。
+
+## v3.8（2026-10-04）：全局间距系统 + 安全说明条 + 代码审核
+
+**起因**：用户贴图指出「只读数据面板 · 不连接钱包 · 不请求签名 · 不发起任何交易 | 数据全部来自公开接口」
+这一行上下贴得太紧，要求顺手把全站间距一起收拾干净，再做一次代码审核与性能优化。
+
+**根因（量出来的，不是猜的）**：`work/template.html` 里 `.safe-line` **完全没有 CSS 规则** ——
+它就是一个裸 `<div>`。无头浏览器实测：它上距页头 18px、下距主卡片 **0px**（页头 `margin-bottom:18px`，
+它自己零边距，下面的 `.grid2` 也没有上边距），所以那一行字像是「粘」在卡片上。
+
+**① 安全说明条正式成型**
+
+| | 改前 | 改后 |
+|---|---|---|
+| 与下方卡片间距 | **0px** | 16px |
+| 与页头间距 | 18px | 16px |
+| 外观 | 裸文本（13.5px 继承字号） | 信任条：淡绿渐变底 + `1px` 描边 + 左缘 3px 绿条 |
+| 字号 | 13.5px（比正文还大） | 11.5px（`--fs-11`，说明性文字该有的层级） |
+| 手机端高度 | 84px（3 行） | 74px（收紧内边距 + 隐藏 `|` 分隔符） |
+
+绿色取 `--up`（涨色）表达「安全」语义，左右各留白；不加阴影，避免和主卡抢视线。
+
+**② 全站间距归一成一套标尺（4px 基准）**
+
+在 `:root` 排版系统里新增 5 个语义变量，**改样式请统一用它们**，不要再写死数字：
+
+```css
+--sp-sec:28px;    /* 大段落之间：上个模块 → 下个模块标题 */
+--sp-card:16px;   /* 卡片 / 栅格之间、页头下方 */
+--sp-block:12px;  /* 段落标题 → 内容、控件 → 内容 */
+--sp-tight:10px;  /* 段落内紧邻元素（副标题、小控件、表头） */
+--sp-in:9px;      /* 卡片内部小间距（键值、脚注） */
+```
+
+共替换 **27 处**写死的间距。无头浏览器实测改前 / 改后（同一条链路逐段量）：
+
+```
+改前：safe→卡片 0 · 标题→副标题 10 · 副标题→控件 11 · 控件→内容 12 · 内容→汇总 13
+      排行卡→说明 14 · 栅格→子块 16 · 标题上边距 26        ← 同一页四种「标题到内容」的距离
+改后：safe→卡片 16 · 标题→副标题 12 · 副标题→控件 10 · 控件→内容 12 · 内容→汇总 12
+      排行卡→说明 16 · 栅格→子块 16 · 标题上边距 28        ← 全部落在 10 / 12 / 16 / 28
+```
+
+另外两栏之间的缝从 14px 放宽到 16px（`.grid2` / `.guide`），两栏内容不再显得挤。
+
+**③ 点「?」的高亮改成「滚动停稳后再亮」**
+
+v3.7.4 是点击瞬间就点亮，但跨半页的平滑滚动要走约 2 秒 —— 实测
+`t=200ms scrollY=0 → t=1200ms scrollY=5798 → t=2000ms` 才落位，
+用户滚到时 4 秒闪光已经烧掉一半。新增 `gflashAfterScroll(el)`：
+
+- 监听 window `scroll`（`passive:true`），**连续 180ms 没有新滚动 = 停住了 → 点亮**；
+- 目标本来就在视口内（不产生滚动事件）时 0.45 秒后直接亮；
+- 兜底上限 7 秒，`fire()` 里移除监听，不会堆积。
+
+实测：长距离场景高亮在 **2250ms**（即滚动停稳那一刻，`scrollY=6502`）亮起，完整持续 **4000ms**；
+无需滚动场景 505ms 亮起。
+
+**④ 代码审核 + 性能实测（数据口径、功能一律未动）**
+
+- 折叠：初始 0 → 展开 1189 → 收起 0 → 再展开 1189，页脚位移随开随回（v3.7.1 的修复仍有效）；
+- 桌面滚动：p50=17ms / p90=17ms / p99=18ms，**卡顿帧（>32ms）0 个**；
+- 模拟中端手机（4 倍 CPU 降速、390px）：首屏 680ms，滚动 p99=18ms、**0 卡顿帧**；
+- 明暗两套主题下安全条渐变 / 描边 / 状态灯配色均正确解析，控制台 **零报错**；
+- 手机端无横向溢出（`scrollWidth == clientWidth`）；DOM 1877 节点。
+- 结论：性能本来就健康，本轮不做激进优化（如 `content-visibility` 会影响锚点滚动与折叠测量，风险大于收益）。
+
+**验收**：`outputs/pons-stonkfun-monitor.html` 里 `dashboard-version` = `v3.8-2026-10-04`；
+页脚版本号 `v3.8 · 2026-10-04`；线上用 `https://ponsfi.xyz/?v=380` 打开确认。
+
+## v3.9（2026-10-05）：首屏提速 + 数据源体检 + 排行榜容错
+
+**起因**：用户提两条 —— ①「打开网站 1~3 秒价格才更新，第一印象像数据不对」；
+②「全站数据源不统一，有的口径晚两天、小时级却又是新的，把全站复测一遍，
+有数据的优先展示」。
+
+**根因（无头浏览器时序实测，非猜测）**
+
+| 症状 | 实测证据 | 根因 |
+|---|---|---|
+| 价格 2.7 秒才变 | 价格请求 `start=587ms`，比日度请求晚半秒才发出 | `loadLive()` 里请求**串行 await**：价格排在 6 个日度口径后面 |
+| 主数据 1.7 秒才渲染 | `renderAll()` 要等排行榜（4.2MB 接口）跑完才执行 | 重数据把首屏渲染堵住了 |
+| 榜单连着两天没更新 | 日志 `leaderboard: IncompleteRead(4267266 bytes read)` | 4.2MB 榜单偶发被掐断，`leaderboard.py` **没有重试**，静默退回旧快照 |
+| STONK 日度晚 2 天 | DefiLlama `stonkfun.*` 最后一天 10-03；官方接口 `lastBuybackAt` 是秒级 | 上游出数节奏 + 两边统计基准不同（官方口径约为 DL 的 2 倍） |
+
+**① 首屏提速：请求全并行 + 价格优先上屏**
+
+`loadLive()` 重构为流水线：价格与所有请求**同时发出**，价格回来立刻单独 `renderAll() + flashPrices()`；
+主数据 `coreP = allSettled([loadFees(), loadMarket()])`；排行榜 `lbP` 单独跑；链上 RPC 不阻塞首屏。
+
+| 指标 | v3.8 | v3.9 |
+|---|---|---|
+| 价格更新上屏 | 2683ms | **663ms** |
+| 主数据 renderAll | 1682ms | **988ms** |
+| 首个请求发出 | 587ms | **86ms** |
+
+**② 新增「数据源体检 · 每个数字有多新」板块**（`#srcBox` / `renderSrc()`）
+
+五项逐条摊开：币价、PONS 日度、STONK 日度、小时级、收入排行榜 —— 各自的上游、最后一天/最后一小时、
+是否滞后；滞后 ≥2 天标黄，并写明「那是上游出数的节奏，不是本站故障」。
+抓取失败退回旧榜时明说「上次抓取失败，现在显示的是上一份」。
+日度口径取「收入 / 销毁取更早的那条」（报忧不报喜）。
+
+**③ 排行榜抓取容错**（`work/leaderboard.py`）
+
+`get()` 加 3 次重试 + gzip + `Connection: close`；`fetch_board()` 新增 `fetchedAt`（本次真正抓到的时刻）
+与 `stale`；`build_monitor.py` 退回旧榜时打 `stale=True, staleReason="fetch-failed"`。
+实测 2.9 秒抓通 **2476 个协议**（Pons 24h #31 / StonkFun 24h #17）。
+
+**④ STONK 官方口径日线通道就绪**（`work/hourly.py` 的 `sf_daily()`）
+
+官方接口秒级更新但基准与 DefiLlama 不同 → **两套口径并列展示、标注差异，绝不相减或混算**。
+官方日线只出完整天：相邻取样点都需 ≥21:00 UTC 且间隔 22~26 小时，不用半天数据冒充整天。
+`sfa-history.json` 目前 21 条样本（10-04 07:21 起），**10-05 21:00 UTC 之后**自动产出第一天。
+
+**验收**（本地无头实测，控制台零报错）
+- `dashboard-version` = `v3.9-2026-10-05`，页脚 `v3.9 · 2026-10-05`；
+- 体检板块 5 行齐全，且能从快照值自动更新到实时值（PONS 10-03 → 10-04、榜单时间同步刷新）；
+- 模拟旧榜 → 第 5 行正确变黄并写明原因；手机端（390px）零横向溢出。
+
+## v3.9.1（2026-10-05）：缺的数据用更快的源补上 + 回购榜排序修正 + 实时胶囊
+
+**起因**：用户连问三处 —— ①首页卡片「数据晚了 2 天」为什么、有没有实时数据；
+②日度明细里 10-04/10-05 全是「待更新」，能不能拿到最新；
+③回购榜「钱少的在上面、钱多的在下面」（#3 Pons V1 $81.4K 压在 #4 Sky $195.6K 之上）。
+
+**① 日度明细：待更新的格子用更快的源补上（标明覆盖时长）**
+
+| 项目 | 快源 | 补法 |
+|---|---|---|
+| PONS | 链上 | 回购支出＝链上真值；收入＝回购支出÷80%（与小时级同一口径） |
+| STONK | 官方接口 | 累计值（totalRevenueUsd / totalBuybackUsd）做差 |
+
+产出在 `work/hourly.py` → `hourly.json.dailySupp`（`{项目: {"YYYY-MM-DD": {rev, hold, hours, partial}}}`），
+前端只在「DefiLlama 缺失」的格子里显示，并标注 `链上·6h` / `官方·15.8h` 这种覆盖时长，hover 有口径说明。
+**半天只标半天，绝不假装整天**（与 sf_daily 同一条原则）。
+实测（10-05）：PONS 10-04 全天 $207.2K/$165.8K；STONK 10-04 官方·15.8h $518.9K/$310.2K、10-05 官方·6.4h $86.2K/$52.7K。
+
+**② 回购榜排序修正**
+
+根因：列表 `sort` 按 DefiLlama 名次（`x.r24`），但自家两行显示的金额被链上现读覆盖
+（`burnPeerVal`），两个口径不同 → 视觉上就是「钱少的在上面」。
+修复：改为按「这一列实际显示的金额」排序；链上口径的两行名次显示为「链上」徽章（不占用 DefiLlama 名次），
+表头注明「带 ⚡ 的两行是链上现读，口径不同」。实测顺序：1.24M → 646K → 350.9K(链上) → 195.6K → 144.6K → 122.4K → 113.9K → 80.9K(链上)。
+
+**③ 首页卡片「实时 24 小时」胶囊**
+
+- 有滞后徽章（数据晚了 N 天）的卡片，旁边多一个绿色胶囊：`实时 24 小时 $605.1K`（PONS＝链上、STONK＝官方）。
+  点击 → 切到小时监控的「收入」tab 并平滑滚动过去；hover 说明滚动 24h 与日度口径的区别。
+- 「最新单日收入」标签后面补上该数字的日期（如 `· 10-03`），新旧一眼可见。
+- 窄屏（≤680px）卡片名行允许换行，实测 360/390/768/1440 四档零横向溢出。
+
+**验收**：`dashboard-version` = `v3.9.1-2026-10-05`；线上 `https://ponsfi.xyz/?v=391`；
+四档屏宽零溢出、控制台零报错；回购榜金额单调递减；日度表待更新格有链上/官方补充值与覆盖时长。
+
+## v3.10（2026-10-05）：全站数据统一 · 一个价格，一个来源
+
+**起因**：用户反馈「数据有点混乱，一会这个价格一会那个价格」，要求按「用户只需要知道现在的真实数据」来全站规划。
+
+**根因（实测）**：两个实时价接口都在写同一个 `DATA.price` ——
+`loadPrices()`（coins.llama.fi）与 `loadMarket()`（CoinGecko，`if(x.usd) DATA.price[name]=x.usd` 无条件覆盖）。
+实测同一时刻两源报价不同（PONS：llama $0.3780 / CoinGecko $0.3818），谁后到谁说了算，每次自动刷新都可能翻面。
+
+**修复**
+- `loadMarket` 只在前者没给到价时兜底（`if(x.usd && !(DATA.price[name]>0))`）；主源成功时记录 `DATA.priceAt`。
+- 新增全站唯一价格出口 `pxOf(id)`：主源 → 兜底源 → 最后收盘价。替换 `b24usd()`、
+  `stats()` 的 priceNow、`burnStats()` 的价格 —— 卡片价 / 回购折算 / 销毁估值 / 收益率全部同源。
+- 「数据时间 …」后加「· 价格实时 HH:MM」（`DATA.priceAt`），新旧一眼可见。
+- 文案减负：日度表补充值标签 `链上·6h`/`官方·15.8h` → `最新`/`最新·Nh`；
+  卡片胶囊 `实时 24 小时` → `最近 24 小时`。口径细节保留在悬停说明与「数据源体检」。
+
+**验收**（本地无头实测）：加载后与手动刷新后，卡片价 == `DATA.price`（主源，$0.3780），
+不再等于 CoinGecko 值（$0.3818）；`gen` 显示「数据时间 … · 价格实时 13:42」；标签显示 `最新·6h`；控制台零报错。
+
+## v3.11（2026-10-05）：顶级画风 · 一把尺子量到底
+
+**起因**：用户要求「设计一款新的画风，要求顶级」。
+
+**先做审计（脚本量化现状）**：全站圆角有 21 种写法
+（999px / 50% / 14px / 6px / 11px / 2px / 9px / 5px / 12px / 8px / 10px / 16px / 20px / 99px / 7px / 4px / 3px…），
+字号既有 `--fs-*` 令牌又有散落的 8.5 / 9 / 10 / 10.5 / 11 / 13 / 14 / 14.5 / 15 / 15.5px 硬编码 ——
+没有统一标尺，是「看着不高级」的根因。
+
+**改造（纯样式层，数据逻辑 / 接口 / i18n 键一行没动）**
+| 维度 | 改前 | 改后 |
+|---|---|---|
+| 圆角 | 21 种写法混用 | 四档 + 胶囊：`--r-xs 5` / `--r-sm 8` / `--r-md 12` / `--r-lg 18` / `--r-pill 999` |
+| 卡片圆角 | 14px | 18px（`--r-lg`，13 处） |
+| 控件圆角 | 9px | 12px（`--r-md`，20 处） |
+| 最小字号 | 8.5px（卡片里的「?」） | 10.5px（`--fs-10`），全站再没有 10.5px 以下的字 |
+| 字号体系 | 令牌 + 9 种硬编码 | 七档：`--fs-10` ~ `--fs-20`（119 处归位） |
+| 卡片阴影 | 暗色只有一层 inset | 暗/浅分别调：「发丝高光 + 两层景深」，另加 `--card-sheen` 顶部一线提亮 |
+| 顶栏 | 纯文字，标题 11.5px 灰字 | P 字渐变品牌标 + 标题 16.5px 加粗、数据时间退到次要层 |
+| 区块标题 | 只有右侧细线 | 左侧加 PONS 紫→STONK 绿渐变小竖条 + 右侧细线 |
+| 价格 | 默认字体 | 等宽数字（`--font-num`）+ 收紧字距，两个币上下对齐 |
+| 氛围 | 顶部一处光晕 | 顶部主光晕 + 右上副光晕 + 极淡点阵网格（上半屏显影、带 mask） |
+| 细节 | — | 细滚动条、`::selection` 配色、按钮悬停景深、表头吸顶发丝线 |
+
+**实施方式**：`work/template.html` 一次性脚本改写 ——
+① 在排版系统 `:root` 后加「设计标尺 v3.11」令牌块；
+② 三套主题（暗 / 浅 / 跟系统）分别升级 `--card-shadow`、`--stick-shadow`，新增 `--glow2`、`--card-sheen`；
+③ 正则批量把 `border-radius:Npx`（82 处）、`font-size:Npx`（119 处）换成令牌；
+④ 顶栏 h1 插入内联 SVG 品牌标（渐变 id `brandGrad311`，无外部依赖）；
+⑤ 在 `</style>` 前追加「v3.11 视觉精修」段落，集中放新设计，方便以后回退。
+
+**回归实测**（本地无头，1440 / 1024 / 768 / 390 四种屏宽 × 暗 / 浅两种主题 = 8 组）：
+页面溢出 `0`、JS 报错 `0`、最小渲染字号 `10.5px`、`.card` 圆角 `18px`、`.tab` 圆角 `12px`、
+品牌标存在、价格字体为等宽 —— 全部符合新标尺。
+
+**备份**：改前的 `work/template.html` 存为 `work/template.html.bak-v311-premium`（要回退直接覆盖）。
+
+## v3.11.1（2026-10-05）：字体专项 · 大字优雅，小字精确
+
+**起因**：用户问「全站字体有什么需要优化的？什么字体更合适顶级网站风格」。
+
+**审计（脚本量化）**
+- UI 栈只有 `-apple-system … "Microsoft YaHei"` —— Windows / 安卓用户看到的是十几年前的雅黑观感。
+- **数值字体不统一**：日度大表用「UI 字体 + tabular-nums」，卡片价 / 排行大字 / 销毁大字却用 SF Mono ——
+  同一屏两套数字语言，且大字（36px）方块感重。这是「字体不一致」的主要残留。
+- 等宽栈是 `ui-monospace / SF Mono / Menlo`，装了 JetBrains Mono、Geist Mono 的人也吃不到。
+- 6 处绕过令牌硬编码字体（`.mono` / 指标说明 / 图表刻度各写各的）。
+- 日度表日期列挂着 `.mono`，格子里却是中文（「近 7 日均」「待更新」）→ 中文回退到另一个字体，同列两种字形。
+
+**改造（纯样式层）**
+| 维度 | 改前 | 改后 |
+|---|---|---|
+| UI 栈 | 苹果系 + 雅黑 | `system-ui → Segoe UI Variable → Roboto → 苹方 / 鸿蒙 / MiSans / 思源黑 / 雅黑 UI`，拉丁在前中文在后（逐字回退） |
+| 数值字体 | 混用（表=UI / 卡片=等宽） | 全站统一 UI 字体 + `tabular-nums`（大字优雅，列仍对齐） |
+| 等宽用途 | 到处用 | 只留机器码：地址 / 哈希 / 公式 / 图表刻度 / 版本号 |
+| 等宽栈 | SF Mono / Menlo | `JetBrains Mono → Geist Mono → IBM Plex Mono → Cascadia → 系统等宽` |
+| 日度表 | 单元格挂 `.mono`，中文混字形 | `#tbl td{font-family:var(--font-ui)}` 整表统一 |
+| 排版开关 | 只有 tnum | 加 `font-kerning` / `font-optical-sizing` / `text-rendering:optimizeLegibility` |
+| 大数字字距 | -1.6 / -1.3 / -0.9px（按等宽调） | -0.85 / -0.7 / -0.45px（按新字体回正） |
+
+**新增令牌**：`--font-mono`（机器码专用）；`--font-num` 改为 `var(--font-ui)`（25 处引用自动跟随）。
+
+**回归实测**（8 组）：溢出 0、报错 0、最小字号 10.5px；实测解析结果
+`body / .price .p / .rank-big / #tbl td → system-ui + tabular-nums`，
+`.addr code / .hourly-axis / .dash-ver → JetBrains Mono`。
+
+**备份**：改前模板存为 `work/template.html.bak-v3111-font`。
+
+## v3.12（2026-10-05）：内嵌 Inter · 三端同一个字形
+
+**起因**：用户说「设计的越好看我都能接受」——同意把字体做到三端完全一致。
+
+**为什么不是「随便换个字体」**：审计发现真正的差异在**字形跨平台不一致**——
+同一个 `$1.28M`，Mac 渲染成 SF Pro、Windows 渲染成 Segoe UI、安卓渲染成 Roboto，
+三种宽度三种粗细。要做「顶级」，先要**在任何设备上都长一样**。
+
+**做法**
+| 项 | 内容 |
+|---|---|
+| 字体 | Inter 可变字体（100~900 全字重），拉丁子集 |
+| 来源 | `@fontsource-variable/inter` → `inter-latin-wght-normal.woff2` |
+| 版权 | SIL Open Font License 1.1（免费商用、允许网页嵌入） |
+| 原始体积 | 48,256 字节 → base64 后 64,344 字符 |
+| 落盘位置 | 内嵌在 `work/template.html` 的 `<style>` 开头的 `@font-face`（data URI） |
+| 源文件留档 | `work/fonts/inter-latin-wght-normal.woff2`（要重新生成时用它） |
+
+**为什么内嵌而不是外链文件**：本站是「单文件应用」，而服务器 nginx 对整站
+`Cache-Control: no-cache` —— 外链字体会变成**每次打开都重新下载**。内嵌后零额外请求、
+零白屏、零跨域，也不需要在服务器上加目录、改 nginx。
+
+**为什么中文不跟着换**：Inter 不含中日韩字形，浏览器会逐字回退到系统中文栈
+（`苹方 → 鸿蒙 Sans → MiSans → 思源黑 → 雅黑 UI`）。这样做有两个好处：
+① 不为了 Windows 好看而把 Mac 上公认最好的苹方换掉；② 页面 1021 个唯一汉字，
+中文子集至少 250~500KB，而 HTML 每次访问都要重下，代价不划算。
+
+**顺带修好的一件事**：`font-weight:800` 现在是真字重。此前 Windows 上 Segoe UI 最高
+只到 Bold，`.hi`（关键数字）、`.rank-big`（排行大字）、`.tab.on`（选中标签页）想表达的
+「更重一层」在 Windows 上是假的；Inter 可变字体 100~900 全支持。
+
+**实测**
+- `document.fonts` → `Inter | 100 900 | loaded`；
+- 宽度对比法确认真的在用 Inter 渲染：同串数字 `Inter 233.06px` vs `system-ui 219.34px`；
+- 1440 / 1024 / 768 / 390 × 暗 / 浅 共 8 组：页面溢出 0、窄容器裁切 0、最小字号 10.5px、
+  控制台报错 0（只剩无头环境里被墙的行情接口）；
+- 单文件 443KB → 509KB（+64KB）。
+
+**回退**：删掉模板里那段 `@font-face`，并把 `--font-ui` 开头的 `"Inter",` 去掉。
+改前模板备份：`work/template.html.bak-v312-font`。
+
+## v3.13（2026-10-05）：图标系统 · 把 emoji 换成一整套线性图标
+
+**起因**：用户指出安全条的 🔒 这类 emoji「老土」，要求「通过资源库找到匹配的顶级 icon，
+并作为产品经理判断加在哪里合适」。
+
+**为什么 emoji 不能用**：同一个 🔒，苹果渲染成彩色拟物、Windows 渲染成单色平面、安卓又是
+另一套；大小、基线、字重三端各不相同，和面板里原有的 X 标 / 心形 / 品牌标（都是 2px 圆头
+描边的线性 SVG）放一起，一眼就是「贴上去的」。要「顶级」，图标必须和文字、和已有的 SVG
+是同一套线条语言。
+
+**选型**
+| 项 | 内容 |
+|---|---|
+| 图标库 | Lucide（lucide.dev） |
+| 许可 | MIT License（免费商用、可修改、可再分发） |
+| 网格 | 24×24，2px 圆头描边（`stroke-linecap/linejoin: round`） |
+| 引入方式 | **内联 `<symbol>` sprite**，`<use href="#ic-xxx">` 引用 |
+| 为什么不用 CDN / 图标字体 | 本站是「单文件应用 + 全站 no-cache」：外部请求每次都要重下，图标字体还会闪一下方框 |
+
+**改了什么（共 20 处 emoji + 8 个板块标题）**
+
+| 位置 | 原来 | 现在 |
+|---|---|---|
+| 安全说明条 | 🔒 | `shield` 盾牌勾 |
+| 主题切换（系统/浅色/深色） | ◐ ☀ ☾ | `monitor` / `sun` / `moon` |
+| 刷新数据 / 更新排行 | ↻ | `refresh-cw` 循环箭头 |
+| 排行榜前三名 | 🥇🥈🥉 | 金属圆牌（金/银/铜渐变 + 内高光）+ 名次数字 |
+| 链上现读 | ⚡ | `zap` 闪电 |
+| 页脚浏览量 | 👁 | `eye` |
+| 打赏（4 处） | ☕ | `coffee` |
+| 告警条 / 已触发标记 | ⚠ | `triangle-alert` |
+| BGM 展开箭头 | ▴ | `chevron-up` |
+| 页脚「链上记录」 | ↗ | `external-link` |
+| 8 个板块标题 | 无 | 脉冲 / 铃铛 / 火焰 / 奖杯 / 趋势 / 表格 / 数据库 / 说明书 |
+
+**代码怎么组织的**
+- `<body>` 开头一段隐藏 `<svg>`，里面 20 个 `<symbol id="ic-xxx">`；
+- CSS 里一条 `.ic` 规则统管尺寸（`1em`）、颜色（`currentColor`）、线宽和圆头；
+- 动态渲染处用 `icn('zap')` 生成同样的 `<svg class="ic"><use href="#ic-zap"/></svg>`，
+  字面量图标用 `IC.zap` / `IC.refresh` 等常量，避免到处手写。
+
+**两个容易踩的坑（以后改的时候注意）**
+1. **i18n 会重写板块标题**：`renderStatic()` 里 `#st-rules` 等是整段 `innerHTML` 覆写的，
+   图标必须一起拼进去，否则切一次语言图标就没了（`st-guideTxt` 只换文字，所以图标要放在
+   它外面）。
+2. **`esc()` 过的地方不能塞 SVG**：`burnSub` / `burnPeersNote` / `burnRankBy` / `h24.tag`
+   这些字符串会被 `esc()` 转义，图标只能拼在 `esc()` **外面**。
+
+**刻意保留**：作者昵称里的 💎 属于本人 ID；`→ ↑ ↓ ↗ ↳ ①②③ ● ▲▼` 是排版符号不是 emoji，
+全部原样保留。
+
+**实测**
+- 24 个图标全部命中 symbol，引用缺失 0；
+- 8 个板块标题各 1 个图标，中英切换后数量不变；
+- 1440 / 1024 / 768 / 390 × 暗 / 浅 共 8 组：页面溢出 0、容器裁切 0、最小字号 10.5px、报错 0；
+- 主题按钮实测循环：系统 → 太阳 → 月亮；打赏弹窗图标 + 文案正常；
+- 渲染后的 DOM 文本里已无 ☕ ⚡ 🥇 👁 🔒 🔒 ⚠ ◐ ☀ ☾ ▴ ↻ 等 emoji。
+
+**回退**：`cp work/template.html.bak-v313-icon work/template.html` 后重渲染。
+改前备份：`work/template.html.bak-v313-icon`。
+
+## v3.13.1（2026-10-05）：实心图标 + 三档尺寸
+
+**起因**：用户看完 v3.13 反馈「可以换成实心的，图标要大一点。不然一样大看不出来，需要有层次感」。
+
+**换库**：Lucide 是纯描边库（没有实心权重），整套换成 **Phosphor Icons 的 Fill 权重**
+（phosphoricons.com · MIT License · 免费商用）。仍是 256 网格、单路径填充、内联 `<symbol>`、
+零外部请求。21 个图标源文件取自 `@phosphor-icons/core@2.1.1/assets/fill/`。
+
+**尺寸三档**（这是「层次感」的落点）
+
+| 档 | 尺寸 | 用在哪 |
+|---|---|---|
+| 一档 | **18px + 品牌渐变** | 8 个板块标题图标 |
+| 二档 | **15px** | 顶部按钮 / 刷新（带旋转动画）/ 安全条盾牌 / 打赏咖啡 |
+| 三档 | 11~14px | 告警 13~14px、链上现读闪电 11~13px、BGM 箭头 12px、浏览量眼睛 13px、外链 12px、页脚打赏 13px |
+
+**品牌渐变怎么做的**：sprite 的 `<defs>` 里放一个 `<linearGradient id="icGrad313">`，
+两个 `<stop>` 的颜色由 CSS 变量给：
+
+```css
+#icGrad313 .gs1{stop-color:var(--pons)}
+#icGrad313 .gs2{stop-color:var(--stonk)}
+.sec-title > .ic{width:18px;height:18px;fill:url(#icGrad313)}
+```
+
+浅色 / 深色主题各自换色，不用改 SVG。实测解析结果：
+暗色 `#8b7cff → #2ee6a8`、浅色 `#6249e8 → #0d9b73`。
+
+⚠️ **坑（下次换图标必看）**：symbol 里的 `<path>` **不能带 `fill` 属性**。
+Phosphor 原始文件的 path 是 `fill="currentColor"`，它属于「元素自身的表现属性」，
+优先级高于从 `<svg class="ic">` 继承下来的 `fill:url(#渐变)` —— 不删掉渐变永远不会生效。
+本轮的 symbol 生成时已经统一去掉了 `fill="currentColor"`。
+
+**顺带**：`刷新数据` 按钮补上了图标，并且刷新时图标会转（`@keyframes icspin`，
+`prefers-reduced-motion` 下自动停用）。
+
+**实测**：1440 / 1024 / 768 / 390 × 暗 / 浅 共 8 组 —— 溢出 0、容器裁切 0、最小字号 10.5px、
+报错 0（只剩 `file://` 下 coingecko 的 CORS，线上正常）；24 个图标 0 引用缺失；
+板块标题行高 20px、头部高度未变，布局没有因为图标变大而走形。
+
+**回退**：`cp work/template.html.bak-v3131 work/template.html` 后重渲染。
+（要退回 v3.13 的线性版：`cp work/template.html.bak-v313-icon work/template.html`。）
+
+## v3.13.2（2026-10-05）：图标动效层 · 有提示感，但不吵
+
+**起因**：用户看完 v3.13.1 反馈「如果图标再加上一些动画效果就更好了，有一种提示的感觉」。
+
+**设计原则**：动效分三类，全部有含义，不为动而动。
+
+| 类 | 动效 | 含义 |
+|---|---|---|
+| ① 入场提示 | 板块滚进视野时，图标胶囊弹一下（`icPop .68s`）+ 放一圈淡光，一次性 | 「这里是一个新板块」 |
+| ② 状态提示 | 链上现读的实心闪电常驻呼吸（`icBreath 2.8s`）；告警条 / 风险标每轮渲染轻跳一下（`icAlert`） | 呼吸 = 数据是实时的；轻跳 = 有事要处理 |
+| ③ 手感提示 | 悬停微反应：主题按钮翻转 -22°、刷新按钮倒转 -52°、打赏咖啡上跳、浏览量眼睛眨一下、榜单名次放大 | 「这里可点」 |
+
+**图标胶囊**：板块图标从 18px 裸图标升级为「20px 图标 + 4px 内边距 = 28px 胶囊」，
+底色是 `{PONS 紫 → STONK 绿}` 各 16% 的极淡渐变 + 1px 同色描边（`color-mix`，深浅主题自动适配）。
+**原 `.sec-title::before` 的 3px 渐变竖条已 `display:none` 退役** —— 两条左侧标记一起太满，
+胶囊本身就是左侧标记。
+
+**入场怎么触发（踩坑记录，重要）**：
+第一版用 `IntersectionObserver`。回归测试发现「网页一步跳到底部」或「点锚点直接跳转」时，
+中间那些从没进入过视野的板块**不会产生任何回调**，图标会永远停在 `opacity:0`。
+**已改为 rAF 节流的滚动扫描**（`icRevealInit()`，在 `qInit()` 后调用）：
+判定条件 `rect.top < vh * 0.94 || rect.bottom < 0`（后者专治「已经被滚到上方」的情况），
+全部点亮后自动摘掉监听。三种极端场景（一步到底 / 锚点跳转 / 反复上下）实测 8/8 全亮。
+
+**无障碍**：`prefers-reduced-motion: reduce` 下所有 animation 置 `none`、transform 置 `none`、
+图标 `opacity` 兜底为 1 —— 动效党有动效，晕动症用户看到的是静态但完整的界面。
+`<html class="ic-motion">` 由 `<head>` 末尾一段内联脚本在首帧前打上，避免入场动画闪一下；
+无 JS 时图标照常显示（不会因为缺类名而消失）。
+
+**实测（16 组回归）**：1440 / 1024 / 768 / 390 × 暗 / 浅 × 常规 / 减弱动效 ——
+`opacity=1×8`、`animation=icPop×8`（减弱动效下 `none×8`）、溢出 0、容器裁切 0、报错 0、
+图标引用缺失 0、最小字号 10.5px。滚动入场实测（1440）：首屏 1/8 → 滚到底 8/8；
+390 手机首屏 0/8 → 滚到底 8/8，符合「滚到哪亮到哪」。
+
+**回退**：`cp work/template.html.bak-v3132 work/template.html` 后 `python3 work/render_only.py` 重渲染。
+
+## v3.13.3（2026-10-05）：性能 & 手机端专项
+
+**起因**：用户反馈「感觉上线之后有点卡卡的」，并要求「性能测试一下 + 适配手机端」。
+
+**怎么测的**：本机 Chrome 无头 + CPU 4 倍降频，跑三件事 ——
+JS 火焰图（CDP Profiler）、长任务/TBT、滚动 2s 实测帧率；再用
+`PerformanceObserver` 抓 CLS 的 `previousRect / currentRect` 精确位移。
+
+**测出来的三件事（都不是「感觉」，是数字）**
+
+| 问题 | 数字 | 修法 |
+|---|---|---|
+| 板块图标入场处理器每帧读布局 | `sweep` 一次滚动吃 **318ms** 主线程 | 开场量一次、缓存绝对位置，滚动只比数字（降到 **13ms**） |
+| 顶部头像跟随同样每帧读布局 | 每帧 2 次 `getBoundingClientRect` | 缓存「名片绝对顶 + 头像原位」，滚动只算数字 |
+| 报警卡呼吸动的是 box-shadow | 每帧重画整张卡 | 光圈挪到只改 `opacity` 的伪元素，交给合成器 |
+
+**顺手查出的真凶（CLS）**：不是卡片区，是**横幅歌词条 `.lyric` 初始没有 `hidden`**，
+JS 几十毫秒后才把它收掉 —— 手机上正好把整页顶下去 **72px**（桌面 8px）。
+改成 HTML 里默认 `class="lyric hidden"` 后：
+**桌面 CLS 0.2616 → 0.0005**，手机 0.1274 → 0.0658（手机剩下的是骨架高度差，
+第二次打开会被「自学习」修正，见下）。
+
+**骨架自学习**：价格卡在数据落地前用 `.card.sk` 占位（`.card.sk{min-height:var(--cards-h,380px)}`）。
+`renderCards()` 每次把「真实单卡高」按断点分桶存进 `localStorage`（`ponsCardsH-d/t/m`），
+`<head>` 的内联脚本在首帧前把它写成 `--cards-h` —— 老访客第二次打开基本零跳动。
+
+**手机端改动**
+- 表格：`#tbl` 在 ≤680px 收窄到 660px，**日期列 `position:sticky` 吸住左边**，
+  标题下加中英滑动提示（`.tbl-hint`，用 `html[lang]` 切中英，不动 i18n 字典）。
+- 点击目标：标签页 / 主题 / 语言 / 刷新 / 点赞 / 打赏链接一律 ≥38px；
+  `?` 问号本身 16px，但外挂 `::after{inset:-11px}` 的 38px 命中区。
+- 小字：≤680px 把 `--fs-10` 从 10.5px 抬到 11.5px（全站小字一起抬）。
+- 省电：每个呼吸点原本 3 层动画（点 + 两层雷达圈），手机上只留 1 层。
+
+**实测**
+- 滚动 FPS（4 倍降频）：桌面 42.9 → 53.5；关掉动画的上限 60.2（说明动画只占 ~7fps）。
+- 常驻动画：手机 53 → 28 个。
+- 16 组回归（1440/1024/768/390 × 暗/浅 × 常规/减弱动效）：
+  `opacity=1×8`、`anim=icPop×8`（减弱动效 `none×8`）、溢出 0、裁切 0、报错 0、图标缺失 0。
+- 功能冒烟：卡片/标签页/排行榜/回购行/日度表/8 个板块图标全部正常，`#lyric` 默认 `hidden`。
+
+**回退**：`cp work/template.html.bak-v3133 work/template.html && python3 work/render_only.py`。
+
+## v3.14（2026-10-06）：市场占有率 · 24 小时成交量份额
+
+**需求**：用户要两个「赛道地位」数字 —— PONS 24h 成交量占 Robinhood Chain 全链的比例；
+STONK 占 Solana 全链的比例，外加跟 pump.fun 的份额对比。
+
+**口径怎么定的（关键）**：市面上「成交量」至少有三套口径 —— GeckoTerminal 的**单一池子**
+（本站小时监控在用）、CoinGecko 的**代币全市场**、DefiLlama 的**协议**（平台所有交易对加总）。
+三个数不能互相加减，所以新板块只用 **DefiLlama 一套**：分子＝协议 24h 成交量、
+分母＝该链全部 DEX 24h 成交量，同源同尺。板块文案和「指标说明」都写明了这一点。
+
+| 卡片 | 大数字 | 附带 |
+|---|---|---|
+| PONS | 占 Robinhood Chain 全链 **1.29%** | 链内第 **9 / 115**、近 7 日 **↓0.37pp**、近 14 天占比迷你走势 |
+| STONK | 占 Solana 全链 **0.91%** | 链内第 **22 / 126**、近 7 日 ↑0.05pp、走势图；**对阵 pump.fun**：StonkFun＝pump.fun 的 **9.4%**，pump.fun 一家占全链 **9.67%**（是我们的 **10.7×**） |
+
+**取数**：`work/hourly.py` 新增 `market_share()`，每小时随管道抓 5 个 DefiLlama 接口
+（pons / stonkfun / pump.fun 的 dailyVolume 摘要 + Robinhood Chain / Solana 的 dexs 总览），
+产出 `hourly.json → share`（含最近 14 天占比日线）。失败时沿用上一份，静默不报错、
+绝不拖垮整轮抓取；调试可用 `python3 work/hourly.py --share-only`。
+
+**前端**：新板块在「回购与销毁」之后、「收入排行」之前（`#st-share`）。
+大数字 + 占比条（STONK 卡上另有一条橙线标出 pump.fun 的位置）+ 名次/7 日变化胶囊 +
+14 天迷你走势 + STONK 专属「对阵 pump.fun」对比条；中英双语；`?` 直跳「指标说明」
+新增的 `#gloss-share` 条目（自动展开 + 闪烁高亮）。缺数据时整个板块自动隐藏。
+
+**验证**：无头 Chrome 实测 —— 桌面 1440 / 手机 390 溢出 0、报错 0（仅 file:// 下的既有
+外链失败）；双语切换、缺数据兜底、「?」跳转＋高亮均通过。
+
+**回退**：`cp work/template.html.bak-v3134 work/template.html && python3 work/render_only.py`
+（`work/hourly.py.bak-v3134` 是脚本备份）。
+
+## v3.15（2026-10-06）：销毁里程碑 · 离下一个整数关口还有多久
+
+**需求**：用户拿 stonk.fyi 的「MILESTONE · $STONK supply burned」截图（大号百分比 +
+环形图 + 刻度进度条 + 2×2 数据格）做参考，要求同款加进本站并自行优化。
+
+**口径怎么定的（关键）**：百分比 = 累计销毁量 ÷ 10 亿总供应量。PONS 用本地
+`burn-history.json` 日快照，STONK 优先官方 `sf-history.json` 小时快照（官方口径，
+跟 STONK 官网 revenue 页一致）。「每天销毁速率」优先取最近 20~28 小时的差值
+（更贴近现状），不满窗口时退回近 7 天首尾差值；「离下一关还有几天」= 缺口 ÷ 速率，
+是趋势外推不是承诺，板块里用小字注明。
+
+| 币 | 已销毁 | 占总量 | 销毁速度 | 下一关 | 预计 |
+|---|---|---|---|---|---|
+| PONS | 320,040,051 | **32.004%** | 22.15 万/天（0.0222%/天） | 33% | ≈ 45 天 |
+| STONK | 200,054,055 | **20.0054%** | 158.12 万/天（0.1581%/天） | 21% | ≈ 6.3 天 |
+
+底部对比条：**StonkFun 烧钱速度是 Pons 的 7.1×**（同窗口、同口径）。
+
+**取数**：`work/hourly.py` 新增 `milestone()`（模式同 `market_share()`），
+产出 `hourly.json → milestone`（每币含 burned / pct / price / burnedUsd /
+perDay / speedPct / nextPct / toNext / daysTo / src，另 versus.faster + ratio）。
+失败沿用旧值，不拖垮整轮抓取；调试可用 `python3 work/hourly.py --milestone-only`（与
+`--share-only` 对称，只刷新本板块，不重跑整条管道）。
+
+**前端**：新板块在「回购与销毁」之后、「市场占有率」之前（`#st-milestone`）。
+环形 SVG（dasharray 按真实百分比）+ 0→100% 刻度进度条（橙标下一关位置）+
+2×2 数据格（已销毁数量 / 折美元 / 每天速度 / 下一关）；中英双语；
+`?` 直跳「指标说明」新增的 `#gloss-milestone` 条目（自动展开 + 闪烁高亮）。
+缺数据时整个板块自动隐藏。
+
+**验证**：无头 Chrome 实测 —— 桌面 1440 / 手机 390、深色 / 浅色四组溢出全 0，
+环形 dasharray、刻度标「下一关 33%」、fill 32% 正确；英文切换、指南条目
+展开均通过；报错 0（仅 file:// 下的既有外链 CORS）。
+
+**回退**：`cp work/template.html.bak-v315 work/template.html && cp work/hourly.py.bak-v315 work/hourly.py && python3 work/render_only.py`
+（另随这次修了 `work/appeal_check.py`：GoPlus 抓取失败时保留旧状态，避免复抓成功时误报「新增标记」）。
+
+## v3.16（2026-10-06）：合并重复板块 · 「销毁里程碑」并进「回购与销毁」
+
+**背景**：用户发现「回购与销毁」与「销毁里程碑」两块功能重叠 —— 已销毁数量、占比、
+现价折算这三个数字两边都在显示，而且两边数据源刷新节奏不同（卡片＝浏览器链上现读、
+里程碑＝每小时快照），偶尔出现两个值（32.01% vs 32.00%），容易让人以为数据打架。
+
+**怎么改**（纯前端，数据管道一行没动）：
+- 删除独立板块「销毁里程碑」；独有内容并进「回购与销毁」卡片：
+  · 进度条上加橙色标记＝下一个整数关口（例「下一关 33%」），悬停有快照说明
+  · 新增一行小字：销毁速度 22.2 万/天（0.022%/天）· ≈ 45 天后抵达下一关
+  · 板块抬头追加一句：StonkFun 销毁速度 ≈ Pons 的 6.9~7.1 倍（同一把尺子）
+  · 「?」指向原指标说明 #gloss-milestone（内容已改写成合并后的读法）
+- 每个数字全站只出现一次；页面长度减少约一个板块。
+
+**验证**：无头 Chrome —— 桌面 1440 深色 / 桌面 810 浅色 / 手机 390 深色与浅色四组：
+卡片 2 张、橙色标记（33% / 21%）与速度行齐全、溢出 0、无 `#st-milestone` 残留；
+中英双语切换 OK；「?」跳转 #gloss-milestone 条目存在。
+
+**回退**：`cp work/template.html.bak-v316 work/template.html && python3 work/render_only.py`
+（`work/render_only.py.bak-v316` 同步留档）。
+
+## v3.17（2026-10-06）：环形销毁进度 · 大号百分比进圆圈
+
+**需求**：用户要求把「回购与销毁」卡片里的横条进度改成圆圈效果，数字要大、更有张力。
+
+**怎么改**（纯样式/前端，数据与管道不动）：
+- 每张卡左侧新增环形进度：圈内大号百分比（桌面 28px / 字重 800）+「占总量」小字，
+  环＝币色 + 光晕（drop-shadow），弧长按链上现读占比绘制；
+- 右侧保留大号「已销毁数量」+「按现价折算」两行；
+- 横条与橙色「下一关」标记取消，信息并进一行小字：
+  「销毁速度 22.2 万/天（0.022%/天）· 距下一关 33% 还差 996.0 万 · 按当前速度 ≈ 45 天后抵达」；
+- 百分比全卡只出现一次（圈里），不再和文字重复。
+
+**验证**：无头 Chrome 四组（桌面深色 1440 / 桌面浅色 810 / 手机 390 深色、浅色）：
+环 dasharray 104.57 / 326.73 ≈ 32%，stroke 10px、颜色＝币色；圈内字号 28px/800；
+环与右侧文字无重叠（间距 16px）；溢出 0、报错 0；中英双语 OK。
+
+**回退**：`cp work/template.html.bak-v317 work/template.html && python3 work/render_only.py`
+（`work/render_only.py.bak-v317` 同步留档）。
+
+## v3.18（2026-10-06）：STONK 官方口径对账 · 修复「卡片与官网对不上」
+
+**需求**：用户拿 stonkfun.xyz/developers 的官方 API 对账，发现看板 STONK
+「已销毁 199.85M」与官网「200.11M」不一致。
+
+**查证结论**（两个原因叠加）：
+- 滞后：卡片数字来自每天 09:00 跑一次的链上快照，官方接口是分钟级更新，
+  7 个小时 ≈ 26 万枚没跟上；
+- 口径：链上推算用的「初始供应」写成整 10 亿，官方实际原始供应
+  999,969,797.91（差 30,202 枚）。
+
+**改动**（数据管道 + 3 处小改动；界面结构未动）：
+- `work/hourly_check.py`：新增 `patch_official_stonk()`，每小时用官方累计值覆盖
+  STONK 卡片的已销毁 / 占比 / 近 24h 回购（官方快照 >6h 未更新则不动，宁旧不假）。
+- `work/buyback.py`：`STONK_INITIAL` → 999,969,797.91；`burn-history.json`
+  历史快照同步迁移（24h 差值不受影响）。
+- `work/hourly.py`：中转线路把实测最稳的 translate.goog 放第一位；新增
+  `/api/v2/revenue/daily` 官方日线抓取（`out["sfDaily"]`，75 天全量）；
+  milestone 的 STONK 供应量同步修正。
+- `work/template.html`：日度明细 STONK 列改用官方口径（与 stonkfun.xyz 一致，
+  官方断流时退回 DefiLlama）；「近 24 小时回购」新增「官方接口」标签；
+  「数据源体检」「页脚」「补位格」文案同步更新。
+
+**验证**：无头 Chrome 断网渲染本地产物 —— 卡片 200.12M（20.01%）、日度表
+STONK $456.4K（10-05）等官方值齐全、无 JS 报错；线上 ponsfi.xyz 内嵌
+200123999.83 + sfDaily(10-05=456429.26)；官方 API 同期读数 200123999.83，完全对齐。
+
+**回退**：`work/*.bak-v318` 覆盖回对应文件 + `burn-history.json.bak-v318` 还原。
+
+## v3.19（2026-10-06）：一句话结论「深度解读」+ 数据源体检折叠
+
+**需求**（两条）：
+1. 用户看「一句话结论：暂停加仓」时要求更深的分析 —— 结合全站数据给出推理链，
+   而不是一句判断；重点讲清「回购到底能不能托住价格」。
+2. 「数据源体检 · 每个数字有多新」常驻页面太长，要求像「指标说明」一样默认折叠。
+
+**改动**（纯前端，两块；界面其它板块一行没动）：
+- `work/template.html` `renderRules()` 的结论卡新增 `.sum-deep`「深度解读」，
+  每个项目 5 行、全部用页面同源数据现算：
+  1. **跌势**：最近 3 天日均 vs 前 4 天日均（`last7Split()`）+ 连跌/连涨天数 —— 判断是否仍在恶化；
+  2. **托底**：7 日回购 ÷ 同期成交额 vs 5% 「有效买盘」门槛（差几倍），并给出
+     年化买回流通市值比例（≥100% 时表述为「不足一年买回全部流通盘」）——
+     用数字回答「回购能否托底」；
+  3. **估值**：P/S vs 1.5x / 4x，并对比「本周收入涨跌 vs 价格涨跌」判断估值
+     被压缩还是被抬高（含上周同口径 P/S）；
+  4. **拐点**：小时级近 24h 收入 vs 前 24h（`hourlyInflection()`）+ 折算日均相对
+     7 日均的冷热；
+  5. **条件**：解除「暂停加仓」需要收入回到警戒线之上并站稳（含还差几个点、按斜率
+     估算还有几天跌破），跌破离场线按纪律撤。
+- 「数据源体检」标题改为 `guide-head` 可点击折叠（`srcSetOpen/srcToggle/transitionend`，
+  与「指标说明」同一套 max-height + 淡入动画）；`renderStatic()` 不再覆盖标题 innerHTML，
+  改为更新 `#st-srcTxt` 与 `#srcHint`；`.guide-wrap` 淡入动画选择器补上 `.srcbox`。
+- i18n 中英同步（`drHead/drHint/drDrop/drBuy/drVal/drTurn/drCond` + 5 个模板函数）。
+
+**验证**：无头 Chrome 断网渲染 —— 深度解读两块共 10 行正常输出、数值格式化正确
+（$136.6K / -44.6% / 10.7× 等）、`srcToggle(true)` 后 `#srcWrap` 带 `open` 类且
+`max-height:363px`；切 EN 后 `I18N.zh/en` 键零缺失、rules 区无 `undefined/NaN`。
+
+**回退**：`cp work/template.html.bak-v319b work/template.html && python3 work/render_only.py`。
+
+## v3.22（2026-10-07）：卡通 Logo · 手机端收尾 · 断档回填 · 图表标签防重叠
+
+**起因**：三条反馈 —— ① 站点没辨识度（标签页和页头一直是「P」字母标），想要个卡通一点的；
+② 手机端图表坐标字发糊、字号偏小、帮助入口难点；③ 昨晚 21:50→今早 10:05 本机休眠，
+STONK 小时数据断了 14 小时（红框里的空柱）。
+
+**① 新 Logo：加密狗（呼应作者昵称「阿拉斯加的狗💎」）**
+- 形象：圆脸 + 紫(#8b7cff)→绿(#2ee6a8)渐变耳朵 + 额头小钻石 + 黑眼睛带高光 + 深色鼻子 + 微笑嘴；
+  深色圆角底板托底，浅色/深色标签页都清楚。
+- 落点三处（同一份素材）：浏览器标签页 favicon（SVG + 32px PNG 兜底）、苹果触屏图标（180px）、
+  页头 `<i class="brand">` 内联 SVG。全部 data URI 内嵌，零外部请求。
+- 源文件与改法：
+  - `work/brand/dog.svg` —— 小狗形象母版（64×64）；
+  - `node work/brand/render_dog.mjs` —— 生成 `logo.svg` + `logo-16/32/180/192/512.png`；
+    加 `--ascii` 可在终端把图标打成字符网格自检（白底/深底/26px 页头尺寸）；
+  - `python3 work/brand/embed_icon.py` —— 把上面三处同步进 `work/template.html`（幂等，可反复跑）。
+  - 旧「P」标整套备份在 `work/brand/prev-P/`。
+- 想要换形象：改 `dog.svg` → 跑上面两个命令 → 渲染上线，其它地方不用动。
+
+**② 手机端收尾（配 v3.21.3 的图表读数改造一起上）**
+- 小时图 / 趋势图的坐标文字从 SVG 搬进 HTML 覆盖层（`.hourly-marks` / `.chart-marks`），
+  按容器真实像素排布 —— 手机端不再被整体拉伸糊掉；窗口缩放自动重排。
+- 趋势图新增两条「防重叠」规则（手机图表只有 ~94px 高时才暴露）：
+  - 两条止损线的文字标签会互相压住 → 标签按真实像素上下错开，且不许越过底部日期行；
+  - 最下面那枚末端胶囊会骑到日期行上 → 先量出「日期行顶部」，再算可用高度夹回。
+- 手机端字号整体抬一档（`--fs-10:11.5px … --fs-16:17.5px`）、次级文字对比度提到 4.4:1、
+  「?」帮助入口补 38px 命中区、页脚昵称里的 X 链接补上下命中区。
+
+**③ STONK 小时数据断档回填（`work/hourly.py` 的 `sf_series()`）**
+- 官方累计接口断档（本机睡眠/守护停摆导致快照断档）时，不再直接丢弃整段，而是把
+  这一跳的增量**按小时均摊**回填到中间各小时；回填小时在图上画成斜纹柱 + 「断档回填 · 估算」徽标，
+  和逐小时实测值区分开。只影响展示，不改口径。
+
+**回退**：`cp work/template.html.bak-v322 work/template.html && python3 work/render_only.py`
+
+## v3.23 · 像素画 Logo 全点位替换（2026-10-07）
+
+- 作者指定用一张 800×800 像素画（蓝鳄 + 绿蛙 + 彩色棋盘底）当 Logo，替换 v3.22 的卡通狗。
+- 落点（与旧版一一对应）：
+  - 标签页 favicon：32px PNG（`logo-pix-32.png`）
+  - 苹果触屏图标：180px PNG（`logo-pix-180.png`）
+  - 页头 `<i class="brand">`：52px PNG 内嵌、26px 显示（`image-rendering:pixelated` 保像素锐）
+  - 分享图：og:image / twitter:image 指向 `https://stonk1000x.top/logo-pixel.png`（800px 原画；
+    换新文件名是为了绕开 X/微信对 logo-512.png 的旧图缓存）
+- 源文件与改法：
+  - 原图拷贝 `work/brand/pixel-source.webp`；
+  - `node work/brand/render_pixel.mjs` 生成 pixel-source.png + logo-pix-32/52/180/256/512.png
+    （最近邻缩放保像素块；加 `--ascii` 可在终端打字符网格自检）；
+  - `python3 work/brand/embed_icon.py` 一条命令同步进 `work/template.html`（含 og/twitter 地址替换、防呆断言）。
+  - 旧「卡通狗」整套素材（dog.svg / render_dog.mjs / logo-*.png / docs 里的副本）已移入 `work/brand/prev-dog/`。
+- 服务器：新增 `/var/www/pons-dashboard/logo-pixel.png`（800×800），覆盖 `logo-512.png` 为像素画 512 版。
+- 回退：`cp work/template.html.bak-logo-pixel work/template.html && python3 work/render_only.py`，
+  旧狗素材从 `work/brand/prev-dog/` 回抄即可。
+
+## v3.25（2026-10-08）：小时柱「只认实测」· 删除断档回填
+
+- 背景：用户核对「小时监控 · 最近 72 小时」的 STONK 收入，觉得柱子有假。
+  对账结论：**总量和 StonkFun 官方一致**（如 10-06 官方 $461,540 / 站内小时求和 $449,748；
+  10-07 官方 $256,261 / 站内 $266,638，差额来自统计时刻与四舍五入），不是数据源的问题。
+- 真正的问题在显示：`sf_series()` 把断档期的累计增量**按均值摊平**到多根柱子上，
+  于是出现一串一模一样高的「假柱」（线上曾出现 $16,948×6、$12,981×9）。
+- 改法（v3.25）：
+  - 相邻两次采样间隔 ≤ 1 个整点 → 增量记到较早那个整点；**超过 1 个整点直接留空，不回填、不估算**；
+  - 删除斜纹柱（hpHatch）、「断档回填·估算」徽标与相关说明；
+  - 空小时显示「未采样」（英文 not sampled），提示语补充中英说明。
+- 配色统一（同版）：小时柱新增专属柱色变量 `--hb-pons` / `--hb-stonk`（深色/浅色主题各自微调一档），
+  两列同款「上实下透」（100% → 72%）竖向渐变；图例圆点与柱子同色 —— 视觉上只有一个系统。
+- 配套：`deploy/ponspulse-dispatch.sh` 快照阈值 75→45 分钟，压低断档概率（治本还在采样密度）。
+- 备份：`work/template.html.bak-v325`、`work/hourly.py.bak-v325`。
+- 回退：把两个 .bak-v325 抄回去 + `python3 work/render_only.py` 重新上线即可。
+
+## v3.26（2026-10-08）：STONK 小时收入/销毁改「官方逐笔账本」
+
+- 背景：v3.25「只认实测」后，STONK 小时列大面积「未采样」——官方累计值每小时才抓
+  一条，构建错过 / 中转抽风就断档，柱位留空，用户看不到数（截图反馈）。
+- 新数据源（官方逐笔流水，带时间戳，与平台页面同源）：
+  - 买回 `/api/v2/revenue/buybacks?limit=100`（signature / spentValueUsd / createdAt）；
+  - 销毁 `/api/v2/revenue/burns?limit=100`（amountTokens / createdAt；只有 buyback 一种来源，实测无 source=all）。
+  - 游标翻页（page.nextCursor）；国内直连被墙 → translate.goog 保留整串 query 的中转
+    （cursor 不能丢）；CI（海外节点）带 `PONSPULSE_SF_DIRECT=1` 直连。
+- 实现（`work/hourly.py`，新增账本段）：
+  - `work/sf-ledger.json` 滚动账本（~110h）：buy=[[ts,usd]]、burn=[[ts,tok]] 降序、按 (ts,值) 去重；
+  - 覆盖区间 cov：连续翻页天然连续，合并存 [最早,最新] —— 区间盖住的小时「没流水=真 0」，
+    盖不到 = None（前端仍显示「未采样」，与「不猜数」原则一致）；
+  - 每轮构建增量：顶部补新（接到已有最新一条）＋ pend 断点续传补旧
+    （每轮每流 PONSPULSE_LEDGER_MAX_PAGES 页，默认 10；断网/预算用尽自动留续点）。
+  - 收入 = 每小时买回 USD ÷ ratio；ratio 取官方日线最近 3 个完整日的 买回÷收入（实测 0.6001），
+    取不到用 0.5976 兜底；销毁 = 每小时官方销毁流水逐笔求和。
+  - 取值顺序：账本（精确到笔）→ 覆盖不到的小时退回累计差值 → 再退快照。
+- 首日回填：222 页 / 买回 21,331 条 / 销毁 1,187 条，一次盖满 110h（72h 图 + 余量）。
+- 对账：10-04~10-07 四天买回与官方日线**完全一致（±0.0%）**；销毁比官方日线低
+  1.8%~3.7%（官方日线口径略高于逐笔列表口径，属口径差异；小时图以逐笔账本为准，偏保守）；
+  10-08 实测 ratio=0.6001，24h 收入合计 ≈ $253K（同日官方日线口径 $256K 同量级）。
+- 配套：
+  - `work/ci_build.py` 的 SNAPSHOT_FILES 与 workflow「恢复状态文件」都加入 sf-ledger.json
+    （孤儿快照回传 → CI / 本地共享同一本账，断点续传跨机器生效）；
+  - 图下注释（中英）改写：「官方买回流水逐笔折算 / 精确到笔 / 没抓到才留空」白话版；
+  - 版本号 v3.26 写进 render_only.py（VER + meta + BANNER）。
+- 备份 / 回退：`work/hourly.py.bak-v326`、`work/template.html.bak-v326`；两个抄回后
+  `python3 work/render_only.py` 重新上线。
+
+## v3.27（2026-10-08）：STONK 深度页（独立视图）
+
+- 背景：作者要求给 $STONK 做一个单独的深度页，把 stonk.fyi 的信息密度搬进本站，
+  同时**只用我们已经信任的数据源**（StonkFun 官方 API + GeckoTerminal + RugCheck + DefiLlama）。
+- 新数据脚本 `work/stonk_page.py`（每小时跟 CI 一起跑）：
+  - 官方 API：`/api/revenue`（累计）、`/api/v2/revenue/daily`（日线）、
+    `/api/v2/revenue/burns`（销毁逐笔）→ 收入 / 买回 / 销毁 / 最近销毁记录；
+  - GeckoTerminal：主池实时价与成交、`/tokens/{mint}/info`（持币人数与持仓分布）、
+    `/pools/{pool}/ohlcv/day?limit=90`（价格史）、`/tokens/{mint}/pools`（资金池列表）；
+  - RugCheck：流动性总量、增发/冻结权限、转账税、风险标记；
+  - DefiLlama：收入榜名次与榜上邻居（复用总览页的 leaderboard）。
+  - 产出 `work/stonk-page.json`，并把 `stonkPage` 字段注入 `dashboard-data.json`。
+- 页面（`#stkView`，总览页零改动、样式与令牌完全复用）：
+  - 入口：页头「STONK 深度页」按钮 / `?page=stonk` / `#stonk`；页内右上角有返回、主题、语言三个按钮；
+  - 结构：首屏 hero（价格 / 24h / 市值 / 成交 / 销毁进度 / 持币 / 主池深度 / 全市场流动性）
+    → 安全徽章条 → 一句话结论卡 → 粘性章节导航；
+  - 七个板块：供应与安全（供应条、销毁来源、最近销毁链上记录、安全检查）、
+    飞轮（6 个比例指标 + 30 天日柱 + 72 小时三页签 + 价格走势）、需求与资金（买卖笔数 / 买盘占比 /
+    池子分布 / 持币分布 / 人数变化）、估值与位置（P/S、年化收入、排名与榜上邻居）、
+    体检评分卡（12 项数值 + 阈值）、飞轮推演（0/5/10/20/35% × 7/30 天，地板价与天花板价）、口径与来源。
+- 只认实测：持币人数变化与主池净流入用本站累积快照算，采不满就不显示结论；
+  评分卡每项都带数值和阈值，未采样显示灰色，不猜数。
+- 配套（都要一起改，缺一个就会断）：
+  - `work/ci_build.py`：bucket 列表加 `work/stonk-page.json`；两种模式都在最后跑
+    `stonk_page.py` → `render_only.py`（daily 模式也要再渲染一次，否则 stonkPage 进不了 HTML）；
+  - `.github/workflows/ponspulse.yml`「恢复状态文件」加 `work/stonk-page.json`
+    （快照里的采样历史要能跨轮累积，否则人数变化永远算不出来）；
+  - `work/render_only.py` 的 VER / BANNER / meta 升到 v3.27。
+- 排查小抄：页面靠 `BUNDLE.stonkPage` 是否有值决定渲染；
+  数据没到就先跑 `python3 work/stonk_page.py`（需能连上 stonkfun.xyz 与 GeckoTerminal），
+  CI 里是直连，本机走 translate.goog 中转。
+- 备份 / 回退：`work/template.html.bak-v327`、`work/stonk_page.py.bak-v327`、`work/stonk-page.json.bak-v327`；
+  抄回模板后 `python3 work/render_only.py` 重新上线。
+
+## v3.27.1（2026-10-08）：全站一个价 · 资金池重试 · 手机端列数
+
+- 背景：作者反馈深度页「单价对不上、有些数据是空的」，手机端也挤。
+- **全站一个价**（本次的核心）：站点价格只有一个源 —— `DATA.price[id]`（前端由
+  coins.llama.fi 实时刷新，`pxOf()` 是唯一入口；禁止读 `DATA.market[..].price`，见 3.11 注释）。
+  - 深度页首屏价格/市值/24h 涨跌改走 `stkSiteInfo()`（同一套数字），取不到才退回快照；
+  - 页内 GT 实时刷新不再覆盖价格，只补 24h 成交、主池储备、买卖笔数；
+  - `work/stonk_page.py` 同步：`px_use = 官方价 or GT 价`，市值 = px_use × 流通量，
+    P/S、主池深度占比、回购均价对比全部改用同一个价。
+- **资金池列表空了**：CI 里 `hourly.py` 刚跑完会吃掉 GeckoTerminal 这一分钟的大部分配额，
+  四连请求的最后一个（代币池子列表）经常 429。修法：
+  - `gt_get` 遇到 429 的退避从 4/7/10 秒拉长到 20/30/40 秒；
+  - 列表仍为空时，等 25 秒单独再要一次（`gt-pools-retry`）；
+  - 解析抽成 `parse_gt_pools()`，主流程只调一次。
+- **手机端列数收口**：飞轮 6 列 / 需求 5 列原本把列数写在元素行内样式上，媒体查询压不过行内样式，
+  手机上挤成一条。改成类名 `g2~g6`（`.stk-grid`）、`sc2`（`.stk-score`）、`m3`（`.stk-mo`）+ 媒体查询：
+  ≤980px 一律两列、评分卡 ≤560px 单列。
+- 顺手：价格图天数与「每天的收入与买回」天数都改成按实际数据长度显示（官方日线只有 ~24 天，
+  写死「90 天 / 30 天」会与图对不上）；快照累积到 14 小时时首页已能看到「1 小时持币变化」。
+- 回退：`cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py`。
+
+## v3.27.3（2026-10-09）：深度页布局打磨 · 手机端适配
+
+- 背景：作者反馈 STONK 深度页「UI 布局需要优化，同步适配手机端」。这版用无头 Chrome
+  在 1425 / 390 / 360 三个宽度实测（不靠猜），逐条修掉真实问题，总览页零改动。
+- **板块标题图标全隐藏（真 bug）**：全局规则 `.ic-motion .sec-title > .ic{opacity:0}` 要等
+  `icRevealInit` 发 `.ic-in` 才点亮，但它只登记加载时就存在的标题；深度页标题是 `stkRender`
+  动态生成的，永远没被登记 —— 七个板块标题前一直是空图标位。修法：`stkRender` 收尾给
+  `#stkRoot` 里所有 `.sec-title` 补 `ic-in`。
+- **锚点跳转被吸顶导航盖住**：`.stk-nav` 是 sticky（高约 44px），而 `#stk-s-*` 没有
+  `scroll-margin`，点胶囊后标题正落在导航条底下（实测 anchorTop=0）。补
+  `#stkView .sec-title{scroll-margin-top:68px}`（手机 64px）。
+- **吸顶导航缝隙透字**：胶囊之间是透明的，滚动时正文从缝里穿过。吸顶时加 `.stick`
+  渐变底色 + 毛玻璃（与总览 `#secNav` 同款处理）。
+- **导航条联动**：滚动时当前板块（按标题距顶 ≤112px 判定）高亮 `.on`；手机/平板
+  （≤1023px）滑动出现、停手 1.3 秒自动收起（和总览导航一致）；点中的胶囊自动滚到
+  导航条可视区中间。
+- **手机端**：资金池行由「名字 | 储备 / 成交错位」改成「名字整行 + 储备/成交左右对齐」；
+  图表高度 190→170px；图表气泡（tooltip）贴左右边缘时按气泡宽度收进图表内，不再溢出卡片。
+- 回退：`cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py`。
+
+## v3.27.4（2026-10-09）：手机端头部按钮重叠修复
+
+- 背景：作者手机截图反馈头部「STONK 深度页」按钮文字压在「刷新数据」按钮上。
+- 根因（无头浏览器实测 360/390/430px）：≤680px 规则把「系统 / EN / 深度页 / 刷新」四个按钮
+  `flex:1 1 0` 四等分 + `white-space:nowrap` —— 深度页按钮内容需 91px、盒子只有 72px
+  （360px 屏），文字溢出按钮盒子叠到隔壁；v3.27 加入口按钮后才出现。
+- 修法（仅 ≤680px）：改 3+1 —— 系统 / EN / 刷新 平分一行，STONK 深度页整行独占
+  （`#btnRefresh{order:2}` + `header .stk-btn-entry{flex:1 1 100%;order:3}`）。
+- 复测：360/390/430 三档全部无溢出、无重叠、无横向滚动；深度页头部（.stk-bar-r）同测无恙。
+- 回退：`cp work/template.html.bak-v327 work/template.html && python3 work/render_only.py`。
+
+## v3.28.0（2026-10-09）：深度页顶部布局重整 · 手机端打磨
+
+- 背景：作者反馈深度页「整体布局都调整一下，顺便适配手机端」（手机截图红框圈出首屏安全徽章一条）。
+- **顶部收成两张卡**：安全徽章（已放弃增发/冻结、0% 税、风控无标记、流动性、前 10 大钱包）
+  从独立一条并入 hero 卡底部做**尾条**（1px 分隔线 + 淡底、圆角随卡），不再以 -2px 负边距
+  悬浮在卡片边缘外。渲染侧：`stkHeroHTML(h,fw,dm,sf)` 内部统一调 `stkChipsHTML()`，
+  `stkRender()` 不再单推徽章。改这处必看：hero 的网格重命名 `.stk-hero-main`
+  （`.stk-hero` 改为 `display:block;padding:0;overflow:hidden`，别再把它当 grid 用）。
+- **徽章图标按语义区分**：权限/税/风控 = 盾牌、流动性 = 柱状（`ic-volume`）、前 10 大钱包 = 饼图
+  （`ic-pie`）；原来六枚全是盾牌，语义不对。
+- **手机端（≤680px）**：hero 内边距 18/20 → 14/14/12、价格 34 → 38px、顶栏按钮抬到 38px
+  命中区（与总览页一致）；`.stk-bar-r{width:100%}` + 「返回总览」`flex:1 1 auto` —— 放同一行时
+  只把余量给它，放不下换行时自动占满整行（320/360px 实测截图里按钮不再孤零零挂左边）。
+- **窄屏（≤480px）**：8 格数据格的指标名（`.stk-cell .k`）允许换行 —— 320px 实测原来
+  「主池净流入（24h）」「人数变化 · 24 小时」「年化收入（近 7 日）」被截成「…」，现在完整显示。
+- 复测（无头 Chrome，320/360/390/430/600/768/1024/1180/1440 九档）：无横向溢出、无按钮重叠、
+  指标名不截断；杂项：390px 下 hero 卡 505 → 584（含并入的徽章条），首屏「hero 顶 → 徽章底」
+  总高从 644 → 584，省约 60px。
+- 回退：`cp work/template.html.bak-v328 work/template.html && python3 work/render_only.py`。
+
+## v3.28.1（2026-10-11）：深度页「飞轮推演」白话化
+
+- 背景：作者反馈「飞轮推演」板块看不懂，术语太重（地板价 / 天花板价 / 恒定乘积 / 复利）。
+- 板块改名：`secModel` 飞轮推演 → **收入涨了会怎样**（导航胶囊与板块标题共用同一 i18n key，改一处全跟）。
+- 六个数值格白话化：期内收入→**这段时间的收入**、期内买回→**拿去回购的钱**、销毁 STONK→**烧掉的 STONK**、
+  供应减少→**流通量减少**、地板价（只算供应）→**保守估算价（只看销毁）**、
+  天花板价（AMM 无卖出）→**乐观估算价（买盘全进池）**。
+- 格子小字：`vs now`（此前中英混排）双语化；`+10%/d × 7d` → 「每天 +10% · 连着 7 天」；
+  「流通量被烧掉的比例」→「烧掉的币占流通量」。
+- 底部说明：先说「这是一道算术题，不是价格预测」，再按三步讲算法（7 日均值起点 → 每天涨 → ~60% 回购 →
+  回购 ÷ 现价 = 烧币），最后解释两个估算的含义；原「真实价格一定落在两者之间」改成
+  「可能比保守估算更低，也可能够不到乐观估算」（去掉绝对化表述）。
+- 中英双语同步；算法与数据管道零改动。回退：`cp work/template.html.bak-v3281 work/template.html && python3 work/render_only.py`。
+
+## STONK 深度页新增「飞轮名单」+「谁在买 · 24 小时钱包分层」（v3.29.0，2026-10-11）
+
+作者参考 stonkfun 官方飞轮页与「大户/散户净流入」类看板提出；数据采集全部在云端（GitHub Actions）完成，电脑不用开机。
+
+- **飞轮名单 · 平台代币 Top 10**（板块 id `stk-s-rank`）：官方 `/api/flywheel`
+  （`work/hourly.py` 的 `SF_FLY_API`，国内走海外中转 / CI 直连）→ `work/stonk_page.py::parse_flywheel`
+  → `payload.flywheelRank`。展示排名 / 头像 / 市值 / 分配权重 + 累计回购金额·笔数·曾上榜代币数；
+  底部注明官方口径「列入名单≠承诺对每枚都回购」。头像走 Irys 网关，加载失败自动回退首字母。
+- **谁在买 · 24 小时钱包分层**（板块 id `stk-s-flow`，新文件 `work/wallet_flow.py`）：
+  - 成交：GeckoTerminal 每池最近 300 笔（不支持翻页），每次构建采样、按「交易指纹」去重，
+    滚动攒 24h 账本 → `work/wallet-flow.json`（已加入 ci_build 快照回传清单，云端积累）；
+  - 分层：钱包「当前」持币市值 = 链上余额（Solana RPC `getTokenAccountsByOwner` 批量查、
+    余额缓存 TTL 48h）× 现价；巨鲸 ≥$1M ｜ 鲨鱼 $100K–1M ｜ 海豚 $10K–100K ｜ 小鱼 <$10K，
+    查不到进「未识别」；做市商无公开标签，不单列（如实标注，不造数）；
+  - 展示：四档 + 未识别，绿=净买 / 红=净卖，中心分叉条；顶部四格=窗口进度 / 识别覆盖 /
+    采样成交额 / 参与钱包；口径与局限写在板块底部。刚上线头几个小时账本偏小属正常。
+- RPC 节点顺序：官方 `api.mainnet-beta.solana.com` → `solana-rpc.publicnode.com` →
+  `api.metaplex.solana.com`（2026-10-11 实测：本机（国内）直连全部被墙/拒绝，CI（海外）正常）。
+- 导航新增两个胶囊；中英双语全覆盖；回退：`cp work/template.html.bak-v329 work/template.html && python3 work/render_only.py`。
+- **2026-10-11 修复（v3.29.1）**：首跑实测云端管道被个别公共 RPC「连上但不回包」拖到 20+ 分钟；
+  `wallet_flow.py` 加 15s 单请求超时 + 每批最多 2 轮 + 全局预算（查余额 ≤240s / 拉成交 ≤150s，
+  单轮最多 800 个钱包、按最近活跃优先），查不完的钱包与资金池留到下一轮，防止整条 CI 超时。
+- **2026-10-11 修复（v3.29.2）**：定位到首个真 bug —— `sample()` 组装结果时
+  `{v[1] for t, v in tr.items() if t >= cutoff}` 把账本「指纹键（字符串）」当时间戳与整数比，
+  抛 TypeError 被上层的 try/except 吞掉 → `walletFlow` 恒为 None（连续两轮复现）。
+  改为 `v[0] >= cutoff`；同时增加：账本先落盘再查余额（中途异常不丢成交）、
+  状态文件带 `dbg`（tradesErr / 余额 ok 计数），出问题可直接从快照里看原因。
+  本地端到端复测：5 池 1500 笔成交、456 钱包分层、二次调用幂等去重全部通过。
+- **2026-10-11 修复（v3.29.3）**：云端快照实测「成交 1500 笔全部入库，但 478 个钱包余额查询
+  0 成功」（`dbg.hold={"need":478,"ok":0}`，交易全部落进「未识别」桶）。逐家实测公共 RPC 后
+  确认根因、彻底换掉查询方式：
+  - 官方节点对 `getTokenAccountsByOwner` 的**批量请求直接 429**（哪怕一批只有 5 个）；
+    publicnode 一个请求只允许 1 个该调用、且「索引类请求」已改为付费（403）；
+    Metaplex / ExtraNode 域名已下线，drpc 免费套餐不含 Solana，OnFinality / Ankr 要 Key。
+    官方节点「单发 + 1.5s 间隔」基本可用（15/20 成功、无 429），但 478 个钱包要十几分钟。
+  - 改用 **ATA 本地推导 + 地址批量查询**：关联代币账户（ATA）地址用纯 sha256 本地算出
+    （`_ata()`，零 RPC），再用 `getMultipleAccounts` 一次查 100 个地址
+    （实测每次约 0.5s、连续多次无 429）—— 478 个钱包 5 次调用、几秒查完。
+  - ATA 不存在 = 当前不持有（抽样 8/8 回查确认 token 账户数为 0），记 0 归小鱼档；
+    批量解析金额与逐钱包单查完全一致（含 22,894 枚的样本、含 0 枚样本）。
+  - `dbg` 增加 `rpc` 字段（chunks/batches/nulls/err/decimals），下一轮构建从快照即可复核；
+    本地端到端复测：300 钱包 4.4s 查完（0 错误、83 个 null-ATA）、`sample()` 管线
+    40 钱包全部分档、覆盖率 100%。
+
+- **2026-10-11 修复（v3.29.4）**：用户反馈从 STONK 深度页点「返回总览」后，左上角小头像 +
+  打赏按钮 + 渐隐顶栏残留悬浮、盖住总览页头（附截图）。根因：深度页里总览内容被
+  `display:none`，名片量位置的函数（`measure()`）此时读到全 0 坐标；深度页停留期间
+  一旦有数据刷新（`renderAll` → `__miniMeasure`）或窗口变化，错误数值就被写进缓存。
+  返回总览时「滚动位置本来就是 0」不产生 scroll 事件去纠正，于是残留。
+  修复三处（只动前端过渡逻辑，数据与版式零改动）：
+  1. `measure()` 加护栏：名片宽高为 0（不可见）时跳过，保留上次有效值；
+  2. `window.__miniMeasure` 由「仅量」改为「量 + 重绘（remeasure）」；
+  3. `stkOpen()` 在 `scrollTo(0,0)` 后 rAF 里强制重绘一次小头像/顶栏状态。
+  回归验证（Node + DOM 仿真，跑模板真实代码）：旧代码可完整复现
+  （返回后 mini.op=1 / bar.on=true / 大头像 opacity 0），修复后全部归位
+  （mini.op=0 / bar off / 大头像 opacity 1），且返回后再次下滑动画一切正常。
+  回退：`cp work/template.html.bak-v3294 work/template.html && python3 work/render_only.py`。
+- **2026-10-11 新增（v3.29.5）**：作者反馈「看板太长，回顶部麻烦」，要求右下角（行情BGM上方）
+  加一个向上箭头按钮，点击立即回顶；总览 + STONK 深度页、PC + 手机同一套。
+  实现：按钮插在 `.bgm` 列最上方（BGM 展开详情时自动上移让位），图标用官方 Phosphor
+  arrow-up（与全站同一套图标）。下滑超过 520px 才浮出（淡入 + 上浮，回顶自动收起）；
+  点击平滑回顶，系统开启「减少动态效果」时瞬间回顶；手机端 38px + 5px 隐形热区。
+  性能：scroll 监听 passive + rAF 节流、状态不变不写 DOM；隐藏时不占键盘 Tab 顺序。
+  测试：DOM 仿真 8/8 通过（显示/隐藏阈值、幂等、平滑/瞬间回顶、双语标签），
+  2000 次滚动事件共 0.35ms、DOM 写 ≤2 次；v3.29.4 小头像回归测试同步复跑全绿。
+  回退：`cp work/template.html.bak-v3295 work/template.html && python3 work/render_only.py`。
+- **2026-10-11 重整（v3.29.6）**：作者反馈 STONK 深度页「抓不到重心、数据层级乱」。做了三层改造：
+  ① 板块顺序按决策路径重排：飞轮 → 谁在买 → 盘面资金 → 供应与安全 → 估值 → 飞轮名单 →
+     评分卡 → 假设推演 → 口径说明（标题带 01~09 序号做骨架）；
+  ② 导航与板块标题改由同一张 SECS 表生成，顺序永久同步（不再手写两遍）；
+  ③ 首屏 KPI 分主次：前 4 格（市值 / 日回购 / 已销毁 / 销毁速度）放大 + 淡底色，
+     后 4 格（成交 / 持币 / 池深 / 流动性）收为次层；回购值改「最近一个完整日」
+     （与结论卡同口径），7 日均挪到小字；英文词典同步（Daily buyback）。
+  测试：渲染产物 JS 语法通过；SECS 顺序断言 9 项全对；标题序号 + 兼容旧调用 2/2；
+  v3.29.4 小头像、v3.29.5 回顶按钮回归测试均全绿。数据管道零改动。
+  回退：`cp work/template.html.bak-v3296 work/template.html && python3 work/render_only.py`。
+- **2026-10-11 修复（v3.29.7）**：作者反馈两个手机端 bug（附截图）：① STONK 深度页左上角
+  打赏浮标（`.tip-mini`）压住吸顶导航条（`.stk-nav`）；② 钱包分层板块的行内文字互相压字。
+  修复（纯 CSS + 一处判定逻辑，数据与结构零改动）：
+  1. 手机/平板（≤1023）深度页把吸顶导航下移到 `top:54px` 让开浮标（浮标底边≈47px），
+     锚点跳转 `scroll-margin-top` 同步 68/64 → 104px；1024+ 桌面端内容整体右移
+     （左导航列），本来就不重叠，维持原样；
+  2. 吸顶判定不再写死 `top<=9`，改为读导航自己的 computed top（吸到 54px 时才知道
+     「已吸顶」），否则手机端补底色 `.stick` 与「停手 1.3s 收起」都会失效；
+  3. 钱包分层行（`.stk-flow .row`）手机端改纵向堆叠：名称一行 / 数值 + 买卖笔数一行
+     （两端对齐、放不下自动换行）/ 占比条一行；名称允许换行，任何宽度都不可能再压字。
+  验证（无头 Chrome 实测 500 / 768 / 1024 三档 + 对照组）：
+    · 修复后 500 / 768：浮标 × 导航重叠面积 = 0；对照组（强注旧规则）分别 1979 / 2212 px²，
+      证明探针能测出旧 bug（灵敏度）；1024 桌面端回归 = 0、锚点留白 68px 未变；
+    · `stkSpyPaint` 阈值逻辑 5/5（含「旧代码在 54px 吸附时失效」的对照）；
+    · 渲染产物 JS `node --check` 通过；mini / totop / secHead 三个历史回归全绿。
+  回退：`cp work/template.html.bak-v3297 work/template.html && python3 work/render_only.py`。
+- **2026-10-11 三项优化（v3.29.8）**：作者一次提了三条：① 深度页顶着 01~09 序号、还挂着一条
+  自己的导航，跟主页侧边栏两套并存，层级乱；② 钱包分层只能看四档总数，想点开看单档明细；
+  ③ 价格走势图粗糙（没有当天价格数字、没有时间刻度、必须悬停才看得到价格）。
+  改动全在前端模板，数据管道零改动：
+  1. **导航合并**：删掉深度页独立的 `.stk-nav` 与标题 01~09 序号，复用主页侧边栏 `#secNav`
+     （桌面左栏 / 手机横滑胶囊同一套）。`NAV_ITEMS` 与 `NAV_STK_ITEMS` 两张清单由
+     `navItems()` 动态取用，进/出深度页调 `navResync()` 重建按钮并重算高亮与监听；
+     吸顶阈值不再写死 6/66，改读导航自身 computed `top`（深度页手机端 54px 让开打赏浮标），
+     否则手机端补底色与「停手收起」会全部失效。
+  2. **钱包分层行可点开**：每行加 `›`（手机端隐藏，不挤文字），点击 / 回车弹数据卡 ——
+     净流入大数字 + 买卖红绿占比条 + 买 / 卖 / 成交额 / 成交笔数 / 占采样成交 / 买卖占比 六格，
+     底部复述口径；全屏遮罩，点遮罩 / × / Esc / 滚动任一方式关闭；弹框定位夹在视口内。
+     上方补一行「点一下任意一档，看这一档的成交明细」提示。
+  3. **价格走势图重做**：头部直接给最新收盘价 + 区间涨跌 pill + 起止日期；Y 轴三档价格刻度
+     （`lo=Math.max(0,…)` 修掉负价刻度）、X 轴 4 个日期刻度、三日横参考线 + 末端脉冲光晕、
+     悬停 / 触摸十字线 + 跟随点 + 日期价格气泡。
+  验证（应用内浏览器实测）：桌面 1280×720 —— 深度页侧边栏 10 项不压内容，
+  价格图 Y 轴 $0.3987 / $0.1994 / $0.0000（无负值）、X 轴 08-12 / 09-12 / 09-25 / 10-08；
+  分层弹框 inView、点遮罩可关。手机 390×844 —— 导航 top 54px 与打赏浮标零重叠、
+  滑动出现 / 停手 1.5s 收起、全页无横向溢出；分层弹框 236px 宽不换行、无溢出。
+  返回总览回归：侧边栏换回总览 10 项、`stk-on` 正常消失、无残留。
+  回退：`cp work/template.html.bak-v3298 work/template.html && python3 work/render_only.py`。
+- **2026-10-12 手机端两处修复（v3.29.9）**：作者发了两张截图：① 手机打开深度页（`?page=stonk`），
+  横滑胶囊导航叠在页头「STONK 深度页」卡片上；② 桌面左侧栏长标题被省略号截断
+  （「飞轮 · 收…」「谁在买 · 2…」「飞轮名单 …」「收入涨了…」）。
+  1. **深度页页头被导航压住（≤1023px）**：导航为让开左上角打赏浮标自 v3.29.7 起吸顶于 54px，
+     而它文档流里的位置更靠上（≈18px）——页面一打开就被「吸」着下移约 36px，
+     压住紧跟其后的 `#stkView` 页头 24px（实测 390 宽：导航底 95 vs 页头顶 71）。
+     改：媒体查询内加 `body.stk-on #stkView{margin-top:46px}`（注意外边距折叠：与导航
+     `margin-bottom:12px` 取大者；46px 落位后页头从导航底边下方 10px 开始）；
+     桌面端（≥1024）导航在左侧留白列、不重叠，不受影响。
+  2. **侧边栏文字截断（桌面）**：导航列 `--nav-w` 122→134px；深度页四个长标题改用侧边栏短标签
+     （`NAV_STK_ITEMS` 新增 `nk` 键，`navBuild()` 有 nk 且词典里有就用；`STK_I18N` 增补
+     `navFly:'回购飞轮'` / `navFlow:'谁在买'` / `navRank:'飞轮名单'` / `navModel:'收入推演'`，
+     英文 Flywheel / Who buys / Roster / What-if）——板块大标题仍用长文案，不受影响；
+     `.nav-t` 去掉省略号截断，改允许折行兜底（宁愿两行、不截断）。
+  验证（应用内浏览器实测）：390 / 375 / 768 手机+平板深度页：导航底边与页头间距 10–14px、
+  零重叠、无横向溢出，点导航锚点落位正常（114px 留白）；1280 桌面：深度页与总览页侧边栏
+  全部 10 项无截断（scrollWidth=clientWidth、单行），导航列右缘 143 < 内容左缘 176；
+  中文 / English 双语标签全部完整；375 总览页回归正常、深度页 ⇄ 总览切换无残留。
+  回退：`cp work/template.html.bak-v3299 work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 两处优化（v3.29.10）**：作者提了两条：① 手机端「72 小时数据柱」太挤，几乎看不清；
+  ② 深度页「谁在买」要鼠标点击才出数据框，要求改成**鼠标划过即出、移开即消失**。
+
+  1. **手机端小时图改「横向滑动长图」**（桌面不变）：原先把 1200 单位宽的图硬压进 ~350px 视口，
+     每根柱子只剩约 2px。改法：
+     - HTML：`svg#hourlyChart` + `.hourly-marks` 外包一层 `.hourly-chartwrap > .hourly-scroll`（`overflow-x:auto`），
+       新增两个小签 `#hourlyPeak`（峰值）/`#hourlySwipe`（滑动提示，仅 ≤680px 显示）。
+     - 渲染（`renderHourly`）：手机端 `svg.style.width = 72×16px`（每格 16px，柱宽约 6.7px），
+       默认把 `scrollLeft` 停在最右（最新）；`window.__hourScroll` 跨标签页保留滑动位置；
+       纵轴刻度 `i.y` 在手机端隐藏（改由「峰值」小签承担）；用户滑离右端后滑动提示淡出。
+     - 手势：`touchstart/move/end` 区分「拖动＝滑动」与「轻点＝选中」——
+       位移 >8px 或按住 >700ms 不触发选中；轻点才把那一小时数据写进图下读数卡。
+       提示框定位改 `svg.closest('.hourly-box')`（svg 外层多了一层滚动容器）。
+  2. **「谁在买」悬停出框（桌面）**：每行加 `onmouseenter/onmouseleave`；
+     进出统一走一次「对账」`stkFlowHoverSync(ms)`——延时 70/110ms 后重新查
+     `.stk-flow .row.fclick:hover`：悬停谁就显示谁，没有任何一行被悬停就收起。
+     hover 模式弹框不铺遮罩、不显示 ×、`pointer-events:none`；触屏仍走点击模式
+     （遮罩 + ×，点空白/滑动关闭）。这样快速划过一排、或从这行直接滑到那行，
+     都不会残留上一个数据框（初版按「离开的那一行」判断，快速划过多行时会残留，已修）。
+
+  实测（应用内浏览器）：390 宽 → `scrollWidth 1152 / clientWidth 325`、初始 `scrollLeft=827`（最右）、
+  柱宽 6.72px、`docWidth 379 < 390` 无横向溢出、峰值/滑动小签正常、纵轴刻度隐藏；
+  1280 桌面 → `svg.style.width` 复位、容器零溢出、纵轴刻度恢复、整屏总览不变。
+  悬停五组场景（进入 / 移开 / 跨行 / 快速划过 / 行内移动）全部符合预期；
+  点击模式、Esc、点空白关闭回归正常；切「收入/销毁」标签滑动位置保留。
+  已知限制：沙箱无法注入原生触摸事件，手机端「轻点选时 / 拖动不滑走」的触屏路径
+  未在自动化里真机复测（逻辑简单，请以手机实测为准）。
+  回退：`cp work/template.html.bak-v32910-before work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 深度子页布局收尾 + 隐藏打赏（v3.29.11）**：作者发手机截图（STONK 深度页顶部）提了三条：
+  ① 顶部那块布局要优化；② 深度子页不需要「打赏」，把左上角浮标隐藏掉；③ 子页整体布局都收拾一遍。
+
+  1. **根因**：v3.29.7/9 为「让开左上角打赏浮标（.tip-mini，底边≈47px）」在 ≤1023px 给导航加了
+     `top:54px` 吸顶 + 给 `#stkView` 加了 `margin-top:46px` —— 导航与页头之间因此常驻一条空档，
+     滚动时上方还留一条 54px 的空带。打赏既然要隐藏，这两处就让位退役了。
+  2. **改法**（只动 `work/template.html`）：
+     - `body.stk-on` 的隐藏名单里去掉 `:not(.tip-mini)` → 深度页浮标整体 `display:none`
+       （`.tip-modal` 弹窗保留，总览页脚「Buy me a coffee」入口不受影响）。
+     - ≤1023px 的深度页规则改为 `body.stk-on #secNav{top:6px}`（普通页同款）；
+       删掉 `#stkView{margin-top:46px}` 与 114px 锚点补偿，回到默认 80px（手机 64px）。
+       深度页不出现顶部固定栏（.topbar 在 stk-on 下隐藏），tb-on 的 66px 档位也不需要。
+     - 手机端（≤680）页头收紧：`.stk-bar{gap:10px;margin-bottom:14px}`、`.stk-bar-r{gap:6px}`、
+       按钮 padding 7/11（保留 38px 命中区）。
+  3. **实测（应用内浏览器）**：390 宽 → 浮标 `display:none`、`#stkView margin-top 0`、
+     导航吸顶 6px（高 40.9px）、导航底到页头 12px、无横向溢出；滚动后吸顶 top=6、
+     顶部固定栏 display:none 不打架；主页面 390/1280 浮标照常（滚后 opacity 1 落位于左上，
+     与导航无重叠）；1280 深度页侧边栏导航/单行页头/零溢出均回归通过。
+  4. 回退：`cp work/template.html.bak-v32911-before work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 「收入推演」模块重做（v3.29.12）**：作者发深度页截图说“这个监控的看板不知道是什么意思”，
+  指的是「收入涨了会怎样」模块：6 个数字平铺（收入/回购/烧毁/流通量/保守价/乐观价），过程量与结论量同权重并列，
+  乐观档的 +565% 很容易被读成“预测要涨 565%”。
+
+  1. **根因**：模块缺“读法”——没告诉用户哪一步是输入、哪一步是过程、哪一步是结论；两个价格估计
+     （一个“下限参照”、一个“理论天花板”）和中间账目混在一排，语义差最远的两类数字被拉平了。
+  2. **改法**（只动 `work/template.html`）：拆成三步叙事——
+     - ①「你的假设」：两个档位选择器（增速/天数）归到步骤 1，附提示“改一改，下面两段马上重算”；
+     - ②「这段时间平台的账」：收入/回购/烧毁/流通量 4 格（原 6 格去掉两个价格格；`stk-mo` 由 `m3` 改默认，
+       桌面 4 列、≤980 自动 2×2）；
+     - ③「价格的两个边界」：保守/乐观拆成两张主卡（左侧色条 + 角标「下限参考」「理论上限」），乐观卡涨幅用
+       琥珀色、卡底注明“现实几乎到不了”；下方加「现价 ●——— 理论上限」示意横条 + “不是预测区间”的说明；
+       步骤标题右侧挂「算术结果 · 不是价格预测」铭牌。
+     - 底部长注释拆成三行短句（怎么算的 / 保守估算 / 乐观估算），`b` 前缀高亮。
+     - 新增 i18n 键 zh/en 各 15 个（`mStep1/2/3`、`mStep1Sub/2Sub`、`mNotForecast`、`mFloorTag/Sub`、
+       `mCeilTag/Sub`、`mNow`、`mRangeCap`、`mNoteHow/1`、`mNoteLo/2`、`mNoteHi/3`），`secModelSub` 同步改口径。
+     - 计算逻辑一行没动（revSum/buy/burnTok/cut/floor/ceil 原式保留），只换呈现。
+  3. **实测（应用内浏览器，localhost:8777）**：
+     - 联动：点 0%+30 天 → 账目/边界全部重算；点 35% → 极端档降级正确（流通量减少 7325% 时保守价显示“—”，
+       不崩）；还原 10%+7 天与初始读数完全一致。
+     - 文案：中英切换两次往返，三步标题/铭牌/卡角标全部跟随，切回中文无残留。
+     - 布局：1280 宽两卡并排（508px×2、同顶等高 119px）、圆点钉在横条两端、步骤分隔线 1px、零横向溢出；
+       390 宽单列堆叠（313px）、横条标签转竖排、账目 2 列、零横向溢出。
+  4. 回退：`cp work/template.html.bak-v32912-before work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 价格走势图「丝滑化 + 正圆终点」（v3.29.13）**：作者发深度页截图（红框圈出右端终点），
+  说“这个点都不是圆的，而且 K 线也不太丝滑”。
+
+  1. **根因**：SVG 用 `viewBox="0 0 1200 300" preserveAspectRatio="none"` 被横向拉伸 —— SVG `<circle>`
+     会随拉伸变成椭圆；折线也全是 `L` 直线段，40 个点看着有棱角。
+  2. **改法**（只动 `work/template.html`）：
+     - 曲线：新增 `smoothD()`（单调三次样条 Fritsch–Carlson），折线输出 `C` 贝塞尔段 —— 顺滑且不过冲、不越过真实数据点；
+       `stroke-width="2.5"` + `vector-effect="non-scaling-stroke"`。
+     - 终点：删掉 SVG 里的 halo+dot 两个圆，改为 HTML 层 `#stkPEnd`（`position:absolute;left:100%`，百分比坐标跟随
+       任何宽高比）；11px 正圆 + 与全站一致的 `dotPing` 呼吸环；`prefers-reduced-motion` 降级为静态。
+     - 悬停十字线/跟点/气泡逻辑一行没动（它们本来就定位 HTML 元素，取原始数据点，不受平滑影响）。
+  3. **实测（应用内浏览器，localhost:8777）**：
+     - 几何：1280 与 390 宽下终点圆点 11×11、`border-radius:50%`；圆点中心 vs 曲线真实末点 dx=0、dy=-0.03px；
+       路径 `C` 段 39 段（40 点全平滑）；零横向溢出。
+     - 动画：`dotPing 2.8s` 与全站呼吸点同款；减弱动效媒体查询降级为静态。
+  4. 回退：`cp work/template.html.bak-v32913-before work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 首屏价格不再「闪一下」（v3.29.14）**：作者反馈打开 `stonk1000x.top` 首页时，
+  「价格都要闪一下，然后再刷新到真实的价格」，体验很差。
+  1. **根因**：页面先用内嵌快照价渲染卡片，实时价（coins.llama.fi）回来后再 `renderAll()` 重画，
+     并调用 `flashPrices()` 给价格放一个「放大 + 变绿」1.4s 动画 → 用户看到的就是「旧价 → 闪一下 → 新价」。
+  2. **改法**（只动 `work/template.html`，撤掉 pxflash）：
+     - 首屏价格改「骨架 → 一次成型」：`<head>` 里给 `<html>` 打 `px-boot`（含 2.8s 自带兜底），
+       CSS 把价格数字（`.pxv`，深度页连 `$` 符号一起）隐去、原位放一根微光条（`pxskel`）——
+       第一帧起就不显示旧价；
+     - 实时价落地后 `pxReveal()`（幂等）摘掉 `px-boot`，数字 0.28s 淡入 —— 全程只出现一次真实价格；
+     - 价格源没数据 / 超时 2.8s → 直接揭开快照值，不给用户看无限骨架；`prefers-reduced-motion` 下降级为静态条。
+  3. **实测（应用内浏览器，localhost:8777）**：
+     - 时序采样：第 1 帧 `boot=true · pxv 透明度 0 · 微光条 pxskel 在跑`（此时数字已是实时价 $0.3238，只是被骨架挡着）；
+       ~0.3s 后 `boot 摘除 · 数字 1 → 0.28s 淡入 · 微光条消失`；`.flash` 元素 0 个（闪烁动画已彻底移除）。
+     - 深度页 `?page=stonk`：hero 价格（`.stk-px`）同规则，落地后正常显示实时价。
+  4. 回退：`cp work/template.html.bak-v32914-before work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 「PONS 小时收入」换算修正（v3.29.15）**：作者发现「72 小时监控里的 PONS 收入」与
+  「每日明细里的 PONS 日收入」对不上、且差距很大。
+
+  1. **排查结论（哪个数对、哪个数错）**：
+     - 每日明细的「日收入」（DefiLlama dailyRevenue）**是对的**：累计 ≈ 官方 analytics 的协议收入口径；
+       「回购」列（dailyHoldersRevenue）同样对得上官方回购资金口径。
+     - 错的是小时监控的收入换算：旧口径「收入 = 链上回购支出 ÷ 80%」建立在「80% 收入用于回购」的
+       历史假设上；链上核对发现 **2026-10-09 起回购量跳升 3 倍**（单日约 22 万枚 → 59.8 万 → 69.8 万枚
+       PONS），DefiLlama holdersRevenue 同步跳升（10-08 $73.7K → 10-10 $258K），而同期收入只有
+       $47K~60K/天 —— 回购在动用金库/累积费用，已不是「当日收入的 80%」。÷0.8 会把小时收入
+       **高估约 5 倍**（修复前 24h $310.8K vs 真实约 $47K）。
+  2. **改法（数据管道 + 前端呈现）**：
+     - `work/hourly.py`：新增 `pons_rev_ratio()` —— 每次构建抓 DefiLlama 最近 3 个**完整日**
+       （ts < 今日 00:00 UTC）的 `ΣdailyRevenue ÷ ΣdailyHoldersRevenue` 作为校准比率（健康带
+       0.05~1.5，实测 0.2514；取不到按 旧 hourly.json 值 → 常量 0.25 回退）；PONS 小时收入
+       ＝ 回购支出 × 校准比率；`dailySupp` 的「回购」列同步按 收入÷比率 还原；hourly.json
+       新增 `ponsRevRatio / ponsRevRatioSrc` 字段（旧顶层 `buybackShare` 键删除）。
+     - `work/template.html`：页面打开时的实时重算（GeckoTerminal 刷新最近 26 小时 + 链上补最近
+       3 小时）三处 JS 改乘 `h.ponsRevRatio||0.25`；收入图注 / 口径说明 / 来源说明（中英）写明
+       「回购数 ≠ 收入、旧 80% 口径已失效、比率按最近 3 个完整日自动校准」。
+     - 回购/销毁卡、每日明细、估值卡不动 —— 它们本来就用 DefiLlama 日线 / 官方账本，是对的数。
+  3. **实测（本地跑通管道 + 数值对账）**：
+     - 校准比率 0.2514（10-09/10/11 三日 Σrev $179,264 ÷ Σhold $713,042）；
+     - 修正后小时收入 24h 合计 **$61.2K**（修复前约 $310K），与 DL 日线（$47K~65K）同量级；
+       dailySupp：10-10 rev $63.1K、10-11 rev $63.7K（对应 DL $59.9K / $47.1K）；
+     - 渲染产物全部内联脚本 `node --check` 语法通过；线上以 CI 快照为准。
+  4. 备份：`work/hourly.py.bak-v32915`、`work/template.html.bak-v32915`。
+  5. 回退：`cp work/hourly.py.bak-v32915 work/hourly.py && cp work/template.html.bak-v32915 work/template.html && python3 work/render_only.py`。
+
+- **2026-10-12 PONS 收入「逐日校准」（v3.29.16）**：v3.29.15 修掉 ÷0.8 的 5 倍高估后继续优化 ——
+  小时柱与每日明细「按天求和」仍有 ±30% 偏差。
+
+  1. **问题**：单一「最近 3 日平均比率」跟不上逐日变化的回购/收入比 —— 官方日线逐日比率为
+     10-09 0.344 / 10-10 0.232 / 10-11 0.192；而 10-12 因成交翻倍（0-12 点 PONS 成交
+     $29.0万 → $61.2万，2.1×）当天比率又回到 ~0.50。任何单一数字都必然和一部分天对不上。
+  2. **改法**（`work/hourly.py` + `work/template.html`，含当日成交翻倍的事实核对）：
+     - 历史各天：各用当天官方日线「收入÷回购」校准（官方回购滞后约 1 天时用链上回购兜底）
+       —— 小时柱按天求和 ≈ 每日明细表；
+     - 当天：取「当天官方部分值 ÷ 当天链上回购」实时折算，并用最近 3 日加权比率 R3 的
+       [0.5×, 2.5×] 夹住（防上游部分日数据异常）；拿不到退回 R3 → 旧 hourly.json 值 → 常量 0.25；
+     - hourly.json 新增 `ponsRevRatioByDay`（前端实时重算按「小时所属日期」取比率）；
+     - 中英文图注/来源说明同步改写为「逐日校准」。
+  3. **实测（本地跑通 + 对账）**：
+     - 10-10：$58,223（DL $59,880，−2.8%）；10-11：$48,685（DL $47,064，+3.4%）；
+     - 10-12 当天 13h：$65,819（DL 当天部分值 $64,699，+1.7%）—— 当天与明细表基本重合；
+     - 当天实时比率 `today-live` 0.4998；渲染产物内联脚本 `node --check` 语法通过。
+  4. 备份：`work/hourly.py.bak-v32916`、`work/template.html.bak-v32916`。
+  5. 回退：`cp work/hourly.py.bak-v32916 work/hourly.py && cp work/template.html.bak-v32916 work/template.html && python3 work/render_only.py`。
+
+- **2026-10-13 ICP 备案号上页脚（v3.29.17）**：`ponsfi.xyz` 的首次备案当天审核通过
+  （**皖ICP备2026035096号-1**，备案类型「个人」，备案时间 2026-10-13；
+  备案号经第三方备案查询站核验，查询站数据用 bilibili.com 做过交叉校验）。
+
+  1. **为什么要做**：工信部《互联网信息服务管理办法》——备案通过的网站须在**页脚悬挂备案号**，
+     并**链接到备案系统首页**（`https://beian.miit.gov.cn/`），否则责令限期改正。
+     腾讯云备案后台「备案成功」页也把「悬挂备案号」列为必须项。
+  2. **改法**（`work/template.html`，数据管道零改动）：
+     - 页脚 `#foot` 拆成两块：`#footMain`（原来的 JS 渲染区：来源说明 + 作者名片 + 版本/浏览量）
+       \+ 静态 `.foot-beian`（备案行）；
+     - 备案号**写死在 HTML 里**，不经 JS 渲染 —— 这样任何抓取方式（含不执行 JS 的核查脚本）
+       都能直接看到；链接指向 `https://beian.miit.gov.cn/`，`target="_blank"` + `rel="noopener"`；
+     - 样式：小盾牌图标 + 弱化字色（`--mut2`）+ 上方一条细分割线，`flex-wrap` 手机端自动换行，
+       不抢主视觉；JS 那行改渲染到 `#footMain`。
+  3. **实测**：渲染产物含 `皖ICP备2026035096号-1`、`dashboard-version` = `v3.29.17-2026-10-13`；
+     内联脚本 `node --check` 通过。两个域名共用同一份 HTML（同服务器/同隧道）→ 一处改动两站同步。
+  4. 备份：`work/template.html.bak-v32917`、`work/render_only.py.bak-v32917`、
+     `work/看板维护说明.md.bak-v32917`。
+  5. 回退：`cp work/template.html.bak-v32917 work/template.html && cp work/render_only.py.bak-v32917 work/render_only.py && python3 work/render_only.py`。
+  6. **遗留（下一步）**：**公安联网备案**——须本人办理（刷脸 + 证件核验，Agent 不能代办）：
+     打开 <https://beian.mps.gov.cn/> → 注册登录 → 「联网备案」→ 填入备案后台给出的
+     「公安联网备案数据码」（腾讯云备案成功页 / 备案控制台里可见，此处不落库）发起 →
+     通过后拿到「皖公网安备XXXXXXXX号」，
+     把它发我，我按同样方式在 `.foot-beian` 里加一行并链接 `https://beian.mps.gov.cn`。
+     时间要求：网站开通后 **30 日内**。
+  7. **风险提示**：备案要求「域名解析至腾讯云服务器」，而 ponsfi.xyz 现在 DNS 在 Cloudflare
+     （CNAME 到隧道 `1b33f509-392d-4737-ae3a-16ae6b3eddab`）。若腾讯云/管局复核较真，
+     可能需要补一条指向腾讯云服务器的解析 —— **先等整改通知，别主动动 DNS**。
+
+- **2026-10-14 收入排行「0 值自愈」（v3.29.18）**：StonkFun 在「收入排行」里显示
+  「24 小时 #2388 $0、比一个月前下滑 2381 位」。
+
+  1. **排查**：看板自己没错 —— 是 DefiLlama 总榜接口当时把 `stonkfun.total24h` 记成 **0**
+     （同一时刻它自己的单协议接口 `summary/fees/stonkfun` 是 $219,831）。上游按
+     「领取时点」记账，当日行没落库时 24h 就是 0，而 7/30 日不受影响，于是名次被排到 2388。
+     证据：CI 01:45Z 的快照 `leaderboard.board.total24h.near.stonkfun = {v: 0}`；
+     当天 06:43Z 复测总榜已恢复 219,831（单协议接口一直是对的）。
+  2. **改法**（`work/leaderboard.py` + `work/template.html`，其它模块零改动）：
+     - 服务端新增 `patch_zero_targets()`：总榜里目标协议某口径为 0 → 读单协议接口补；
+       仍是 0 → 退到该协议日线里**最后一个非零值**；补完再排序（名次跟着修正），
+       结果记进 `board.fixed` 并在 CI 日志里打印「[兜底] …」；
+     - 前端刷新路径加同规则的 `patchZeroTargets()`（浏览器直连 DefiLlama 时同样生效）；
+     - 本地缓存加 `rankCacheBroken()` 自检：旧缓存里出现「24h=0 但 7 日有值」直接作废重拉
+       —— 已经缓存了坏数据的浏览器，打开页面就会自己修好，不用手动点「更新排行」。
+  3. **实测**：Node 上跑前端片段（真实接口）：坏缓存识别 = true / 好数据 = false；
+     StonkFun 24h → #20（$219,831），PONS 24h → #38（$84,902）；
+     服务端 `fetch_board()` 实跑：StonkFun 24h #20 / 7日 #23 / 30日 #7，体积 6,976 字节；
+     渲染产物内联脚本 `node --check` 通过。
+  4. 备份：`work/leaderboard.py.bak-v32918`、`work/template.html.bak-v32918`、
+     `work/render_only.py.bak-v32918`、`work/看板维护说明.md.bak-v32918`。
+  5. 回退：`cp work/leaderboard.py.bak-v32918 work/leaderboard.py && cp work/template.html.bak-v32918 work/template.html && python3 work/render_only.py`。
+
+## GitHub 同步（2026-10-04 起）
+
+- 仓库：`https://github.com/aryehToDog/ponsfi-dashboard`（私有）
+- 认证：本机 `~/.ssh/ponsfi_github` 部署密钥（只对这一个仓库有写权限；
+  想撤销就去仓库 Settings → Deploy keys 删掉，随时可换）。
+- 分支分工：
+  - `main` = 代码 / 模板 / 脚本 + 版本 tag（发版时提交，带说明）。
+  - `snapshots` = 每次上线的「整站最新快照」（孤儿提交 + 强推，远端只保留最新一份，
+    防止 400KB 的 HTML 和 JSON 按小时堆进历史把仓库撑爆）。
+- 自动同步：`work/hourly_check.py` 每次上线成功后调用 `work/git_sync.py`；
+  运行日志见 `work/git-sync.log`。同步失败只记日志，不影响上线。
+- 防泄露：`.githooks/pre-commit`、`.githooks/pre-push` 会拦下含
+  「服务器密码 / 证件 / .exp 登录脚本」的提交与推送。换电脑克隆后跑一次
+  `git config core.hooksPath .githooks` 即可生效。
+- 历史清理（2026-10-04）：用 `filter-branch` 从全部历史里删除了服务器登录脚本与证件照片，
+  并把备份 README 里的服务器密码替换成 `REDACTED`；原仓库在本机 `.git`，改动不可逆，
+  如需回滚用 `/tmp/ponsfi-git-backup`（本机临时备份）。
+
+### 版本发布（2026-10-04 起）：每次上线自动打标签
+
+- 每次「源文件上线」（模板 / 脚本有改动）后，`work/git_sync.py` 会自动：
+  1. 提交并推送 main；
+  2. 打一个**带更新说明的版本标签**并推送 —— 去 GitHub 仓库的 Tags 页就能逐版回看。
+- 标签名怎么定：
+  - 这一版改了页脚版本号（`work/render_only.py` 里的 `VER`，如 `v3.5`）→ 标签就叫 `v3.5`；
+  - 否则在最近版本标签的补丁位 +1（`v3.5.1`、`v3.5.2` …）。
+- 标签说明 = 自上个版本以来的提交清单 + 改动文件统计（脚本自动生成）。
+- 只是「数据刷新、源文件没动」的那一小时不会打标签（避免一天 24 个版本）；
+  整站快照照旧每小时进 `snapshots` 分支。
+- 手动发一版：把 `render_only.py` 的 `VER` 改成新版本号 → 正常上线一次即可。
+
+### 申诉复查：MetaMask 与 GoPlus 双双清除 · 2026-10-12（✅ 全部完成）
+
+**结论：两处黑名单都已清零 —— MetaMask 名单只剩仿冒站 `ponsfi.top`，GoPlus 误报也已恢复。**
+
+- 2026-10-12 19:16 复查（`work/appeal_check.py`，GitHub API 直读）：
+  - MetaMask 官方名单 `metamask_entries = ["ponsfi.top"]` → `ponsfi.xyz` **已彻底移除**；
+  - GoPlus `phishing_site` 标记 **已清除**（`goplus_flag = false`）→ 币安/OKX 系钱包拦截预计 1~3 天内陆续解除；
+  - ScamSniffer issue #827：仍 open、0 回复（不影响钱包拦截，无需再追）。
+- 说明：本机 launchd 每日 09:55 的复查任务近期未按时触发（日志停在 10-06），本次为手动执行；
+  需要时随手 `python3 work/appeal_check.py` 复查即可。
+- 提醒：`ponsfi.xyz` 的 ICP 备案仍在管局审核中，审核期间不要大改网站内容/域名信息。
+
+### 申诉复查：黑名单已实际移除 ponsfi.xyz · 2026-10-11（✅ 成功）
+
+**结论：官方 `src/config.json` 里 `ponsfi.xyz` 已消失，只剩仿冒站 `ponsfi.top`。**
+
+- 2026-10-11 10:0x UTC 复查（GitHub API 直读，绕过 raw 的 CDN 缓存）：
+  黑名单里 ponsfi 相关条目只剩 `ponsfi.top`（他人仿冒站，与本项目无关）。
+- PR #299334：closed（未合并 —— 维护者按惯例后台直接删，与 10-06 的
+  「this has been removed, thanks!」留言一致）；issue #299330：closed。
+- ScamSniffer issue #827：仍 open、0 回复；GoPlus 独立判定是否有变化以
+  `work/appeal_check.py` 的日志为准（两者都不影响 MetaMask 系钱包的拦截）。
+- **影响**：各钱包客户端按自己的节奏拉取名单更新，界面警告预计 1~3 天内消失。
+  可以开始放心对外分享，只认 `https://stonk1000x.top` 与 `https://ponsfi.xyz`；
+  `ponsfi.top` 是仿冒站，勿混淆、勿打开。
+- 提醒：`ponsfi.xyz` 的 ICP 备案仍在管局审核中，审核期间不要大改网站内容/域名信息。
+
+### 申诉复查：MetaMask 维护者确认移除 · 2026-10-06
+
+**结论：官方已口头确认删除，但名单文件还没落地（截至当晚复查）。**
+
+- 2026-10-06 13:23 UTC，MetaMask 协作者 **AlexHerman1** 在 PR #299334 留言
+  「this has been removed, thanks!」并关闭 PR（走的是「关 PR、后台直接删」的常规流程，不是合并）。
+- 同晚 21:41 复查：`src/config.json` 的 blacklist 里**仍有 `ponsfi.xyz`**
+  （该文件最后一次改动 12:15 UTC，早于关闭时间）→ 属于「已批、未发布」。
+- GoPlus 仍是 `phishing_site=1`；ScamSniffer issue #827 仍 0 回复。
+- 另一个入口 issue #299330（blocklist removal request，10-03 提交）仍 open、无评论。
+
+**脚本已升级（`work/appeal_check.py`，旧版备份 `appeal_check.py.bak-v1`）**
+
+1. 名单改走 GitHub API 直读（raw 有 CDN 缓存，会滞后几分钟）；
+2. 识别维护者「removed」留言 → 不再误报「PR 被关闭需要处理」；
+3. 维护者确认后 **48 小时**名单仍未更新 → 提醒一次去 PR 追问；
+4. 名单里 `ponsfi.xyz` 真正消失 → 报成功（钱包警告预计 1~3 天内消失）。
+
+**接下来**
+- 等名单删除；钱包端警告消失后再对外公开分享 `ponsfi.xyz`。
+- 分享默认用主域名 `https://stonk1000x.top`；只认这两个域名，`ponsfi.top` 是仿冒站。

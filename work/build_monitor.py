@@ -41,6 +41,69 @@ def get(url):
     raise last_error
 
 
+# ---- 上游「当天还没结算完」体检（v3.29.21） -----------------------------------
+# 背景：2026-10-15 作者发现「每日明细」里 PONS 10-14 只有 $3.9K（-96%），怀疑坏了。
+# 排查：DefiLlama 的 Pons 是父协议，下面是 Pons V1 / Pons V2 两个子模块；10-14 当天
+#       V2 还没入库，totalDataChart 只有 V1 的零头（24K 费 / 3.9K 收入），父协议看着
+#       就像「暴跌 96%」。半截数不能当整日数用，否则表格、均值、结论全被带歪。
+# 做法：用 totalDataChartBreakdown（每天各子模块出了多少）做体检 ——
+#       最近 2 天里，若某天缺了前 7 天中贡献 ≥20% 的子模块，就把这天标成「未结算完」
+#       （seriesPending）。前端拿到这些日期后宁可写「待更新」，也不用半截数；
+#       小时模式（ci_build.py）发现标记就地重取，上游补全后自动恢复。
+def day_of(ts):
+    return datetime.datetime.utcfromtimestamp(int(ts)).strftime("%Y-%m-%d")
+
+
+def breakdown_by_day(j):
+    """totalDataChartBreakdown → {YYYY-MM-DD: {child: value}}（多链时合并子模块口径）。"""
+    out = {}
+    for row in (j.get("totalDataChartBreakdown") or []):
+        try:
+            ts, mp = int(row[0]), (row[1] or {})
+        except Exception:
+            continue
+        bag = out.setdefault(day_of(ts), {})
+        for kids in mp.values():
+            if not isinstance(kids, dict):
+                continue
+            for k, v in kids.items():
+                try:
+                    v = float(v)
+                except Exception:
+                    continue
+                bag[k] = bag.get(k, 0.0) + v
+    return out
+
+
+def pending_days(j, recent=2, lookback=7, min_share=0.2):
+    """还没结算完的天（见上）。返回 ['YYYY-MM-DD', ...]，正常情况是空列表。"""
+    bd = breakdown_by_day(j)
+    if len(bd) < 3:
+        return []
+    days = sorted(bd)
+    out = []
+    for d in days[-recent:]:
+        kids = {k for k, v in bd[d].items() if v}
+        if not kids:
+            continue
+        prev = [x for x in days if x < d][-lookback:]
+        if not prev:
+            continue
+        total = {}
+        for x in prev:
+            for k, v in bd[x].items():
+                total[k] = total.get(k, 0.0) + v
+        allv = sum(total.values())
+        missv = sum(v for k, v in total.items() if k not in kids)
+        if allv > 0 and missv / allv >= min_share:
+            out.append(d)
+    return out
+
+
+def series_of(j):
+    return [[int(ts), round(float(v), 2)] for ts, v in (j.get("totalDataChart") or [])]
+
+
 def fetch_bundle():
     bundle = {
         "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
@@ -51,13 +114,18 @@ def fetch_bundle():
         "market": {},
     }
     errors = []
+    pending = {}
     for slug in PAGES:
         for dt in DATATYPES:
             try:
                 j = get(f"https://api.llama.fi/summary/fees/{slug}?dataType={dt}")
-                bundle["series"][f"{slug}.{dt}"] = [
-                    [int(ts), round(float(v), 2)] for ts, v in (j.get("totalDataChart") or [])
-                ]
+                key = f"{slug}.{dt}"
+                bundle["series"][key] = series_of(j)
+                pd = pending_days(j)
+                if pd:
+                    pending[key] = pd
+                    print("warn: %s 最近 %s 还没结算完（缺子模块）→ 前端先不给半截数" %
+                          (key, ",".join(pd)), file=sys.stderr)
             except Exception as exc:
                 errors.append(f"{slug}.{dt}: {exc}")
         try:
@@ -65,6 +133,7 @@ def fetch_bundle():
             bundle["meta"][slug] = {"name": m.get("name"), "mcap": m.get("mcap"), "symbol": m.get("symbol")}
         except Exception as exc:
             errors.append(f"meta.{slug}: {exc}")
+    bundle["seriesPending"] = pending
     try:
         j = get("https://coins.llama.fi/chart/" + ",".join(PRICE_KEYS.values()) + "?span=90&period=1d")
         coins = j.get("coins", {})

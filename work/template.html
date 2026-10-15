@@ -1852,6 +1852,9 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-pax span{flex:1 1 0;min-width:0;text-align:center;font-variant-numeric:tabular-nums}
 .stk-pax span:first-child{text-align:left}
 .stk-pax span:last-child{text-align:right}
+/* v3.29.21：价格/FDV 卡 —— 图加高一点、纵向留白合理；跨度大时自动切对数刻度（画在 JS 里） */
+#stkPBox{height:235px}
+@media (max-width:560px){#stkPBox{height:200px}}
 /* v3.29.20：官方日收入 90 天柱状图 —— 绿色渐变柱 + 顶部三格数据签；
    手机端（≤680px）改为横向滑动长图（每根柱 ~14px、默认停最新），滑动提示首次滚动后淡出。 */
 .stk-r90box{position:relative}
@@ -1861,11 +1864,12 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   border:1px solid var(--line);box-shadow:var(--card-shadow);font-size:var(--fs-10);color:var(--mut);
   white-space:nowrap;transition:opacity .3s ease}
 .stk-r90swipe.off{opacity:0}
-.sk-r90{opacity:.92;transition:opacity .12s ease,filter .12s ease}
-.sk-r90.bad{opacity:.16}
-.stk-r90svg.hot .sk-r90{opacity:.34}
-.stk-r90svg.hot .sk-r90.on{opacity:1;filter:brightness(1.18)}
-.stk-r90svg.hot .sk-r90.bad{opacity:.16}
+.sk-r90{opacity:1;transition:filter .1s ease}
+.sk-r90.bad{opacity:.14}
+.sk-r90.on{filter:brightness(1.32) saturate(1.08)}
+.stk-r90cross{position:absolute;top:0;bottom:0;width:1px;z-index:2;pointer-events:none;opacity:0;
+  background:color-mix(in srgb,var(--hb-stonk) 60%,transparent);transition:opacity .1s ease}
+.stk-r90cross.on{opacity:1}
 .stk-grid.g3r90{grid-template-columns:repeat(3,1fr)}
 @media (max-width:680px){
   .stk-r90scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
@@ -2996,7 +3000,41 @@ const fmtN = (v,d=2) => (v===null||isNaN(v))?'—':v.toLocaleString('en-US',{min
 /* 榜单名字来自外部 API，插进 innerHTML 前先转义，避免把页面结构顶坏 */
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dayKey = ts => new Date(ts*1000).toISOString().slice(0,10);
-const toMap = arr => { const m={}; (arr||[]).forEach(([ts,v])=>{ const k=dayKey(ts); m[k]=(m[k]||0)+v; }); return m; };
+const toMap = (arr,skip) => { const m={}; (arr||[]).forEach(([ts,v])=>{ const k=dayKey(ts); if(skip&&skip.has(k)) return; m[k]=(m[k]||0)+v; }); return m; };
+/* v3.29.21：上游「当天还没结算完」体检 —— 与 work/build_monitor.py 的 pending_days 同一套规则。
+   DefiLlama 父协议下挂了子模块（Pons V1 / Pons V2）；子模块还没入库的那天，日线上只剩先结算
+   那部分的零头（2026-10-14 的 PONS 收入就因此看着像暴跌 96%）。这些日期宁可标「待更新」
+   （或让位给链上补充值），也不把半截数当整日数用。上游补全后标记自动消失。 */
+const pendingOf = key => {
+  const p = DATA.seriesPending && DATA.seriesPending[key];
+  return (p && p.length) ? new Set(p) : null;
+};
+function pendingDaysOf(j){
+  try{
+    const bd={};
+    (j.totalDataChartBreakdown||[]).forEach(function(row){
+      const day=dayKey(row[0]), mp=row[1]||{}, bag=bd[day]=bd[day]||{};
+      Object.keys(mp).forEach(function(chain){
+        const kids=mp[chain]||{};
+        Object.keys(kids).forEach(function(k){ const v=+kids[k]; if(isFinite(v)) bag[k]=(bag[k]||0)+v; });
+      });
+    });
+    const days=Object.keys(bd).sort();
+    if(days.length<3) return [];
+    const out=[];
+    days.slice(-2).forEach(function(d){
+      const kids=Object.keys(bd[d]).filter(function(k){ return bd[d][k]>0; });
+      if(!kids.length) return;
+      const prev=days.filter(function(x){ return x<d; }).slice(-7);
+      const total={};
+      prev.forEach(function(x){ Object.keys(bd[x]).forEach(function(k){ total[k]=(total[k]||0)+bd[x][k]; }); });
+      let allv=0, missv=0;
+      Object.keys(total).forEach(function(k){ allv+=total[k]; if(kids.indexOf(k)<0) missv+=total[k]; });
+      if(allv>0 && missv/allv>=0.2) out.push(d);
+    });
+    return out;
+  }catch(e){ return []; }
+}
 const sortedKeys = m => Object.keys(m).sort();
 const smaAt = (vals,i,n) => { if (i<n-1) return null; let s=0; for(let j=i-n+1;j<=i;j++) s+=vals[j]; return s/n; };
 
@@ -3004,9 +3042,9 @@ const smaAt = (vals,i,n) => { if (i<n-1) return null; let s=0; for(let j=i-n+1;j
 function build(){
   const rev = {}, hold = {}, fee = {}, price = {};
   PROJECTS.forEach(p=>{
-    rev[p.id]  = toMap(DATA.series[p.seriesKey+'.dailyRevenue']);
-    hold[p.id] = toMap(DATA.series[p.seriesKey+'.dailyHoldersRevenue']);
-    fee[p.id]  = toMap(DATA.series[p.seriesKey+'.dailyFees']);
+    rev[p.id]  = toMap(DATA.series[p.seriesKey+'.dailyRevenue'], pendingOf(p.seriesKey+'.dailyRevenue'));
+    hold[p.id] = toMap(DATA.series[p.seriesKey+'.dailyHoldersRevenue'], pendingOf(p.seriesKey+'.dailyHoldersRevenue'));
+    fee[p.id]  = toMap(DATA.series[p.seriesKey+'.dailyFees'], pendingOf(p.seriesKey+'.dailyFees'));
     price[p.id]= toMap(DATA.priceSeries[p.id]);
   });
   /* v3.18：STONK 日度换成官方口径（与 stonkfun.xyz 一致）——官方有数的日子直接覆盖，
@@ -4595,7 +4633,8 @@ window.addEventListener('resize',function(){
    原则：只陈述事实，不美化；拿不到就说拿不到（v3.2 定下的口径，继续守）。 */
 function lastDayOf(key){
   const arr = (DATA.series && DATA.series[key]) || [];
-  for(let i=arr.length-1;i>=0;i--){ if(arr[i] && arr[i][1]!=null && isFinite(arr[i][0])) return dayKey(arr[i][0]); }
+  const skip = pendingOf(key);
+  for(let i=arr.length-1;i>=0;i--){ if(arr[i] && arr[i][1]!=null && isFinite(arr[i][0]) && !(skip&&skip.has(dayKey(arr[i][0])))) return dayKey(arr[i][0]); }
   return null;
 }
 function renderSrc(){
@@ -5123,7 +5162,13 @@ async function loadFees(){
     else {
       const arr = (j.totalDataChart||[]).map(([ts,v])=>[ts, v]);
       /* 接口偶尔返回空数组：不要用它覆盖内嵌快照，否则图表会整段空掉 */
-      if(arr.length) DATA.series[k] = arr;
+      if(arr.length){
+        DATA.series[k] = arr;
+        /* 半截天实时体检：内嵌快照的标记可能过时，这里跟着上游结果重算一遍（补全后自动清空） */
+        DATA.seriesPending = DATA.seriesPending || {};
+        const pd = pendingDaysOf(j);
+        if(pd.length) DATA.seriesPending[k] = pd; else delete DATA.seriesPending[k];
+      }
     }
   });
 }
@@ -5360,6 +5405,8 @@ zh:{
   r90Vs:'较前日', r90NoData:'官方当天无数据（不估算）', r90Swipe:'← 左右滑动看更早',
   r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天数值。',
   pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
+  pxTabPx:'价格', pxTabFdv:'FDV',
+  pxFdvNote:function(x){ return '口径：日线收盘价 × 总供应 '+x+' 枚'; },
   dBuy:'买', dSell:'卖', dBuyShare:'买盘笔数占比', dTraders:'买/卖家数', dNetflow:'主池净流入（24h）',
   dRecording:'记录中', dSnap:'已记录 {h} 小时，满 24 小时开始显示',
   pools:'资金池分布（按储备排序）', pool:'池子', liqT:'储备', volT:'24h 成交', dexT:'平台',
@@ -5441,6 +5488,8 @@ en:{
   r90Vs:'vs prev', r90NoData:'no official value that day (never estimated)', r90Swipe:'← swipe for earlier',
   r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day.',
   pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
+  pxTabPx:'Price', pxTabFdv:'FDV',
+  pxFdvNote:function(x){ return 'basis: daily close × total supply '+x+' tokens'; },
   dBuy:'buys', dSell:'sells', dBuyShare:'Buy share', dTraders:'traders (buy/sell)', dNetflow:'Main pool net flow (24h)',
   dRecording:'recording', dSnap:'{h}h recorded — shows once 24h is covered',
   pools:'Pool distribution (by reserves)', pool:'Pool', liqT:'Liquidity', volT:'24h vol', dexT:'DEX',
@@ -5829,6 +5878,12 @@ function stkFlyHTML(fw, h){
     + '</div>'
     + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartPrice').replace('{n}', ((stkBundle()||{}).priceHist||[]).length || 0))+'</span></div>'
+    +   '<div class="tabs" id="stkPTabs" style="margin-bottom:10px">'
+    +     ['px','fdv'].map(function(k){
+            var on=(STK_PTAB===k);
+            return '<button class="tab'+(on?' on':'')+'" type="button" onclick="stkPriceTab(\''+k+'\')">'+esc(st(k==='px'?'pxTabPx':'pxTabFdv'))+'</button>';
+          }).join('')
+    +   '</div>'
     +   '<div class="stk-phead" id="stkPHead"></div>'
     +   '<div class="stk-chart" id="stkPBox">'
     +     '<svg id="stkPChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg>'
@@ -5845,6 +5900,7 @@ function stkFlyHTML(fw, h){
     +   '<div class="stk-grid g3r90" id="stkR90Stat"></div>'
     +   '<div class="stk-chart stk-r90box" style="margin-top:10px">'
     +     '<div class="stk-r90scroll" id="stkR90Scroll"><svg class="stk-r90svg" id="stkR90Chart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg></div>'
+    +     '<div class="stk-r90cross" id="stkR90Cross"></div>'
     +     '<div class="stk-r90swipe off" id="stkR90Swipe">'+esc(st('r90Swipe'))+'</div>'
     +     '<div class="stk-tip" id="stkR90Tip"></div>'
     +   '</div>'
@@ -6242,6 +6298,14 @@ function stkNoteHTML(d){
 
 /* ---------- 图表（纯 SVG，零依赖；鼠标/手指滑过可看具体数值） ---------- */
 var STK_HTAB='rev';
+/* v3.29.21：价格走势卡的两档视图 —— 价格 / FDV（FDV = 当日收盘价 × 总供应，同形切换） */
+var STK_PTAB='px';
+function stkPriceTab(k){
+  STK_PTAB=(k==='fdv')? 'fdv':'px';
+  var box=document.getElementById('stkPTabs');
+  if(box){ Array.prototype.forEach.call(box.children, function(b,i){ b.classList.toggle('on', ['px','fdv'][i]===STK_PTAB); }); }
+  stkDrawPrice();
+}
 function stkHover(svg, tip, n, cb){
   if(!svg||!tip||!n) return;
   function at(ev){
@@ -6368,15 +6432,29 @@ function stkDrawPrice(){
   }
   function d2(ts){ var dt=new Date(ts*1000); return String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
   function d4(ts){ var dt=new Date(ts*1000); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+  /* v3.29.21：价格 / FDV 两档切换（FDV = 当日收盘价 × 总供应，供应量几乎不随销毁变，两条线同形）。
+     头部大数字、纵轴、气泡全跟着切换，口径写在下方小字里。 */
+  var isFdv=(STK_PTAB==='fdv');
+  var supply=(d.model&&d.model.supply)||0;
+  if(isFdv && !(supply>0)) isFdv=false;
+  var sv=ph.map(function(r){ return [r[0], isFdv? r[1]*supply : r[1]]; });
+  var vTxt=function(v){ return isFdv? fmtU(v) : pxS(v); };
   var H=300, padT=20, padB=16, innerH=H-padT-padB;
   var lo=Infinity, hi=-Infinity;
-  ph.forEach(function(r){ lo=Math.min(lo,r[1]); hi=Math.max(hi,r[1]); });
-  if(!(hi>lo)){ hi=lo+0.0001; }
-  var pad=(hi-lo)*0.10; lo=Math.max(0, lo-pad); hi+=pad;   /* 价格不可能为负：下限贴住 0，别让刻度出现负价 */
-  var n=ph.length;
+  sv.forEach(function(r){ lo=Math.min(lo,r[1]); hi=Math.max(hi,r[1]); });
+  if(!(hi>lo)){ hi=lo+Math.max(1e-9, lo*0.001); }
+  /* v3.29.21：47 天里价格从 0.010 到 0.36（35 倍）——线性刻度会把最近一个月压成贴底一条线，
+     跨度 ≥3 倍时自动切对数刻度，早期涨幅与近期走势同时看得清 */
+  var useLog=(lo>0 && hi/lo>=3);
+  if(useLog){ lo=lo/1.16; hi=hi*1.16; }
+  else { var pad=(hi-lo)*0.12; lo=Math.max(0, lo-pad); hi+=pad; }
+  var n=sv.length;
   function X(i){ return i/(n-1)*1200; }
-  function Y(v){ return padT+innerH*(1-(v-lo)/(hi-lo)); }
-  var pts=ph.map(function(r,i){ return [X(i),Y(r[1])]; });
+  function Y(v){
+    var t=useLog? (Math.log(v)-Math.log(lo))/(Math.log(hi)-Math.log(lo)) : (v-lo)/(hi-lo);
+    return padT+innerH*(1-t);
+  }
+  var pts=sv.map(function(r,i){ return [X(i),Y(r[1])]; });
   /* v3.29.13：单调三次样条（Fritsch–Carlson）—— 折线拉成顺滑曲线，且不过冲、不越过真实点 */
   function smoothD(p){
     var m=p.length, i;
@@ -6402,11 +6480,11 @@ function stkDrawPrice(){
   }
   var line=smoothD(pts);
   var area=line+' L1200 '+(padT+innerH)+' L0 '+(padT+innerH)+' Z';
-  var ly=Y(ph[n-1][1]);
-  var lastPx=ph[n-1][1], firstPx=ph[0][1];
-  var chg=(firstPx>0)? (lastPx/firstPx-1) : null;
-  /* v3.29.8：三档价格参考线（比原来的纯折线更容易读数） */
-  var gridVals=[hi,(hi+lo)/2,lo];
+  var ly=Y(sv[n-1][1]);
+  var lastV=sv[n-1][1], firstV=sv[0][1];
+  var chg=(firstV>0)? (lastV/firstV-1) : null;
+  /* v3.29.8：三档价格参考线（比原来的纯折线更容易读数）；对数刻度时取几何中点 */
+  var gridVals= useLog? [hi, Math.sqrt(hi*lo), lo] : [hi,(hi+lo)/2,lo];
   var grid=gridVals.map(function(v){
     var gy=Y(v).toFixed(1);
     return '<line class="sk-grid" x1="0" x2="1200" y1="'+gy+'" y2="'+gy+'"></line>';
@@ -6420,13 +6498,15 @@ function stkDrawPrice(){
   if(end){ end.style.left='100%'; end.style.top=(ly/300*100).toFixed(2)+'%'; end.classList.add('on'); }
   /* 头部：最新收盘价直接摆出来（不用 hover），旁边挂区间涨跌 */
   if(head){
-    head.innerHTML='<div class="pxl"><span class="pxn">'+pxS(lastPx)+'</span>'
+    head.innerHTML='<div class="pxl"><span class="pxn">'+vTxt(lastV)+'</span>'
       + (chg!=null? '<span class="pxc '+stkPctCls(chg)+'" title="'+esc(st('pxPill'))+'">'+pctS(chg)+'</span>' : '')
       + '</div>'
-      + '<div class="pxs">'+d4(ph[0][0])+' → '+d4(ph[n-1][0])+' · '+esc(st('pxRange').replace('{n}', String(n)))+'</div>';
+      + '<div class="pxs">'+d4(ph[0][0])+' → '+d4(ph[n-1][0])+' · '+esc(st('pxRange').replace('{n}', String(n)))
+      + (isFdv? ' · '+esc(st('pxFdvNote')(LANG==='zh'? (supply/1e8).toFixed(2)+' 亿' : (supply/1e6).toFixed(1)+'M')) : '')
+      + '</div>';
   }
   if(yax) yax.innerHTML=gridVals.map(function(v){
-    return '<span style="top:'+(Y(v)/300*100).toFixed(2)+'%">'+pxS(v)+'</span>';
+    return '<span style="top:'+(Y(v)/300*100).toFixed(2)+'%">'+vTxt(v)+'</span>';
   }).join('');
   /* X 轴：四档日期刻度（首 / 两个中间点 / 末） */
   if(ax){
@@ -6443,8 +6523,8 @@ function stkDrawPrice(){
       return Math.max(0, Math.min(n-1, Math.round(cx/Math.max(1,r.width)*(n-1))));
     }
     function show(ev){
-      var i=at(ev), row=ph[i];
-      tip.innerHTML='<b>'+d4(row[0])+'</b> · '+pxS(row[1]);
+      var i=at(ev), row=sv[i];
+      tip.innerHTML='<b>'+d4(row[0])+'</b> · '+(isFdv?'FDV ':'')+vTxt(row[1]);
       tip.classList.add('on');
       var rr=svg.getBoundingClientRect(), rw=Math.max(1,rr.width);
       var tw=Math.min(tip.offsetWidth||92, Math.max(70, rw-10));
@@ -6469,6 +6549,7 @@ function stkDrawPrice(){
 /* v3.29.20：官方日收入 90 天 —— 绿色渐变柱状图；桌面悬停 / 手机轻点看当天数值。
    手机端是横向滑动长图（默认停最新），所以气泡按「相对卡片」定位，滚动后也不会飘。 */
 function stkR90Hover(svg, box, tip, n, cb){
+  var prev=-1;
   function at(ev){
     var r=svg.getBoundingClientRect();
     var cx=(ev.touches&&ev.touches[0]? ev.touches[0].clientX : ev.clientX)-r.left;
@@ -6476,21 +6557,27 @@ function stkR90Hover(svg, box, tip, n, cb){
   }
   function show(ev){
     var i=at(ev);
+    if(i===prev) return;               /* v3.29.21：同一根柱子内不重画 —— 气泡不再跟鼠标抖 */
+    prev=i;
     tip.innerHTML=cb(i);
     tip.classList.add('on');
     var br=box.getBoundingClientRect();
+    var sr=svg.getBoundingClientRect();
+    var cx=sr.left-br.left+((i+0.5)/Math.max(1,n))*sr.width;   /* 气泡钉在柱子正上方（不是鼠标处） */
     var tw=Math.min(tip.offsetWidth||96, Math.max(70, br.width-10));
-    var mx=(ev.touches&&ev.touches[0]? ev.touches[0].clientX : ev.clientX)-br.left;
-    tip.style.left=Math.max(tw/2+2, Math.min(br.width-tw/2-2, mx)).toFixed(1)+'px';
+    tip.style.left=Math.max(tw/2+2, Math.min(br.width-tw/2-2, cx)).toFixed(1)+'px';
     var rs=svg.querySelectorAll('.sk-r90');
     for(var k=0;k<rs.length;k++) rs[k].classList.toggle('on', +rs[k].getAttribute('data-i')===i);
-    svg.classList.add('hot');
+    var cr=document.getElementById('stkR90Cross');
+    if(cr){ cr.style.left=Math.max(0, Math.min(br.width, cx)).toFixed(1)+'px'; cr.classList.add('on'); }
   }
   function hide(){
+    prev=-1;
     tip.classList.remove('on');
-    svg.classList.remove('hot');
     var rs=svg.querySelectorAll('.sk-r90');
     for(var k=0;k<rs.length;k++) rs[k].classList.remove('on');
+    var cr=document.getElementById('stkR90Cross');
+    if(cr) cr.classList.remove('on');
   }
   svg.addEventListener('mousemove', show);
   svg.addEventListener('mouseleave', hide);
@@ -6524,10 +6611,10 @@ function stkDrawRev90(){
   var mx=0;
   for(var i=0;i<n;i++){ var v=rev[i]; if(v!=null&&isFinite(v)) mx=Math.max(mx,v); }
   mx=mx||1;
-  var step=1200/n, bw=Math.min(18, Math.max(2.4, step*0.66));
+  var step=1200/n, bw=Math.min(20, Math.max(2.6, step*0.68));
   var parts=['<defs><linearGradient id="stkR90G" x1="0" y1="0" x2="0" y2="1">'
-    +'<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".98"></stop>'
-    +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".42"></stop></linearGradient></defs>'];
+    +'<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity="1"></stop>'
+    +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".58"></stop></linearGradient></defs>'];
   for(var j=0;j<n;j++){
     var vv=rev[j], bad=(vv==null||!isFinite(vv));
     var hh=bad? 0.9 : Math.max(1.2, innerH*vv/mx);

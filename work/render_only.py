@@ -9,6 +9,29 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.21「价格/FDV 切换 + 90 天柱配色 + 半截日体检」 · 2026-10-15
+     【为什么做这一版】作者三条反馈：
+       ① 90 天收入柱状图「看得不是很清楚、划上去有点难受」；
+       ② 价格走势「图看的太难受」，要求加 FDV 切换；
+       ③ 每日明细里 PONS 10-14 收入只有 $3.9K（-96%）—— 一查是上游没结算完的假暴跌。
+     【这一版改了什么】
+       ① 90 天收入图配色（work/template.html，只动呈现）：柱身透明度 1、渐变收敛成 1→0.58、
+          略加宽（0.66→0.68、上限 18→20）；悬停不再压暗其他 83 根柱子，改目标柱
+          brightness(1.32) + 竖向定位线；气泡钉在柱顶不再跟鼠标抖；缺失柱保持 14% 淡条。
+       ② 价格走势卡新增「价格 / FDV」两档切换：FDV = 当日收盘价 × 总供应（999,969,797.91 枚，
+          口径写在卡片小字里）；47 天跨度 35 倍（0.010→0.36），跨度 ≥3 倍自动切对数刻度
+          （线性刻度会把最近一个月压成贴底一条线）；卡片加高（桌面 235px / 手机 200px）；
+          头部大数字、纵轴、气泡、参考线全部跟随切换。中英文案同步。
+       ③ PONS 半截日体检（「假暴跌」根因修复）：DefiLlama 的 Pons 是父协议（Pons V1 + V2 两个
+          子模块），10-14 当天 V2 还没入库，日线上只剩 V1 的零头 → 页面显示 -96%。现在
+          build_monitor.py 用 totalDataChartBreakdown 做体检：最近 2 天里缺了前 7 天贡献 ≥20%
+          的子模块 → 写入 seriesPending；前端 build() / 数据源体检跳过这些日期（宁可标「待更新」
+          或让位给链上补充值，绝不用半截数）；浏览器实时刷新用同一套规则重算（上游补全即自动
+          恢复）；ci_build.py 小时模式发现 pending 非空就地重抓（与坏榜自愈同一模式）。
+     实测（Node 桩环境）：90 天图 84 根柱、渐变 1/.58、同柱不重画；FDV 切换头部/纵轴/气泡
+       同步、对数刻度生效；pending 日期在明细表里落「待更新」/链上补值；渲染产物 node --check 通过。
+     回退：cp work/template.html.bak-v32921 work/template.html && cp work/render_only.py.bak-v32921 work/render_only.py && cp work/build_monitor.py.bak-v32921 work/build_monitor.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.20「90 天官方日收入图」 · 2026-10-15
      【为什么做这一版】作者要求在 STONK 深度页补一张「90 天 Revenue」柱状图（数据源
        stonkfun.xyz/revenue），位置放在「价格走势」卡片正下方，并要求数值一眼可见。
@@ -897,10 +920,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.20-2026-10-15">
+<meta name="dashboard-version" content="v3.29.21-2026-10-15">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.20 · 2026-10-15"
+VER = "v3.29.21 · 2026-10-15"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

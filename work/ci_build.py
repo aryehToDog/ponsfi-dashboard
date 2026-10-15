@@ -136,6 +136,56 @@ def refresh_broken_board():
         return False
 
 
+def series_pending(path=None):
+    """快照里有没有「上游当天还没结算完」的序列（见 build_monitor.py 的 pending_days）。
+
+    返回 {seriesKey: [日期, ...]}；正常情况下是空 dict。"""
+    try:
+        d = json.load(open(path or os.path.join(HERE, "dashboard-data.json"), encoding="utf-8"))
+        p = d.get("seriesPending") or {}
+        return {k: v for k, v in p.items() if v}
+    except Exception:
+        return {}
+
+
+def refresh_pending_series():
+    """小时模式：快照里有「半截天」就就地重抓这些序列，上游补全后自动恢复。
+
+    背景（2026-10-15）：DefiLlama 的父协议下挂子模块（Pons V1 / Pons V2），子模块当天
+    还没入库时父协议只剩零头，页面会把 10-14 的 PONS 收入显示成 -96% 的假暴跌。
+    日线全量一天才跑一次，但「补全」通常几小时内就发生 —— 每小时顺手重抓这几个小接口，
+    体检通过（pending 空）就清理标记，前端随即恢复显示。
+    """
+    pend = series_pending()
+    if not pend:
+        return False
+    try:
+        sys.path.insert(0, HERE)
+        import build_monitor as bm
+        dp = os.path.join(HERE, "dashboard-data.json")
+        d = json.load(open(dp, encoding="utf-8"))
+        left = {}
+        for key in list(pend):
+            try:
+                slug, dt = key.split(".", 1)
+                j = bm.get(f"https://api.llama.fi/summary/fees/{slug}?dataType={dt}")
+                d.setdefault("series", {})[key] = bm.series_of(j)
+                pd = bm.pending_days(j)
+                if pd:
+                    left[key] = pd
+            except Exception as exc:
+                left[key] = pend[key]
+                log("  序列 %s 重抓失败（沿用旧数据）：%s" % (key, exc))
+        d["seriesPending"] = left
+        atomic_json(d, dp)
+        log("检测到 %d 条序列含未结算天（%s）→ 已就地重抓（仍未结算 %d 条）"
+            % (len(pend), ",".join(sorted(pend)), len(left)))
+        return True
+    except Exception as exc:
+        log("未结算序列重抓失败（沿用旧快照）：%s" % exc)
+        return False
+
+
 def daily_age_hours(path=None):
     """最近一次全量（daily）构建距今多少小时。
 
@@ -231,6 +281,7 @@ def main():
         run([sys.executable, os.path.join(HERE, "hourly.py")])
         merge_hourly()
         refresh_broken_board()
+        refresh_pending_series()
     # v3.27 STONK 深度页数据（两种模式都跑；渲染统一放最后，保证 stonkPage 进 HTML）
     run([sys.executable, os.path.join(HERE, "stonk_page.py")])
     run([sys.executable, os.path.join(HERE, "render_only.py")])

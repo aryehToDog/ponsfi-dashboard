@@ -9,6 +9,25 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.23「FDV 供应量口径修正」 · 2026-10-15
+     【为什么做这一版】作者截图反馈 STONK 深度页「价格走势」卡的 FDV 不对：显示 $107.10M。
+       排查结论：FDV 档拿 d.model.supply（= 初始供应 999,969,797.91 枚）当乘数，
+       但 STONK 已经烧掉 207,240,044 枚 —— 用「烧之前」的供应量算 FDV，等于把已经销毁的
+       2.07 亿枚也算进了市值，比全站口径高出 26%（$111.8M vs $88.6M）。
+     【这一版改了什么】只改这一个乘数与口径小字（work/template.html）：
+       ① FDV = 当日收盘价 × **当前总供应**（= 初始 − 已销毁 = 792,729,753 枚），
+          取数顺序 model.circ → supply.circ → 兜底 model.supply；
+          与本页 hero 的 FDV（GeckoTerminal 收盘价 × 当前供应）和全站市值（实时价 × 同一供应）
+          从此同一口径。
+       ② 口径小字写明为什么是这个数：「口径：日线收盘价 × 当前总供应 7.93 亿枚
+          （已扣 2.07 亿枚销毁）」，中英各一份 —— 数字变了也能自己看懂。
+       ③ 价格档、90 天收入柱、明细表、其余板块零改动。
+     实测（headless Chrome 跑真实页面）：FDV 档头部 $107.10M → $88.61M（47 天最长点
+       $334.20M / 最短 $7.07M 同步收窄），口径小字按新文案渲染；
+       Node 桩新增三条回归：FDV ≠ 初始供应档、两档相差 >15%、与全站 mcap 差异 <12%；
+       三套桩（图表 / 表格 / 入口）全过、渲染产物 node --check 通过。
+     回退：cp work/template.html.bak-v32923 work/template.html && cp work/render_only.py.bak-v32923 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.22「STONK 深度页入口：独立页启动卡」 · 2026-10-15
      【为什么做这一版】作者截图反馈：页头那枚「STONK 深度页」按钮和「系统 / EN」长得一样，
        太不起眼，用户根本不知道它指向一个独立的深度页（要求「一眼就知道这个页面的含义」）。
@@ -942,10 +961,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.22-2026-10-15">
+<meta name="dashboard-version" content="v3.29.23-2026-10-15">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.22 · 2026-10-15"
+VER = "v3.29.23 · 2026-10-15"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

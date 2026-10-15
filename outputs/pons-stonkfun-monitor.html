@@ -1,5 +1,24 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.23「FDV 供应量口径修正」 · 2026-10-15
+     【为什么做这一版】作者截图反馈 STONK 深度页「价格走势」卡的 FDV 不对：显示 $107.10M。
+       排查结论：FDV 档拿 d.model.supply（= 初始供应 999,969,797.91 枚）当乘数，
+       但 STONK 已经烧掉 207,240,044 枚 —— 用「烧之前」的供应量算 FDV，等于把已经销毁的
+       2.07 亿枚也算进了市值，比全站口径高出 26%（$111.8M vs $88.6M）。
+     【这一版改了什么】只改这一个乘数与口径小字（work/template.html）：
+       ① FDV = 当日收盘价 × **当前总供应**（= 初始 − 已销毁 = 792,729,753 枚），
+          取数顺序 model.circ → supply.circ → 兜底 model.supply；
+          与本页 hero 的 FDV（GeckoTerminal 收盘价 × 当前供应）和全站市值（实时价 × 同一供应）
+          从此同一口径。
+       ② 口径小字写明为什么是这个数：「口径：日线收盘价 × 当前总供应 7.93 亿枚
+          （已扣 2.07 亿枚销毁）」，中英各一份 —— 数字变了也能自己看懂。
+       ③ 价格档、90 天收入柱、明细表、其余板块零改动。
+     实测（headless Chrome 跑真实页面）：FDV 档头部 $107.10M → $88.61M（47 天最长点
+       $334.20M / 最短 $7.07M 同步收窄），口径小字按新文案渲染；
+       Node 桩新增三条回归：FDV ≠ 初始供应档、两档相差 >15%、与全站 mcap 差异 <12%；
+       三套桩（图表 / 表格 / 入口）全过、渲染产物 node --check 通过。
+     回退：cp work/template.html.bak-v32923 work/template.html && cp work/render_only.py.bak-v32923 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.22「STONK 深度页入口：独立页启动卡」 · 2026-10-15
      【为什么做这一版】作者截图反馈：页头那枚「STONK 深度页」按钮和「系统 / EN」长得一样，
        太不起眼，用户根本不知道它指向一个独立的深度页（要求「一眼就知道这个页面的含义」）。
@@ -933,7 +952,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.22-2026-10-15">
+<meta name="dashboard-version" content="v3.29.23-2026-10-15">
 
 <html lang="zh-CN">
 <head>
@@ -3299,7 +3318,7 @@ const BUNDLE = {"generated": "2026-10-15T03:01:55.239870Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.22 · 2026-10-15';
+const DASH_VER = 'v3.29.23 · 2026-10-15';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -6411,7 +6430,7 @@ zh:{
   r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天数值。',
   pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
   pxTabPx:'价格', pxTabFdv:'FDV',
-  pxFdvNote:function(x){ return '口径：日线收盘价 × 总供应 '+x+' 枚'; },
+  pxFdvNote:function(s,b){ return '口径：日线收盘价 × 当前总供应 '+s+'（已扣 '+b+'销毁）'; },
   dBuy:'买', dSell:'卖', dBuyShare:'买盘笔数占比', dTraders:'买/卖家数', dNetflow:'主池净流入（24h）',
   dRecording:'记录中', dSnap:'已记录 {h} 小时，满 24 小时开始显示',
   pools:'资金池分布（按储备排序）', pool:'池子', liqT:'储备', volT:'24h 成交', dexT:'平台',
@@ -6495,7 +6514,7 @@ en:{
   r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day.',
   pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
   pxTabPx:'Price', pxTabFdv:'FDV',
-  pxFdvNote:function(x){ return 'basis: daily close × total supply '+x+' tokens'; },
+  pxFdvNote:function(s,b){ return 'basis: daily close × current supply '+s+' (net of '+b+' burned)'; },
   dBuy:'buys', dSell:'sells', dBuyShare:'Buy share', dTraders:'traders (buy/sell)', dNetflow:'Main pool net flow (24h)',
   dRecording:'recording', dSnap:'{h}h recorded — shows once 24h is covered',
   pools:'Pool distribution (by reserves)', pool:'Pool', liqT:'Liquidity', volT:'24h vol', dexT:'DEX',
@@ -7307,7 +7326,8 @@ function stkNoteHTML(d){
 
 /* ---------- 图表（纯 SVG，零依赖；鼠标/手指滑过可看具体数值） ---------- */
 var STK_HTAB='rev';
-/* v3.29.21：价格走势卡的两档视图 —— 价格 / FDV（FDV = 当日收盘价 × 总供应，同形切换） */
+/* v3.29.21：价格走势卡的两档视图 —— 价格 / FDV（FDV = 当日收盘价 × 当前总供应，同形切换）
+   v3.29.23：供应量口径修正 —— 用「当前总供应」（初始 − 已销毁），不是初始供应 */
 var STK_PTAB='px';
 function stkPriceTab(k){
   STK_PTAB=(k==='fdv')? 'fdv':'px';
@@ -7441,10 +7461,16 @@ function stkDrawPrice(){
   }
   function d2(ts){ var dt=new Date(ts*1000); return String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
   function d4(ts){ var dt=new Date(ts*1000); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
-  /* v3.29.21：价格 / FDV 两档切换（FDV = 当日收盘价 × 总供应，供应量几乎不随销毁变，两条线同形）。
-     头部大数字、纵轴、气泡全跟着切换，口径写在下方小字里。 */
+  /* v3.29.21：价格 / FDV 两档切换（FDV = 当日收盘价 × 当前总供应，两条线同形）。
+     头部大数字、纵轴、气泡全跟着切换，口径写在下方小字里。
+     v3.29.23：这里以前拿 d.model.supply（= 初始供应 10.00 亿）当乘数 —— STONK 已经烧掉
+     2.07 亿枚，于是 FDV 被算成 $111M，比全站市值（同一个流水、按当前供应算）高出 25%
+     以上，也和本页 hero 里的 FDV（GeckoTerminal 收盘价 × 当前供应）对不上。
+     现在统一成「当前总供应 = 初始 − 已销毁」。 */
   var isFdv=(STK_PTAB==='fdv');
-  var supply=(d.model&&d.model.supply)||0;
+  var supInit=(d.model&&d.model.supply)||0;
+  var supply=(d.model&&d.model.circ)||(d.supply&&d.supply.circ)||supInit;
+  var burned=(d.supply&&d.supply.burned)||Math.max(0, supInit-supply)||0;
   if(isFdv && !(supply>0)) isFdv=false;
   var sv=ph.map(function(r){ return [r[0], isFdv? r[1]*supply : r[1]]; });
   var vTxt=function(v){ return isFdv? fmtU(v) : pxS(v); };
@@ -7511,7 +7537,9 @@ function stkDrawPrice(){
       + (chg!=null? '<span class="pxc '+stkPctCls(chg)+'" title="'+esc(st('pxPill'))+'">'+pctS(chg)+'</span>' : '')
       + '</div>'
       + '<div class="pxs">'+d4(ph[0][0])+' → '+d4(ph[n-1][0])+' · '+esc(st('pxRange').replace('{n}', String(n)))
-      + (isFdv? ' · '+esc(st('pxFdvNote')(LANG==='zh'? (supply/1e8).toFixed(2)+' 亿' : (supply/1e6).toFixed(1)+'M')) : '')
+      + (isFdv? ' · '+esc(st('pxFdvNote')(
+            LANG==='zh'? (supply/1e8).toFixed(2)+' 亿枚' : (supply/1e6).toFixed(1)+'M',
+            LANG==='zh'? (burned/1e8).toFixed(2)+' 亿枚' : (burned/1e6).toFixed(1)+'M')) : '')
       + '</div>';
   }
   if(yax) yax.innerHTML=gridVals.map(function(v){

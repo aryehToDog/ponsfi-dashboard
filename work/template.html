@@ -5500,7 +5500,8 @@ zh:{
   chartRev90:'官方日收入（最近 {n} 天，StonkFun Revenue）',
   r90Latest:'最新一天', r90Avg:'日均收入', r90Peak:'单日峰值', r90Days:'天',
   r90Vs:'较前日', r90NoData:'官方当天无数据（不估算）', r90Swipe:'← 左右滑动看更早',
-  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天数值。',
+  r90Fdv:'市值 FDV',
+  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天收入与市值 FDV（= 当天价格 × 当前总供应，代币发行前没价格的天显示 —）。',
   pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
   pxTabPx:'价格', pxTabFdv:'FDV',
   pxFdvNote:function(s,b){ return '口径：日线收盘价 × 当前总供应 '+s+'（已扣 '+b+'销毁）'; },
@@ -5584,7 +5585,8 @@ en:{
   chartRev90:'Official daily revenue (last {n} days, StonkFun)',
   r90Latest:'Latest day', r90Avg:'Daily average', r90Peak:'Best day', r90Days:'days',
   r90Vs:'vs prev', r90NoData:'no official value that day (never estimated)', r90Swipe:'← swipe for earlier',
-  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day.',
+  r90Fdv:'Mkt cap (FDV)',
+  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day\u2019s revenue and market-cap FDV (= that day\u2019s price \u00d7 current supply; \u2014 before the token existed).',
   pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
   pxTabPx:'Price', pxTabFdv:'FDV',
   pxFdvNote:function(s,b){ return 'basis: daily close × current supply '+s+' (net of '+b+' burned)'; },
@@ -6810,14 +6812,31 @@ function stkDrawRev90(){
     ids.forEach(function(k){ if(uniq.indexOf(k)<0) uniq.push(k); });
     ax.innerHTML=uniq.map(function(k){ return '<span>'+esc(md(dates[k]))+'</span>'; }).join('');
   }
+  /* v3.29.25：气泡第二行补「当天市值 FDV」——收入要跟当期估值一起看才有意义。
+     取价优先级：GeckoTerminal 日线收盘（priceHist，和「价格走势」卡的 FDV 档同一个数）
+     → DefiLlama 日频价（priceSeries，把 GeckoTerminal 没成交、没出 K 线的日子补上）
+     → 两个都没有（代币发行前）显示 —，不估算。FDV = 当天价格 × 当前总供应（v3.29.23 口径）。 */
+  var pxDay={}, isoDay=function(ts){ return new Date(ts*1000).toISOString().slice(0,10); };
+  var dseries=(typeof DATA!=='undefined' && DATA.priceSeries && DATA.priceSeries.stonkfun) || [];
+  for(var q1=0;q1<dseries.length;q1++) pxDay[isoDay(dseries[q1][0])]=dseries[q1][1];
+  var phist=(d.priceHist||[]);
+  for(var q2=0;q2<phist.length;q2++) pxDay[isoDay(phist[q2][0])]=phist[q2][1];   /* 同源优先，后铺覆盖 */
+  var supCirc=(d.model&&d.model.circ)||0;
+  function fdvOf(day){ var p=pxDay[day]; return (p>0&&supCirc>0)? p*supCirc : null; }
   if(tip){
     stkR90Hover(svg, svg.closest('.stk-r90box')||svg.parentNode||svg, tip, n, function(k){
-      var v2=rev[k];
-      if(v2==null||!isFinite(v2)) return '<b>'+esc(dates[k]||'')+'</b> · '+esc(st('r90NoData'));
-      var t2='<b>'+esc(dates[k]||'')+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
-      var pv=(k>0? rev[k-1] : null);
-      if(pv!=null&&isFinite(pv)&&pv>0){ var pc=v2/pv-1; t2+=' · '+esc(st('r90Vs'))+' '+(pc>=0?'+':'')+(pc*100).toFixed(1)+'%'; }
-      return t2;
+      var v2=rev[k], day=dates[k]||'', line2='';
+      var t2;
+      if(v2==null||!isFinite(v2)) t2='<b>'+esc(day)+'</b> · '+esc(st('r90NoData'));
+      else{
+        t2='<b>'+esc(day)+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
+        var pv=(k>0? rev[k-1] : null);
+        if(pv!=null&&isFinite(pv)&&pv>0){ var pc=v2/pv-1; line2=esc(st('r90Vs'))+' '+(pc>=0?'+':'')+(pc*100).toFixed(1)+'%'; }
+      }
+      var f2=fdvOf(day);
+      line2=(line2? line2+' · ' : '')+esc(st('r90Fdv'))+' '+(f2!=null? fmtU(f2) : '—');
+      /* 两行拆开写：单价/较前日/市值 FDV 都不挤在一行，320px 窄屏整条气泡也放得进卡片 */
+      return t2+'<br>'+line2;
     });
   }
   /* 手机端：默认停在最新（最右）；提示条第一次滑动后淡出 */

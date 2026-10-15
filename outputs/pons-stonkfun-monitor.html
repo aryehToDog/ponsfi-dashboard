@@ -1,5 +1,26 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.25「官方日收入气泡加当天市值 FDV」 · 2026-10-15
+     【为什么做这一版】作者要求：看官方日收入（StonkFun Revenue，84 天）的时候，气泡里要能同时
+       看到「当天对应的市值 FDV」—— 收入得跟当期估值一起看才知道贵不贵。
+     【这一版改了什么】只改这张卡的悬停/轻点气泡文案与一点样式（work/template.html）：
+       ① 气泡由一行改成两行：第一行「2026-09-28 · 收入 $619.4K」，
+          第二行「较前日 +17.7% · 市值 FDV $192.20M」。顺带修掉一个老毛病：原来单行气泡
+          在 320px 窄屏有 291px 宽、会撑出卡片，现在两行各≈240px，整条放得进卡片。
+       ② 取价优先级（和 v3.29.23 的口径一致，FDV = 当天价格 × 当前总供应 792,729,753 枚）：
+          GeckoTerminal 日线收盘（priceHist，与「价格走势」卡的 FDV 档同一个数）优先，
+          该日没有 K 线时用 DefiLlama 日频价（priceSeries.stonkfun）兜底，
+          两个都没有（代币发行前）显示 — 不估算。实测覆盖率 71/84 天：
+          GeckoTerminal 46 天 + DefiLlama 兜底 25 天，缺的 13 天全部在 2026-08-05 发行之前。
+       ③ 底部来源小字同步写明 FDV 口径与「发行前没价格的天显示 —」（中英各一份）。
+       ④ 其余板块、价格走势卡、90 天柱子、明细表零改动。
+     实测（headless Chrome 跑真实页面，桌面 1400 / 平板 768 / 手机 390·360·320）：
+       气泡两行、含「市值 FDV」；气泡宽度 221~239px 全部落在卡片内（320px 卡宽 254px 也放得下），
+       页面无横向溢出；价格走势卡 20 项老断言全部照旧通过（刻度栏 58/67px、气泡与跟随点零偏移）。
+       Node 桩补 4 条回归（同源优先 / 日频兜底 / 发行前 — / 无收入数据也带 FDV 行），
+       图表 / 表格 / 入口三套桩全过，渲染产物 node --check 通过。
+     回退：cp work/template.html.bak-v32925 work/template.html && cp work/render_only.py.bak-v32925 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.24「STONK 价格走势图重做」 · 2026-10-15
      【为什么做这一版】作者截图反馈 STONK 深度页「价格走势（最近 47 天）」这张图难看、
        重点不明显。老图有三个毛病：① 纵轴刻度数字直接压在折线与填充上（显脏）；
@@ -986,7 +1007,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.24-2026-10-15">
+<meta name="dashboard-version" content="v3.29.25-2026-10-15">
 
 <html lang="zh-CN">
 <head>
@@ -3380,7 +3401,7 @@ const BUNDLE = {"generated": "2026-10-15T03:01:55.239870Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.24 · 2026-10-15';
+const DASH_VER = 'v3.29.25 · 2026-10-15';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -6489,7 +6510,8 @@ zh:{
   chartRev90:'官方日收入（最近 {n} 天，StonkFun Revenue）',
   r90Latest:'最新一天', r90Avg:'日均收入', r90Peak:'单日峰值', r90Days:'天',
   r90Vs:'较前日', r90NoData:'官方当天无数据（不估算）', r90Swipe:'← 左右滑动看更早',
-  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天数值。',
+  r90Fdv:'市值 FDV',
+  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天收入与市值 FDV（= 当天价格 × 当前总供应，代币发行前没价格的天显示 —）。',
   pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
   pxTabPx:'价格', pxTabFdv:'FDV',
   pxFdvNote:function(s,b){ return '口径：日线收盘价 × 当前总供应 '+s+'（已扣 '+b+'销毁）'; },
@@ -6573,7 +6595,8 @@ en:{
   chartRev90:'Official daily revenue (last {n} days, StonkFun)',
   r90Latest:'Latest day', r90Avg:'Daily average', r90Peak:'Best day', r90Days:'days',
   r90Vs:'vs prev', r90NoData:'no official value that day (never estimated)', r90Swipe:'← swipe for earlier',
-  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day.',
+  r90Fdv:'Mkt cap (FDV)',
+  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day\u2019s revenue and market-cap FDV (= that day\u2019s price \u00d7 current supply; \u2014 before the token existed).',
   pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
   pxTabPx:'Price', pxTabFdv:'FDV',
   pxFdvNote:function(s,b){ return 'basis: daily close × current supply '+s+' (net of '+b+' burned)'; },
@@ -7799,14 +7822,31 @@ function stkDrawRev90(){
     ids.forEach(function(k){ if(uniq.indexOf(k)<0) uniq.push(k); });
     ax.innerHTML=uniq.map(function(k){ return '<span>'+esc(md(dates[k]))+'</span>'; }).join('');
   }
+  /* v3.29.25：气泡第二行补「当天市值 FDV」——收入要跟当期估值一起看才有意义。
+     取价优先级：GeckoTerminal 日线收盘（priceHist，和「价格走势」卡的 FDV 档同一个数）
+     → DefiLlama 日频价（priceSeries，把 GeckoTerminal 没成交、没出 K 线的日子补上）
+     → 两个都没有（代币发行前）显示 —，不估算。FDV = 当天价格 × 当前总供应（v3.29.23 口径）。 */
+  var pxDay={}, isoDay=function(ts){ return new Date(ts*1000).toISOString().slice(0,10); };
+  var dseries=(typeof DATA!=='undefined' && DATA.priceSeries && DATA.priceSeries.stonkfun) || [];
+  for(var q1=0;q1<dseries.length;q1++) pxDay[isoDay(dseries[q1][0])]=dseries[q1][1];
+  var phist=(d.priceHist||[]);
+  for(var q2=0;q2<phist.length;q2++) pxDay[isoDay(phist[q2][0])]=phist[q2][1];   /* 同源优先，后铺覆盖 */
+  var supCirc=(d.model&&d.model.circ)||0;
+  function fdvOf(day){ var p=pxDay[day]; return (p>0&&supCirc>0)? p*supCirc : null; }
   if(tip){
     stkR90Hover(svg, svg.closest('.stk-r90box')||svg.parentNode||svg, tip, n, function(k){
-      var v2=rev[k];
-      if(v2==null||!isFinite(v2)) return '<b>'+esc(dates[k]||'')+'</b> · '+esc(st('r90NoData'));
-      var t2='<b>'+esc(dates[k]||'')+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
-      var pv=(k>0? rev[k-1] : null);
-      if(pv!=null&&isFinite(pv)&&pv>0){ var pc=v2/pv-1; t2+=' · '+esc(st('r90Vs'))+' '+(pc>=0?'+':'')+(pc*100).toFixed(1)+'%'; }
-      return t2;
+      var v2=rev[k], day=dates[k]||'', line2='';
+      var t2;
+      if(v2==null||!isFinite(v2)) t2='<b>'+esc(day)+'</b> · '+esc(st('r90NoData'));
+      else{
+        t2='<b>'+esc(day)+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
+        var pv=(k>0? rev[k-1] : null);
+        if(pv!=null&&isFinite(pv)&&pv>0){ var pc=v2/pv-1; line2=esc(st('r90Vs'))+' '+(pc>=0?'+':'')+(pc*100).toFixed(1)+'%'; }
+      }
+      var f2=fdvOf(day);
+      line2=(line2? line2+' · ' : '')+esc(st('r90Fdv'))+' '+(f2!=null? fmtU(f2) : '—');
+      /* 两行拆开写：单价/较前日/市值 FDV 都不挤在一行，320px 窄屏整条气泡也放得进卡片 */
+      return t2+'<br>'+line2;
     });
   }
   /* 手机端：默认停在最新（最右）；提示条第一次滑动后淡出 */

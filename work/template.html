@@ -1861,9 +1861,37 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-pax span{flex:1 1 0;min-width:0;text-align:center;font-variant-numeric:tabular-nums}
 .stk-pax span:first-child{text-align:left}
 .stk-pax span:last-child{text-align:right}
+/* v3.29.24：价格走势图重做 ——
+   ① 左侧腾出「刻度栏」：Y 轴数字不再压在折线与填充上，栏宽按最长标签自适应（JS 量完写 --pxgut）；
+   ② 网格从 3 条虚线换成 4 条实线（正好落在真实最高/最低与两档中间值上）+ 3 条浅竖线；
+   ③ 折线加一层发光描边、填充加深一档，末点脉冲保留；
+   ④ 峰值 / 谷值各带一枚小圆点 + 日期标签，一眼看出区间在哪儿、什么时候到过。 */
+.stk-paxwrap{padding-left:var(--pxgut,58px);padding-right:8px}
+.stk-paxax{position:relative;height:13px}
+.stk-paxax span{position:absolute;top:0;white-space:nowrap;transform:translateX(-50%)}
+.stk-paxax span:first-child{transform:none}
+.stk-paxax span:last-child{transform:translateX(-100%)}
+.stk-pyax span{left:auto;right:calc(100% - var(--pxgut,58px));padding:0 11px 0 0;background:none;border-radius:0;white-space:nowrap}
+.stk-pmk{position:absolute;z-index:3;pointer-events:none;width:9px;height:9px;border-radius:50%;
+  background:var(--hb-stonk);border:2px solid var(--panel);transform:translate(-50%,-50%);opacity:0;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--hb-stonk) 18%,transparent);transition:opacity .2s ease}
+.stk-pmk.lo{background:transparent;border-color:color-mix(in srgb,var(--hb-stonk) 62%,var(--mut));box-shadow:none}
+.stk-pmk.on{opacity:1}
+.stk-pmtag{position:absolute;z-index:4;pointer-events:none;white-space:nowrap;opacity:0;
+  font-size:var(--fs-10);font-weight:700;font-variant-numeric:tabular-nums;color:var(--mut);
+  background:color-mix(in srgb,var(--panel) 86%,transparent);border:1px solid var(--line);
+  border-radius:var(--r-pill);padding:2px 8px;transition:opacity .2s ease;
+  transform:translate(-50%,0)}                                       /* 默认挂在点的下侧 */
+.stk-pmtag.up{transform:translate(-50%,calc(-100% - 8px))}           /* 峰值标在点上方 */
+.stk-pmtag.dn{transform:translate(-50%,8px)}
+.stk-pmtag.on{opacity:1}
+.sk-gridP{stroke:color-mix(in srgb,var(--line2) 80%,transparent);stroke-dasharray:none}
+.sk-gridm{stroke:color-mix(in srgb,var(--line2) 55%,transparent)}
+.sk-vgrid{stroke:color-mix(in srgb,var(--line2) 48%,transparent);stroke-dasharray:none}
 /* v3.29.21：价格/FDV 卡 —— 图加高一点、纵向留白合理；跨度大时自动切对数刻度（画在 JS 里） */
-#stkPBox{height:235px}
-@media (max-width:560px){#stkPBox{height:200px}}
+#stkPCard{--pxgut:58px}   /* 刻度栏宽度：Y 轴数字栏 = 图左边距，X 轴那一行跟着它对齐；JS 量到更长的刻度会就地调大 */
+#stkPBox{height:235px;padding-left:var(--pxgut);padding-right:8px}
+@media (max-width:560px){#stkPCard{--pxgut:50px} #stkPBox{height:200px}}
 /* v3.29.20：官方日收入 90 天柱状图 —— 绿色渐变柱 + 顶部三格数据签；
    手机端（≤680px）改为横向滑动长图（每根柱 ~14px、默认停最新），滑动提示首次滚动后淡出。 */
 .stk-r90box{position:relative}
@@ -5949,7 +5977,7 @@ function stkFlyHTML(fw, h){
     +   '<div class="stk-chart"><svg id="stkHChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkHTip"></div></div>'
     +   '<div class="stk-note" id="stkHSum" style="margin-top:10px"></div>'
     + '</div>'
-    + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
+    + '<div class="card stk-card stk-sec" id="stkPCard" style="margin-top:var(--sp-card)">'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartPrice').replace('{n}', ((stkBundle()||{}).priceHist||[]).length || 0))+'</span></div>'
     +   '<div class="tabs" id="stkPTabs" style="margin-bottom:10px">'
     +     ['px','fdv'].map(function(k){
@@ -5963,10 +5991,12 @@ function stkFlyHTML(fw, h){
     +     '<div class="stk-pyax" id="stkPYax"></div>'
     +     '<div class="stk-pcross" id="stkPCross"></div>'
     +     '<div class="stk-pend" id="stkPEnd"></div>'
+    +     '<i class="stk-pmk" id="stkPHiDot"></i><span class="stk-pmtag" id="stkPHiTag"></span>'
+    +     '<i class="stk-pmk lo" id="stkPLoDot"></i><span class="stk-pmtag" id="stkPLoTag"></span>'
     +     '<div class="stk-pdot" id="stkPDot"></div>'
     +     '<div class="stk-tip" id="stkPTip"></div>'
     +   '</div>'
-    +   '<div class="stk-axis stk-pax" id="stkPAx"></div>'
+    +   '<div class="stk-paxwrap" id="stkPAxWrap"><div class="stk-axis stk-paxax" id="stkPAx"></div></div>'
     + '</div>'
     + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartRev90').replace('{n}', (((stkBundle()||{}).flywheel||{}).rev90||{}).n || 0))+'</span></div>'
@@ -6502,6 +6532,7 @@ function stkDrawPrice(){
     if(cross) cross.classList.remove('on');
     if(dot) dot.classList.remove('on');
     if(end) end.classList.remove('on');
+    hideMark('stkPHiDot','stkPHiTag'); hideMark('stkPLoDot','stkPLoTag');
     return;
   }
   function d2(ts){ var dt=new Date(ts*1000); return String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
@@ -6563,19 +6594,70 @@ function stkDrawPrice(){
   var ly=Y(sv[n-1][1]);
   var lastV=sv[n-1][1], firstV=sv[0][1];
   var chg=(firstV>0)? (lastV/firstV-1) : null;
-  /* v3.29.8：三档价格参考线（比原来的纯折线更容易读数）；对数刻度时取几何中点 */
-  var gridVals= useLog? [hi, Math.sqrt(hi*lo), lo] : [hi,(hi+lo)/2,lo];
-  var grid=gridVals.map(function(v){
+  /* v3.29.24：图左边留出刻度栏以后，卡片里的 HTML 浮层不能再按百分比定位（百分比是相对卡片边框算的，
+     不含刻度栏）。XL() 把 SVG 的 0~1 横向比例换算成卡片里的水平位置：从刻度栏右沿起、到右侧 8px 止；
+     写成 calc 而不是写死 px，窗口缩放时不用重画也不会漂。 */
+  var box=document.getElementById('stkPBox');
+  function XL(f){ return 'calc(var(--pxgut,58px) + (100% - var(--pxgut,58px) - 8px) * '+f.toFixed(5)+')'; }
+  /* 网格：上下沿（正好是刻度上下限）+ 两档中间值，实线；对数刻度按等比取，线性刻度按等分取 */
+  var gridVals=[hi, useLog? hi*Math.pow(lo/hi,1/3) : hi-(hi-lo)/3,
+                    useLog? hi*Math.pow(lo/hi,2/3) : hi-(hi-lo)*2/3, lo];
+  var grid=gridVals.map(function(v,k){
     var gy=Y(v).toFixed(1);
-    return '<line class="sk-grid" x1="0" x2="1200" y1="'+gy+'" y2="'+gy+'"></line>';
+    return '<line class="sk-gridP'+(k===1||k===2?' sk-gridm':'')+'" x1="0" x2="1200" y1="'+gy+'" y2="'+gy+'"></line>';
   }).join('');
+  /* X 轴四档日期刻度的下标（首 / 1/3 / 2/3 / 末）；浅竖线对齐前三个，末位留给终点脉冲 */
+  var xIds=[0, Math.round((n-1)/3), Math.round((n-1)*2/3), n-1];
+  var vgrid=[0,1,2].map(function(k){
+    var gx=X(xIds[k]).toFixed(1);
+    return '<line class="sk-vgrid" x1="'+gx+'" x2="'+gx+'" y1="0" y2="300"></line>';
+  }).join('');
+  /* 折线发光：同一条路径叠两层宽而淡的描边（比 SVG 高斯模糊便宜，手机上不掉帧） */
   svg.innerHTML='<defs><linearGradient id="stkPG" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".30"></stop><stop offset="1" stop-color="var(--hb-stonk)" stop-opacity="0"></stop></linearGradient></defs>'
-    + grid
+    + '<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".42"></stop>'
+    + '<stop offset=".55" stop-color="var(--hb-stonk)" stop-opacity=".13"></stop>'
+    + '<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".02"></stop></linearGradient></defs>'
+    + grid + vgrid
     + '<path d="'+area+'" fill="url(#stkPG)"></path>'
-    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>';
-  /* 终点圆点：HTML 定位（百分比），任何宽高比下都是正圆 */
-  if(end){ end.style.left='100%'; end.style.top=(ly/300*100).toFixed(2)+'%'; end.classList.add('on'); }
+    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="9" stroke-opacity=".07" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>'
+    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="5" stroke-opacity=".13" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>'
+    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="2.8" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>';
+  /* 终点圆点：HTML 定位（百分比高度 + calc 水平），任何宽高比下都是正圆 */
+  if(end){ end.style.left=XL(1); end.style.top=(ly/300*100).toFixed(2)+'%'; end.classList.add('on'); }
+  /* v3.29.24：区间峰值 / 谷值 —— 各标一枚圆点 + 日期标签，不用 hover 也能看出最高最低在哪天。
+     峰值默认标在点上方、谷值标在点下方，贴边就翻到另一侧；左右贴边时把标签拽回卡片内。 */
+  var ih=0, il=0, q;
+  for(q=1;q<n;q++){ if(sv[q][1]>sv[ih][1]) ih=q; if(sv[q][1]<sv[il][1]) il=q; }
+  function hideMark(a,b){
+    [a,b].forEach(function(id){ var el=document.getElementById(id); if(el) el.classList.remove('on'); });
+  }
+  function markPoint(idx, isHi){
+    var dotEl=document.getElementById(isHi? 'stkPHiDot':'stkPLoDot');
+    var tagEl=document.getElementById(isHi? 'stkPHiTag':'stkPLoTag');
+    var f=idx/Math.max(1,n-1), yp=pts[idx][1]/300*100;
+    if(dotEl){ dotEl.style.left=XL(f); dotEl.style.top=yp.toFixed(2)+'%'; dotEl.classList.add('on'); }
+    if(!tagEl) return;
+    tagEl.textContent=d2(sv[idx][0])+' · '+vTxt(sv[idx][1]);
+    var bh=(box&&box.clientHeight)||235, hpx=bh*yp/100;
+    var th=tagEl.offsetHeight||17, above=!!isHi;
+    /* 上方留 6px 余量：图顶就是卡片里图区上沿，标签稍微探出去一点不会撞到别的东西（头部下方有 10px 间距） */
+    if(above && hpx-th-8<-6) above=false;
+    else if(!above && hpx+th+8>bh-2) above=true;
+    tagEl.style.left=XL(f); tagEl.style.top=yp.toFixed(2)+'%';
+    tagEl.classList.toggle('up', above);
+    tagEl.classList.toggle('dn', !above);
+    tagEl.classList.add('on');
+    var bw=(box&&box.clientWidth)||0, tw=tagEl.offsetWidth||0;
+    if(bw&&tw){
+      var gut=svg.getBoundingClientRect().left-box.getBoundingClientRect().left;
+      var cx=gut+f*Math.max(0, bw-gut-8), dx=0;
+      if(cx-tw/2<2) dx=2-(cx-tw/2); else if(cx+tw/2>bw-2) dx=(bw-2)-(cx+tw/2);
+      tagEl.style.marginLeft=dx? dx.toFixed(1)+'px' : '';
+    }
+  }
+  /* 末点自己就是区间最高/最低时不再重复标注（会和终点脉冲叠在一起） */
+  if(ih!==n-1) markPoint(ih, true); else hideMark('stkPHiDot','stkPHiTag');
+  if(il!==n-1 && il!==ih) markPoint(il, false); else hideMark('stkPLoDot','stkPLoTag');
   /* 头部：最新收盘价直接摆出来（不用 hover），旁边挂区间涨跌 */
   if(head){
     head.innerHTML='<div class="pxl"><span class="pxn">'+vTxt(lastV)+'</span>'
@@ -6587,14 +6669,30 @@ function stkDrawPrice(){
             LANG==='zh'? (burned/1e8).toFixed(2)+' 亿枚' : (burned/1e6).toFixed(1)+'M')) : '')
       + '</div>';
   }
-  if(yax) yax.innerHTML=gridVals.map(function(v){
-    return '<span style="top:'+(Y(v)/300*100).toFixed(2)+'%">'+vTxt(v)+'</span>';
-  }).join('');
-  /* X 轴：四档日期刻度（首 / 两个中间点 / 末） */
+  if(yax){
+    yax.innerHTML=gridVals.map(function(v){
+      return '<span style="top:'+(Y(v)/300*100).toFixed(2)+'%">'+vTxt(v)+'</span>';
+    }).join('');
+    /* 刻度栏宽度自适应：量一次最长标签，量到比现在更宽才就地调大并重画一遍（只增不减，收敛即停；
+       元素还没上屏时量出来是 0，直接跳过，下一轮再量）。 */
+    if(box){
+      var sw=0, sp=yax.children, si;
+      for(si=0;si<sp.length;si++) sw=Math.max(sw, sp[si].offsetWidth||0);
+      var gutNow=svg.getBoundingClientRect().left-box.getBoundingClientRect().left;  /* 当前实际刻度栏宽 */
+      if(sw>0 && sw+3>gutNow+0.5 && (box._pxg||0)<4){
+        box._pxg=(box._pxg||0)+1;
+        (document.getElementById('stkPCard')||box).style.setProperty('--pxgut', (Math.ceil(sw)+3)+'px');
+        stkDrawPrice();
+        return;
+      }
+    }
+  }
+  /* X 轴：四档日期刻度（首 / 两个中间点 / 末），落在和图内浅竖线同一列上 */
   if(ax){
-    var ids=[0, Math.round((n-1)/3), Math.round((n-1)*2/3), n-1];
-    var uniq=[]; ids.forEach(function(i){ if(uniq.indexOf(i)<0) uniq.push(i); });
-    ax.innerHTML=uniq.map(function(i){ return '<span>'+d2(ph[i][0])+'</span>'; }).join('');
+    var uniq=[]; xIds.forEach(function(i){ if(uniq.indexOf(i)<0) uniq.push(i); });
+    ax.innerHTML=uniq.map(function(i){
+      return '<span style="left:'+(i/Math.max(1,n-1)*100).toFixed(3)+'%">'+d2(ph[i][0])+'</span>';
+    }).join('');
   }
   /* 悬停/触摸：十字线 + 跟随点 + 日期价格气泡 */
   var tip=document.getElementById('stkPTip');
@@ -6609,12 +6707,13 @@ function stkDrawPrice(){
       tip.innerHTML='<b>'+d4(row[0])+'</b> · '+(isFdv?'FDV ':'')+vTxt(row[1]);
       tip.classList.add('on');
       var rr=svg.getBoundingClientRect(), rw=Math.max(1,rr.width);
+      var off=box? (rr.left-box.getBoundingClientRect().left) : 0;   /* 气泡按卡片定位，得补上左侧刻度栏 */
       var tw=Math.min(tip.offsetWidth||92, Math.max(70, rw-10));
       var tx=Math.max(tw/2+2, Math.min(rw-tw/2-2, (i/Math.max(1,n-1))*rw));
-      tip.style.left=tx.toFixed(1)+'px';
-      var xp=(i/Math.max(1,n-1)*100), yp=(pts[i][1]/300*100);
-      if(cross){ cross.style.left=xp.toFixed(2)+'%'; cross.classList.add('on'); }
-      if(dot){ dot.style.left=xp.toFixed(2)+'%'; dot.style.top=yp.toFixed(2)+'%'; dot.classList.add('on'); }
+      tip.style.left=(off+tx).toFixed(1)+'px';
+      var yp=(pts[i][1]/300*100);
+      if(cross){ cross.style.left=XL(i/Math.max(1,n-1)); cross.classList.add('on'); }
+      if(dot){ dot.style.left=XL(i/Math.max(1,n-1)); dot.style.top=yp.toFixed(2)+'%'; dot.classList.add('on'); }
     }
     function hide(){
       tip.classList.remove('on');

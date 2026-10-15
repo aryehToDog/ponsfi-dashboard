@@ -1710,12 +1710,21 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @keyframes stkIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){body.stk-on #stkView{animation:none}}
 
-.stk-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:var(--sp-card)}
-.stk-bar-l{display:flex;align-items:center;gap:11px;min-width:0}
-.stk-mark{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-weight:900;font-size:15px;letter-spacing:-.4px;flex:0 0 auto;
-  background:linear-gradient(140deg,var(--hb-stonk),color-mix(in srgb,var(--hb-stonk) 42%,var(--panel)));color:#04140e;
-  box-shadow:0 10px 24px -14px var(--stonk)}
-.stk-title{font-size:var(--fs-14);font-weight:800;letter-spacing:-.2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* v3.29.22：深度页页头从「一行标题」升级成品牌横幅 —— 左侧绿方块 logo 和总览页入口按钮上那个是同一个记号，
+   点进来一眼确认「这就是那枚按钮指向的独立页」；最左边一道品牌绿竖线做视觉锚点 */
+.stk-bar{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-bottom:var(--sp-card);padding:14px 16px 14px 19px;border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--hb-stonk) 24%,var(--line2));
+  background:linear-gradient(118deg,color-mix(in srgb,var(--hb-stonk) 11%,transparent),color-mix(in srgb,var(--pons) 7%,transparent) 55%,transparent 86%),var(--panel);
+  box-shadow:var(--card-shadow)}
+.stk-bar::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--hb-stonk),color-mix(in srgb,var(--hb-stonk) 18%,transparent))}
+.stk-bar-l{display:flex;align-items:center;gap:12px;min-width:0}
+.stk-mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(140deg,var(--hb-stonk),color-mix(in srgb,var(--hb-stonk) 40%,var(--panel)));color:#04140e;
+  box-shadow:0 12px 26px -14px var(--stonk),inset 0 1px 0 rgba(255,255,255,.35)}
+.stk-mark .ic{width:22px;height:22px}
+.stk-title{font-size:var(--fs-16);font-weight:800;letter-spacing:-.35px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stk-title .tag{font-size:var(--fs-10);font-weight:600;color:var(--mut);border:1px solid var(--line2);border-radius:var(--r-pill);padding:2px 8px;letter-spacing:0}
 .stk-sub{font-size:var(--fs-11);color:var(--mut);margin-top:4px}
 .stk-bar-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -2037,8 +2046,55 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-burnrow .tx{text-align:right}
 .stk-burnrow .tx a{color:var(--accent);text-decoration:none;font-size:var(--fs-11)}
 .stk-burnrow .tx a:hover{text-decoration:underline}
-.stk-btn-entry{display:inline-flex;align-items:center;gap:7px}
-.stk-btn-entry .ic{width:14px;height:14px}
+/* v3.29.22 · STONK 深度页入口 = 「独立页启动卡」（原来是和「系统/EN」并排的普通小按钮，太不起眼）
+   设计逻辑（自上而下三层，一眼看明白这是什么页）：
+     ① 品牌绿方块 logo（点进去之后深度页页头是同一个记号，视觉一对就对上号）；
+     ② 两行文案 —— 主行「是什么页」，副行「里面有什么」；
+     ③ 呼吸绿点（实时数据）+ 右侧箭头（可点、有新页面），外加 7.5s 一次的低速流光。
+   动效全部走 transform/opacity，且 respects prefers-reduced-motion。 */
+.stk-btn-entry{position:relative;display:inline-flex;align-items:center;gap:10px;text-align:left;
+  padding:5px 12px 5px 6px;border-radius:var(--r-pill);overflow:hidden;isolation:isolate;
+  border:1px solid color-mix(in srgb,var(--hb-stonk) 42%,var(--line2));
+  background:linear-gradient(118deg,color-mix(in srgb,var(--hb-stonk) 16%,transparent),color-mix(in srgb,var(--pons) 10%,transparent) 58%,transparent 88%),var(--panel2);
+  box-shadow:0 10px 26px -20px var(--stonk),inset 0 1px 0 rgba(255,255,255,.05);
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease,transform .08s}
+.stk-btn-entry:hover{border-color:color-mix(in srgb,var(--hb-stonk) 66%,var(--line2));
+  background:linear-gradient(118deg,color-mix(in srgb,var(--hb-stonk) 26%,transparent),color-mix(in srgb,var(--pons) 15%,transparent) 58%,transparent 88%),var(--panel3);
+  box-shadow:0 15px 32px -20px var(--stonk),inset 0 1px 0 rgba(255,255,255,.07)}
+.stk-btn-entry::after{content:"";position:absolute;inset:-2px;z-index:0;pointer-events:none;
+  background:linear-gradient(104deg,transparent 36%,color-mix(in srgb,var(--hb-stonk) 24%,transparent) 50%,transparent 64%);
+  transform:translateX(-130%);animation:seSheen 7.5s ease-in-out 1.2s infinite}
+@keyframes seSheen{0%{transform:translateX(-130%)}26%{transform:translateX(130%)}100%{transform:translateX(130%)}}
+.stk-btn-entry > *{position:relative;z-index:1}
+.stk-btn-entry .se-mark{width:27px;height:27px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(140deg,var(--hb-stonk),color-mix(in srgb,var(--hb-stonk) 38%,var(--panel)));color:#04140e;
+  box-shadow:0 6px 16px -10px var(--stonk),inset 0 1px 0 rgba(255,255,255,.35)}
+.stk-btn-entry .se-mark .ic{width:15px;height:15px}
+.stk-btn-entry .se-body{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stk-btn-entry .se-t{display:flex;align-items:center;gap:6px;font-size:var(--fs-12);font-weight:700;
+  letter-spacing:-.15px;line-height:1.25;white-space:nowrap}
+.stk-btn-entry .se-s{font-size:var(--fs-10);font-weight:600;color:var(--mut);line-height:1.2;white-space:nowrap}
+.stk-btn-entry .se-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:var(--hb-stonk);
+  color:var(--hb-stonk);box-shadow:0 0 8px currentColor;animation:seDot 2.8s ease-in-out infinite}
+@keyframes seDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.78)}}
+.stk-btn-entry .se-go{display:inline-flex;align-items:center;margin-left:1px;opacity:.5;
+  transition:transform .18s ease,opacity .18s ease}
+.stk-btn-entry .se-go .ic{width:13px;height:13px;transform:rotate(90deg)}
+.stk-btn-entry:hover .se-go,.stk-btn-entry:focus-visible .se-go{opacity:1;transform:translateX(2px)}
+@media (prefers-reduced-motion:reduce){
+  .stk-btn-entry::after{animation:none;opacity:0}
+  .stk-btn-entry .se-dot{animation:none}
+  .stk-btn-entry:hover .se-go,.stk-btn-entry:focus-visible .se-go{transform:none}
+}
+/* 手机端：这枚按钮整行独占（见上方 header .stk-btn-entry 规则），做成一条「启动横幅」——
+   左 logo、中间两行、右箭头推到最右，手指一点就进深度页 */
+@media(max-width:680px){
+  header .stk-btn-entry{justify-content:flex-start;gap:10px;padding:7px 12px 7px 8px;min-height:48px}
+  header .stk-btn-entry .se-body{flex:1 1 auto}
+  header .stk-btn-entry .se-go{margin-left:auto}
+  header .stk-btn-entry .se-mark{width:30px;height:30px;border-radius:10px}
+  header .stk-btn-entry .se-mark .ic{width:16px;height:16px}
+}
 
 /* v3.27.1 手机端：列数收口（原来列数写在元素行内样式上，媒体查询压不过它） */
 .stk-grid.g2{grid-template-columns:repeat(2,1fr)}
@@ -2065,6 +2121,10 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @media (max-width:680px){
   /* v3.29.11：深度页页头收紧 —— 打赏浮标/让位留白退役后，头部与导航的节奏重新校准 */
   .stk-bar{gap:10px;margin-bottom:14px}
+  /* v3.29.22：横幅在手机上略收一点内边距与 logo 尺寸，别把标题挤到第二行 */
+  .stk-bar{padding:12px 13px 12px 16px}
+  .stk-mark{width:40px;height:40px;border-radius:13px}
+  .stk-mark .ic{width:20px;height:20px}
   .stk-bar-r .tbtn{min-height:38px;padding:7px 11px;display:inline-flex;align-items:center;justify-content:center}
   .stk-bar-r{width:100%;gap:6px}
   .stk-bar-r .tbtn:last-child{flex:1 1 auto}
@@ -2160,7 +2220,15 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
       <span class="badge" id="src">加载中…</span>
       <button class="tbtn" id="tbtn" onclick="cycleTheme()" title="切换主题：跟随系统 / 浅色 / 深色"><svg class="ic" aria-hidden="true"><use href="#ic-monitor"/></svg> 系统</button>
       <button class="tbtn" id="lbtn" onclick="cycleLang()" title="中文 / English">EN</button>
-      <button class="tbtn stk-btn-entry" id="stkEntry" onclick="stkToggle()" title="STONK 深度页"><svg class="ic" aria-hidden="true"><use href="#ic-zap"/></svg><span id="stkEntryTxt">STONK 深度页</span></button>
+      <!-- v3.29.22：STONK 深度页入口 —— 独立页启动卡（品牌绿 logo + 两行文案 + 呼吸点 + 箭头） -->
+      <button class="tbtn stk-btn-entry" id="stkEntry" onclick="stkToggle()" title="STONK 深度页">
+        <span class="se-mark" aria-hidden="true"><svg class="ic"><use href="#ic-zap"/></svg></span>
+        <span class="se-body">
+          <span class="se-t"><span id="stkEntryTxt">STONK 深度页</span><span class="se-dot" aria-hidden="true"></span></span>
+          <span class="se-s" id="stkEntrySub">回购 · 销毁 · 估值 · 飞轮</span>
+        </span>
+        <span class="se-go" aria-hidden="true"><svg class="ic"><use href="#ic-chev-up"/></svg></span>
+      </button>
       <button id="btnRefresh" onclick="loadLive()"><svg class="ic" aria-hidden="true"><use href="#ic-refresh"/></svg> 刷新数据</button>
     </div>
   </header>
@@ -2272,7 +2340,7 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
   <div id="stkView">
     <div class="stk-bar">
       <div class="stk-bar-l">
-        <span class="stk-mark">$</span>
+        <span class="stk-mark" aria-hidden="true"><svg class="ic"><use href="#ic-zap"/></svg></span>
         <div>
           <div class="stk-title"><span id="stkTitleTxt">STONK 深度页</span><span class="tag">StonkFun · Solana</span></div>
           <div class="stk-sub" id="stkSub"></div>
@@ -5351,7 +5419,8 @@ function renderAll(){
    ========================================================================== */
 var STK_I18N = {
 zh:{
-  entry:'STONK 深度页', entryTip:'STONK 单独一页：供应与销毁、回购飞轮、需求与资金、估值与排名',
+  entry:'STONK 深度页', entrySub:'回购 · 销毁 · 估值 · 飞轮',
+  entryTip:'进入 STONK 独立一页：回购飞轮、谁在买、供应与销毁、估值与排名、平台前十代币',
   back:'← 返回总览', title:'STONK 深度页', tag:'独立视图',
   sub:'StonkFun 平台币 · Solana · 每小时云端更新（打开页面时再拉一次实时价）',
   liveOn:'● 实时数据已刷新', liveOff:'● 页面快照（实时刷新没连上）',
@@ -5434,7 +5503,8 @@ zh:{
   noteLi4:'本页只是把公开数据摆在一起，不构成任何投资建议。回购能提供买盘，但不能保证价格——决定权在买卖双方。'
 },
 en:{
-  entry:'STONK deep dive', entryTip:'A dedicated STONK page: supply & burns, buyback flywheel, demand, valuation',
+  entry:'STONK deep dive', entrySub:'buybacks · burns · valuation · flywheel',
+  entryTip:'Open the dedicated STONK page: buyback flywheel, who is buying, supply & burns, valuation, top tokens',
   back:'← Back to overview', title:'STONK deep dive', tag:'separate view',
   sub:'StonkFun platform token · Solana · rebuilt hourly in the cloud (live refresh on open)',
   liveOn:'● live data refreshed', liveOff:'● snapshot (live refresh offline)',
@@ -5593,6 +5663,9 @@ function stkToggle(force){
 function stkEntryLabel(){
   var b=document.getElementById('stkEntryTxt');
   if(b) b.textContent=st('entry');
+  /* v3.29.22：入口副行 —— 一眼说明深度页里有什么（中英各一份） */
+  var s=document.getElementById('stkEntrySub');
+  if(s) s.textContent=st('entrySub');
 }
 
 /* ---------- 整页渲染 ---------- */

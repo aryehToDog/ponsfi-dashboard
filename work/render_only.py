@@ -9,6 +9,27 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.22「STONK 深度页入口：独立页启动卡」 · 2026-10-15
+     【为什么做这一版】作者截图反馈：页头那枚「STONK 深度页」按钮和「系统 / EN」长得一样，
+       太不起眼，用户根本不知道它指向一个独立的深度页（要求「一眼就知道这个页面的含义」）。
+     【这一版改了什么】只动呈现与文案，不碰数据与计算（work/template.html）：
+       ① 总览页页头入口重做（.stk-btn-entry）：普通小按钮 → 「独立页启动卡」——
+          品牌绿方块 logo（⚡，和深度页页头同一个记号，点进去视觉对得上号）+ 两行文案
+          （主行「STONK 深度页」/ 副行「回购 · 销毁 · 估值 · 飞轮」一眼说明页里有什么）+
+          呼吸绿点（实时数据）+ 右侧箭头（悬停右移），描边/底色走品牌绿渐变，
+          7.5s 一次的低速流光扫过；手机端整行独占（48px 高横幅、箭头推到最右）。
+       ② 深度页页头（.stk-bar）：一行标题 → 品牌横幅 —— 左侧 3px 品牌绿竖线做锚点、
+          同款绿方块 logo（原来的「$」换成 ⚡ 图标）、标题字号 14→16、绿紫渐变底 + 卡片投影；
+          手机端收内边距与 logo 尺寸，320px 窄屏标题换行也不重叠。
+       ③ 文案：STK_I18N 新增 entrySub（中英各一份），entryTip 补全页内板块清单；
+          静态副行默认中文，JS 起来之前也不会空着或闪 undefined。
+       ④ 动效全走 transform/opacity，并 respects prefers-reduced-motion（关流光、关呼吸点）。
+     实测（headless Chrome 量布局，桌面 1400 / 平板 768 / 手机 390·360·320）：
+       入口桌面 192×41px、比同排按钮（30px）明显高一档、页头仍是一行且互不重叠；
+       手机端整行独占 48px、箭头贴右、无横向溢出；深度页横幅 320px 下标题换行不重叠；
+       Node 桩三套（图表 / 表格 / 入口文案双语）全过、渲染产物 node --check 通过。
+     回退：cp work/template.html.bak-v32922 work/template.html && cp work/render_only.py.bak-v32922 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.21「价格/FDV 切换 + 90 天柱配色 + 半截日体检」 · 2026-10-15
      【为什么做这一版】作者三条反馈：
        ① 90 天收入柱状图「看得不是很清楚、划上去有点难受」；
@@ -921,10 +942,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.21-2026-10-15">
+<meta name="dashboard-version" content="v3.29.22-2026-10-15">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.21 · 2026-10-15"
+VER = "v3.29.22 · 2026-10-15"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

@@ -148,41 +148,56 @@ def series_pending(path=None):
         return {}
 
 
-def refresh_pending_series():
-    """小时模式：快照里有「半截天」就就地重抓这些序列，上游补全后自动恢复。
+def refresh_series_health():
+    """小时模式：对六个 DefiLlama 日线序列做一次「半截天」体检，并顺手刷新序列本身。
 
     背景（2026-10-15）：DefiLlama 的父协议下挂子模块（Pons V1 / Pons V2），子模块当天
     还没入库时父协议只剩零头，页面会把 10-14 的 PONS 收入显示成 -96% 的假暴跌。
-    日线全量一天才跑一次，但「补全」通常几小时内就发生 —— 每小时顺手重抓这几个小接口，
-    体检通过（pending 空）就清理标记，前端随即恢复显示。
+
+    为什么每小时都要体检（而不是「有标记才重抓」—— 2026-10-15 补的坑）：
+      只查「标记非空」有先有鸡还是先有蛋的问题 —— 标记只有 daily 全量才会第一次写入；
+      刚发版 / 状态回退时快照里根本没有这个键，hourly 就永远不体检，页面继续显示半截数。
+      现在改成每小时都体检这 6 个小接口（与 build_monitor 同一套 pending_days 规则），
+      耗时几秒：上游补全 → 标记自动清空；新出现半截天 → 标记自动写入；序列值跟着更新。
     """
-    pend = series_pending()
-    if not pend:
-        return False
     try:
         sys.path.insert(0, HERE)
         import build_monitor as bm
         dp = os.path.join(HERE, "dashboard-data.json")
         d = json.load(open(dp, encoding="utf-8"))
-        left = {}
-        for key in list(pend):
-            try:
-                slug, dt = key.split(".", 1)
-                j = bm.get(f"https://api.llama.fi/summary/fees/{slug}?dataType={dt}")
-                d.setdefault("series", {})[key] = bm.series_of(j)
-                pd = bm.pending_days(j)
-                if pd:
-                    left[key] = pd
-            except Exception as exc:
-                left[key] = pend[key]
-                log("  序列 %s 重抓失败（沿用旧数据）：%s" % (key, exc))
-        d["seriesPending"] = left
-        atomic_json(d, dp)
-        log("检测到 %d 条序列含未结算天（%s）→ 已就地重抓（仍未结算 %d 条）"
-            % (len(pend), ",".join(sorted(pend)), len(left)))
-        return True
+        pend, changed, failed = {}, False, 0
+        for slug in bm.PAGES:
+            for dt in bm.DATATYPES:
+                key = f"{slug}.{dt}"
+                try:
+                    j = bm.get(f"https://api.llama.fi/summary/fees/{slug}?dataType={dt}")
+                    ser = bm.series_of(j)
+                    if ser and d.setdefault("series", {}).get(key) != ser:
+                        d["series"][key] = ser
+                        changed = True
+                    pd = bm.pending_days(j)
+                    if pd:
+                        pend[key] = pd
+                except Exception as exc:
+                    failed += 1
+                    old = (d.get("seriesPending") or {}).get(key)
+                    if old:
+                        pend[key] = old      # 体检失败：沿用旧标记，宁可不出半截数
+                    log("  序列 %s 体检失败（沿用旧数据）：%s" % (key, exc))
+        # 体检失败时不把旧的标记清掉（失败沿用旧标记，见上）
+        if d.get("seriesPending") != pend:
+            changed = True
+        d["seriesPending"] = pend
+        if pend:
+            log("半截日体检：%s 还没结算完 → 前端不用半截数" %
+                ", ".join("%s(%s)" % (k, ",".join(v)) for k, v in sorted(pend.items())))
+        if changed:
+            atomic_json(d, dp)
+            log("日线序列已刷新（%d 条，pending %d 条，体检失败 %d 条）"
+                % (len(d.get("series", {})), len(pend), failed))
+        return changed
     except Exception as exc:
-        log("未结算序列重抓失败（沿用旧快照）：%s" % exc)
+        log("日线序列体检失败（沿用旧快照）：%s" % exc)
         return False
 
 
@@ -281,7 +296,7 @@ def main():
         run([sys.executable, os.path.join(HERE, "hourly.py")])
         merge_hourly()
         refresh_broken_board()
-        refresh_pending_series()
+        refresh_series_health()
     # v3.27 STONK 深度页数据（两种模式都跑；渲染统一放最后，保证 stonkPage 进 HTML）
     run([sys.executable, os.path.join(HERE, "stonk_page.py")])
     run([sys.executable, os.path.join(HERE, "render_only.py")])

@@ -27,7 +27,8 @@ BANNER = """<!-- ===============================================================
           build_monitor.py 用 totalDataChartBreakdown 做体检：最近 2 天里缺了前 7 天贡献 ≥20%
           的子模块 → 写入 seriesPending；前端 build() / 数据源体检跳过这些日期（宁可标「待更新」
           或让位给链上补充值，绝不用半截数）；浏览器实时刷新用同一套规则重算（上游补全即自动
-          恢复）；ci_build.py 小时模式发现 pending 非空就地重抓（与坏榜自愈同一模式）。
+          恢复）；ci_build.py 小时模式每次都体检这 6 个日线序列（不能只查「标记非空」——
+          刚发版时快照没有标记键，会永远不体检；体检失败沿用旧标记），补全/回退自动进出。
      实测（Node 桩环境）：90 天图 84 根柱、渐变 1/.58、同柱不重画；FDV 切换头部/纵轴/气泡
        同步、对数刻度生效；pending 日期在明细表里落「待更新」/链上补值；渲染产物 node --check 通过。
      回退：cp work/template.html.bak-v32921 work/template.html && cp work/render_only.py.bak-v32921 work/render_only.py && cp work/build_monitor.py.bak-v32921 work/build_monitor.py && python3 work/render_only.py

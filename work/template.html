@@ -1852,6 +1852,28 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-pax span{flex:1 1 0;min-width:0;text-align:center;font-variant-numeric:tabular-nums}
 .stk-pax span:first-child{text-align:left}
 .stk-pax span:last-child{text-align:right}
+/* v3.29.20：官方日收入 90 天柱状图 —— 绿色渐变柱 + 顶部三格数据签；
+   手机端（≤680px）改为横向滑动长图（每根柱 ~14px、默认停最新），滑动提示首次滚动后淡出。 */
+.stk-r90box{position:relative}
+.stk-r90scroll{width:100%;height:100%}
+.stk-r90swipe{position:absolute;right:8px;top:6px;z-index:4;pointer-events:none;display:none;
+  padding:3px 9px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--panel2) 88%,transparent);
+  border:1px solid var(--line);box-shadow:var(--card-shadow);font-size:var(--fs-10);color:var(--mut);
+  white-space:nowrap;transition:opacity .3s ease}
+.stk-r90swipe.off{opacity:0}
+.sk-r90{opacity:.92;transition:opacity .12s ease,filter .12s ease}
+.sk-r90.bad{opacity:.16}
+.stk-r90svg.hot .sk-r90{opacity:.34}
+.stk-r90svg.hot .sk-r90.on{opacity:1;filter:brightness(1.18)}
+.stk-r90svg.hot .sk-r90.bad{opacity:.16}
+.stk-grid.g3r90{grid-template-columns:repeat(3,1fr)}
+@media (max-width:680px){
+  .stk-r90scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;overscroll-behavior-x:contain}
+  .stk-r90scroll::-webkit-scrollbar{display:none}
+  .stk-r90scroll svg{width:1200px}
+  .stk-r90swipe{display:block}
+}
 
 /* v3.29.8 钱包分层：整行可点，弹出该档买卖明细（手机没有 hover，点击看数） */
 .stk-flow-hint{display:flex;align-items:center;gap:6px;font-size:var(--fs-10);color:var(--mut2);margin:10px 2px 6px}
@@ -5333,6 +5355,10 @@ zh:{
   chartDaily:'每天的收入与买回（最近 {n} 天）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
   chartHourly:'最近 72 小时', hourTabRev:'收入', hourTabBurn:'销毁', hourTabVol:'交易量',
   chartPrice:'价格走势（最近 {n} 天，STONK/SOL 日线收盘）',
+  chartRev90:'官方日收入（最近 {n} 天，StonkFun Revenue）',
+  r90Latest:'最新一天', r90Avg:'日均收入', r90Peak:'单日峰值', r90Days:'天',
+  r90Vs:'较前日', r90NoData:'官方当天无数据（不估算）', r90Swipe:'← 左右滑动看更早',
+  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天数值。',
   pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
   dBuy:'买', dSell:'卖', dBuyShare:'买盘笔数占比', dTraders:'买/卖家数', dNetflow:'主池净流入（24h）',
   dRecording:'记录中', dSnap:'已记录 {h} 小时，满 24 小时开始显示',
@@ -5410,6 +5436,10 @@ en:{
   chartDaily:'Daily revenue and buybacks (last {n} days)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
   chartHourly:'Last 72 hours', hourTabRev:'Revenue', hourTabBurn:'Burn', hourTabVol:'Volume',
   chartPrice:'Price (last {n} days, STONK/SOL daily close)',
+  chartRev90:'Official daily revenue (last {n} days, StonkFun)',
+  r90Latest:'Latest day', r90Avg:'Daily average', r90Peak:'Best day', r90Days:'days',
+  r90Vs:'vs prev', r90NoData:'no official value that day (never estimated)', r90Swipe:'← swipe for earlier',
+  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day.',
   pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
   dBuy:'buys', dSell:'sells', dBuyShare:'Buy share', dTraders:'traders (buy/sell)', dNetflow:'Main pool net flow (24h)',
   dRecording:'recording', dSnap:'{h}h recorded — shows once 24h is covered',
@@ -5809,6 +5839,17 @@ function stkFlyHTML(fw, h){
     +     '<div class="stk-tip" id="stkPTip"></div>'
     +   '</div>'
     +   '<div class="stk-axis stk-pax" id="stkPAx"></div>'
+    + '</div>'
+    + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
+    +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartRev90').replace('{n}', (((stkBundle()||{}).flywheel||{}).rev90||{}).n || 0))+'</span></div>'
+    +   '<div class="stk-grid g3r90" id="stkR90Stat"></div>'
+    +   '<div class="stk-chart stk-r90box" style="margin-top:10px">'
+    +     '<div class="stk-r90scroll" id="stkR90Scroll"><svg class="stk-r90svg" id="stkR90Chart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg></div>'
+    +     '<div class="stk-r90swipe off" id="stkR90Swipe">'+esc(st('r90Swipe'))+'</div>'
+    +     '<div class="stk-tip" id="stkR90Tip"></div>'
+    +   '</div>'
+    +   '<div class="stk-axis stk-pax" id="stkR90Ax"></div>'
+    +   '<div class="stk-note" id="stkR90Sum" style="margin-top:10px"></div>'
     + '</div>';
 }
 
@@ -6425,10 +6466,107 @@ function stkDrawPrice(){
     svg.addEventListener('touchend', hide);
   }
 }
+/* v3.29.20：官方日收入 90 天 —— 绿色渐变柱状图；桌面悬停 / 手机轻点看当天数值。
+   手机端是横向滑动长图（默认停最新），所以气泡按「相对卡片」定位，滚动后也不会飘。 */
+function stkR90Hover(svg, box, tip, n, cb){
+  function at(ev){
+    var r=svg.getBoundingClientRect();
+    var cx=(ev.touches&&ev.touches[0]? ev.touches[0].clientX : ev.clientX)-r.left;
+    return Math.max(0, Math.min(n-1, Math.floor(cx/Math.max(1,r.width)*n)));
+  }
+  function show(ev){
+    var i=at(ev);
+    tip.innerHTML=cb(i);
+    tip.classList.add('on');
+    var br=box.getBoundingClientRect();
+    var tw=Math.min(tip.offsetWidth||96, Math.max(70, br.width-10));
+    var mx=(ev.touches&&ev.touches[0]? ev.touches[0].clientX : ev.clientX)-br.left;
+    tip.style.left=Math.max(tw/2+2, Math.min(br.width-tw/2-2, mx)).toFixed(1)+'px';
+    var rs=svg.querySelectorAll('.sk-r90');
+    for(var k=0;k<rs.length;k++) rs[k].classList.toggle('on', +rs[k].getAttribute('data-i')===i);
+    svg.classList.add('hot');
+  }
+  function hide(){
+    tip.classList.remove('on');
+    svg.classList.remove('hot');
+    var rs=svg.querySelectorAll('.sk-r90');
+    for(var k=0;k<rs.length;k++) rs[k].classList.remove('on');
+  }
+  svg.addEventListener('mousemove', show);
+  svg.addEventListener('mouseleave', hide);
+  svg.addEventListener('touchstart', show, {passive:true});
+  svg.addEventListener('touchmove', show, {passive:true});
+  svg.addEventListener('touchend', hide);
+}
+function stkDrawRev90(){
+  var d=stkBundle(); if(!d) return;
+  var r9=(d.flywheel||{}).rev90||{};
+  var rev=r9.rev||[], dates=r9.dates||[], n=Math.min(rev.length, dates.length);
+  var svg=document.getElementById('stkR90Chart'), tip=document.getElementById('stkR90Tip');
+  if(!svg) return;
+  /* 顶部三格：最新 / 日均 / 峰值 —— 不进图表也能先看到具体数字 */
+  var stat=document.getElementById('stkR90Stat');
+  if(stat){
+    var lastV=null, lastD='';
+    for(var q=n-1;q>=0;q--){ if(rev[q]!=null&&isFinite(rev[q])){ lastV=rev[q]; lastD=dates[q]; break; } }
+    stat.innerHTML=[
+      '<div class="stk-cell"><div class="k">'+esc(st('r90Latest'))+'</div><div class="v">'+(lastV!=null? fmtU(lastV):'—')+'<small>'+esc(String(lastD||'').slice(5))+'</small></div></div>',
+      '<div class="stk-cell"><div class="k">'+esc(st('r90Avg'))+'</div><div class="v">'+(r9.avg!=null? fmtU(r9.avg):'—')+'<small>'+esc((r9.n||n)+' '+st('r90Days'))+'</small></div></div>',
+      '<div class="stk-cell"><div class="k">'+esc(st('r90Peak'))+'</div><div class="v">'+(r9.max!=null? fmtU(r9.max):'—')+'<small>'+esc(String(r9.maxDate||'').slice(5))+'</small></div></div>'
+    ].join('');
+  }
+  var sum=document.getElementById('stkR90Sum');
+  if(sum) sum.textContent=st('r90Note').replace('{n}', String(n));
+  var ax=document.getElementById('stkR90Ax');
+  if(ax) ax.innerHTML='';
+  if(!n){ svg.innerHTML=''; return; }
+  var H=300, padT=14, padB=16, innerH=H-padT-padB;
+  var mx=0;
+  for(var i=0;i<n;i++){ var v=rev[i]; if(v!=null&&isFinite(v)) mx=Math.max(mx,v); }
+  mx=mx||1;
+  var step=1200/n, bw=Math.min(18, Math.max(2.4, step*0.66));
+  var parts=['<defs><linearGradient id="stkR90G" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".98"></stop>'
+    +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".42"></stop></linearGradient></defs>'];
+  for(var j=0;j<n;j++){
+    var vv=rev[j], bad=(vv==null||!isFinite(vv));
+    var hh=bad? 0.9 : Math.max(1.2, innerH*vv/mx);
+    var x=j*step+(step-bw)/2;
+    parts.push('<rect class="sk-b sk-r90'+(bad?' bad':'')+'" data-i="'+j+'" x="'+x.toFixed(2)+'" y="'+(padT+innerH-hh).toFixed(2)
+      +'" width="'+bw.toFixed(2)+'" height="'+hh.toFixed(2)+'" rx="2" fill="url(#stkR90G)"></rect>');
+  }
+  svg.innerHTML=parts.join('');
+  if(ax){
+    var md=function(s){ return String(s||'').slice(5); };
+    var ids=[0, Math.round((n-1)/3), Math.round((n-1)*2/3), n-1], uniq=[];
+    ids.forEach(function(k){ if(uniq.indexOf(k)<0) uniq.push(k); });
+    ax.innerHTML=uniq.map(function(k){ return '<span>'+esc(md(dates[k]))+'</span>'; }).join('');
+  }
+  if(tip){
+    stkR90Hover(svg, svg.closest('.stk-r90box')||svg.parentNode||svg, tip, n, function(k){
+      var v2=rev[k];
+      if(v2==null||!isFinite(v2)) return '<b>'+esc(dates[k]||'')+'</b> · '+esc(st('r90NoData'));
+      var t2='<b>'+esc(dates[k]||'')+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
+      var pv=(k>0? rev[k-1] : null);
+      if(pv!=null&&isFinite(pv)&&pv>0){ var pc=v2/pv-1; t2+=' · '+esc(st('r90Vs'))+' '+(pc>=0?'+':'')+(pc*100).toFixed(1)+'%'; }
+      return t2;
+    });
+  }
+  /* 手机端：默认停在最新（最右）；提示条第一次滑动后淡出 */
+  var sc=document.getElementById('stkR90Scroll'), hint=document.getElementById('stkR90Swipe');
+  if(sc){
+    if(sc.scrollWidth>sc.clientWidth+8) sc.scrollLeft=sc.scrollWidth;
+    if(hint){
+      hint.classList.remove('off');
+      if(!sc.__r9hint){ sc.__r9hint=1; sc.addEventListener('scroll', function(){ hint.classList.add('off'); }, {passive:true}); }
+    }
+  }
+}
 function stkDraw(){
   try{ stkDrawDaily(); }catch(e){ console.error('stk daily', e); }
   try{ stkDrawHour(true); }catch(e){ console.error('stk hour', e); }
   try{ stkDrawPrice(); }catch(e){ console.error('stk price', e); }
+  try{ stkDrawRev90(); }catch(e){ console.error('stk rev90', e); }
   try{ stkModelPaint(); }catch(e){ console.error('stk model', e); }
 }
 

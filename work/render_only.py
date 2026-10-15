@@ -9,6 +9,23 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.20「90 天官方日收入图」 · 2026-10-15
+     【为什么做这一版】作者要求在 STONK 深度页补一张「90 天 Revenue」柱状图（数据源
+       stonkfun.xyz/revenue），位置放在「价格走势」卡片正下方，并要求数值一眼可见。
+     【这一版改了什么】
+       ① work/stonk_page.py：新增 sf_daily_all() —— 官方日线 ?limit=100 一次拿全
+          （现有 84 个完整日，07-23 起）。注意旧 _sf_get 走 translate.goog 会把 query
+          吃掉（只剩默认 25 天），这里改用「保留 query」的中转拼法；取数失败时回退到
+          25 天档（图仍能画，只是窗口短）。payload.flywheel 新增 rev90：
+          {dates, rev, n, sum, avg, max, maxDate}；只取完整日（不含未过完的今天），
+          缺失日写 null、不估算。
+       ② template.html：价格走势卡片下方新增「官方日收入（最近 n 天）」卡片 ——
+          顶部三格数据签（最新一天 / 日均收入 / 单日峰值，不进图表就能读到数）、
+          绿色渐变柱状图、四档日期轴、来源与口径说明；桌面悬停 / 手机轻点柱体弹数据框
+          （当天收入 + 较前日涨跌），移开即消失；手机端（≤680px）改横向滑动长图、
+          默认停最新，滑动提示首次滚动后淡出。中英文案同步补齐。
+     回退：cp work/stonk_page.py.bak-v32920 work/stonk_page.py && cp work/template.html.bak-v32920 work/template.html && cp work/render_only.py.bak-v32920 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.19「小时模式也修坏榜」 · 2026-10-14
      【为什么做这一版】v3.29.18 修好了排行榜的 0 值取数（前端自愈 + 全量构建兜底），
        但快照里内嵌的旧榜要等到下一次全量（每天 01:23 UTC）才被替换 —— 打开页面
@@ -880,10 +897,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.19-2026-10-14">
+<meta name="dashboard-version" content="v3.29.20-2026-10-15">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.19 · 2026-10-14"
+VER = "v3.29.20 · 2026-10-15"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

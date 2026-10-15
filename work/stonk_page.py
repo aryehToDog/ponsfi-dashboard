@@ -16,6 +16,7 @@
     采样不足时前端明确写「记录中」。
 """
 import datetime, json, os, sys, time
+import urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -59,6 +60,43 @@ def jload(path, default=None):
             return json.load(fh)
     except Exception:
         return default
+
+
+def sf_daily_all():
+    """官方日线全量（v3.29.20）：?limit=100 → 目前一次拿全 85 天（07-23 起）。
+
+    坑：H._sf_get 走 translate.goog 会把 query 吃掉（只剩默认 25 天），所以这里用
+    「保留 query」的中转拼法（同 _sf_ledger_urls），国内/海外都能拿全量。"""
+    target = H.SF_DAILY_API + "?limit=100"
+    u = urllib.parse.urlparse(target)
+    q = urllib.parse.quote(target, safe="")
+    tr = ("https://%s.translate.goog%s?" % (u.netloc.replace(".", "-"), u.path)
+          + (u.query + "&" if u.query else "")
+          + "_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en")
+    urls = [tr,
+            "https://api.cors.lol/?url=" + q,
+            "https://r.jina.ai/" + target,
+            "https://api.allorigins.win/raw?url=" + q,
+            "https://api.codetabs.com/v1/proxy?quest=" + q]
+    if os.environ.get("PONSPULSE_SF_DIRECT") == "1":
+        urls.insert(0, target)          # 海外节点（GitHub Actions）直连最快最稳
+    last = None
+    for url in urls:
+        for i in range(2):
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
+                                                           "Accept": "application/json,text/plain,*/*",
+                                                           "Connection": "close"})
+                body = urllib.request.urlopen(req, timeout=45).read().decode("utf-8", "replace")
+                j = H._sf_parse(body)
+                days = (j or {}).get("days") if isinstance(j, dict) else None
+                if days:
+                    return days
+                last = ValueError("bad payload: %s" % body[:80])
+            except Exception as exc:
+                last = exc; time.sleep(1.2 + i)
+    print("warn: sf daily all: %s" % last, file=sys.stderr)
+    return None
 
 
 def safe_get(url, tries=2, label=""):
@@ -223,6 +261,7 @@ def main():
     rug = safe_get(RUG, tries=1, label="rugcheck") or {}
     sf_tot = H._sf_get(H.SF_API) or {}
     sf_daily = H._sf_get(H.SF_DAILY_API) or {}
+    sf_daily_all_days = sf_daily_all() or (sf_daily.get("days") or [])   # 全量 85 天（v3.29.20 90 天收入图用）
     sf_burns = H._sf_ledger_get(H.SF_BURNS_API) or {}
     sf_fly = H._sf_get(H.SF_FLY_API) or {}
 
@@ -304,6 +343,25 @@ def main():
         "count": [int(fnum(d.get("buybackCount")) or 0) for d in days],
         "bought": [round(fnum(d.get("boughtTokens")) or 0, 4) for d in days],
     }
+
+    # ---- 官方日线全量（v3.29.20）：90 天收入柱状图（只取完整日，不含未过完的今天） ----
+    fa = [d for d in (sf_daily_all_days or []) if isinstance(d, dict) and d.get("date")]
+    fa.sort(key=lambda d: d["date"])
+    fa = [d for d in fa if d["date"] < today][-90:]
+    rv90 = []
+    for d in fa:
+        v90 = fnum(d.get("revenueUsd"))
+        rv90.append(round(v90, 2) if v90 is not None else None)
+    rev90 = {"dates": [d["date"] for d in fa], "rev": rv90}
+    rev90["n"] = len(rev90["rev"])
+    if rev90["rev"]:
+        vals = [v for v in rev90["rev"] if v is not None]
+        tot90 = sum(vals) if vals else None
+        mx90 = max(vals) if vals else None
+        rev90["sum"] = round(tot90, 2) if tot90 is not None else None
+        rev90["avg"] = round(tot90 / len(vals), 2) if (tot90 is not None and vals) else None
+        rev90["max"] = round(mx90, 2) if mx90 is not None else None
+        rev90["maxDate"] = rev90["dates"][rev90["rev"].index(mx90)] if mx90 is not None else None
 
     def avg(seq):
         seq = [x for x in seq if x is not None]
@@ -424,6 +482,7 @@ def main():
         },
         "burns": burns_feed,
         "flywheel": {
+            "rev90": rev90,
             "dates": dly["dates"], "rev": dly["rev"], "buyback": dly["buyback"], "burnTok": dly["burn"],
             "count": dly["count"],
             "rev7": rev7, "rev7prev": rev7p, "chg7": chg7,
@@ -489,8 +548,8 @@ def main():
     H.atomic_dump(payload, OUT)
     dd["stonkPage"] = payload
     H.atomic_dump(dd, DD)
-    print("stonk-page: price=%s (gt=%s) mcap=%s burned=%s holders=%s pools=%s bulls=%s/%s snaps=%s" % (
-        px_use, price, mcap_use, burned_tot, holders, len(pools), tally["bull"], len(items), len(snaps)))
+    print("stonk-page: price=%s (gt=%s) mcap=%s burned=%s holders=%s pools=%s bulls=%s/%s snaps=%s rev90=%s" % (
+        px_use, price, mcap_use, burned_tot, holders, len(pools), tally["bull"], len(items), len(snaps), rev90["n"]))
     return 0
 
 

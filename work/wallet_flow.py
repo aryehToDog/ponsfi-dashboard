@@ -25,6 +25,12 @@
   · 局限（前端原样标注）：只覆盖 DEX 成交（转帐 / OTC 不算）；做市商没有公开标签
     （截图类产品的 MM 档无公开数据源，不硬造）；分层用当前余额，窗口内刚清仓 /
     刚建仓的钱包可能归错档。
+  · 成本线 / 浮盈浮亏（v3.29.28）：「窗口买入均价 = 窗口买入额 ÷ 枚数」与现价比，
+    回答作者的问题「这个地址是赚钱买入还是亏钱买入」。枚数优先用成交自带的实测值
+    （v3.29.26 起入库的条目）；更早的条目没有这个字段，按「成交当小时收盘价」
+    折算（GT ohlcv/hour，实测 587 笔有枚数的成交：折算价与真实成交单价偏差中位数
+    0.35%、95.4% 在 ±1% 内，2026-10-17 验证）。含折算的行前端标 ≈，不硬说实测。
+    注意：这只是「窗口内买入」的成本线，不是钱包的全仓成本（窗口之外的老仓无法回溯）。
 
 用法：由 stonk_page.py 调用 sample()；本文件可单独跑 --selftest 做本机验证。
 """
@@ -274,6 +280,27 @@ def _fetch_pool_trades(pool):
     return out
 
 
+def _fetch_px_hist(pool, limit=26):
+    """主池最近 N 小时的小时收盘价（GT ohlcv/hour）→ [(bucket_ts, close)]，失败返回 []。
+
+    用途（v3.29.28）：成本线要「枚数」才能算均价，而账本里 v3.29.26 之前入库的成交
+    没有枚数字段 → 用成交当小时的收盘价把美元额折算成枚数。这不是拍脑袋的近似：
+    2026-10-17 拿 587 笔同时有枚数的真实成交回测，折算价与成交单价的偏差中位数 0.35%、
+    95.4% 在 ±1% 内（STONK 小时内的价格波动本来就小）。前端对含折算的行标 ≈。
+    """
+    net, _ = H.POOLS["stonk"]
+    url = "%s/networks/%s/pools/%s/ohlcv/hour?limit=%d&aggregate=1" % (GT, net, pool, limit)
+    j = H.get(url)
+    rows = (((j or {}).get("data") or {}).get("attributes") or {}).get("ohlcv_list") or []
+    out = []
+    for r in rows:
+        try:
+            out.append((int(r[0]) // 3600 * 3600, float(r[4])))
+        except Exception:
+            continue
+    return out
+
+
 def _tier_of(usd):
     for key, lo in TIER_ORDER:
         if usd >= lo:
@@ -309,14 +336,28 @@ def _bot_reason(w, n, buy, sell):
     return None
 
 
-def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
+def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None, px_hist=None):
     """采样一轮 → 聚合结果 dict；price 拿不到 / 完全没数据时返回 None。
 
     trade_fetcher(pool) → [attributes]；默认 H.get 拉 GT。测试时可注入。
+    px_hist = [(bucket_ts, close)]：成本线里给旧条目折算枚数用的小时收盘价（v3.29.28）；
+    不传且走真实网络时自动拉主池（测试注入 trade_fetcher 时不会联网）。
     """
     now = int(now or time.time())
     fetcher = trade_fetcher or _fetch_pool_trades
     errs = []
+    if px_hist is None and trade_fetcher is None and pool_addrs:
+        try:
+            px_hist = _fetch_px_hist(pool_addrs[0])
+        except Exception as exc:
+            px_hist = []
+            errs.append("px:%s" % str(exc)[:70])
+    pxmap = {}
+    for it in (px_hist or []):
+        try:
+            pxmap[int(it[0]) // 3600 * 3600] = float(it[1])
+        except Exception:
+            pass
     st = jload(state_path, {}) or {}
     tr = st.get("tr") or {}
     tiers = st.get("tiers") or {}
@@ -398,9 +439,16 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
     span_lo, span_hi = None, None
     per = {}                     # 钱包 → 窗口内买卖合计（前 20 榜用）
     tok_tr = tok_have = 0        # 数量字段覆盖率（旧账本条目没有，页面如实标注）
+    fold_usd = all_usd = 0.0     # 成本线里「按小时收盘价折算枚数」的成交额占比（v3.29.28）
     for entry in tr.values():
         t, w, kind, u = entry[0], entry[1], entry[2], entry[3]
         tok = entry[4] if len(entry) > 4 else None
+        # 成本线用的「有效枚数」：实测优先；旧条目没有枚数字段时按当小时收盘价折算
+        tok_eff, folded = tok, False
+        if tok is None and u and pxmap:
+            fpx = pxmap.get(int(t // 3600 * 3600))
+            if fpx:
+                tok_eff, folded = u / fpx, True
         if t < cutoff:
             continue
         tv = tiers.get(w)
@@ -417,13 +465,25 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         p = per.get(w)
         if p is None:
             p = per[w] = {"buy": 0.0, "sell": 0.0, "btok": 0.0, "stok": 0.0,
+                          "bq": 0.0, "sq": 0.0, "foldB": 0.0, "foldS": 0.0,
                           "nb": 0, "ns": 0, "miss": 0}
+        all_usd += u
+        if folded:
+            fold_usd += u
         if kind == "b":
             p["buy"] += u
             p["nb"] += 1
+            if tok_eff:
+                p["bq"] += tok_eff
+                if folded:
+                    p["foldB"] += u
         else:
             p["sell"] += u
             p["ns"] += 1
+            if tok_eff:
+                p["sq"] += tok_eff
+                if folded:
+                    p["foldS"] += u
         tok_tr += 1
         if tok:
             tok_have += 1
@@ -467,6 +527,14 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
             "stok": round(p["stok"], 4) if (p["stok"] and not p["miss"]) else None,
             "nb": p["nb"], "ns": p["ns"],
             "bal": bal, "balt": balt,
+            # 成本线（v3.29.28）：均价 = 金额 ÷ 有效枚数（实测 + 按小时收盘价折算）；
+            # apxB / apxS = 该方向成交额里「折算」占的百分比（>0 前端标 ≈，0 = 全实测）
+            "bq": round(p["bq"], 4) if p["bq"] else None,
+            "sq": round(p["sq"], 4) if p["sq"] else None,
+            "bavg": round(p["buy"] / p["bq"], 8) if p["bq"] else None,
+            "savg": round(p["sell"] / p["sq"], 8) if p["sq"] else None,
+            "apxB": round(p["foldB"] / p["buy"] * 100, 1) if p["buy"] else 0,
+            "apxS": round(p["foldS"] / p["sell"] * 100, 1) if p["sell"] else 0,
         }
 
     for w, p in per.items():
@@ -501,6 +569,7 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         "botVol": round(bot_vol, 2),
         "botMix": bot_mix,
         "tokCover": round(tok_have / tok_tr * 100, 1) if tok_tr else None,
+        "foldPct": round(fold_usd / all_usd * 100, 1) if all_usd else None,
         "srcNote": "GeckoTerminal 成交 + Solana RPC 余额（本站采样）",
     }
     H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now,

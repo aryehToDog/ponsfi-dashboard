@@ -2052,6 +2052,10 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-wlr .ad i{font-style:normal;font-size:9px;font-weight:700;border-radius:999px;padding:1px 6px;flex:0 0 auto;
   border:1px solid var(--line);color:var(--mut);white-space:nowrap}
 .stk-wlr .ad i.dup{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--accent)}
+/* v3.29.28：成本线 chip（浮盈 / 浮亏）—— 这家窗口买入的货，按现价算是赚是亏 */
+.stk-wlr .ad i.pl{border-color:transparent}
+.stk-wlr .ad i.pl.up{color:var(--up);background:color-mix(in srgb,var(--up) 14%,transparent)}
+.stk-wlr .ad i.pl.down{color:var(--down);background:color-mix(in srgb,var(--down) 14%,transparent)}
 .stk-wlr .am{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:var(--fs-12);white-space:nowrap}
 .stk-wlr .am.b{color:var(--up)} .stk-wlr .am.s{color:var(--down)}
 /* v3.29.27：金额下面补一行净额（买 − 卖）——「买入榜」里的人不一定真的在囤货 */
@@ -2072,6 +2076,8 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   line-height:1.6;background:color-mix(in srgb,var(--panel) 45%,var(--panel2))}
 .stk-wlp .ft b{color:color-mix(in srgb,var(--txt) 86%,var(--mut));font-weight:700;font-variant-numeric:tabular-nums}
 .stk-wlp .ft .pk{color:var(--wn-txt);font-weight:600}
+.stk-wlp .ft b.up{color:color-mix(in srgb,var(--up) 78%,var(--mut))}
+.stk-wlp .ft b.down{color:color-mix(in srgb,var(--down) 78%,var(--mut))}
 .stk-wlr .sub{grid-column:2/4;font-size:var(--fs-10);color:var(--mut);display:flex;flex-wrap:wrap;gap:1px 8px;
   font-variant-numeric:tabular-nums;line-height:1.45}
 .stk-wlr .sub b{font-weight:700;color:color-mix(in srgb,var(--txt) 84%,var(--mut))}
@@ -2081,6 +2087,8 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   /* 320px 窄屏：地址列放不下「地址 + 徽章」时让徽章换行，地址永远完整显示（不出现省略号截断） */
   .stk-wlr .ad{flex-wrap:wrap;row-gap:2px}
   .stk-wlr .ad b{font-size:10px}
+  /* 窄屏再省一行：行内不铺「数量」（弹框里还在），优先给成本线 / 余额留空间 */
+  .stk-wlr .sub .qt{display:none}
 }
 .stk-pop .cp{margin-left:auto;font-size:var(--fs-10);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));
   border-radius:var(--r-pill);padding:1px 8px;cursor:pointer;white-space:nowrap}
@@ -5594,7 +5602,7 @@ zh:{
   wlRgas:'gas 机器人', wlRhf:'高频机器', wlRmm:'双向对刷',
   wlFiltFoot:'过滤口径（行为启发式，宁可漏、不误杀，名单在这里可对账）：gas＝已核实的 gas 竞价机器人；高频＝24h ≥300 笔，或 ≥60 笔且单笔平均 ≤$1,000；对刷＝24h ≥40 笔且买卖两边体量相当（都 ≥ 对方 35%）、净额 ≤ 双向总额 15%。',
   wlEmpty:'还没攒够采样：新榜随云端每小时采样滚动生成（满 24 小时为完整窗口）。',
-  wlNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal 前 5 大池），转账 / OTC 不计；排名按 24 小时该方向成交额；「数量」为该方向成交的代币枚数（自本次更新起记录，滚动 24 小时后完整）；「余额」为最近一次链上余额快照（48 小时内有效），0 = 当前不持有。正数＝买入，负数＝卖出。',
+  wlNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal 前 5 大池），转账 / OTC 不计；排名按 24 小时该方向成交额；「数量」为该方向成交的代币枚数（早期入库的成交没有枚数字段，按当小时收盘价折算，标 ≈）；「余额」为最近一次链上余额快照（48 小时内有效），0 = 当前不持有。正数＝买入，负数＝卖出。',
   wlTokPend:'数量字段自本次更新起记录：当前覆盖 {p}，满 24 小时后完整；金额与排名不受影响。',
   wlCopy:'复制地址', wlCopied:'已复制 ✓', wlScan:'Solscan 查看',
   wlNet:'净额（买 − 卖）', wlQtyBuy:'买入数量', wlQtySell:'卖出数量',
@@ -5603,6 +5611,11 @@ zh:{
   wlThr:'上榜门槛', wlHold:'家合计还持有', wlClearedCnt:'家已清仓',
   wlSellHold:'≈ 他们 24h 卖出额的 {x} 倍（还有货）',
   wlNBuysSells:'买 / 卖笔数', wlBalAge:'{h} 小时前', wlBalAgeN:'余额快照',
+  wlCost:'成本线', wlSellPx:'卖均价', wlGain:'浮盈', wlLoss:'浮亏',
+  wlNoBuy:'窗口无买入（老仓出货）',
+  wlPnlSum:'窗口买入筹码浮盈', wlPnlSumSub:'按现价 · 仅窗口买入部分',
+  wlPopBavg:'窗口买入均价', wlPopSavg:'窗口卖出均价', wlPopVsPx:'相对现价',
+  wlPnlNote:'成本线 = 窗口买入额 ÷ 枚数（早于 v3.29.26 入库的成交没有枚数字段，按当小时收盘价折算，标 ≈），与现价比 —— 只反映窗口内买入的这部分，不含窗口之外的老仓成本。',
   wlPopFoot:'只统计 DEX 逐笔成交；余额为链上快照（48 小时内），0 = 当前不持有。',
   flPopVol:'成交额', flPopN:'成交笔数', flPopShare:'占采样成交', flPopSide:'买卖占比（买/卖）',
   flPopFoot:'口径与上方总表一致：只统计 DEX 逐笔成交；正数＝净买入，负数＝净卖出。',
@@ -5698,7 +5711,7 @@ en:{
   wlRgas:'gas bot', wlRhf:'high-freq', wlRmm:'wash/MM',
   wlFiltFoot:'Heuristic filters (favour missing over mis-flagging; the list is shown for audit): gas = verified gas-bidding bot; high-freq = 300+ trades/24h, or 60+ trades averaging ≤$1,000; wash/MM = 40+ trades with both sides ≥35% of each other and net ≤15% of turnover.',
   wlEmpty:'Still sampling: this board builds as the cloud samples every hour (24h = full window).',
-  wlNote:'Method: DEX trades only (GeckoTerminal, top 5 pools); transfers / OTC excluded. Ranking uses 24h volume on that side. “Amount” is the token quantity traded that side (recorded from this release onward; complete after a rolling 24h). “Balance” is the latest on-chain snapshot (valid ≤48h); 0 = currently holds none. Positive = buying, negative = selling.',
+  wlNote:'Method: DEX trades only (GeckoTerminal, top 5 pools); transfers / OTC excluded. Ranking uses 24h volume on that side. “Amount” is the token quantity traded that side (earlier trades carry no token field and are converted at the hourly close, marked ≈). “Balance” is the latest on-chain snapshot (valid ≤48h); 0 = currently holds none. Positive = buying, negative = selling.',
   wlTokPend:'Token amounts are recorded from this release onward: currently {p} covered — complete after 24h. Amounts and ranking are unaffected.',
   wlCopy:'Copy', wlCopied:'Copied ✓', wlScan:'Solscan',
   wlNet:'Net (buy − sell)', wlQtyBuy:'Bought (tokens)', wlQtySell:'Sold (tokens)',
@@ -5707,6 +5720,11 @@ en:{
   wlThr:'Cutoff', wlHold:'wallets still hold', wlClearedCnt:'exited',
   wlSellHold:'≈ {x}× their 24h sells (more to come)',
   wlNBuysSells:'buys / sells', wlBalAge:'{h}h ago', wlBalAgeN:'Balance snapshot',
+  wlCost:'cost', wlSellPx:'sell px', wlGain:'in profit', wlLoss:'in loss',
+  wlNoBuy:'no buys in window (older bags)',
+  wlPnlSum:'Unrealized P&L on window buys', wlPnlSumSub:'at current price · window buys only',
+  wlPopBavg:'Avg buy price (window)', wlPopSavg:'Avg sell price (window)', wlPopVsPx:'vs current price',
+  wlPnlNote:'Cost basis = window buy volume ÷ tokens (trades booked before v3.29.26 carry no token field and are converted at the hourly close, marked ≈), compared with the current price — window buys only, older inventory excluded.',
   wlPopFoot:'DEX trades only; balance is an on-chain snapshot (≤48h); 0 = holds none right now.',
   flPopVol:'Volume', flPopN:'Trades', flPopShare:'of sampled volume', flPopSide:'Buy/sell split (buy/sell)',
   flPopFoot:'Same basis as the table above: DEX trades only; positive = net buying, negative = net selling.',
@@ -6394,6 +6412,34 @@ function stkFlowPopClose(ev){
    ========================================================================== */
 var STK_WL_TOT=0;
 function stkSlug(a){ a=String(a||''); return a.length>16? a.slice(0,6)+'\u2026'+a.slice(-4) : a; }
+/* v3.29.28：成本线（窗口买入均价 / 卖出均价）→ 与现价比的浮盈浮亏。
+   现价只走全站唯一出口 pxOf('stonkfun')；拿不到价就整块不显示（宁可空，不报假数）。 */
+function stkPnlPct(bavg){
+  var px=pxOf('stonkfun');
+  if(!(bavg>0) || !(px>0)) return null;
+  return (px/bavg - 1) * 100;
+}
+function stkPnlTxt(bavg){
+  var v=stkPnlPct(bavg);
+  if(v==null) return null;
+  var up=(v>=0);
+  return {up:up, txt:(up? st('wlGain') : st('wlLoss'))+' '+(up?'+':'\u2212')+Math.abs(v).toFixed(Math.abs(v)<100?1:0)+'%'};
+}
+function stkPnlChip(bavg){
+  var t=stkPnlTxt(bavg);
+  return t? '<i class="pl '+(t.up?'up':'down')+'">'+esc(t.txt)+'</i>' : '';
+}
+/* 一批行的加权成本线 → 「成本线 ≈$0.1194 → 浮盈 +6.2%」（面板落点小结用） */
+function stkPnlBit(rows){
+  var usd=0, tok=0, apx=0;
+  rows.forEach(function(r){
+    if(r.bavg>0 && r.bq>0){ usd+=(r.buy||0); tok+=r.bq; if(r.apxB>0) apx=1; }
+  });
+  if(!(tok>0)) return null;
+  var avg=usd/tok, t=stkPnlTxt(avg);
+  return esc(st('wlCost'))+' <b>'+(apx?'\u2248':'')+pxS(avg)+'</b>'
+    + (t? ' \u2192 <b class="'+(t.up?'up':'down')+'">'+esc(t.txt)+'</b>' : '');
+}
 function fmtTk(v){
   if(v==null||!isFinite(v)) return '\u2014';
   var a=Math.abs(v);
@@ -6431,6 +6477,10 @@ function stkWPopOpen(ev, row, hover){
   var nb=num(row.getAttribute('data-nb')), ns=num(row.getAttribute('data-ns'));
   var bal=num(row.getAttribute('data-bal')), balt=num(row.getAttribute('data-balt'));
   var balTs=num(row.getAttribute('data-balts'));
+  var bavg=num(row.getAttribute('data-bavg')), savg=num(row.getAttribute('data-savg'));
+  var apxb=num(row.getAttribute('data-apxb')), apxs=num(row.getAttribute('data-apxs'));
+  var bq=num(row.getAttribute('data-bq')), sq=num(row.getAttribute('data-sq'));
+  var pnl=(bavg>0)? stkPnlTxt(bavg) : null;   /* v3.29.28 成本线 → 浮盈浮亏 */
   var balAge=(bal==null || balTs==null)? '\u2014'
     : st('wlBalAge').replace('{h}', (Math.max(0,(Date.now()/1000-balTs)/3600)).toFixed(0));
   var side=(row.getAttribute('data-side')==='s')? 's':'b';
@@ -6438,6 +6488,9 @@ function stkWPopOpen(ev, row, hover){
   var share=(tv!=null && STK_WL_TOT>0)? tv/STK_WL_TOT*100 : null;
   var bp=(tv&&tv>0&&b!=null)? Math.max(2,Math.min(98,b/tv*100)) : null;
   var tok=esc(st('wlTokUnit'));
+  /* 数量：实测优先，没攒齐时用成本线折算的枚数（标 ≈，与行内一致） */
+  var qBuy=(bt!=null)? fmtTk(bt)+' '+tok : ((bq!=null)? '\u2248'+fmtTk(bq)+' '+tok : '\u2014');
+  var qSell=(stk!=null)? fmtTk(stk)+' '+tok : ((sq!=null)? '\u2248'+fmtTk(sq)+' '+tok : '\u2014');
   var pop=document.createElement('div');
   pop.className='stk-pop stk-pop-w'; pop.id='stkFlowPop';
   pop.innerHTML=
@@ -6452,8 +6505,11 @@ function stkWPopOpen(ev, row, hover){
     +   '<div><span>'+esc(st('flSell'))+'</span><b>'+(s==null?'\u2014':fmtU(s))+'</b></div>'
     +   '<div><span>'+esc(st('wlNet'))+'</span><b>'+((b==null||s==null)?'\u2014':((b-s>=0?'+':'\u2212')+fmtU(Math.abs(b-s))))+'</b></div>'
     +   '<div><span>'+esc(st('flPopN'))+'</span><b>'+((nb==null||ns==null)?'\u2014':(nS(nb+ns)+' '+st('flTrades')))+'</b></div>'
-    +   '<div><span>'+esc(st('wlQtyBuy'))+'</span><b>'+(bt==null?'\u2014':(fmtTk(bt)+' '+tok))+'</b></div>'
-    +   '<div><span>'+esc(st('wlQtySell'))+'</span><b>'+(stk==null?'\u2014':(fmtTk(stk)+' '+tok))+'</b></div>'
+    +   '<div><span>'+esc(st('wlQtyBuy'))+'</span><b>'+qBuy+'</b></div>'
+    +   '<div><span>'+esc(st('wlQtySell'))+'</span><b>'+qSell+'</b></div>'
+    +   '<div><span>'+esc(st('wlPopBavg'))+'</span><b>'+((bavg==null)?'\u2014':(((apxb>0)?'\u2248':'')+pxS(bavg)))+'</b></div>'
+    +   '<div><span>'+esc(st('wlPopSavg'))+'</span><b>'+((savg==null)?'\u2014':(((apxs>0)?'\u2248':'')+pxS(savg)))+'</b></div>'
+    +   '<div><span>'+esc(st('wlPopVsPx'))+'</span><b>'+(pnl? esc(pnl.txt) : '\u2014')+'</b></div>'
     +   '<div><span>'+esc(st('wlBal'))+'</span><b>'+(bal==null?'\u2014':(fmtU(bal)+(balt!=null? ' \u00b7 '+fmtTk(balt)+' '+tok:'')))+'</b></div>'
     +   '<div><span>'+esc(st('flPopShare'))+'</span><b>'+(share==null?'\u2014':share.toFixed(1)+'%')+'</b></div>'
     +   '<div><span>'+esc(st('wlNBuysSells'))+'</span><b>'+((nb==null||ns==null)?'\u2014':(nS(nb)+' / '+nS(ns)))+'</b></div>'
@@ -6470,6 +6526,8 @@ function stkWRow(r, i, side, dual, showTok){
   var b=(side==='b');
   var vol=(b? r.buy : r.sell)||0;
   var tok=b? r.btok : r.stok;
+  var tokApx=false;
+  if(tok==null){ var tq=(b? r.bq : r.sq); if(tq!=null){ tok=tq; tokApx=true; } }   /* v3.29.28：实测枚数没攒齐时用折算枚数（标 ≈） */
   var n=(b? r.nb : r.ns)||0;
   var net=(r.buy||0)-(r.sell||0);
   var ncls=(net>0.005)? 'up':((net<-0.005)? 'down':'');
@@ -6482,19 +6540,25 @@ function stkWRow(r, i, side, dual, showTok){
     + ' data-b="'+((r.buy!=null)?r.buy:'')+'" data-s="'+((r.sell!=null)?r.sell:'')+'" data-bt="'+((r.btok!=null)?r.btok:'')+'" data-st="'+((r.stok!=null)?r.stok:'')+'"'
     + ' data-nb="'+((r.nb!=null)?r.nb:'')+'" data-ns="'+((r.ns!=null)?r.ns:'')+'" data-bal="'+((r.bal!=null)?r.bal:'')+'" data-balt="'+((r.balt!=null)?r.balt:'')+'"'
     + ' data-balts="'+((r.balTs!=null)?r.balTs:'')+'"'
+    + ' data-bavg="'+((r.bavg!=null)?r.bavg:'')+'" data-savg="'+((r.savg!=null)?r.savg:'')+'"'
+    + ' data-apxb="'+((r.apxB!=null)?r.apxB:'')+'" data-apxs="'+((r.apxS!=null)?r.apxS:'')+'"'
+    + ' data-bq="'+((r.bq!=null)?r.bq:'')+'" data-sq="'+((r.sq!=null)?r.sq:'')+'"'
     + ' onclick="stkFlowPop(event, this)" onmouseenter="stkFlowHoverIn(this)" onmouseleave="stkFlowHoverOut(this)"'
     + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();stkFlowPop(event, this);}"'
     + ' aria-label="'+esc(stkSlug(r.w)+(LANG==='zh'? '：查看这家的买卖明细':' \u2014 view detail'))+'">'
     + '<span class="rk'+(i<3? ' t'+(i+1):'')+'">'+(i+1)+'</span>'
     + '<span class="ad"><b>'+esc(stkSlug(r.w))+'</b>'
       + (dual? '<i class="dup">'+esc(st('wlBoth'))+'</i>':'')
+      + stkPnlChip(r.bavg)
       + ((r.bal!=null && !(r.bal>0) && side==='s')? '<i>'+esc(st('wlCleared'))+'</i>':'')+'</span>'
     + '<span class="am '+(b?'b':'s')+'">'+(b?'+':'\u2212')+fmtU(vol)
       + '<small class="nt '+ncls+'">'+esc(st('wlNetShort'))+' '+(net>=0?'+':'\u2212')+fmtU(Math.abs(net))+'</small></span>'
     + '<span class="sub">'
-      + (showTok? '<span>'+esc(st('wlQty'))+' <b>'+(tok!=null? fmtTk(tok)+' '+esc(st('wlTokUnit')) : '\u2014')+'</b></span>':'')
+      + (showTok? '<span class="qt">'+esc(st('wlQty'))+' <b>'+((tok!=null)? ((tokApx?'\u2248':'')+fmtTk(tok)+' '+esc(st('wlTokUnit'))) : '\u2014')+'</b></span>':'')
       + '<span><b>'+nS(n)+'</b> '+esc(st('flTrades'))+'</span>'
       + '<span>'+esc(st('wlBal'))+' '+bal+'</span>'
+      + ((r.bavg!=null)? '<span>'+esc(st('wlCost'))+' <b>'+((r.apxB>0)?'\u2248':'')+pxS(r.bavg)+'</b></span>'
+          : ((r.savg!=null)? '<span>'+esc(st('wlSellPx'))+' <b>'+((r.apxS>0)?'\u2248':'')+pxS(r.savg)+'</b></span>' : ''))
     + '</span>'
     + '</div>';
 }
@@ -6525,6 +6589,10 @@ function stkWPanel(side, rows, dualMap, sumSide, showTok){
     if(cleared) bits.push('（'+cleared+' '+esc(st('wlClearedCnt'))+'）');
     if(!b && sumSide>0 && hold>0) bits.push('<span class="pk">'+esc(st('wlSellHold').replace('{x}', (hold/sumSide).toFixed(1)))+'</span>');
   }
+  /* v3.29.28：这批人的窗口成本线 → 相对现价的浮盈浮亏（拿不到现价 / 没有买入就不显示） */
+  var cost=stkPnlBit(rows);
+  if(cost) bits.push(cost);
+  else if(!b && rows.reduce(function(a,r){ return a+(r.buy||0); },0) < 1) bits.push(esc(st('wlNoBuy')));
   html+='<div class="ft">'+bits.join(' \u00b7 ')+'</div>';
   return '<div class="stk-wlp '+(b?'buy':'sell')+'">'+html+'</div>';
 }
@@ -6553,7 +6621,16 @@ function stkWalletTopHTML(wf){
   buy.forEach(function(r){ sumB+=(r.buy||0); });
   sell.forEach(function(r){ sumS+=(r.sell||0); });
   var net=sumB-sumS;
-  var showTok=(wf.tokCover==null)||(wf.tokCover>=2);   /* 数量还没开始积累时先不占位，免得整屏「—」 */
+  /* v3.29.28：榜单口径的「窗口买入筹码浮盈」= Σ(窗口买入枚数 × 现价 − 窗口买入额)，
+     只算窗口里买进来的那部分（买完又卖掉的不扣，口径小字写明）；两个榜合并去重。 */
+  var pxNow=pxOf('stonkfun'), pnlSum=0, pnlN=0, pnlApx=0, seenW={};
+  buy.concat(sell).forEach(function(r){
+    if(seenW[r.w]) return; seenW[r.w]=1;
+    if(pxNow>0 && r.bavg>0 && r.bq>0){ pnlSum += r.bq*pxNow - (r.buy||0); pnlN++; if(r.apxB>0) pnlApx=1; }
+  });
+  /* 数量列（v3.29.28）：榜上只要有任一行能给出枚数（实测或折算）就铺这一列，免得整屏「—」 */
+  var showTok=false;
+  buy.concat(sell).forEach(function(r){ if(r.btok!=null||r.stok!=null||r.bq!=null||r.sq!=null) showTok=true; });
   var pct=function(x){ return (STK_WL_TOT>0)? (x/STK_WL_TOT*100).toFixed(1)+'%' : '\u2014'; };
   var bp=(sumB+sumS)>0? sumB/(sumB+sumS)*100 : 50;
   var mix=(wf.botMix||{});
@@ -6562,6 +6639,7 @@ function stkWalletTopHTML(wf){
     + '<span>'+esc(st('wlSumSell'))+' <b class="down">'+fmtU(sumS)+'</b><small>'+(LANG==='zh'?'占采样 ':'of sampled ')+pct(sumS)+'</small></span>'
     + '<span>'+esc(st('wlSumNet'))+' <b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'\u2212')+fmtU(Math.abs(net))+'</b></span>'
     + '<span>'+esc(st('wlFilt'))+' <b>'+(wf.botN||0)+'</b><small>'+fmtU(wf.botVol||0)+' \u00b7 '+pct(wf.botVol||0)+'</small></span>'
+    + ((pnlN>0)? '<span>'+esc(st('wlPnlSum'))+' <b class="'+(pnlSum>=0?'up':'down')+'">'+(pnlSum>=0?'+':'\u2212')+fmtU(Math.abs(pnlSum))+'</b><small>'+(pnlApx?'\u2248 ':'')+esc(st('wlPnlSumSub'))+'</small></span>' : '')
     + '</div>'
     + '<div class="stk-wl-vbar" role="img" title="'+esc(st('wlBuy')+' vs '+st('wlSell'))+'" aria-label="'+esc(st('wlSumBuy')+' '+bp.toFixed(1)+'% / '+st('wlSumSell')+' '+(100-bp).toFixed(1)+'%')+'">'
       + '<i class="b" style="width:'+bp.toFixed(1)+'%"></i><i class="s" style="width:'+(100-bp).toFixed(1)+'%"></i>'
@@ -6590,6 +6668,7 @@ function stkWalletTopHTML(wf){
   }
   var note='<div class="stk-model-note">'+esc(st('wlNote'))
     + ((wf.tokCover!=null && wf.tokCover<98)? '<div>'+esc(st('wlTokPend').replace('{p}', (wf.tokCover||0).toFixed(1)+'%'))+'</div>':'')
+    + ((pnlN>0)? '<div>'+esc(st('wlPnlNote'))+'</div>':'')
     + '</div>';
   return '<div class="card stk-card stk-sec">'+head+sumbar+panels+filt+note+'</div>';
 }

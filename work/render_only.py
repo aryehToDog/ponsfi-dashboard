@@ -9,6 +9,24 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ---------------------------------------------------------------------------
+     ponsfi.xyz 看板 · 版本 v3.29.29「修 CI 限流：成本线在线上真的显示出来」 · 2026-10-17
+     【为什么做这一版】v3.29.28 的成本线在本地离线数据上一切正常，但云端 CI 跑完后
+       wallet-flow.json 的 dbg.tradesErr 记着 "px:HTTP Error 429: Too Many Requests"、
+       foldPct=0、bavg/savg 全空 —— 线上「成本线 / 浮盈浮亏」整块没生效。
+       根因：CI 里 stonk_page.py 紧跟 hourly.py 之后跑，_fetch_px_hist 为拿小时收盘价
+       又多发了一次 GeckoTerminal 请求，撞上同一批限流（429）；异常被吃掉后 pxmap 为空，
+       所有旧条目的枚数折算都失败，成本线整块空。
+     【这一版改了什么】只改数据层取价方式（work/stonk_page.py）：小时收盘价直接复用
+       hourly.json 的 hours[] + stonk.close[] —— 同一个 CI 里 hourly.py 刚写过，
+       与 _fetch_px_hist 完全同源同口径（GT ohlcv/hour 的 close、按整点分桶），
+       不再额外发 GT 请求；hourly.json 缺失 / 空时才退回联网兜底（原 _fetch_px_hist）。
+       排名 / 过滤 / 窗口口径 / 前端渲染零改动。
+     实测（真实云端快照 2026-10-17 11:12 · 20,178 笔 · 离线注入）：foldPct 95.0%、
+       榜首 bavg 0.1203，与限额前本地离线跑的 97.5% / 0.1203 同量级（换批数据、窗口起点
+       不同的小差），成本线各行有值；渲染产物 node --check + 107 条 Node 断言全过。
+     回退：cp work/stonk_page.py.bak-v32929 work/stonk_page.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.28「前 20 大户动向 · 成本线：这家是赚钱买入还是亏钱买入」 · 2026-10-17
      【为什么做这一版】作者需求：「再加一下他们的盈亏情况 —— 这个地址是赚钱买入还是亏钱买入，
        总的一个收益情况更能直观一点这个钱包的用途」。v3.29.27 的榜单只回答「谁买最多 / 谁卖最多」，
@@ -1114,10 +1132,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.28-2026-10-17">
+<meta name="dashboard-version" content="v3.29.29-2026-10-17">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.28 · 2026-10-17"
+VER = "v3.29.29 · 2026-10-17"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

@@ -456,7 +456,18 @@ def main():
                   if p.get("addr")]
     wf = None
     try:
-        wf = WF.sample(pool_addrs, px_use)
+        # 成本线折算用的小时收盘价（v3.29.29）：直接复用 hourly.json（hourly.py 刚写过，
+        # 与 _fetch_px_hist 同源同口径：GT ohlcv/hour 的 close，按整点分桶），不再额外发
+        # GT 请求 —— CI 里本脚本紧跟 hourly.py 之后跑，再补一次请求会被 429 限流，
+        # 成本线整块变空（v3.29.28 线上实测）；hourly.json 缺失时才退回联网兜底。
+        px_hist = []
+        for _t, _p in zip(hourly.get("hours") or [], ((hourly.get("stonk") or {}).get("close") or [])):
+            try:
+                if _t and _p:
+                    px_hist.append((int(_t) // 3600 * 3600, float(_p)))
+            except Exception:
+                pass
+        wf = WF.sample(pool_addrs, px_use, px_hist=(px_hist or None))
     except Exception as exc:
         print("warn: wallet-flow: %s" % (exc,), file=sys.stderr)
 

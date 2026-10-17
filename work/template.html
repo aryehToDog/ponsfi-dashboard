@@ -2007,6 +2007,76 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   .stk-flow .bar{grid-row:3;grid-column:1}
 }
 
+/* v3.29.26 前 20 大户动向（「谁在买」板块里的子模块）：
+   上：一行四个合计（钱在进 / 钱在出 / 净流向 / 已过滤机器地址）；下：买入榜 + 卖出榜两个面板。
+   每行 = 名次 · 地址 · 金额（大）· 数量/笔数/余额（小字一行）。手机端两面板上下堆，行内小字自动换行。 */
+.stk-wl-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.stk-wl-head em{font-style:normal;font-size:var(--fs-14);line-height:1}
+.stk-wl-head b{font-size:var(--fs-13);letter-spacing:-.1px}
+.stk-wl-head small{font-size:var(--fs-10);color:var(--mut2);line-height:1.4}
+.stk-wl-sum{display:flex;flex-wrap:wrap;gap:6px 18px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:var(--r-md);background:color-mix(in srgb,var(--panel2) 62%,var(--panel));font-size:var(--fs-11)}
+.stk-wl-sum span{display:inline-flex;align-items:baseline;gap:6px;color:var(--mut)}
+.stk-wl-sum b{font-size:var(--fs-12);color:var(--txt);font-variant-numeric:tabular-nums}
+.stk-wl-sum b.up{color:var(--up)} .stk-wl-sum b.down{color:var(--down)}
+.stk-wl-sum small{font-size:var(--fs-10);color:var(--mut2)}
+.stk-wl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:1080px){.stk-wl{grid-template-columns:minmax(0,1fr)}}
+.stk-wlp{border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--panel2);min-width:0}
+.stk-wlp>.hd{display:flex;align-items:center;gap:7px;padding:9px 12px;font-size:var(--fs-11);font-weight:800;letter-spacing:.2px}
+.stk-wlp>.hd em{font-style:normal;font-size:var(--fs-13);line-height:1}
+.stk-wlp>.hd .sum{margin-left:auto;font-weight:600;color:var(--mut);font-size:var(--fs-10);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stk-wlp.buy>.hd{background:color-mix(in srgb,var(--up) 9%,var(--panel2))}
+.stk-wlp.sell>.hd{background:color-mix(in srgb,var(--down) 9%,var(--panel2))}
+.stk-wlp.buy>.hd b{color:var(--up)} .stk-wlp.sell>.hd b{color:var(--down)}
+.stk-wlr{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:2px 10px;align-items:center;
+  padding:7px 12px;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent);cursor:pointer}
+.stk-wlr:hover{background:color-mix(in srgb,var(--accent) 7%,var(--panel2))}
+.stk-wlr:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:-2px}
+.stk-wlr .rk{font-weight:800;color:var(--mut2);font-variant-numeric:tabular-nums;font-size:var(--fs-10);
+  text-align:center;border-radius:5px;line-height:18px;height:18px}
+.stk-wlr .rk.t1{background:color-mix(in srgb,#f5c542 26%,transparent);color:#f0c14b}
+.stk-wlr .rk.t2{background:color-mix(in srgb,#c8d2dd 22%,transparent);color:#cdd8e4}
+.stk-wlr .rk.t3{background:color-mix(in srgb,#d08b52 24%,transparent);color:#d79a66}
+.stk-wlr .ad{min-width:0;display:flex;align-items:center;gap:6px}
+.stk-wlr .ad b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:var(--fs-11);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stk-wlr .ad i{font-style:normal;font-size:9px;font-weight:700;border-radius:999px;padding:1px 6px;flex:0 0 auto;
+  border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+.stk-wlr .ad i.dup{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--accent)}
+.stk-wlr .am{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:var(--fs-12);white-space:nowrap}
+.stk-wlr .am.b{color:var(--up)} .stk-wlr .am.s{color:var(--down)}
+.stk-wlr .sub{grid-column:2/4;font-size:var(--fs-10);color:var(--mut);display:flex;flex-wrap:wrap;gap:1px 8px;
+  font-variant-numeric:tabular-nums;line-height:1.45}
+.stk-wlr .sub b{font-weight:700;color:color-mix(in srgb,var(--txt) 84%,var(--mut))}
+.stk-wlr .sub .cl{color:var(--wn-txt);font-weight:700}
+@media (max-width:420px){
+  .stk-wlr{grid-template-columns:22px minmax(0,1fr) auto;padding:7px 10px;gap:2px 8px}
+  /* 320px 窄屏：地址列放不下「地址 + 徽章」时让徽章换行，地址永远完整显示（不出现省略号截断） */
+  .stk-wlr .ad{flex-wrap:wrap;row-gap:2px}
+  .stk-wlr .ad b{font-size:10px}
+}
+.stk-pop .cp{margin-left:auto;font-size:var(--fs-10);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));
+  border-radius:var(--r-pill);padding:1px 8px;cursor:pointer;white-space:nowrap}
+.stk-pop .cp:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.stk-pop.hov .cp{display:none}
+.stk-pop .pact{margin-top:9px;display:flex;gap:8px}
+.stk-pop .pact a{font-size:var(--fs-10);color:var(--accent);text-decoration:none;border:1px solid var(--line);
+  border-radius:var(--r-pill);padding:2px 9px}
+.stk-pop .pact a:hover{border-color:var(--accent)}
+.stk-pop.hov .pact{display:none}
+.stk-pop-w{width:262px}
+.stk-wl-f{margin-top:10px;border:1px solid var(--line);border-radius:var(--r-md);background:color-mix(in srgb,var(--panel2) 62%,var(--panel));overflow:hidden}
+.stk-wl-f>summary{cursor:pointer;padding:8px 12px;font-size:var(--fs-10);color:var(--mut);list-style:none;display:flex;align-items:center;gap:7px}
+.stk-wl-f>summary::-webkit-details-marker{display:none}
+.stk-wl-f>summary:before{content:'\25B8';font-size:9px;color:var(--mut2);transition:transform .18s ease}
+.stk-wl-f[open]>summary:before{transform:rotate(90deg)}
+.stk-wl-f>summary:hover{color:var(--txt)}
+.stk-wl-fl{display:flex;flex-wrap:wrap;gap:4px 14px;padding:2px 12px 10px;font-size:var(--fs-10);color:var(--mut);font-variant-numeric:tabular-nums}
+.stk-wl-fl span{display:inline-flex;align-items:center;gap:6px}
+.stk-wl-fl b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:600;color:var(--txt)}
+.stk-wl-fl .tag{font-style:normal;font-size:9px;border:1px solid var(--line);border-radius:999px;padding:0 6px;color:var(--wn-txt)}
+
 .stk-hbar{display:flex;height:14px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
 .stk-hbar i{height:100%}
 .stk-hlegend{display:flex;gap:12px;flex-wrap:wrap;font-size:var(--fs-10);color:var(--mut);margin-top:7px}
@@ -5489,6 +5559,21 @@ zh:{
   flEmpty:'采样中：云端每小时记一笔成交，攒满 24 小时后就显示各档净流入（刚上线的头几个小时数字会偏小）。',
   flNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal），转账 / OTC 不计；分层按钱包「当前」持币市值（链上余额 × 现价），窗口内刚清仓 / 刚建仓的钱包可能归错档；做市商没有公开标签，不单列（不硬造数据）。正数＝净买入，负数＝净卖出。',
   flTap:'鼠标划过任意一档看明细，手机轻点一下', flPopNet:'净流入（窗口内）',
+  wlTitle:'前 20 大户动向 · 24 小时',
+  wlSub:'谁在买、谁在卖、买了/卖了多少、手里还剩多少 —— 全部实测，机器人 / 高频地址先剔除',
+  wlBuy:'买入榜 · 货在进', wlSell:'卖出榜 · 货在出',
+  wlQty:'数量', wlTokUnit:'枚', wlBal:'余额', wlCleared:'已清仓', wlBoth:'双向',
+  wlSumBuy:'买入榜合计', wlSumSell:'卖出榜合计', wlSumNet:'榜单净流向',
+  wlFilt:'已过滤机器地址', wlFiltN:'已过滤 {n} 个机器人 / 高频地址（涉及成交 {p}）',
+  wlRgas:'gas 机器人', wlRhf:'高频机器', wlRmm:'双向对刷',
+  wlFiltFoot:'过滤口径（行为启发式，宁可漏、不误杀，名单在这里可对账）：gas＝已核实的 gas 竞价机器人；高频＝24h ≥300 笔，或 ≥60 笔且单笔平均 ≤$1,000；对刷＝24h ≥40 笔且买卖两边体量相当（都 ≥ 对方 35%）、净额 ≤ 双向总额 15%。',
+  wlEmpty:'还没攒够采样：新榜随云端每小时采样滚动生成（满 24 小时为完整窗口）。',
+  wlNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal 前 5 大池），转账 / OTC 不计；排名按 24 小时该方向成交额；「数量」为该方向成交的代币枚数（自本次更新起记录，滚动 24 小时后完整）；「余额」为最近一次链上余额快照（48 小时内有效），0 = 当前不持有。正数＝买入，负数＝卖出。',
+  wlTokPend:'数量字段自本次更新起记录：当前覆盖 {p}，满 24 小时后完整；金额与排名不受影响。',
+  wlCopy:'复制地址', wlCopied:'已复制 ✓', wlScan:'Solscan 查看',
+  wlNet:'净额（买 − 卖）', wlQtyBuy:'买入数量', wlQtySell:'卖出数量',
+  wlPopBuy:'24 小时买入额（榜单排序依据）', wlPopSell:'24 小时卖出额（榜单排序依据）',
+  wlPopFoot:'只统计 DEX 逐笔成交；余额为链上快照（48 小时内），0 = 当前不持有。',
   flPopVol:'成交额', flPopN:'成交笔数', flPopShare:'占采样成交', flPopSide:'买卖占比（买/卖）',
   flPopFoot:'口径与上方总表一致：只统计 DEX 逐笔成交；正数＝净买入，负数＝净卖出。',
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
@@ -5574,6 +5659,21 @@ en:{
   flEmpty:'Sampling: the cloud records a batch every hour. Once 24h is collected, tier flows appear here (early numbers will look small).',
   flNote:'Method: DEX trades only (GeckoTerminal); transfers / OTC excluded. Tiers use each wallet’s current holdings (on-chain balance × spot price), so wallets that fully entered or exited within the window may be misclassified. Market makers have no public labels and are not shown as a separate tier (no fabricated data). Positive = net buying, negative = net selling.',
   flTap:'Hover any tier for details (tap on mobile)', flPopNet:'Net flow (window)',
+  wlTitle:'Top 20 wallets · 24h',
+  wlSub:'Who buys, who sells, how much, and what they still hold — all measured; bots / high-frequency addrs filtered first',
+  wlBuy:'Top buyers · inflow', wlSell:'Top sellers · outflow',
+  wlQty:'Amount', wlTokUnit:'STONK', wlBal:'Balance', wlCleared:'Exited', wlBoth:'both sides',
+  wlSumBuy:'Top-20 buys', wlSumSell:'Top-20 sells', wlSumNet:'Net bias',
+  wlFilt:'Filtered bots', wlFiltN:'{n} bot / high-frequency addresses filtered (volume {p})',
+  wlRgas:'gas bot', wlRhf:'high-freq', wlRmm:'wash/MM',
+  wlFiltFoot:'Heuristic filters (favour missing over mis-flagging; the list is shown for audit): gas = verified gas-bidding bot; high-freq = 300+ trades/24h, or 60+ trades averaging ≤$1,000; wash/MM = 40+ trades with both sides ≥35% of each other and net ≤15% of turnover.',
+  wlEmpty:'Still sampling: this board builds as the cloud samples every hour (24h = full window).',
+  wlNote:'Method: DEX trades only (GeckoTerminal, top 5 pools); transfers / OTC excluded. Ranking uses 24h volume on that side. “Amount” is the token quantity traded that side (recorded from this release onward; complete after a rolling 24h). “Balance” is the latest on-chain snapshot (valid ≤48h); 0 = currently holds none. Positive = buying, negative = selling.',
+  wlTokPend:'Token amounts are recorded from this release onward: currently {p} covered — complete after 24h. Amounts and ranking are unaffected.',
+  wlCopy:'Copy', wlCopied:'Copied ✓', wlScan:'Solscan',
+  wlNet:'Net (buy − sell)', wlQtyBuy:'Bought (tokens)', wlQtySell:'Sold (tokens)',
+  wlPopBuy:'24h buy volume (ranking basis)', wlPopSell:'24h sell volume (ranking basis)',
+  wlPopFoot:'DEX trades only; balance is an on-chain snapshot (≤48h); 0 = holds none right now.',
   flPopVol:'Volume', flPopN:'Trades', flPopShare:'of sampled volume', flPopSide:'Buy/sell split (buy/sell)',
   flPopFoot:'Same basis as the table above: DEX trades only; positive = net buying, negative = net selling.',
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
@@ -5733,7 +5833,7 @@ function stkRender(){
   ];
   var body={};
   body['stk-s-fly']=stkFlyHTML(fw, h);
-  body['stk-s-flow']=stkFlowHTML(d.walletFlow);
+  body['stk-s-flow']=stkFlowHTML(d.walletFlow)+stkWalletTopHTML(d.walletFlow);
   body['stk-s-demand']=stkDemandHTML(dm);
   body['stk-s-supply']=stkSupplyHTML(sup, h);
   body['stk-s-value']=stkValueHTML(val, md);
@@ -6158,11 +6258,39 @@ function stkFlowHTML(wf){
 /* v3.29.8：钱包分层明细弹框 —— 点一行浮出数据框（总成交/买入/卖出/笔数/占比），点别处关闭。
    手机没有 hover，点击是唯一可靠的入口；PC 上点空白/滚动/Esc 都会收起。 */
 var STK_FPOP=null;
+/* v3.29.26：行主键（分层行用 data-fli，钱包榜行用 data-wl；hover 对账要靠它比「现在悬停的是哪一行」） */
+function stkRowKey(row){
+  return row.getAttribute('data-fli') || row.getAttribute('data-wl') ||
+         (row.getAttribute('data-w') || '');
+}
+/* v3.29.26：弹框定位 + 遮罩 + 收起监听（分层弹框与钱包弹框共用，逻辑与 v3.29.10 一致） */
+function stkPopPlace(pop, row, ev, hover){
+  document.body.appendChild(pop);
+  var r=row.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight;
+  var vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
+  var lx=(ev && ev.clientX)? ev.clientX-pw/2 : r.left+r.width/2-pw/2;
+  lx=Math.max(8,Math.min(vw-pw-8,lx));
+  var ly=r.bottom+8;
+  if(ly+ph>vh-8) ly=r.top-ph-8;
+  ly=Math.max(8,Math.min(vh-ph-8,ly));
+  pop.style.left=lx.toFixed(1)+'px'; pop.style.top=ly.toFixed(1)+'px';
+  if(!hover){
+    var bk=document.createElement('div'); bk.id='stkFlowBk';
+    bk.addEventListener('click',function(){ stkFlowPopClose(); });
+    bk.addEventListener('touchmove',function(){ stkFlowPopClose(); },{passive:true});
+    document.body.appendChild(bk);
+  }
+  if(hover){ pop.classList.add('hov'); pop.setAttribute('data-hov','1'); }
+  STK_FPOP=pop;
+  window.addEventListener('scroll',stkFlowPopClose,{passive:true,once:true});
+  document.addEventListener('keydown',stkFlowEsc,true);
+}
 function stkFlowPop(ev, row, hover){
   if(ev){ try{ ev.stopPropagation(); }catch(e){} }
   stkFlowPopClose();
   if(!row) return;
   var hoverMode=!!hover;
+  if(row.getAttribute('data-w')){ stkWPopOpen(ev, row, hoverMode); return; }
   function num(x){ var v=parseFloat(x); return isFinite(v)? v : null; }
   var buy=num(row.getAttribute('data-buy')), sell=num(row.getAttribute('data-sell')),
       net=num(row.getAttribute('data-net')), n=num(row.getAttribute('data-n')),
@@ -6186,28 +6314,9 @@ function stkFlowPop(ev, row, hover){
     +   '<div><span>'+esc(st('flPopSide'))+'</span><b>'+(bp==null?'—':(bp.toFixed(0)+'% / '+(100-bp).toFixed(0)+'%'))+'</b></div>'
     + '</div>'
     + '<div class="pf">'+esc(st('flPopFoot'))+'</div>';
-  document.body.appendChild(pop);
   /* 定位：贴着被点的行（视口坐标），上下左右都夹在屏幕内；小屏优先放下边缘 */
-  var r=row.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight;
-  var vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
-  var lx=(ev && ev.clientX)? ev.clientX-pw/2 : r.left+r.width/2-pw/2;
-  lx=Math.max(8,Math.min(vw-pw-8,lx));
-  var ly=r.bottom+8;
-  if(ly+ph>vh-8) ly=r.top-ph-8;
-  ly=Math.max(8,Math.min(vh-ph-8,ly));
-  pop.style.left=lx.toFixed(1)+'px'; pop.style.top=ly.toFixed(1)+'px';
-  if(!hoverMode){
-    var bk=document.createElement('div'); bk.id='stkFlowBk';
-    bk.addEventListener('click',function(){ stkFlowPopClose(); });
-    bk.addEventListener('touchmove',function(){ stkFlowPopClose(); },{passive:true});
-    document.body.appendChild(bk);
-  }
-  pop.setAttribute('data-row', row.getAttribute('data-fli')||'');
-  if(hoverMode){ pop.classList.add('hov'); pop.setAttribute('data-hov','1'); }
-  STK_FPOP=pop;
-  /* 点别处 / 滚动 / Esc 收起（backdrop 覆盖全屏，点哪都先落到它身上） */
-  window.addEventListener('scroll',stkFlowPopClose,{passive:true,once:true});
-  document.addEventListener('keydown',stkFlowEsc,true);
+  stkPopPlace(pop, row, ev, hoverMode);
+  pop.setAttribute('data-row', stkRowKey(row));
 }
 /* v3.29.10：桌面端鼠标悬停即出数据框、移开即消失（触屏仍走点击，见 stkFlowPop）。
    进 / 出都走同一次「对账」：延时后重新看当前真正悬停的是哪一行 ——
@@ -6221,11 +6330,11 @@ function stkFlowHoverSync(ms){
   STK_FPH_T=setTimeout(function(){
     try{
       if(document.getElementById('stkFlowBk')) return;      /* 点击模式的弹框优先 */
-      var rows=document.querySelectorAll('.stk-flow .row.fclick'), hov=null;
+      var rows=document.querySelectorAll('.stk-flow .row.fclick, .stk-wl .fclick'), hov=null;
       for(var i=0;i<rows.length;i++){ if(rows[i].matches && rows[i].matches(':hover')){ hov=rows[i]; break; } }
       var p=document.getElementById('stkFlowPop');
       if(hov){
-        if(!p || p.getAttribute('data-row')!==(hov.getAttribute('data-fli')||'')) stkFlowPop(null, hov, true);
+        if(!p || p.getAttribute('data-row')!==stkRowKey(hov)) stkFlowPop(null, hov, true);
       } else if(p && p.getAttribute('data-hov')==='1'){ stkFlowPopClose(); }
     }catch(e){}
   }, ms||70);
@@ -6240,6 +6349,153 @@ function stkFlowPopClose(ev){
   var p=document.getElementById('stkFlowPop'); if(p) p.remove();
   var b=document.getElementById('stkFlowBk'); if(b) b.remove();
   STK_FPOP=null;
+}
+
+/* ==========================================================================
+   v3.29.26 前 20 大户动向（「谁在买」板块的子模块）
+   需求（作者）：知道每天买卖前 20 的地址、数量、余额；去掉机器人/交易所，
+   只要真实用户钱包；按总量排名 —— 一眼看清「有多少货要进、有多少货要出」。
+   数据：work/wallet_flow.py 云端每小时采样（GT 逐笔成交 + 链上余额），
+   topBuy/topSell（各 20 条）+ botFilt（被过滤名单，可展开对账）。
+   ========================================================================== */
+var STK_WL_TOT=0;
+function stkSlug(a){ a=String(a||''); return a.length>16? a.slice(0,6)+'\u2026'+a.slice(-4) : a; }
+function fmtTk(v){
+  if(v==null||!isFinite(v)) return '\u2014';
+  var a=Math.abs(v);
+  if(a>=1e9) return (v/1e9).toFixed(2)+'B';
+  if(a>=1e6) return (v/1e6).toFixed(2)+'M';
+  if(a>=1e3) return (v/1e3).toFixed(1)+'K';
+  if(a>=10) return v.toFixed(0);
+  return v.toFixed(2);
+}
+function stkCopy(txt, el){
+  function done(){
+    if(!el) return;
+    if(!el.getAttribute('data-o')) el.setAttribute('data-o', el.textContent);
+    el.textContent=st('wlCopied');
+    setTimeout(function(){ el.textContent=el.getAttribute('data-o'); },1400);
+  }
+  function fb(){
+    try{
+      var ta=document.createElement('textarea'); ta.value=txt; ta.setAttribute('readonly','');
+      ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, ta.value.length);
+      document.execCommand('copy'); ta.remove(); done();
+    }catch(e){}
+  }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done, fb); return; }
+  }catch(e){}
+  fb();
+}
+function stkWPopOpen(ev, row, hover){
+  function num(x){ var v=parseFloat(x); return (isFinite(v)? v : null); }
+  var w=row.getAttribute('data-w')||'';
+  var b=num(row.getAttribute('data-b')), s=num(row.getAttribute('data-s'));
+  var bt=num(row.getAttribute('data-bt')), stk=num(row.getAttribute('data-st'));
+  var nb=num(row.getAttribute('data-nb')), ns=num(row.getAttribute('data-ns'));
+  var bal=num(row.getAttribute('data-bal')), balt=num(row.getAttribute('data-balt'));
+  var side=(row.getAttribute('data-side')==='s')? 's':'b';
+  var tv=(b!=null||s!=null)? (b||0)+(s||0) : null;
+  var share=(tv!=null && STK_WL_TOT>0)? tv/STK_WL_TOT*100 : null;
+  var bp=(tv&&tv>0&&b!=null)? Math.max(2,Math.min(98,b/tv*100)) : null;
+  var tok=esc(st('wlTokUnit'));
+  var pop=document.createElement('div');
+  pop.className='stk-pop stk-pop-w'; pop.id='stkFlowPop';
+  pop.innerHTML=
+      '<div class="ph"><em>'+(side==='s'?'\uD83D\uDCE4':'\uD83D\uDCE5')+'</em><b>'+esc(stkSlug(w))+'</b>'
+    + '<span class="cp" role="button" tabindex="0" aria-label="'+esc(st('wlCopy'))+'">'+esc(st('wlCopy'))+'</span>'
+    + '<span class="x" role="button" tabindex="0" aria-label="'+(LANG==='zh'?'关闭':'close')+'" onclick="stkFlowPopClose(event)">\u00d7</span></div>'
+    + '<div class="pn '+((side==='s')?'down':'up')+'">'+((side==='s'?'\u2212':'+')+fmtU(side==='s'?(s||0):(b||0)))+'</div>'
+    + '<div class="pl">'+esc(side==='s'? st('wlPopSell'): st('wlPopBuy'))+'</div>'
+    + ((bp!=null)? '<div class="pbar"><i class="b" style="width:'+bp.toFixed(1)+'%"></i><i class="s" style="width:'+(100-bp).toFixed(1)+'%"></i></div>':'')
+    + '<div class="pg">'
+    +   '<div><span>'+esc(st('flBuy'))+'</span><b>'+(b==null?'\u2014':fmtU(b))+'</b></div>'
+    +   '<div><span>'+esc(st('flSell'))+'</span><b>'+(s==null?'\u2014':fmtU(s))+'</b></div>'
+    +   '<div><span>'+esc(st('wlNet'))+'</span><b>'+((b==null||s==null)?'\u2014':((b-s>=0?'+':'\u2212')+fmtU(Math.abs(b-s))))+'</b></div>'
+    +   '<div><span>'+esc(st('flPopN'))+'</span><b>'+((nb==null||ns==null)?'\u2014':(nS(nb+ns)+' '+st('flTrades')))+'</b></div>'
+    +   '<div><span>'+esc(st('wlQtyBuy'))+'</span><b>'+(bt==null?'\u2014':(fmtTk(bt)+' '+tok))+'</b></div>'
+    +   '<div><span>'+esc(st('wlQtySell'))+'</span><b>'+(stk==null?'\u2014':(fmtTk(stk)+' '+tok))+'</b></div>'
+    +   '<div><span>'+esc(st('wlBal'))+'</span><b>'+(bal==null?'\u2014':(fmtU(bal)+(balt!=null? ' \u00b7 '+fmtTk(balt)+' '+tok:'')))+'</b></div>'
+    +   '<div><span>'+esc(st('flPopShare'))+'</span><b>'+(share==null?'\u2014':share.toFixed(1)+'%')+'</b></div>'
+    + '</div>'
+    + '<div class="pf">'+esc(st('wlPopFoot'))+'</div>'
+    + '<div class="pact"><a href="https://solscan.io/account/'+encodeURIComponent(w)+'" target="_blank" rel="noopener">'+esc(st('wlScan'))+' \u2197</a></div>';
+  stkPopPlace(pop, row, ev, hover);
+  pop.setAttribute('data-row', stkRowKey(row));
+  var cp=pop.querySelector('.cp');
+  if(cp) cp.addEventListener('click', function(e2){ try{ e2.stopPropagation(); }catch(e){} stkCopy(w, cp); });
+}
+function stkWRow(r, i, side, dual){
+  var b=(side==='b');
+  var vol=(b? r.buy : r.sell)||0;
+  var tok=b? r.btok : r.stok;
+  var n=(b? r.nb : r.ns)||0;
+  var bal;
+  if(r.bal==null) bal='<b>\u2014</b>';
+  else if(!(r.bal>0)) bal='<span class="cl">'+esc(st('wlCleared'))+'</span>';
+  else bal='<b>'+(r.balt!=null? fmtTk(r.balt)+' '+esc(st('wlTokUnit')) : fmtU(r.bal))+'</b>'+(r.balt!=null? ' \u00b7 '+fmtU(r.bal):'');
+  return '<div class="stk-wlr fclick" role="button" tabindex="0"'
+    + ' data-w="'+esc(r.w)+'" data-wl="'+side+i+'" data-side="'+side+'"'
+    + ' data-b="'+((r.buy!=null)?r.buy:'')+'" data-s="'+((r.sell!=null)?r.sell:'')+'" data-bt="'+((r.btok!=null)?r.btok:'')+'" data-st="'+((r.stok!=null)?r.stok:'')+'"'
+    + ' data-nb="'+((r.nb!=null)?r.nb:'')+'" data-ns="'+((r.ns!=null)?r.ns:'')+'" data-bal="'+((r.bal!=null)?r.bal:'')+'" data-balt="'+((r.balt!=null)?r.balt:'')+'"'
+    + ' onclick="stkFlowPop(event, this)" onmouseenter="stkFlowHoverIn(this)" onmouseleave="stkFlowHoverOut(this)"'
+    + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();stkFlowPop(event, this);}"'
+    + ' aria-label="'+esc(stkSlug(r.w)+(LANG==='zh'? '：查看这家的买卖明细':' \u2014 view detail'))+'">'
+    + '<span class="rk'+(i<3? ' t'+(i+1):'')+'">'+(i+1)+'</span>'
+    + '<span class="ad"><b>'+esc(stkSlug(r.w))+'</b>'
+      + (dual? '<i class="dup">'+esc(st('wlBoth'))+'</i>':'')
+      + ((r.bal!=null && !(r.bal>0) && side==='s')? '<i>'+esc(st('wlCleared'))+'</i>':'')+'</span>'
+    + '<span class="am '+(b?'b':'s')+'">'+(b?'+':'\u2212')+fmtU(vol)+'</span>'
+    + '<span class="sub">'
+      + '<span>'+esc(st('wlQty'))+' <b>'+(tok!=null? fmtTk(tok)+' '+esc(st('wlTokUnit')) : '\u2014')+'</b></span>'
+      + '<span><b>'+nS(n)+'</b> '+esc(st('flTrades'))+'</span>'
+      + '<span>'+esc(st('wlBal'))+' '+bal+'</span>'
+    + '</span>'
+    + '</div>';
+}
+function stkWalletTopHTML(wf){
+  var head='<div class="stk-wl-head"><em>\uD83C\uDFAF</em><b>'+esc(st('wlTitle'))+'</b><small>'+esc(st('wlSub'))+'</small></div>';
+  var buy=(wf&&wf.topBuy)||[], sell=(wf&&wf.topSell)||[];
+  if(!buy.length && !sell.length){
+    return '<div class="card stk-card stk-sec">'+head+'<div class="stk-empty">'+esc(st('wlEmpty'))+'</div></div>';
+  }
+  STK_WL_TOT=(wf.volume||0);
+  var bw={}, sw={};
+  buy.forEach(function(r){ bw[r.w]=1; });
+  sell.forEach(function(r){ sw[r.w]=1; });
+  var sumB=0, sumS=0;
+  buy.forEach(function(r){ sumB+=(r.buy||0); });
+  sell.forEach(function(r){ sumS+=(r.sell||0); });
+  var net=sumB-sumS;
+  var pct=function(x){ return (STK_WL_TOT>0)? (x/STK_WL_TOT*100).toFixed(1)+'%' : '\u2014'; };
+  var sumbar='<div class="stk-wl-sum">'
+    + '<span>'+esc(st('wlSumBuy'))+' <b class="up">'+fmtU(sumB)+'</b><small>'+(LANG==='zh'?'占采样 ':'of sampled ')+pct(sumB)+'</small></span>'
+    + '<span>'+esc(st('wlSumSell'))+' <b class="down">'+fmtU(sumS)+'</b><small>'+(LANG==='zh'?'占采样 ':'of sampled ')+pct(sumS)+'</small></span>'
+    + '<span>'+esc(st('wlSumNet'))+' <b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'\u2212')+fmtU(Math.abs(net))+'</b></span>'
+    + '<span>'+esc(st('wlFilt'))+' <b>'+(wf.botN||0)+'</b><small>'+fmtU(wf.botVol||0)+' \u00b7 '+pct(wf.botVol||0)+'</small></span>'
+    + '</div>';
+  var panels='<div class="stk-wl">'
+    + '<div class="stk-wlp buy"><div class="hd"><em>\uD83D\uDCE5</em>'+esc(st('wlBuy'))+'<span class="sum">'+fmtU(sumB)+'</span></div>'
+      + buy.map(function(r,i){ return stkWRow(r,i,'b', !!sw[r.w]); }).join('')+'</div>'
+    + '<div class="stk-wlp sell"><div class="hd"><em>\uD83D\uDCE4</em>'+esc(st('wlSell'))+'<span class="sum">'+fmtU(sumS)+'</span></div>'
+      + sell.map(function(r,i){ return stkWRow(r,i,'s', !!bw[r.w]); }).join('')+'</div>'
+    + '</div>';
+  var filt='';
+  var fl=(wf.botFilt||[]);
+  if(fl.length){
+    var rl={gas:st('wlRgas'), hf:st('wlRhf'), mm:st('wlRmm')};
+    filt='<details class="stk-wl-f"><summary>'+esc(st('wlFiltN').replace('{n}', String(wf.botN||fl.length)).replace('{p}', fmtU(wf.botVol||0)+' \u00b7 '+pct(wf.botVol||0)))+'</summary>'
+      + '<div class="stk-wl-fl">'+fl.map(function(r){
+          return '<span><b>'+esc(stkSlug(r.w))+'</b><i class="tag">'+esc(rl[r.r]||r.r)+'</i> '+fmtU(r.v)+' \u00b7 '+nS(r.n)+' '+esc(st('flTrades'))+'</span>';
+        }).join('')+'</div>'
+      + '<div class="stk-model-note" style="margin-top:8px">'+esc(st('wlFiltFoot'))+'</div></details>';
+  }
+  var note='<div class="stk-model-note">'+esc(st('wlNote'))
+    + ((wf.tokCover!=null && wf.tokCover<98)? '<div>'+esc(st('wlTokPend').replace('{p}', (wf.tokCover||0).toFixed(1)+'%'))+'</div>':'')
+    + '</div>';
+  return '<div class="card stk-card stk-sec">'+head+sumbar+panels+filt+note+'</div>';
 }
 
 /* ---------- 估值与位置 ---------- */

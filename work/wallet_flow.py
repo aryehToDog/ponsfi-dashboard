@@ -12,6 +12,16 @@
     再用 getMultipleAccounts 一次 100 个地址批量取余额 —— 2026-10-11 实测公共节点对
     逐钱包查询（getTokenAccountsByOwner）限流极严，批量地址位图才是能跑通的形态。
     余额结果缓存归档（TTL 48 小时）；查不到的钱包进「未识别」桶，单列不充数。
+  · 前 20 榜（v3.29.26）：在分层之上，按 24 小时成交额列出「买入榜 / 卖出榜」各 20 名，
+    每行给 地址 / 成交金额 / 代币数量 / 当前余额（同样是实测值，不估算）。
+    代币数量来自 GT 每笔成交的 from/to_token_amount（自 v3.29.26 起随账本记录，
+    滚动 24 小时后完整；更早入库的旧条目没有这个字段，显示 —）。
+    机器人 / 交易所过滤是行为启发式（页面口径如实标注，不硬说 100% 干净）：
+      ① gas 档：已核实的 gas 竞价机器人地址名单；
+      ② 高频档：24h ≥ 300 笔，或 ≥ 60 笔且平均单笔 ≤ $1,000（刷单形态）；
+      ③ 对刷档：24h ≥ 40 笔、买卖两边体量相当且净额 ≤ 双向总额 15%（做市/对冲形态）。
+    被过滤的地址不参与排名，但会在页面「已过滤」折叠里列出（地址/成交额/原因），
+    数字可对账 —— 宁可少写几个名字，也不假装标签百分百准确。
   · 局限（前端原样标注）：只覆盖 DEX 成交（转帐 / OTC 不算）；做市商没有公开标签
     （截图类产品的 MM 档无公开数据源，不硬造）；分层用当前余额，窗口内刚清仓 /
     刚建仓的钱包可能归错档。
@@ -52,6 +62,19 @@ HOLDINGS_BUDGET_S = 240     # 每轮构建查余额的总预算：查不完的�
 MAX_CHECK_PER_RUN = 800     # 单轮最多查的钱包数（按最近活跃排序，优先查新鲜的）
 TRADES_BUDGET_S = 150       # 拉成交的总预算：拉不完的资金池直接跳过（下轮再补）
 TIER_ORDER = [("whale", 1_000_000), ("shark", 100_000), ("dolphin", 10_000), ("fish", 0)]
+TOP_N = 20                  # 买入榜 / 卖出榜各取前 20
+FILT_SHOW = 30              # 页面「已过滤」折叠里最多列 30 个（按成交额排序）
+BOT_HARD_N = 300            # 24h ≥ 300 笔：一律按机器处理
+BOT_MIN_N = 60              # 高频档：24h ≥ 60 笔 …
+BOT_MAX_AVG = 1000          # … 且平均单笔 ≤ $1,000（真人很少以这个频率刷小额）
+MM_MIN_N = 40               # 对刷档：24h ≥ 40 笔 …
+MM_MAX_NET = 0.15           # … 且净额 ≤ 双向总额的 15% …
+MM_MIN_SIDE = 0.35          # … 且买卖两边都 ≥ 对方的 35%（在两边来回倒，不是在真买/真卖）
+# 已核实的机器人 / 基础设施地址（前两个前缀 gas 的即 gas 竞价机器人，GT 成交里高频出现）
+KNOWN_BOTS = frozenset([
+    "gasBidSWW5zmwXs3gn8TG2ijzKkrwpyM7ucwjgDQst6",
+    "gasTzr94Pmp4Gf8vknQnqxeYxdgwFjbgdJa4msYRpnB",
+])
 
 
 def jload(path, default=None):
@@ -258,6 +281,34 @@ def _tier_of(usd):
     return "fish"
 
 
+def _wallet_tok(a, kind):
+    """这笔成交里「钱包这一侧」收/付的 STONK 枚数（GT 的 to/from_token_amount）。
+
+    买：钱包收到代币 → to_token_amount ；卖：钱包付出代币 → from_token_amount。
+    拿不到 / 非正数返回 None（前端显示 —，不估算）。
+    """
+    try:
+        v = float(a.get("to_token_amount") if kind == "b" else a.get("from_token_amount"))
+    except Exception:
+        return None
+    return round(v, 4) if v > 0 else None
+
+
+def _bot_reason(w, n, buy, sell):
+    """钱包的「机器 / 机构」标签（None = 正常参与排名）。见文件头 v3.29.26 说明。"""
+    if w in KNOWN_BOTS:
+        return "gas"
+    tv = buy + sell
+    if n >= BOT_HARD_N:
+        return "hf"
+    mx, mn = (buy, sell) if buy >= sell else (sell, buy)
+    if n >= MM_MIN_N and tv > 0 and abs(buy - sell) <= MM_MAX_NET * tv and mn >= MM_MIN_SIDE * mx:
+        return "mm"
+    if n >= BOT_MIN_N and tv / n <= BOT_MAX_AVG:
+        return "hf"
+    return None
+
+
 def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
     """采样一轮 → 聚合结果 dict；price 拿不到 / 完全没数据时返回 None。
 
@@ -300,7 +351,8 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
             fp = _fingerprint(str(a.get("tx_hash") or ""), pool, kind, u)
             if fp in tr:
                 continue
-            tr[fp] = [t, a["tx_from_address"], kind, round(u, 2)]
+            # v3.29.26：账本加记这一侧收/付的代币枚数（旧条目没这个字段，读时按 4 元组兜底）
+            tr[fp] = [t, a["tx_from_address"], kind, round(u, 2), _wallet_tok(a, kind)]
     if not got_any and not tr:
         H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now,
                        "dbg": {"empty": True, "tradesErr": errs[:5]}}, state_path)
@@ -330,7 +382,8 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         if need:
             hold, hdiag = fetch_holdings(need)
             for w, amt in hold.items():
-                tiers[w] = [round(amt * price, 2), now]
+                # [市值USD, 查询时间, 代币枚数]（第三项 v3.29.26 起才有）
+                tiers[w] = [round(amt * price, 2), now, round(amt, 4)]
             wf_dbg = {"need": len(need), "ok": len(hold), "rpc": hdiag}
             print("wallet-flow: checked %d wallets (%d ok, %d null-ATA)"
                   % (len(need), len(hold), (hdiag or {}).get("nulls") or 0))
@@ -343,7 +396,11 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         agg[key] = {"net": 0.0, "buy": 0.0, "sell": 0.0, "n": 0, "wh": set()}
     agg["na"] = {"net": 0.0, "buy": 0.0, "sell": 0.0, "n": 0, "wh": set()}
     span_lo, span_hi = None, None
-    for t, w, kind, u in tr.values():
+    per = {}                     # 钱包 → 窗口内买卖合计（前 20 榜用）
+    tok_tr = tok_have = 0        # 数量字段覆盖率（旧账本条目没有，页面如实标注）
+    for entry in tr.values():
+        t, w, kind, u = entry[0], entry[1], entry[2], entry[3]
+        tok = entry[4] if len(entry) > 4 else None
         if t < cutoff:
             continue
         tv = tiers.get(w)
@@ -357,6 +414,25 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
             b["net"] -= u
         b["n"] += 1
         b["wh"].add(w)
+        p = per.get(w)
+        if p is None:
+            p = per[w] = {"buy": 0.0, "sell": 0.0, "btok": 0.0, "stok": 0.0,
+                          "nb": 0, "ns": 0, "miss": 0}
+        if kind == "b":
+            p["buy"] += u
+            p["nb"] += 1
+        else:
+            p["sell"] += u
+            p["ns"] += 1
+        tok_tr += 1
+        if tok:
+            tok_have += 1
+            if kind == "b":
+                p["btok"] += tok
+            else:
+                p["stok"] += tok
+        else:
+            p["miss"] += 1
         span_lo = t if span_lo is None else min(span_lo, t)
         span_hi = t if span_hi is None else max(span_hi, t)
 
@@ -372,6 +448,39 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         out_tiers.append({"k": "na", "net": round(b["net"], 2), "buy": round(b["buy"], 2),
                           "sell": round(b["sell"], 2), "n": b["n"], "wh": len(b["wh"])})
 
+    # ---- 5) 前 20 榜（买入 / 卖出），先按行为特征剔机器，再按成交额排名 ----
+    def _row(w, p):
+        tv = tiers.get(w)
+        bal, balt = None, None
+        if tv:
+            bal = tv[0]
+            if len(tv) > 2:
+                balt = tv[2]
+        return {
+            "w": w,
+            "buy": round(p["buy"], 2), "sell": round(p["sell"], 2),
+            # 数量：只有该钱包窗口内每一笔都带数量字段才给合计（缺一条就显示 —，不估算）
+            "btok": round(p["btok"], 4) if (p["btok"] and not p["miss"]) else None,
+            "stok": round(p["stok"], 4) if (p["stok"] and not p["miss"]) else None,
+            "nb": p["nb"], "ns": p["ns"],
+            "bal": bal, "balt": balt,
+        }
+
+    for w, p in per.items():
+        p["r"] = _bot_reason(w, p["nb"] + p["ns"], p["buy"], p["sell"])
+    clean = sorted((w for w in per if not per[w]["r"]),
+                   key=lambda w: -(per[w]["buy"] + per[w]["sell"]))
+    botw = sorted((w for w in per if per[w]["r"]),
+                  key=lambda w: -(per[w]["buy"] + per[w]["sell"]))
+    top_buy = [_row(w, per[w]) for w in sorted(clean, key=lambda w: -per[w]["buy"])[:TOP_N]]
+    top_sell = [_row(w, per[w]) for w in sorted(clean, key=lambda w: -per[w]["sell"])[:TOP_N]]
+    bot_filt = [{"w": w, "v": round(per[w]["buy"] + per[w]["sell"], 2),
+                 "n": per[w]["nb"] + per[w]["ns"], "r": per[w]["r"]} for w in botw[:FILT_SHOW]]
+    bot_vol = sum(per[w]["buy"] + per[w]["sell"] for w in botw)
+    bot_mix = {}
+    for w in botw:
+        bot_mix[per[w]["r"]] = bot_mix.get(per[w]["r"], 0) + 1
+
     result = {
         "updatedAt": now,
         "spanH": round((span_hi - span_lo) / 3600.0, 1) if (span_hi and span_lo) else None,
@@ -382,6 +491,13 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
         "volume": round(vol, 2),
         "thresholds": {"whale": 1_000_000, "shark": 100_000, "dolphin": 10_000},
         "tiers": out_tiers,
+        "topBuy": top_buy,
+        "topSell": top_sell,
+        "botFilt": bot_filt,
+        "botN": len(botw),
+        "botVol": round(bot_vol, 2),
+        "botMix": bot_mix,
+        "tokCover": round(tok_have / tok_tr * 100, 1) if tok_tr else None,
         "srcNote": "GeckoTerminal 成交 + Solana RPC 余额（本站采样）",
     }
     H.atomic_dump({"v": 1, "tr": tr, "tiers": tiers, "built": now,

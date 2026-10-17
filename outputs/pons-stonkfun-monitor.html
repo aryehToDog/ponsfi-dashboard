@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
      ---------------------------------------------------------------------------
+     ---------------------------------------------------------------------------
+     ponsfi.xyz 看板 · 版本 v3.29.30「改名：前 20 大户动向 → 24 小时买入 / 卖出榜 · 前 20」 · 2026-10-17
+     【为什么做这一版】作者反馈：「『前 20 大户动向 · 24 小时』这个名字有歧义，有点感觉是
+       持仓地址前 20 的感觉」。确实：这张卡是「按 24 小时成交额排的买入 / 卖出榜」，
+       和「持仓量前 20」完全是两回事，原名容易被误读。
+     【这一版改了什么】只改文案（work/template.html 的中英各一份），逻辑 / 数据 / 布局零改动：
+       ① 标题：前 20 大户动向 · 24 小时 → 「24 小时买入 / 卖出榜 · 前 20」
+          （en：Top 20 wallets · 24h → Top 20 buyers & sellers · 24h）；
+       ② 副标题补一句排名口径：「按 24 小时买入 / 卖出成交额排名、各取前 20」，把
+          「不是按持仓量」这件事说明白（en 同步：Ranked by 24h buy / sell volume, top 20 each side）。
+     实测：渲染产物 node --check 通过；Node 桩 107 条断言全过（test_wl.js 两处标题断言同步改到新名）；
+       线上无头 Chrome 复核（桌面 1400 / 手机 390·320）标题换新、无横向溢出、零 JS 报错。
+     回退：cp work/template.html.bak-v32930 work/template.html && python3 work/render_only.py
      ponsfi.xyz 看板 · 版本 v3.29.29「修 CI 限流：成本线在线上真的显示出来」 · 2026-10-17
      【为什么做这一版】v3.29.28 的成本线在本地离线数据上一切正常，但云端 CI 跑完后
        wallet-flow.json 的 dbg.tradesErr 记着 "px:HTTP Error 429: Too Many Requests"、
@@ -1123,7 +1136,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.29-2026-10-17">
+<meta name="dashboard-version" content="v3.29.30-2026-10-17">
 
 <html lang="zh-CN">
 <head>
@@ -3621,7 +3634,7 @@ const BUNDLE = {"generated": "2026-10-15T03:01:55.239870Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.29 · 2026-10-17';
+const DASH_VER = 'v3.29.30 · 2026-10-17';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -6719,8 +6732,8 @@ zh:{
   flEmpty:'采样中：云端每小时记一笔成交，攒满 24 小时后就显示各档净流入（刚上线的头几个小时数字会偏小）。',
   flNote:'口径：只统计 DEX 逐笔成交（GeckoTerminal），转账 / OTC 不计；分层按钱包「当前」持币市值（链上余额 × 现价），窗口内刚清仓 / 刚建仓的钱包可能归错档；做市商没有公开标签，不单列（不硬造数据）。正数＝净买入，负数＝净卖出。',
   flTap:'鼠标划过任意一档看明细，手机轻点一下', flPopNet:'净流入（窗口内）',
-  wlTitle:'前 20 大户动向 · 24 小时',
-  wlSub:'谁在买、谁在卖、买了/卖了多少、手里还剩多少 —— 全部实测，机器人 / 高频地址先剔除',
+  wlTitle:'24 小时买入 / 卖出榜 · 前 20',
+  wlSub:'按 24 小时买入 / 卖出成交额排名、各取前 20：买了 / 卖了多少、手里还剩多少，全部实测；机器人 / 高频地址先剔除',
   wlBuy:'买入榜 · 货在进', wlSell:'卖出榜 · 货在出',
   wlQty:'数量', wlTokUnit:'枚', wlBal:'余额', wlCleared:'已清仓', wlBoth:'双向',
   wlSumBuy:'买入榜合计', wlSumSell:'卖出榜合计', wlSumNet:'榜单净流向',
@@ -6828,8 +6841,8 @@ en:{
   flEmpty:'Sampling: the cloud records a batch every hour. Once 24h is collected, tier flows appear here (early numbers will look small).',
   flNote:'Method: DEX trades only (GeckoTerminal); transfers / OTC excluded. Tiers use each wallet’s current holdings (on-chain balance × spot price), so wallets that fully entered or exited within the window may be misclassified. Market makers have no public labels and are not shown as a separate tier (no fabricated data). Positive = net buying, negative = net selling.',
   flTap:'Hover any tier for details (tap on mobile)', flPopNet:'Net flow (window)',
-  wlTitle:'Top 20 wallets · 24h',
-  wlSub:'Who buys, who sells, how much, and what they still hold — all measured; bots / high-frequency addrs filtered first',
+  wlTitle:'Top 20 buyers & sellers · 24h',
+  wlSub:'Ranked by 24h buy / sell volume, top 20 each side: how much they bought / sold and what they still hold — all measured; bots / high-frequency addrs filtered first',
   wlBuy:'Top buyers · inflow', wlSell:'Top sellers · outflow',
   wlQty:'Amount', wlTokUnit:'STONK', wlBal:'Balance', wlCleared:'Exited', wlBoth:'both sides',
   wlSumBuy:'Top-20 buys', wlSumSell:'Top-20 sells', wlSumNet:'Net bias',

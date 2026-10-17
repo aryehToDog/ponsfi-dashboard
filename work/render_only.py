@@ -10,6 +10,19 @@ assert "/*__VER__*/" in tpl
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
      ---------------------------------------------------------------------------
+     ---------------------------------------------------------------------------
+     ponsfi.xyz 看板 · 版本 v3.29.30「改名：前 20 大户动向 → 24 小时买入 / 卖出榜 · 前 20」 · 2026-10-17
+     【为什么做这一版】作者反馈：「『前 20 大户动向 · 24 小时』这个名字有歧义，有点感觉是
+       持仓地址前 20 的感觉」。确实：这张卡是「按 24 小时成交额排的买入 / 卖出榜」，
+       和「持仓量前 20」完全是两回事，原名容易被误读。
+     【这一版改了什么】只改文案（work/template.html 的中英各一份），逻辑 / 数据 / 布局零改动：
+       ① 标题：前 20 大户动向 · 24 小时 → 「24 小时买入 / 卖出榜 · 前 20」
+          （en：Top 20 wallets · 24h → Top 20 buyers & sellers · 24h）；
+       ② 副标题补一句排名口径：「按 24 小时买入 / 卖出成交额排名、各取前 20」，把
+          「不是按持仓量」这件事说明白（en 同步：Ranked by 24h buy / sell volume, top 20 each side）。
+     实测：渲染产物 node --check 通过；Node 桩 107 条断言全过（test_wl.js 两处标题断言同步改到新名）；
+       线上无头 Chrome 复核（桌面 1400 / 手机 390·320）标题换新、无横向溢出、零 JS 报错。
+     回退：cp work/template.html.bak-v32930 work/template.html && python3 work/render_only.py
      ponsfi.xyz 看板 · 版本 v3.29.29「修 CI 限流：成本线在线上真的显示出来」 · 2026-10-17
      【为什么做这一版】v3.29.28 的成本线在本地离线数据上一切正常，但云端 CI 跑完后
        wallet-flow.json 的 dbg.tradesErr 记着 "px:HTTP Error 429: Too Many Requests"、
@@ -1132,10 +1145,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.29-2026-10-17">
+<meta name="dashboard-version" content="v3.29.30-2026-10-17">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.29 · 2026-10-17"
+VER = "v3.29.30 · 2026-10-17"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

@@ -1,5 +1,42 @@
 <!DOCTYPE html>
 <!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.27「前 20 大户动向 · 补一层'货还在不在'的读数」 · 2026-10-17
+     【为什么做这一版】作者问「这个看板还有优化的地方吗」—— 复核 v3.29.26 上线后的真实数据，
+       榜单只回答了"谁买最多 / 谁卖最多"，没回答作者最关心的那半句"还有多少货"：
+       ① 只看金额会误读 —— 买入榜第一名未必在囤货（同窗口可能又卖出一部分），
+          榜单里的人到底净进还是净出，页面没有说；
+       ② 20+20 行全铺开，手机上要划三屏才看完，重点被淹；
+       ③ 两榜合计（谁的钱多）靠用户心算，没有直接的比例读数；
+       ④ 过滤小字只说"56 个"，没说为什么滤、滤掉多大体量，对账时不好验证；
+       ⑤ 弹框里数量有了，但没有笔数和余额的"新鲜度"，读数不知道是几点钟的。
+     【这一版改了什么】只改渲染层（work/template.html）+ 账本行多一个时间戳字段
+       （work/wallet_flow.py 的 _row() 多输出 balTs），数据口径、过滤阈值、排行榜算法不动：
+       ① 每行金额大数字下面加一行小字「净 +$26.7K / 净 −$12.3K」（= 该地址窗口内
+          买入 − 卖出，两榜通用）—— 双向地址一眼看出是在囤还是在出。
+       ② 每个榜单底部加"落点小结"：上榜门槛（第 20 名的金额）+「N 家合计还持有 $X」+
+          「M 家已清仓」；卖出榜再多一句「≈ 他们 24h 卖出额的 2.0 倍（还有货）」——
+          只在"还持有 > 24h 卖出合计"时出现，直接回答"货出完了没有"。
+       ③ 默认只铺前 10 名，第 11–20 名收进「展开第 11–20 名」按钮（点开变「收起 ▴」，
+          箭头旋转、无跳变）；两个榜各自一个按钮，互不影响。
+       ④ 合计条下面加一根买卖对比条（绿 = 买入榜合计 / 红 = 卖出榜合计，宽度按占比）+
+          一行 legend（买入 41.8% / 卖出 58.2%）—— 谁的钱多，一眼看完，不用心算。
+       ⑤ 过滤折叠文案带原因分档：「已过滤 56 个机器人 / 高频地址（涉及成交 2 gas 机器人 ·
+          30 高频机器 · 24 双向对刷 · $1.29M · 37.2%）」—— 每个数字都能对上 botFilt 名单。
+       ⑥ 明细弹框补两行：「买 / 卖笔数」与「余额快照 N 小时前」（账本行新增 balTs 记录
+          余额采样时刻；旧快照没有该字段时按"—"兜底）。
+       ⑦ 诚实度：数量字段覆盖不到 2% 时（刚上线的旧账本），整列数量不渲染，只在末行
+          留一句「数量字段自本次更新起记录：当前覆盖 1.7%」—— 不留一屏"—"。
+     实测（真实云端快照 2026-10-17 09:31 · 20,535 笔 / 4,003 钱包，离线聚合后注入跑无头 Chrome）：
+       桌面 1400 / 手机 390·360·320 控制台零报错、docW == vw 零横向溢出；
+       40 行默认可见 10 + 隐藏 10，点「展开第 11–20 名」→「收起 ▴」、hidden=false；
+       买入榜落点小结「上榜门槛 $9.4K · 20 家合计还持有 $1.52M · （6 家已清仓）」、
+       卖出榜「上榜门槛 $10.5K · 20 家合计还持有 $1.16M · （7 家已清仓） ·
+       ≈ 他们 24h 卖出额的 2.0 倍（还有货）」；对比条 41.8% / 58.2%，行内净额
+       「净 +$26.7K」；行高桌面 69px / 手机 74px。Node 桩 65 条断言全过（v3.29.26 是 46 条，
+       新增 19 条覆盖净额 / 展开 / 落点小结 / 对比条 / 弹框新字段 / 空态），
+       渲染产物 node --check 通过。
+     回退：cp work/template.html.bak-v32927 work/template.html && cp work/wallet_flow.py.bak-v32927 work/wallet_flow.py && cp work/render_only.py.bak-v32927 work/render_only.py && python3 work/render_only.py
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.26「前 20 大户动向：谁在买 / 谁在卖 / 还有多少货」 · 2026-10-17
      【为什么做这一版】作者需求：STONK 深度页「谁在买 · 24 小时钱包分层」下面加一个子模块 ——
        每天买卖前 20 的地址、数量、余额，去掉机器人 / 交易所，只要真实用户钱包，按总量排名。
@@ -1039,7 +1076,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.26-2026-10-17">
+<meta name="dashboard-version" content="v3.29.27-2026-10-17">
 
 <html lang="zh-CN">
 <head>
@@ -3056,9 +3093,17 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-wl-head em{font-style:normal;font-size:var(--fs-14);line-height:1}
 .stk-wl-head b{font-size:var(--fs-13);letter-spacing:-.1px}
 .stk-wl-head small{font-size:var(--fs-10);color:var(--mut2);line-height:1.4}
-.stk-wl-sum{display:flex;flex-wrap:wrap;gap:6px 18px;padding:9px 12px;border:1px solid var(--line);
+.stk-wl-sum{padding:9px 12px 10px;border:1px solid var(--line);
   border-radius:var(--r-md);background:color-mix(in srgb,var(--panel2) 62%,var(--panel));font-size:var(--fs-11)}
+.stk-wl-sum .rw{display:flex;flex-wrap:wrap;gap:6px 18px}
 .stk-wl-sum span{display:inline-flex;align-items:baseline;gap:6px;color:var(--mut)}
+.stk-wl-vbar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:9px;background:color-mix(in srgb,var(--line) 60%,var(--panel))}
+.stk-wl-vbar i{height:100%;display:block}
+.stk-wl-vbar i.b{background:var(--up)} .stk-wl-vbar i.s{background:var(--down)}
+.stk-wl-sum .lg{display:flex;gap:14px;margin-top:5px;font-size:var(--fs-10);color:var(--mut2)}
+.stk-wl-sum .lg span{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-10)}
+.stk-wl-sum .lg em{width:8px;height:8px;border-radius:2px;display:inline-block}
+.stk-wl-sum .lg em.b{background:var(--up)} .stk-wl-sum .lg em.s{background:var(--down)}
 .stk-wl-sum b{font-size:var(--fs-12);color:var(--txt);font-variant-numeric:tabular-nums}
 .stk-wl-sum b.up{color:var(--up)} .stk-wl-sum b.down{color:var(--down)}
 .stk-wl-sum small{font-size:var(--fs-10);color:var(--mut2)}
@@ -3088,6 +3133,24 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-wlr .ad i.dup{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));color:var(--accent)}
 .stk-wlr .am{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:var(--fs-12);white-space:nowrap}
 .stk-wlr .am.b{color:var(--up)} .stk-wlr .am.s{color:var(--down)}
+/* v3.29.27：金额下面补一行净额（买 − 卖）——「买入榜」里的人不一定真的在囤货 */
+.stk-wlr .am small.nt{display:block;font-weight:600;font-size:var(--fs-10);letter-spacing:0;color:var(--mut2)}
+.stk-wlr .am small.nt.up{color:color-mix(in srgb,var(--up) 68%,var(--mut))}
+.stk-wlr .am small.nt.down{color:color-mix(in srgb,var(--down) 68%,var(--mut))}
+/* v3.29.27：第 11–20 名默认收起（手机上 40 行要滑 3 屏），展开按钮本身就是个信息 */
+.stk-wl-more[hidden]{display:none}
+.stk-wl-x{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:7px 12px;
+  font-family:inherit;font-size:var(--fs-10);color:var(--accent);background:transparent;border:0;cursor:pointer;
+  border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.stk-wl-x:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.stk-wl-x:focus-visible{outline:2px solid color-mix(in srgb,var(--accent) 60%,transparent);outline-offset:-2px}
+.stk-wl-x i{font-style:normal;transition:transform .18s ease}
+.stk-wl-x.open i{transform:rotate(180deg)}
+/* 面板落点小结：门槛 / 还持有多少货 / 已清仓几家 */
+.stk-wlp .ft{padding:7px 12px;border-top:1px solid var(--line);font-size:var(--fs-10);color:var(--mut);
+  line-height:1.6;background:color-mix(in srgb,var(--panel) 45%,var(--panel2))}
+.stk-wlp .ft b{color:color-mix(in srgb,var(--txt) 86%,var(--mut));font-weight:700;font-variant-numeric:tabular-nums}
+.stk-wlp .ft .pk{color:var(--wn-txt);font-weight:600}
 .stk-wlr .sub{grid-column:2/4;font-size:var(--fs-10);color:var(--mut);display:flex;flex-wrap:wrap;gap:1px 8px;
   font-variant-numeric:tabular-nums;line-height:1.45}
 .stk-wlr .sub b{font-weight:700;color:color-mix(in srgb,var(--txt) 84%,var(--mut))}
@@ -3503,7 +3566,7 @@ const BUNDLE = {"generated": "2026-10-15T03:01:55.239870Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.26 · 2026-10-17';
+const DASH_VER = 'v3.29.27 · 2026-10-17';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {
@@ -6615,6 +6678,10 @@ zh:{
   wlCopy:'复制地址', wlCopied:'已复制 ✓', wlScan:'Solscan 查看',
   wlNet:'净额（买 − 卖）', wlQtyBuy:'买入数量', wlQtySell:'卖出数量',
   wlPopBuy:'24 小时买入额（榜单排序依据）', wlPopSell:'24 小时卖出额（榜单排序依据）',
+  wlNetShort:'净', wlMore:'展开第 {a}–{b} 名', wlLess:'收起 ▴',
+  wlThr:'上榜门槛', wlHold:'家合计还持有', wlClearedCnt:'家已清仓',
+  wlSellHold:'≈ 他们 24h 卖出额的 {x} 倍（还有货）',
+  wlNBuysSells:'买 / 卖笔数', wlBalAge:'{h} 小时前', wlBalAgeN:'余额快照',
   wlPopFoot:'只统计 DEX 逐笔成交；余额为链上快照（48 小时内），0 = 当前不持有。',
   flPopVol:'成交额', flPopN:'成交笔数', flPopShare:'占采样成交', flPopSide:'买卖占比（买/卖）',
   flPopFoot:'口径与上方总表一致：只统计 DEX 逐笔成交；正数＝净买入，负数＝净卖出。',
@@ -6715,6 +6782,10 @@ en:{
   wlCopy:'Copy', wlCopied:'Copied ✓', wlScan:'Solscan',
   wlNet:'Net (buy − sell)', wlQtyBuy:'Bought (tokens)', wlQtySell:'Sold (tokens)',
   wlPopBuy:'24h buy volume (ranking basis)', wlPopSell:'24h sell volume (ranking basis)',
+  wlNetShort:'net', wlMore:'Show ranks {a}–{b}', wlLess:'Collapse ▴',
+  wlThr:'Cutoff', wlHold:'wallets still hold', wlClearedCnt:'exited',
+  wlSellHold:'≈ {x}× their 24h sells (more to come)',
+  wlNBuysSells:'buys / sells', wlBalAge:'{h}h ago', wlBalAgeN:'Balance snapshot',
   wlPopFoot:'DEX trades only; balance is an on-chain snapshot (≤48h); 0 = holds none right now.',
   flPopVol:'Volume', flPopN:'Trades', flPopShare:'of sampled volume', flPopSide:'Buy/sell split (buy/sell)',
   flPopFoot:'Same basis as the table above: DEX trades only; positive = net buying, negative = net selling.',
@@ -7438,6 +7509,9 @@ function stkWPopOpen(ev, row, hover){
   var bt=num(row.getAttribute('data-bt')), stk=num(row.getAttribute('data-st'));
   var nb=num(row.getAttribute('data-nb')), ns=num(row.getAttribute('data-ns'));
   var bal=num(row.getAttribute('data-bal')), balt=num(row.getAttribute('data-balt'));
+  var balTs=num(row.getAttribute('data-balts'));
+  var balAge=(bal==null || balTs==null)? '\u2014'
+    : st('wlBalAge').replace('{h}', (Math.max(0,(Date.now()/1000-balTs)/3600)).toFixed(0));
   var side=(row.getAttribute('data-side')==='s')? 's':'b';
   var tv=(b!=null||s!=null)? (b||0)+(s||0) : null;
   var share=(tv!=null && STK_WL_TOT>0)? tv/STK_WL_TOT*100 : null;
@@ -7461,6 +7535,8 @@ function stkWPopOpen(ev, row, hover){
     +   '<div><span>'+esc(st('wlQtySell'))+'</span><b>'+(stk==null?'\u2014':(fmtTk(stk)+' '+tok))+'</b></div>'
     +   '<div><span>'+esc(st('wlBal'))+'</span><b>'+(bal==null?'\u2014':(fmtU(bal)+(balt!=null? ' \u00b7 '+fmtTk(balt)+' '+tok:'')))+'</b></div>'
     +   '<div><span>'+esc(st('flPopShare'))+'</span><b>'+(share==null?'\u2014':share.toFixed(1)+'%')+'</b></div>'
+    +   '<div><span>'+esc(st('wlNBuysSells'))+'</span><b>'+((nb==null||ns==null)?'\u2014':(nS(nb)+' / '+nS(ns)))+'</b></div>'
+    +   '<div><span>'+esc(st('wlBalAgeN'))+'</span><b>'+balAge+'</b></div>'
     + '</div>'
     + '<div class="pf">'+esc(st('wlPopFoot'))+'</div>'
     + '<div class="pact"><a href="https://solscan.io/account/'+encodeURIComponent(w)+'" target="_blank" rel="noopener">'+esc(st('wlScan'))+' \u2197</a></div>';
@@ -7469,11 +7545,13 @@ function stkWPopOpen(ev, row, hover){
   var cp=pop.querySelector('.cp');
   if(cp) cp.addEventListener('click', function(e2){ try{ e2.stopPropagation(); }catch(e){} stkCopy(w, cp); });
 }
-function stkWRow(r, i, side, dual){
+function stkWRow(r, i, side, dual, showTok){
   var b=(side==='b');
   var vol=(b? r.buy : r.sell)||0;
   var tok=b? r.btok : r.stok;
   var n=(b? r.nb : r.ns)||0;
+  var net=(r.buy||0)-(r.sell||0);
+  var ncls=(net>0.005)? 'up':((net<-0.005)? 'down':'');
   var bal;
   if(r.bal==null) bal='<b>\u2014</b>';
   else if(!(r.bal>0)) bal='<span class="cl">'+esc(st('wlCleared'))+'</span>';
@@ -7482,6 +7560,7 @@ function stkWRow(r, i, side, dual){
     + ' data-w="'+esc(r.w)+'" data-wl="'+side+i+'" data-side="'+side+'"'
     + ' data-b="'+((r.buy!=null)?r.buy:'')+'" data-s="'+((r.sell!=null)?r.sell:'')+'" data-bt="'+((r.btok!=null)?r.btok:'')+'" data-st="'+((r.stok!=null)?r.stok:'')+'"'
     + ' data-nb="'+((r.nb!=null)?r.nb:'')+'" data-ns="'+((r.ns!=null)?r.ns:'')+'" data-bal="'+((r.bal!=null)?r.bal:'')+'" data-balt="'+((r.balt!=null)?r.balt:'')+'"'
+    + ' data-balts="'+((r.balTs!=null)?r.balTs:'')+'"'
     + ' onclick="stkFlowPop(event, this)" onmouseenter="stkFlowHoverIn(this)" onmouseleave="stkFlowHoverOut(this)"'
     + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();stkFlowPop(event, this);}"'
     + ' aria-label="'+esc(stkSlug(r.w)+(LANG==='zh'? '：查看这家的买卖明细':' \u2014 view detail'))+'">'
@@ -7489,13 +7568,55 @@ function stkWRow(r, i, side, dual){
     + '<span class="ad"><b>'+esc(stkSlug(r.w))+'</b>'
       + (dual? '<i class="dup">'+esc(st('wlBoth'))+'</i>':'')
       + ((r.bal!=null && !(r.bal>0) && side==='s')? '<i>'+esc(st('wlCleared'))+'</i>':'')+'</span>'
-    + '<span class="am '+(b?'b':'s')+'">'+(b?'+':'\u2212')+fmtU(vol)+'</span>'
+    + '<span class="am '+(b?'b':'s')+'">'+(b?'+':'\u2212')+fmtU(vol)
+      + '<small class="nt '+ncls+'">'+esc(st('wlNetShort'))+' '+(net>=0?'+':'\u2212')+fmtU(Math.abs(net))+'</small></span>'
     + '<span class="sub">'
-      + '<span>'+esc(st('wlQty'))+' <b>'+(tok!=null? fmtTk(tok)+' '+esc(st('wlTokUnit')) : '\u2014')+'</b></span>'
+      + (showTok? '<span>'+esc(st('wlQty'))+' <b>'+(tok!=null? fmtTk(tok)+' '+esc(st('wlTokUnit')) : '\u2014')+'</b></span>':'')
       + '<span><b>'+nS(n)+'</b> '+esc(st('flTrades'))+'</span>'
       + '<span>'+esc(st('wlBal'))+' '+bal+'</span>'
     + '</span>'
     + '</div>';
+}
+/* v3.29.27：一个榜面板 = 表头（方向 + 合计）+ 前 10 名 + （可展开的第 11–20 名）+ 一行落点小结。
+   为什么默认只铺 10 行：20+20 行在手机上要滑 3 屏，先给「最重要的 10 个」，
+   想看全量的人一键展开 —— 展开按钮本身就是个信息（还有多少钱在第 11–20 名）。 */
+function stkWPanel(side, rows, dualMap, sumSide, showTok){
+  var b=(side==='b');
+  var head='<div class="hd"><em>'+(b?'\uD83D\uDCE5':'\uD83D\uDCE4')+'</em>'+esc(b? st('wlBuy') : st('wlSell'))
+    +'<span class="sum">'+fmtU(sumSide)+'</span></div>';
+  var FIRST=10;
+  var head_rows=rows.slice(0, FIRST), rest=rows.slice(FIRST);
+  var html=head + head_rows.map(function(r,i){ return stkWRow(r,i,side, !!dualMap[r.w], showTok); }).join('');
+  if(rest.length){
+    html+='<div class="stk-wl-more" id="wlMore-'+side+'" hidden>'
+      + rest.map(function(r,i){ return stkWRow(r,i+FIRST,side, !!dualMap[r.w], showTok); }).join('')+'</div>'
+      + '<button class="stk-wl-x" type="button" data-side="'+side+'" data-a="'+(FIRST+1)+'" data-b="'+rows.length+'"'
+        +' onclick="stkWlToggle(\''+side+'\', this)"><span>'+esc(st('wlMore').replace('{a}', String(FIRST+1)).replace('{b}', String(rows.length)))+'</span><i>\u25BE</i></button>';
+  }
+  /* 落点小结：门槛（第 N 名多少钱）· 这 N 家现在手里还有多少货（= 后续潜在抛压 / 潜在买盘），
+     以及「已清仓」几家。全部是实测值相加，不做任何估算。 */
+  var hold=0, cleared=0, known=0;
+  rows.forEach(function(r){ if(r.bal==null) return; known++; if(r.bal>0) hold+=r.bal; else cleared++; });
+  var thr=rows.length? ((b? rows[rows.length-1].buy : rows[rows.length-1].sell)||0) : 0;
+  var bits=[esc(st('wlThr'))+' <b>'+fmtU(thr)+'</b>'];
+  if(known){
+    bits.push(rows.length+' '+esc(st('wlHold'))+' <b>'+fmtU(hold)+'</b>');
+    if(cleared) bits.push('（'+cleared+' '+esc(st('wlClearedCnt'))+'）');
+    if(!b && sumSide>0 && hold>0) bits.push('<span class="pk">'+esc(st('wlSellHold').replace('{x}', (hold/sumSide).toFixed(1)))+'</span>');
+  }
+  html+='<div class="ft">'+bits.join(' \u00b7 ')+'</div>';
+  return '<div class="stk-wlp '+(b?'buy':'sell')+'">'+html+'</div>';
+}
+/* 展开 / 收起第 11–20 名（按钮文案在展开与收起之间切换） */
+function stkWlToggle(side, btn){
+  var box=document.getElementById('wlMore-'+side);
+  if(!box) return;
+  var opening=box.hasAttribute('hidden');
+  if(opening) box.removeAttribute('hidden'); else box.setAttribute('hidden','');
+  btn.querySelector('span').textContent = opening
+    ? st('wlLess')
+    : st('wlMore').replace('{a}', btn.getAttribute('data-a')||'11').replace('{b}', btn.getAttribute('data-b')||'20');
+  btn.classList.toggle('open', opening);
 }
 function stkWalletTopHTML(wf){
   var head='<div class="stk-wl-head"><em>\uD83C\uDFAF</em><b>'+esc(st('wlTitle'))+'</b><small>'+esc(st('wlSub'))+'</small></div>';
@@ -7511,24 +7632,36 @@ function stkWalletTopHTML(wf){
   buy.forEach(function(r){ sumB+=(r.buy||0); });
   sell.forEach(function(r){ sumS+=(r.sell||0); });
   var net=sumB-sumS;
+  var showTok=(wf.tokCover==null)||(wf.tokCover>=2);   /* 数量还没开始积累时先不占位，免得整屏「—」 */
   var pct=function(x){ return (STK_WL_TOT>0)? (x/STK_WL_TOT*100).toFixed(1)+'%' : '\u2014'; };
-  var sumbar='<div class="stk-wl-sum">'
+  var bp=(sumB+sumS)>0? sumB/(sumB+sumS)*100 : 50;
+  var mix=(wf.botMix||{});
+  var sumbar='<div class="stk-wl-sum"><div class="rw">'
     + '<span>'+esc(st('wlSumBuy'))+' <b class="up">'+fmtU(sumB)+'</b><small>'+(LANG==='zh'?'占采样 ':'of sampled ')+pct(sumB)+'</small></span>'
     + '<span>'+esc(st('wlSumSell'))+' <b class="down">'+fmtU(sumS)+'</b><small>'+(LANG==='zh'?'占采样 ':'of sampled ')+pct(sumS)+'</small></span>'
     + '<span>'+esc(st('wlSumNet'))+' <b class="'+(net>=0?'up':'down')+'">'+(net>=0?'+':'\u2212')+fmtU(Math.abs(net))+'</b></span>'
     + '<span>'+esc(st('wlFilt'))+' <b>'+(wf.botN||0)+'</b><small>'+fmtU(wf.botVol||0)+' \u00b7 '+pct(wf.botVol||0)+'</small></span>'
-    + '</div>';
+    + '</div>'
+    + '<div class="stk-wl-vbar" role="img" title="'+esc(st('wlBuy')+' vs '+st('wlSell'))+'" aria-label="'+esc(st('wlSumBuy')+' '+bp.toFixed(1)+'% / '+st('wlSumSell')+' '+(100-bp).toFixed(1)+'%')+'">'
+      + '<i class="b" style="width:'+bp.toFixed(1)+'%"></i><i class="s" style="width:'+(100-bp).toFixed(1)+'%"></i>'
+    + '</div>'
+    + '<div class="lg"><span><em class="b"></em>'+esc(st('wlSumBuy'))+' '+bp.toFixed(1)+'%</span>'
+      + '<span><em class="s"></em>'+esc(st('wlSumSell'))+' '+(100-bp).toFixed(1)+'%</span></div></div>';
   var panels='<div class="stk-wl">'
-    + '<div class="stk-wlp buy"><div class="hd"><em>\uD83D\uDCE5</em>'+esc(st('wlBuy'))+'<span class="sum">'+fmtU(sumB)+'</span></div>'
-      + buy.map(function(r,i){ return stkWRow(r,i,'b', !!sw[r.w]); }).join('')+'</div>'
-    + '<div class="stk-wlp sell"><div class="hd"><em>\uD83D\uDCE4</em>'+esc(st('wlSell'))+'<span class="sum">'+fmtU(sumS)+'</span></div>'
-      + sell.map(function(r,i){ return stkWRow(r,i,'s', !!bw[r.w]); }).join('')+'</div>'
+    + stkWPanel('b', buy, sw, sumB, showTok)
+    + stkWPanel('s', sell, bw, sumS, showTok)
     + '</div>';
   var filt='';
   var fl=(wf.botFilt||[]);
   if(fl.length){
     var rl={gas:st('wlRgas'), hf:st('wlRhf'), mm:st('wlRmm')};
-    filt='<details class="stk-wl-f"><summary>'+esc(st('wlFiltN').replace('{n}', String(wf.botN||fl.length)).replace('{p}', fmtU(wf.botVol||0)+' \u00b7 '+pct(wf.botVol||0)))+'</summary>'
+    var mixTxt=[];
+    if(mix.gas) mixTxt.push(mix.gas+' '+rl.gas);
+    if(mix.hf) mixTxt.push(mix.hf+' '+rl.hf);
+    if(mix.mm) mixTxt.push(mix.mm+' '+rl.mm);
+    filt='<details class="stk-wl-f"><summary>'+esc(st('wlFiltN')
+        .replace('{n}', String(wf.botN||fl.length))
+        .replace('{p}', (mixTxt.length? mixTxt.join(' \u00b7 ')+' \u00b7 ' : '')+fmtU(wf.botVol||0)+' \u00b7 '+pct(wf.botVol||0)))+'</summary>'
       + '<div class="stk-wl-fl">'+fl.map(function(r){
           return '<span><b>'+esc(stkSlug(r.w))+'</b><i class="tag">'+esc(rl[r.r]||r.r)+'</i> '+fmtU(r.v)+' \u00b7 '+nS(r.n)+' '+esc(st('flTrades'))+'</span>';
         }).join('')+'</div>'

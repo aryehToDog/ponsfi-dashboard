@@ -451,13 +451,16 @@ def sample(pool_addrs, price, now=None, state_path=STATE, trade_fetcher=None):
     # ---- 5) 前 20 榜（买入 / 卖出），先按行为特征剔机器，再按成交额排名 ----
     def _row(w, p):
         tv = tiers.get(w)
-        bal, balt = None, None
+        bal, balt, bal_ts = None, None, None
         if tv:
             bal = tv[0]
+            if len(tv) > 1:
+                bal_ts = tv[1]
             if len(tv) > 2:
                 balt = tv[2]
         return {
             "w": w,
+            "balTs": bal_ts,
             "buy": round(p["buy"], 2), "sell": round(p["sell"], 2),
             # 数量：只有该钱包窗口内每一笔都带数量字段才给合计（缺一条就显示 —，不估算）
             "btok": round(p["btok"], 4) if (p["btok"] and not p["miss"]) else None,

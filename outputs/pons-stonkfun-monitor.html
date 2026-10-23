@@ -2,6 +2,14 @@
 <!-- ==========================================================================
      ---------------------------------------------------------------------------
      ---------------------------------------------------------------------------
+     ponsfi.xyz 看板 · 版本 v3.29.31「STONK 收入纳入 $STONK 计价收入」 · 2026-10-23
+     【为什么做这一版】StonkFun 官网收入页新增「$STONK quote revenue」一项；
+       原看板与深度页只读 revenueUsd，少算这部分，和官网 Total revenue 不一致。
+     【这一版改了什么】官方日收入统一为 Total revenue（优先 totalRevenueUsd，否则将
+       revenueUsd 与 quoteRevenueUsd 相加），用于主看板日表和 STONK 深度页的 30/90 日收入、
+       均值与估值；保留收入分项，回购 / 销毁口径不变。
+     回退：恢复 work/hourly.py.bak-v32931、work/stonk_page.py.bak-v32931 和本文件备份后重渲染。
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.30「改名：前 20 大户动向 → 24 小时买入 / 卖出榜 · 前 20」 · 2026-10-17
      【为什么做这一版】作者反馈：「『前 20 大户动向 · 24 小时』这个名字有歧义，有点感觉是
        持仓地址前 20 的感觉」。确实：这张卡是「按 24 小时成交额排的买入 / 卖出榜」，
@@ -1136,7 +1144,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.30-2026-10-17">
+<meta name="dashboard-version" content="v3.29.31-2026-10-23">
 
 <html lang="zh-CN">
 <head>
@@ -3634,7 +3642,7 @@ const BUNDLE = {"generated": "2026-10-15T03:01:55.239870Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.30 · 2026-10-17';
+const DASH_VER = 'v3.29.31 · 2026-10-23';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {

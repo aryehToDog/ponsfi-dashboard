@@ -489,7 +489,16 @@ def sf_official_daily():
         d = (r.get("date") or "")[:10]
         if not d or d >= today:          # 今天不满一天，不混进来
             continue
-        days[d] = {"rev": round(float(r.get("revenueUsd") or 0), 2),
+        # 官网现将收入拆成基础收入 + $STONK 计价收入；看板收入列对齐
+        # 官网「Total revenue」。优先用总值，兼容旧字段及可能的 quote 字段别名。
+        total = r.get("totalRevenueUsd")
+        quote = (r.get("quoteRevenueUsd") if r.get("quoteRevenueUsd") is not None
+                 else r.get("stonkQuoteRevenueUsd"))
+        base = float(r.get("revenueUsd") or 0)
+        total = float(total) if total is not None else base + float(quote or 0)
+        days[d] = {"rev": round(total, 2),
+                   "baseRev": round(base, 2),
+                   "quoteRev": round(float(quote or 0), 2),
                    "hold": round(float(r.get("buybackUsd") or 0), 2),
                    "burn": round(float(r.get("stonkBurnedTokens") or 0), 2)}
     if not days:

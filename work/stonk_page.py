@@ -54,6 +54,18 @@ def fnum(v):
         return None
 
 
+def sf_revenue_usd(day):
+    """官网 Total revenue = revenueUsd + $STONK quote revenue（向后兼容旧 API）。"""
+    total = fnum(day.get("totalRevenueUsd"))
+    if total is not None:
+        return total
+    base = fnum(day.get("revenueUsd")) or 0
+    quote = fnum(day.get("quoteRevenueUsd"))
+    if quote is None:
+        quote = fnum(day.get("stonkQuoteRevenueUsd"))
+    return base + (quote or 0)
+
+
 def jload(path, default=None):
     try:
         with open(path, encoding="utf-8") as fh:
@@ -337,7 +349,7 @@ def main():
     days = [d for d in days if d["date"] < today][-30:]
     dly = {
         "dates": [d["date"][5:] for d in days],
-        "rev": [round(fnum(d.get("revenueUsd")) or 0, 2) for d in days],
+        "rev": [round(sf_revenue_usd(d), 2) for d in days],
         "buyback": [round(fnum(d.get("buybackUsd")) or 0, 2) for d in days],
         "burn": [round(fnum(d.get("stonkBurnedTokens")) or 0, 2) for d in days],
         "count": [int(fnum(d.get("buybackCount")) or 0) for d in days],
@@ -350,7 +362,7 @@ def main():
     fa = [d for d in fa if d["date"] < today][-90:]
     rv90 = []
     for d in fa:
-        v90 = fnum(d.get("revenueUsd"))
+        v90 = sf_revenue_usd(d)
         rv90.append(round(v90, 2) if v90 is not None else None)
     rev90 = {"dates": [d["date"] for d in fa], "rev": rv90}
     rev90["n"] = len(rev90["rev"])

@@ -15,7 +15,7 @@
     python3 work/ci_build.py --mode hourly --no-push # 本地调试
 
 模式：
-    hourly  小时级（hourly.py + 合并 + 渲染）—— 每小时第 23 分钟（UTC）
+    hourly  小时级（hourly.py + 合并 + 深度页 + 全站排行 + 渲染）—— 每小时第 23 分钟（UTC）
     daily   全量（build_monitor.py：DefiLlama 日线 / 收入榜 / 回购 / 小时级）—— 每天 01:23 UTC
     auto    按 UTC 小时自动选：01 点走 daily；另外，只要最近一次全量已经超过
             24 小时（GitHub 定时被延迟/漏跑、或刚迁移过来还没跑过全量），下一个
@@ -89,39 +89,8 @@ def merge_hourly():
     atomic_json(d, dp)
 
 
-def _board_me(b, metric, tid):
-    """从裁好的榜里取目标协议那一行（me=True 的那条）。"""
-    rows = ((b.get(metric) or {}).get("near") or {}).get(tid) or []
-    for r in rows:
-        if isinstance(r, dict) and r.get("me"):
-            return r
-    return None
-
-
-def board_broken(path=None):
-    """快照里的收入榜是不是「坏」的。
-
-    判据（2026-10-14 实踩的坑）：目标协议 24h 为 0、而 7 日有值。
-    DefiLlama 总榜偶发把 stonkfun.total24h 记成 0（同日单协议接口是对的），
-    页面就成了「24 小时 #2388 $0、比一个月前下滑 2381 位」，看着像看板坏了。
-    """
-    try:
-        d = json.load(open(path or os.path.join(HERE, "dashboard-data.json"), encoding="utf-8"))
-        b = ((d.get("leaderboard") or {}).get("board") or {})
-        for tid in ("stonkfun", "pons"):
-            v24, v7 = _board_me(b, "total24h", tid), _board_me(b, "total7d", tid)
-            if v24 and v7 and not (v24.get("v") or 0) > 0 and (v7.get("v") or 0) > 0:
-                return True
-    except Exception:
-        return False
-    return False
-
-
-def refresh_broken_board():
-    """小时模式本来不抓全站榜（4MB 太重），但榜已经坏了就别干等到明天的全量：
-    就地重抓一次 —— leaderboard.py 里对 0 值有兜底（单协议接口 → 日线最后非零值）。"""
-    if not board_broken():
-        return False
+def refresh_leaderboard():
+    """每轮页面渲染前更新全站排行，确保官方 STONK 总收入及时参与重排。"""
     try:
         sys.path.insert(0, HERE)
         from leaderboard import fetch_board
@@ -129,10 +98,19 @@ def refresh_broken_board():
         d = json.load(open(dp, encoding="utf-8"))
         d["leaderboard"] = fetch_board()
         atomic_json(d, dp)
-        log("收入榜有 0 值坏数据（24h=0 但 7 日有值）→ 已就地重抓修正")
+        log("收入榜已刷新（STONK 官网 Total revenue 已参与全站重排）")
         return True
     except Exception as exc:
         log("收入榜重抓失败（沿用旧榜）：%s" % exc)
+        try:
+            dp = os.path.join(HERE, "dashboard-data.json")
+            d = json.load(open(dp, encoding="utf-8"))
+            if d.get("leaderboard"):
+                d["leaderboard"]["stale"] = True
+                d["leaderboard"]["staleReason"] = "fetch-failed"
+                atomic_json(d, dp)
+        except Exception:
+            pass
         return False
 
 
@@ -295,10 +273,11 @@ def main():
     else:
         run([sys.executable, os.path.join(HERE, "hourly.py")])
         merge_hourly()
-        refresh_broken_board()
         refresh_series_health()
     # v3.27 STONK 深度页数据（两种模式都跑；渲染统一放最后，保证 stonkPage 进 HTML）
     run([sys.executable, os.path.join(HERE, "stonk_page.py")])
+    # STONK 官方收入已进入全站排名，每轮渲染前重抓同行榜并用刚生成的 rev90 重排。
+    refresh_leaderboard()
     run([sys.executable, os.path.join(HERE, "render_only.py")])
     publish_deploy()
     if args.push:

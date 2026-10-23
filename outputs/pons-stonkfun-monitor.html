@@ -2,6 +2,13 @@
 <!-- ==========================================================================
      ---------------------------------------------------------------------------
      ---------------------------------------------------------------------------
+     ponsfi.xyz 看板 · 版本 v3.29.33「每轮发布刷新 STONK 总收入排行榜」 · 2026-10-23
+     【为什么做这一版】v3.29.32 的排行改为官网总收入，但云端小时模式仍沿用昨日榜单快照，
+       本次代码更新因此没有立刻更新截图中的 StonkFun 名次和数值。
+     【这一版改了什么】每轮页面渲染前先更新 STONK 深度页官方日线，再抓全站同行榜并重排；
+       排行抓取失败时将快照标旧，避免误显示为最新。首页与深度页共用这一份排行榜数据。
+     回退：恢复 work/ci_build.py.bak-v32933、work/render_only.py.bak-v32933 后重渲染。
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.32「全站收入排行对齐 STONK 官网总收入」 · 2026-10-23
      【为什么做这一版】v3.29.31 已修正主看板、STONK 深度页的日线/估值，但收入排行卡
        和页面内即时刷新仍使用 DefiLlama 的 STONK 单项收入，漏掉官网新增的 $STONK 计价收入。
@@ -1153,7 +1160,7 @@
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.32-2026-10-23">
+<meta name="dashboard-version" content="v3.29.33-2026-10-23">
 
 <html lang="zh-CN">
 <head>
@@ -3651,7 +3658,7 @@ const BUNDLE = {"generated": "2026-10-15T03:01:55.239870Z", "series": {"pons.dai
 function icn(name,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" aria-hidden="true"><use href="#ic-'+name+'"/></svg>';}
 const IC={zap:icn('zap'),refresh:icn('refresh'),alert:icn('alert'),eye:icn('eye'),coffee:icn('coffee'),external:icn('external'),volume:icn('volume'),sun:icn('sun'),moon:icn('moon'),monitor:icn('monitor'),chev:icn('chev-up'),
   activity:icn('activity'),bell:icn('bell'),flame:icn('flame'),trophy:icn('trophy'),trend:icn('trend'),table:icn('table'),db:icn('db'),book:icn('book'),pie:icn('pie'),medal:icn('medal'),shield:icn('shield')};
-const DASH_VER = 'v3.29.32 · 2026-10-23';
+const DASH_VER = 'v3.29.33 · 2026-10-23';
 
 /* ==================== 多语言 / i18n ==================== */
 const I18N = {

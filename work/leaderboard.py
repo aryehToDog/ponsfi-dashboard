@@ -19,8 +19,6 @@ import sys
 import time
 import urllib.request
 
-from stonk_page import sf_daily_all, sf_revenue_usd
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DATA = os.path.join(HERE, "dashboard-data.json")
@@ -123,11 +121,23 @@ def patch_stonk_official_revenue(protocols, days=None):
     这些窗口与看板其余协议的收入排行保持日线口径，避免浏览器/快照各算一套。
     """
     if days is None:
+        # ci_build.py 会先刷新 stonk-page.json；优先复用刚抓好的官方 90 日总收入，
+        # 避免同一轮构建重复请求 StonkFun。独立运行时再直接拉官方日线。
         try:
-            days = sf_daily_all() or []
-        except Exception as exc:
-            print("warn: stonk official leaderboard data: %s" % exc, file=sys.stderr)
+            page = json.load(open(os.path.join(HERE, "stonk-page.json"), encoding="utf-8"))
+            fw = ((page.get("flywheel") or {}).get("rev90") or {})
+            dates, values = fw.get("dates") or [], fw.get("rev") or []
+            days = [{"date": d, "revenueUsd": v}
+                    for d, v in zip(dates, values) if d and v is not None]
+        except Exception:
             days = []
+        if not days:
+            try:
+                from stonk_page import sf_daily_all
+                days = sf_daily_all() or []
+            except Exception as exc:
+                print("warn: stonk official leaderboard data: %s" % exc, file=sys.stderr)
+                days = []
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     rows = []
     for row in days:
@@ -135,7 +145,19 @@ def patch_stonk_official_revenue(protocols, days=None):
             continue
         day = (row.get("date") or "")[:10]
         if day and day < today:
-            rows.append((day, sf_revenue_usd(row)))
+            base = row.get("revenueUsd")
+            quote = row.get("quoteRevenueUsd")
+            if quote is None:
+                quote = row.get("stonkQuoteRevenueUsd")
+            if quote is None:
+                quote = row.get("quoteTokenRevenueUsd")
+            if quote is not None:
+                rev = float(base or 0) + float(quote)
+            elif base is not None:       # stonk-page.json stores normalized Total revenue here
+                rev = float(base)
+            else:
+                rev = float(row.get("totalRevenueUsd") or 0)
+            rows.append((day, float(rev)))
     rows.sort(key=lambda x: x[0])
     by_slug = {p.get("slug"): p for p in protocols}
     target = by_slug.get("stonkfun")

@@ -56,14 +56,18 @@ def fnum(v):
 
 def sf_revenue_usd(day):
     """官网 Total revenue = revenueUsd + $STONK quote revenue（向后兼容旧 API）。"""
-    total = fnum(day.get("totalRevenueUsd"))
-    if total is not None:
-        return total
-    base = fnum(day.get("revenueUsd")) or 0
+    base_raw = fnum(day.get("revenueUsd"))
+    base = base_raw or 0
     quote = fnum(day.get("quoteRevenueUsd"))
     if quote is None:
         quote = fnum(day.get("stonkQuoteRevenueUsd"))
-    return base + (quote or 0)
+    if quote is None:
+        quote = fnum(day.get("quoteTokenRevenueUsd"))
+    if quote is not None:
+        return base + quote
+    if base_raw is not None:
+        return base
+    return fnum(day.get("totalRevenueUsd"))
 
 
 def jload(path, default=None):

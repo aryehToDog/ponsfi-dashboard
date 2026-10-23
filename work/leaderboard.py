@@ -19,6 +19,8 @@ import sys
 import time
 import urllib.request
 
+from stonk_page import sf_daily_all, sf_revenue_usd
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DATA = os.path.join(HERE, "dashboard-data.json")
@@ -114,6 +116,45 @@ def patch_zero_targets(protocols):
     return fixed
 
 
+def patch_stonk_official_revenue(protocols, days=None):
+    """用官网完整日线总收入覆盖 STONK 排行指标（含 $STONK quote revenue）。
+
+    24h 使用最近一个完整 UTC 日，7D/30D 分别汇总最近 7/30 个完整日；
+    这些窗口与看板其余协议的收入排行保持日线口径，避免浏览器/快照各算一套。
+    """
+    if days is None:
+        try:
+            days = sf_daily_all() or []
+        except Exception as exc:
+            print("warn: stonk official leaderboard data: %s" % exc, file=sys.stderr)
+            days = []
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    rows = []
+    for row in days:
+        if not isinstance(row, dict):
+            continue
+        day = (row.get("date") or "")[:10]
+        if day and day < today:
+            rows.append((day, sf_revenue_usd(row)))
+    rows.sort(key=lambda x: x[0])
+    by_slug = {p.get("slug"): p for p in protocols}
+    target = by_slug.get("stonkfun")
+    if not target:
+        return {}
+    aligned = {}
+    for field, n in (("total24h", 1), ("total7d", 7), ("total30d", 30)):
+        window = rows[-n:]
+        if len(window) < n:
+            continue
+        value = round(sum(v for _day, v in window), 2)
+        target[field] = value
+        aligned[field] = {
+            "v": value, "from": window[0][0], "to": window[-1][0],
+            "source": "stonkfun.xyz official total revenue",
+        }
+    return aligned
+
+
 def build_board(protocols):
     """把原始协议数组裁成看板要用的结构。前端刷新排行时用的是同一套逻辑。"""
     total = len(protocols)
@@ -152,16 +193,19 @@ def fetch_board():
     j = get(API)
     protocols = j.get("protocols") or []
     fixed = patch_zero_targets(protocols)
+    stonk_official = patch_stonk_official_revenue(protocols)
     b = build_board(protocols)
     if fixed:
         b["fixed"] = fixed
+    if stonk_official:
+        b["stonkOfficial"] = stonk_official
     now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     # updated   = 上游自己给的时间（没有就用我们的抓取时间）
     # fetchedAt = 我们这次真正抓到的时刻，页面据此判断"这份榜单是不是旧的"
     b["updated"] = j.get("updated") or now
     b["fetchedAt"] = now
     b["stale"] = False
-    b["source"] = "defillama.com/revenue"
+    b["source"] = "defillama.com/revenue + stonkfun.xyz/revenue"
     return b
 
 

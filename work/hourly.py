@@ -465,8 +465,14 @@ def sf_fetch():
     if t.get("totalRevenueUsd") is None:
         print("warn: sf api: totals missing", file=sys.stderr)
         return None
+    quote_rev = t.get("quoteRevenueUsd")
+    if quote_rev is None:
+        quote_rev = t.get("stonkQuoteRevenueUsd")
+    if quote_rev is None:
+        quote_rev = t.get("quoteTokenRevenueUsd")
     return {"ts": int(time.time()),
             "revUsd": float(t["totalRevenueUsd"]),
+            "quoteRevUsd": float(quote_rev) if quote_rev is not None else None,
             "buybackUsd": float(t.get("totalBuybackUsd") or 0),
             "buybackCount": int(t.get("buybackCount") or 0),
             "burnTokens": float(t.get("stonkBurnedTokens") or 0),
@@ -489,13 +495,16 @@ def sf_official_daily():
         d = (r.get("date") or "")[:10]
         if not d or d >= today:          # 今天不满一天，不混进来
             continue
-        # 官网现将收入拆成基础收入 + $STONK 计价收入；看板收入列对齐
-        # 官网「Total revenue」。优先用总值，兼容旧字段及可能的 quote 字段别名。
-        total = r.get("totalRevenueUsd")
+        # 官网现将收入拆成基础收入 + $STONK 计价收入；看板收入列按两项相加
+        # 对齐官网「Total revenue」。只有组件字段缺失时才退回总值旧字段。
         quote = (r.get("quoteRevenueUsd") if r.get("quoteRevenueUsd") is not None
                  else r.get("stonkQuoteRevenueUsd"))
+        if quote is None:
+            quote = r.get("quoteTokenRevenueUsd")
         base = float(r.get("revenueUsd") or 0)
-        total = float(total) if total is not None else base + float(quote or 0)
+        total = base + float(quote or 0)
+        if r.get("revenueUsd") is None and r.get("totalRevenueUsd") is not None:
+            total = float(r["totalRevenueUsd"])
         days[d] = {"rev": round(total, 2),
                    "baseRev": round(base, 2),
                    "quoteRev": round(float(quote or 0), 2),
@@ -539,6 +548,9 @@ def sf_series(buckets):
         if ha not in rev:
             continue
         dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
+        # 新旧快照过渡期没有 quoteRevUsd 的点不跨期补算，避免把累计 quote 收入塞进单小时。
+        if a.get("quoteRevUsd") is not None and b.get("quoteRevUsd") is not None:
+            dr += b["quoteRevUsd"] - a["quoteRevUsd"]
         db = (b.get("burnTokens") or 0) - (a.get("burnTokens") or 0)
         if dr > 0:
             rev[ha] = round((rev[ha] or 0) + dr, 2)
@@ -579,6 +591,8 @@ def sf_daily():
         if ta.hour < 21 or tb.hour < 21:
             continue
         dr = (hb.get("revUsd") or 0) - (ha.get("revUsd") or 0)
+        if ha.get("quoteRevUsd") is not None and hb.get("quoteRevUsd") is not None:
+            dr += hb["quoteRevUsd"] - ha["quoteRevUsd"]
         dh = (hb.get("buybackUsd") or 0) - (ha.get("buybackUsd") or 0)
         db = (hb.get("burnTokens") or 0) - (ha.get("burnTokens") or 0)
         if dr >= 0: out["rev"][b] = round(dr, 2)
@@ -1001,7 +1015,9 @@ def main():
             if not (6 * 3600 <= gap <= 26 * 3600):
                 continue
             supp["stonk"][b] = {
-                "rev": round((hb.get("revUsd") or 0) - (ha.get("revUsd") or 0), 2),
+                "rev": round((hb.get("revUsd") or 0) - (ha.get("revUsd") or 0)
+                              + ((hb.get("quoteRevUsd") or 0) - (ha.get("quoteRevUsd") or 0)
+                                 if ha.get("quoteRevUsd") is not None and hb.get("quoteRevUsd") is not None else 0), 2),
                 "hold": round((hb.get("buybackUsd") or 0) - (ha.get("buybackUsd") or 0), 2),
                 "hours": round(gap / 3600, 1),
                 "partial": gap < 22 * 3600,

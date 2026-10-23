@@ -2747,7 +2747,7 @@ zh:{
   pvTotal:'总浏览', pvToday:'今日', pvUv:'今日访客',
   pvTip:'每次打开页面计 1 次浏览；同一天同一设备只计 1 个访客。数据来自本站自建计数，不接任何第三方统计',
   secRank:'收入排行 · 在整个行业里排第几',
-  rankSub:n=>'数据来自 DefiLlama · 共 '+n+' 个项目 · 按收入总额排（含没上链的中心化平台）',
+  rankSub:n=>'全站同行数据来自 DefiLlama；StonkFun 按官网完整日 Total revenue（含 $STONK 计价收入）重排 · 共 '+n+' 个项目',
   rankPct:p=>'前 '+p+'%',
   rankOf:'共 ',
   rankDeltaUp:n=>'比一个月前 ↑ 上升 '+n+' 位',
@@ -2816,7 +2816,7 @@ zh:{
   srcHourNote:'PONS 收入＝链上回购支出 × 逐日校准比率（按官方日线逐日校准，推算、已标注），销毁＝链上真值；STONK 收入与销毁＝官方接口真值。',
   srcSum:(n,ok,lag)=>'共 <b>'+n+'</b> 项数据源：<b>'+ok+'</b> 项是最新的'+(lag?('，<b>'+lag+'</b> 项滞后（上方已标黄 —— 那是上游出数的节奏，不是本站故障，小时级那套照旧是最新的）'):'')+'。',
   safeLine:'<b>只读数据面板</b> · 不连接钱包 · 不请求签名 · 不发起任何交易<span class="sf-sep">　|　</span>数据全部来自公开接口',
-  foot1:'数据来源：Pons 的收入和回购＝DefiLlama + 链上；STONK 的收入和回购＝StonkFun 官方 API（与官网一致）；成交额和市值＝CoinGecko。Pons 算的是它自己留下的那部分收入（创作者和 Uniswap 的分成已经扣掉）；StonkFun 算的就是它留下的交易费。贵不贵＝市值 ÷（每天收入 × 365 天），数字越小越便宜。参照：pump.fun 30 天收入 $4,528 万、市值 $24.6 亿 → 4.45x。',
+  foot1:'数据来源：Pons 的收入和回购＝DefiLlama + 链上；STONK 的收入和回购＝StonkFun 官方 API（与官网 Total revenue 对齐，含 $STONK 计价收入）；成交额和市值＝CoinGecko。Pons 算的是它自己留下的那部分收入（创作者和 Uniswap 的分成已经扣掉）；StonkFun 算它留下的交易费与 $STONK 计价收入。贵不贵＝市值 ÷（每天收入 × 365 天），数字越小越便宜。参照：pump.fun 30 天收入 $4,528 万、市值 $24.6 亿 → 4.45x。',
   foot2:'红线怎么定的：Pons 7 日均收入 &lt; $10 万＝该走，&lt; $15 万＝别加仓；StonkFun &lt; $20 万＝该走，&lt; $28 万＝别加仓。这个看板只是研究工具，不是投资建议。'
 },
 en:{
@@ -3067,7 +3067,7 @@ en:{
   pvTotal:'views', pvToday:'today', pvUv:'visitors',
   pvTip:'One view per page load; one visitor per device per day. Counted by this site\u2019s own server-side counter — no third-party analytics.',
   secRank:'Revenue ranking · where they sit in the whole industry',
-  rankSub:n=>'Source: DefiLlama · '+n+' projects · ranked by total revenue for the window you pick',
+  rankSub:n=>'Peers from DefiLlama; StonkFun uses official full-day Total revenue, including $STONK quote revenue · '+n+' projects',
   rankPct:p=>'top '+p+'%',
   rankOf:'of ',
   rankDeltaUp:n=>'Up '+n+' places vs one month ago',
@@ -3136,7 +3136,7 @@ en:{
   srcHourNote:'PONS revenue = on-chain buyback spend × a per-day ratio calibrated to official daily data (estimated, labelled); burn = on-chain truth. Both STONK figures are official-API truth.',
   srcSum:(n,ok,lag)=>n+' sources: '+ok+' up to date'+(lag?(', '+lag+' lagging (highlighted above — upstream publishing cadence, not an outage here; the hourly series is still current)'):'')+'.',
   safeLine:'<b>Read-only dashboard</b> · no wallet connection · no signatures · no transactions<span class="sf-sep">　|　</span>all data from public APIs',
-  foot1:'Sources: Pons revenue and buybacks = DefiLlama + on-chain; StonkFun revenue and buybacks = the official StonkFun API (matches the official site); volume and market cap = CoinGecko. Pons revenue is what the protocol keeps (creator and Uniswap splits already deducted); StonkFun revenue is the trading fees it keeps. Valuation = mcap ÷ (daily revenue × 365) — lower is cheaper. Reference: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
+  foot1:'Sources: Pons revenue and buybacks = DefiLlama + on-chain; StonkFun revenue and buybacks = the official API, aligned to the site Total revenue including $STONK quote revenue; volume and market cap = CoinGecko. Pons revenue is what the protocol keeps (creator and Uniswap splits already deducted); StonkFun revenue includes trading fees and $STONK quote revenue. Valuation = mcap ÷ (daily revenue × 365) — lower is cheaper. Reference: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
   foot2:'Where the lines come from: Pons 7-day avg revenue &lt; $100K = get out, &lt; $150K = stop adding; StonkFun &lt; $200K = get out, &lt; $280K = stop adding. A research tool, not investment advice.'
 }
 };
@@ -3365,19 +3365,40 @@ function renderStatic(){
   navBuild();                        /* v3.20：导航文案跟着语言一起换 */
 }
 
-/* ---------- 收入排行：把 DefiLlama 全站榜单裁成"你的位置" ---------- */
+/* ---------- 收入排行：DefiLlama peers + StonkFun 官方 Total revenue ---------- */
 const RANK_METRICS=[{k:'total24h',zh:'24 小时',en:'24H'},{k:'total7d',zh:'7 日',en:'7D'},{k:'total30d',zh:'30 日',en:'30D'}];
 const RANK_DAYS={total24h:1,total7d:7,total30d:30};
 const RANK_TARGET_IDS=['pons','stonkfun'];
 const RANK_TOP_N=10, RANK_NEAR=4, RANK_SLUGS={pons:'pons-v2',stonkfun:'stonkfun'};
+const RANK_CACHE_KEY='pons-rank-v2';
 let RANK_BY='total24h';
 
 function rankBoard(){ return DATA.leaderboard || BUNDLE.leaderboard || null; }
 function rankTabLabel(k){ var m=RANK_METRICS.find(function(x){return x.k===k;}); return m? (LANG==='zh'?m.zh:m.en) : k; }
 function rankPos(r,total){ return Math.min(100, Math.log10(Math.max(r,1))/Math.log10(Math.max(total,10))*100); }
 
+/* 和 leaderboard.py 一样，用 StonkFun 最近 1/7/30 个完整 UTC 日的官方 Total revenue
+   覆盖 DefiLlama 的旧单项收入，再统一重排。数据来自深度页同一份官方日线。 */
+function applyStonkOfficialRevenue(protocols){
+  try{
+    var sp=(DATA&&DATA.stonkPage)||(BUNDLE&&BUNDLE.stonkPage)||{};
+    var r90=sp.flywheel&&sp.flywheel.rev90;
+    if(!r90||!Array.isArray(r90.dates)||!Array.isArray(r90.rev)) return;
+    var days=[];
+    for(var i=0;i<Math.min(r90.dates.length,r90.rev.length);i++)
+      if(r90.dates[i]&&r90.rev[i]!=null&&isFinite(+r90.rev[i])) days.push({d:r90.dates[i],v:+r90.rev[i]});
+    var p=protocols.find(function(x){return x&&x.slug==='stonkfun';});
+    if(!p) return;
+    [[1,'total24h'],[7,'total7d'],[30,'total30d']].forEach(function(x){
+      var n=x[0], w=days.slice(-n);
+      if(w.length===n) p[x[1]]=Math.round(w.reduce(function(a,b){return a+b.v;},0)*100)/100;
+    });
+  }catch(e){}
+}
+
 /* 前端复刻 leaderboard.py 的裁剪逻辑：刷新时用同一套规则重算 */
 function buildRankBoard(protocols){
+  applyStonkOfficialRevenue(protocols);
   var total=protocols.length, board={};
   RANK_METRICS.forEach(function(m){
     var arr=protocols.slice().sort(function(a,b){ return ((b[m.k]||0)-(a[m.k]||0)); });
@@ -3400,7 +3421,7 @@ function buildRankBoard(protocols){
     });
     board[m.k]=o;
   });
-  return {total:total, board:board, updated:new Date().toISOString(), source:'defillama.com/revenue'};
+  return {total:total, board:board, updated:new Date().toISOString(), source:'defillama.com/revenue + stonkfun.xyz/revenue'};
 }
 
 /* 总榜偶发把某协议的 24h 记成 0（上游按「领取时点」记账，当日行还没落库）。
@@ -3448,14 +3469,14 @@ function rankCacheBroken(d){
 /* 实时刷新：整包 4.2MB 太重，浏览器只下压缩后的 ~860KB，并且缓存 6 小时 */
 async function loadLeaderboard(force){
   let cache=null;
-  try{ cache=JSON.parse(localStorage.getItem('pons-rank')||'null'); }catch(e){}
+  try{ cache=JSON.parse(localStorage.getItem(RANK_CACHE_KEY)||'null'); }catch(e){}
   if(cache && cache.d && !force && !rankCacheBroken(cache.d) && (Date.now()-cache.t)<6*3600*1000){ DATA.leaderboard=cache.d; return 1; }
   const j=await fetchJSON('https://api.llama.fi/overview/fees?dataType=dailyRevenue&excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true');
   await patchZeroTargets(j.protocols||[]);   /* 先补 0 值再排序，名次才不会算错 */
   const d=buildRankBoard(j.protocols||[]);
   if(j.updated) d.updated=j.updated;
   DATA.leaderboard=d;
-  try{ localStorage.setItem('pons-rank', JSON.stringify({t:Date.now(), d:d})); }catch(e){}
+  try{ localStorage.setItem(RANK_CACHE_KEY, JSON.stringify({t:Date.now(), d:d})); }catch(e){}
   return 1;
 }
 async function rankForce(){

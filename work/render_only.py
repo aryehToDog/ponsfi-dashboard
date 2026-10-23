@@ -11,6 +11,15 @@ assert "/*__VER__*/" in tpl
 BANNER = """<!-- ==========================================================================
      ---------------------------------------------------------------------------
      ---------------------------------------------------------------------------
+     ponsfi.xyz 看板 · 版本 v3.29.32「全站收入排行对齐 STONK 官网总收入」 · 2026-10-23
+     【为什么做这一版】v3.29.31 已修正主看板、STONK 深度页的日线/估值，但收入排行卡
+       和页面内即时刷新仍使用 DefiLlama 的 STONK 单项收入，漏掉官网新增的 $STONK 计价收入。
+     【这一版改了什么】云端排行快照与浏览器即时刷新统一用 StonkFun 官方完整日 Total revenue
+       （基础 revenueUsd + quoteRevenueUsd）覆盖 1/7/30 日 STONK 收入后重算全站名次；
+       浏览器缓存键升级，旧排行不会再覆盖新口径。
+       其他协议仍使用 DefiLlama；排行区已明确标出口径。其余收入位置沿用 v3.29.31 的修正。
+     回退：恢复 work/leaderboard.py.bak-v32932、work/template.html.bak-v32932 和本文件备份后重渲染。
+     ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.31「STONK 收入纳入 $STONK 计价收入」 · 2026-10-23
      【为什么做这一版】StonkFun 官网收入页新增「$STONK quote revenue」一项；
        原看板与深度页只读 revenueUsd，少算这部分，和官网 Total revenue 不一致。
@@ -1153,10 +1162,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.31-2026-10-23">
+<meta name="dashboard-version" content="v3.29.32-2026-10-23">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.31 · 2026-10-23"
+VER = "v3.29.32 · 2026-10-23"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

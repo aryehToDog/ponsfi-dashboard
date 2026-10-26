@@ -470,9 +470,23 @@ def sf_fetch():
         quote_rev = t.get("stonkQuoteRevenueUsd")
     if quote_rev is None:
         quote_rev = t.get("quoteTokenRevenueUsd")
+    quote_rev_est = False
+    if quote_rev is None:
+        # Current /api/revenue exposes quoteRevenueBurnUsd, not gross quoteRevenueUsd.
+        # Convert by the official share for intraday shape; complete UTC days are then
+        # reconciled to the exact daily Total revenue endpoint below.
+        try:
+            quote_burn = float(t.get("quoteRevenueBurnUsd"))
+            share = float(t.get("buybackShare"))
+        except (TypeError, ValueError):
+            quote_burn, share = None, None
+        if quote_burn is not None and share is not None and share > 0:
+            quote_rev = quote_burn / share
+            quote_rev_est = True
     return {"ts": int(time.time()),
             "revUsd": float(t["totalRevenueUsd"]),
             "quoteRevUsd": float(quote_rev) if quote_rev is not None else None,
+            "quoteRevEstimated": quote_rev_est,
             "buybackUsd": float(t.get("totalBuybackUsd") or 0),
             "buybackCount": int(t.get("buybackCount") or 0),
             "burnTokens": float(t.get("stonkBurnedTokens") or 0),
@@ -560,6 +574,36 @@ def sf_series(buckets):
         if db >= 0:
             burn[ha] = round((burn[ha] or 0) + db, 2)
     return ([rev[b] for b in buckets], [burn[b] for b in buckets], [], [], [])
+
+
+def align_sf_complete_days(rev, burn, buckets, official_days):
+    """完整 UTC 日按官方 daily API 总额校准小时分布；只缩放已有快照值，不补空小时。"""
+    if not official_days:
+        return {"rev": [], "burn": []}
+    indices = {}
+    for i, ts in enumerate(buckets):
+        day = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+        indices.setdefault(day, []).append(i)
+    aligned = {"rev": [], "burn": []}
+    for day, ids in indices.items():
+        target = official_days.get(day)
+        if not isinstance(target, dict) or len(ids) != 24:
+            continue
+        for series, field in ((rev, "rev"), (burn, "burn")):
+            values = [series[i] for i in ids]
+            official = target.get(field)
+            if (official is None or any(v is None for v in values)
+                    or sum(values) <= 0):
+                continue
+            official = float(official)
+            total = sum(values)
+            # Preserve the observed hourly shape, but make the 24h sum equal the
+            # official full-day value. This is an hourly allocation estimate.
+            for i, value in zip(ids[:-1], values[:-1]):
+                series[i] = round(value * official / total, 2)
+            series[ids[-1]] = round(official - sum(series[i] for i in ids[:-1]), 2)
+            aligned[field].append(day)
+    return {key: sorted(set(value)) for key, value in aligned.items()}
 
 
 def sf_daily():
@@ -927,6 +971,8 @@ def main():
         sfday_now = sf_official_daily()
     except Exception as exc:
         print("warn: sf official daily: %s" % exc, file=sys.stderr)
+    aligned_days = align_sf_complete_days(
+        srev, sburn, buckets, (sfday_now or {}).get("days") or {})
     ratio = SF_RATIO_FALLBACK
     if sfday_now and sfday_now.get("days"):
         ds = sorted(sfday_now["days"])[-3:]
@@ -969,8 +1015,18 @@ def main():
         else:
             pv.append(None)
     out["pons"]["rev"], out["pons"]["revEst"] = pv, True
-    out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
-    out["stonk"]["revSrc"] = "official-cumulative" if any(v is not None for v in srev) else "official-pending"
+    quote_est = any(bool(row.get("quoteRevEstimated"))
+                    for row in sf_load_hist()
+                    if isinstance(row, dict) and row.get("ts", 0) >= buckets[0])
+    rev_day_scaled = bool(aligned_days["rev"])
+    burn_day_scaled = bool(aligned_days["burn"])
+    out["stonk"]["rev"], out["stonk"]["revEst"] = srev, (quote_est or rev_day_scaled)
+    out["stonk"]["revSrc"] = ("official-daily-calibrated" if rev_day_scaled else
+                                  "official-cumulative-quote-estimate" if quote_est else
+                                  "official-cumulative" if any(v is not None for v in srev) else
+                                  "official-pending")
+    out["stonk"]["burnEst"] = burn_day_scaled
+    out["stonk"]["dailyAligned"] = aligned_days
     # v3.22：断档回填的小时（前端用斜纹柱 + 文案标注「估算」，不当成实测）
     out["stonk"]["span"], out["stonk"]["spanR"], out["stonk"]["spanB"] = sspan, sspanR, sspanB
 

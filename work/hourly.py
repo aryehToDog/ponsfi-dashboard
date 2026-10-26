@@ -547,14 +547,17 @@ def sf_series(buckets):
             continue
         if ha not in rev:
             continue
-        dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
-        # 新旧快照过渡期没有 quoteRevUsd 的点不跨期补算，避免把累计 quote 收入塞进单小时。
-        if a.get("quoteRevUsd") is not None and b.get("quoteRevUsd") is not None:
-            dr += b["quoteRevUsd"] - a["quoteRevUsd"]
+        # quote 累计字段缺一端时，收入这小时不完整，留空；销毁仍可独立使用。
+        qa, qb = a.get("quoteRevUsd"), b.get("quoteRevUsd")
+        dr = None
+        if (qa is None) == (qb is None):
+            dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
+            if qa is not None:
+                dr += qb - qa
         db = (b.get("burnTokens") or 0) - (a.get("burnTokens") or 0)
-        if dr > 0:
+        if dr is not None and dr >= 0:
             rev[ha] = round((rev[ha] or 0) + dr, 2)
-        if db > 0:
+        if db >= 0:
             burn[ha] = round((burn[ha] or 0) + db, 2)
     return ([rev[b] for b in buckets], [burn[b] for b in buckets], [], [], [])
 
@@ -917,8 +920,8 @@ def main():
         sf_record(sf_cur)
     srev, sburn, sspan, sspanR, sspanB = sf_series(buckets)
 
-    # v3.26：官方逐笔流水账本（买回 / 销毁，带时间戳）→ 按小时精确归类，覆盖累计差值。
-    # 收入 = 买回流水 ÷ 官方比例（最近 3 个完整日校准；拿不到才用历史值兜底）。
+    # 同步官方逐笔流水供深度页使用与交叉核对；小时图以官方累计 API 的相邻快照差值为准。
+    # 流水覆盖并不保证与官网日累计口径一致，因此不能用「买回÷比例」或逐笔销毁值覆盖累计差值。
     sfday_now = None
     try:
         sfday_now = sf_official_daily()
@@ -931,39 +934,29 @@ def main():
         revs = sum(float(sfday_now["days"][d].get("rev") or 0) for d in ds)
         if revs > 0 and 0.40 <= hold / revs <= 0.85:
             ratio = round(hold / revs, 4)
+    led = None
     try:
         led = sf_ledger_sync()
-        led_rev, led_burn = sf_ledger_hours(buckets, ratio)
-        led_fill = 0
-        for i in range(len(buckets)):
-            if led_rev[i] is not None:
-                srev[i] = led_rev[i]
-                led_fill += 1
-            if led_burn[i] is not None:
-                sburn[i] = led_burn[i]
         out["stonk"]["ledger"] = {"buyRows": led["buy"], "burnRows": led["burn"],
-                                  "filled": led_fill, "ratio": ratio}
+                                  "ratio": ratio,
+                                  "chartSource": "official-cumulative-snapshots"}
         if led["failed"]:
             out["stonk"]["ledger"]["failed"] = True
     except Exception as exc:
         print("warn: sf ledger: %s" % exc, file=sys.stderr)
     if any(v is not None for v in sburn):
-        out["stonk"]["burn"], out["stonk"]["burnSrc"] = sburn, "official"
+        out["stonk"]["burn"], out["stonk"]["burnSrc"] = sburn, "official-cumulative"
     else:
-        try:  # 官方两点还没攒够 → 退回旧的 Solana 供应量快照差值
-            out["stonk"]["burn"] = stonk_burn_hourly(buckets)
-            out["stonk"]["burnSrc"] = "snapshot"
-        except Exception as exc:
-            print("warn: stonk burn: %s" % exc, file=sys.stderr)
-            out["stonk"]["burn"] = [None] * HOURS
-            out["stonk"]["burnSrc"] = "none"
+        # 官方累计值不可用时留空，不用另一种统计口径冒充官方小时数。
+        out["stonk"]["burn"] = [None] * HOURS
+        out["stonk"]["burnSrc"] = "official-pending"
 
     # 收入：Pons 用「小时回购支出 × 校准比率」推算（v3.29.16 逐日校准：
     # 历史日各用当天官方日线比率、当天用实时比率，兜底链上/旧值）；
-    # StonkFun 用官方流水账本（买回 ÷ 官方比例）
+    # StonkFun 小时收入与销毁均使用官方累计 API 相邻快照差值；未采到的时段留空。
     hold_by_day = {}
     for b, c, t0 in zip(out["pons"]["burn"], out["pons"]["close"], buckets):
-        if b and c:
+        if b is not None and c:
             d0 = ts_day(t0)
             hold_by_day[d0] = hold_by_day.get(d0, 0.0) + b * c
     ratio_by_day, pons_ratio, pons_ratio_src = pons_rev_ratios(old, hold_by_day)
@@ -971,13 +964,13 @@ def main():
     out["ponsRevRatioByDay"] = ratio_by_day
     pv = []
     for b, c, t0 in zip(out["pons"]["burn"], out["pons"]["close"], buckets):
-        if b and c:
+        if b is not None and c:
             pv.append(round(b * c * ratio_by_day.get(ts_day(t0), pons_ratio), 2))
         else:
             pv.append(None)
     out["pons"]["rev"], out["pons"]["revEst"] = pv, True
     out["stonk"]["rev"], out["stonk"]["revEst"] = srev, False
-    out["stonk"]["revSrc"] = "official" if any(v is not None for v in srev) else "official-pending"
+    out["stonk"]["revSrc"] = "official-cumulative" if any(v is not None for v in srev) else "official-pending"
     # v3.22：断档回填的小时（前端用斜纹柱 + 文案标注「估算」，不当成实测）
     out["stonk"]["span"], out["stonk"]["spanR"], out["stonk"]["spanB"] = sspan, sspanR, sspanB
 
@@ -1055,11 +1048,10 @@ def main():
 
     atomic_dump(out, OUT)
     pb = [x for x in out["pons"]["burn"] if x]
-    lfill = ((out.get("stonk") or {}).get("ledger") or {}).get("filled")
-    print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s · STONK 账本覆盖 %s 小时"
+    print("hourly.json ok · 小时数 %d · PONS 72h 销毁 %s · 交易量 PONS %s / STONK %s · STONK 官方累计快照 %s"
           % (HOURS, round(sum(pb), 1),
              sum(x for x in out["pons"]["vol"] if x), sum(x for x in out["stonk"]["vol"] if x),
-             lfill if lfill is not None else "?"))
+             sum(x is not None for x in out["stonk"]["rev"])))
     return out
 
 

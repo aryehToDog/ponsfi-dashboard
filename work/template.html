@@ -3478,14 +3478,16 @@ function rankCacheBroken(d){
 /* 实时刷新：整包 4.2MB 太重，浏览器只下压缩后的 ~860KB，并且缓存 6 小时 */
 async function loadLeaderboard(force){
   let cache=null;
+  const officialDates=((((DATA.stonkPage||{}).flywheel||{}).rev90||{}).dates)||[];
+  const officialDay=officialDates.length?officialDates[officialDates.length-1]:null;
   try{ cache=JSON.parse(localStorage.getItem(RANK_CACHE_KEY)||'null'); }catch(e){}
-  if(cache && cache.d && !force && !rankCacheBroken(cache.d) && (Date.now()-cache.t)<6*3600*1000){ DATA.leaderboard=cache.d; return 1; }
+  if(cache && cache.d && cache.stonkDay===officialDay && !force && !rankCacheBroken(cache.d) && (Date.now()-cache.t)<6*3600*1000){ DATA.leaderboard=cache.d; return 1; }
   const j=await fetchJSON('https://api.llama.fi/overview/fees?dataType=dailyRevenue&excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true');
   await patchZeroTargets(j.protocols||[]);   /* 先补 0 值再排序，名次才不会算错 */
   const d=buildRankBoard(j.protocols||[]);
   if(j.updated) d.updated=j.updated;
   DATA.leaderboard=d;
-  try{ localStorage.setItem(RANK_CACHE_KEY, JSON.stringify({t:Date.now(), d:d})); }catch(e){}
+  try{ localStorage.setItem(RANK_CACHE_KEY, JSON.stringify({t:Date.now(), d:d, stonkDay:officialDay})); }catch(e){}
   return 1;
 }
 async function rankForce(){
@@ -5502,6 +5504,7 @@ async function loadLive(){
   /* 排行榜 4.2MB：单独发，回来只重画「收入排行」那一段，绝不拖住主数据上屏 */
   const lbP = loadLeaderboard().then(function(){
     try{ renderRank(); }catch(e){}
+    try{ if(document.body.classList.contains('stk-on')) stkRender(); }catch(e){}
   }).catch(function(){});
   /* 链上 24h 回购（20+ 次 RPC，最慢）：同样不阻塞首屏 */
   const chainP = loadChainBurn().then(function(r){
@@ -5851,6 +5854,8 @@ function stkBundle(){
 function stkSyncMetrics(d){
   var h=d.hero||{}, fw=d.flywheel||{}, dm=d.demand||{}, val=d.value||{}, md=d.model||{};
   var site=stkSiteInfo(), px=site.price, mc=site.mcap;
+  var board=rankBoard(), latest=board&&board.board&&board.board.total24h;
+  if(latest){ val.rank=latest.rank||{}; val.rankNear=latest.near||{}; val.rankUpdated=board.updated; }
   var chain=((burnBundle()||{}).chain||{}).stonkfun;
   if(chain && chain.burned!=null && chain.supply>0){
     h.burnedTok=chain.burned; h.burnPct=chain.burned/chain.supply;

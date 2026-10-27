@@ -270,6 +270,7 @@ def main():
     os.makedirs(os.path.join(ROOT, "outputs"), exist_ok=True)   # 全新 checkout 里可能还没有
     if mode == "daily":
         run([sys.executable, os.path.join(HERE, "build_monitor.py")])
+        merge_hourly()
     else:
         run([sys.executable, os.path.join(HERE, "hourly.py")])
         merge_hourly()

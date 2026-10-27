@@ -2717,6 +2717,7 @@ zh:{
   bgmOff:'点一下开始听',
   bgmUpName:'逍遥仙',
   bgmUpName2:'不凡',
+  bgmUpName3:'We Never (Remix)（若如初见）',
   bgmDownName:'兄弟抱一下',
   bgmDownName2:'梦的翅膀受了伤',
   bgmDownName3:'无人之岛',
@@ -2725,8 +2726,8 @@ zh:{
   bgmBandDown:'跌了',
   bgmBandFlat:'不涨不跌',
   bgmLab:'两家平均涨跌',
-  bgmRule:'涨 3% 以上放《逍遥仙》《不凡》轮着来；跌 3% 以上三首疗伤歌轮着放；中间不换歌',
-  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了放《逍遥仙》《不凡》，跌了放《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
+  bgmRule:'涨 3% 以上轮播上涨歌单；跌 3% 以上三首疗伤歌轮着放；中间不换歌',
+  bgmLegend:'上面那个百分比 ＝ 两家的平均涨跌，谁的盘子大谁说了算：近 7 天算 6.5 成、近 24 小时算 3.5 成\n涨了轮播上涨歌单，跌了放《梦的翅膀受了伤》《兄弟抱一下》《无人之岛》\n涨跌 3% 以上才换歌；回到 1.5% 以内就先不换（免得来回跳）',
   bgmNoData:'价格还没到，先不播',
   bgmHold:'不涨不跌，继续放这首',
   bgmPlaceholder:'占位旋律（没读到歌曲文件，先用原创旋律垫着）',
@@ -3039,6 +3040,7 @@ en:{
   bgmOff:'Tap to play',
   bgmUpName:'Xiao Yao Xian',
   bgmUpName2:'Bu Fan',
+  bgmUpName3:'We Never (Remix) — Hi Noise / 秋成',
   bgmDownName:'Brothers Hug',
   bgmDownName2:'Dream Wings Hurt',
   bgmDownName3:'Nobody\u2019s Island',
@@ -3047,8 +3049,8 @@ en:{
   bgmBandDown:'DOWN',
   bgmBandFlat:'FLAT',
   bgmLab:'Avg move',
-  bgmRule:'Up 3%+ alternates "Xiao Yao Xian" / "Bu Fan"; down 3%+ alternates the three sad songs; in between keeps the current one',
-  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → "Xiao Yao Xian" / "Bu Fan". Down → "Dream Wings Hurt" / "Brothers Hug" / "Nobody\u2019s Island"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
+  bgmRule:'Up 3%+ rotates the up playlist; down 3%+ rotates the three sad songs; in between keeps the current one',
+  bgmLegend:'The number above = both coins\u2019 average move, and the bigger coin counts more: 7-day counts 65%, 24-hour counts 35%\nUp → the up playlist. Down → "Dream Wings Hurt" / "Brothers Hug" / "Nobody\u2019s Island"\nIt only switches past 3%; inside 1.5% it keeps playing (no flip-flopping)',
   bgmNoData:'No price data yet — nothing to play',
   bgmHold:'Flat both ways — keeping this track',
   bgmPlaceholder:'Placeholder melody (song files not found)',
@@ -7611,6 +7613,15 @@ const BGM_TRACKS = {
 };
 /* 歌词与音频同目录同名（.lrc）。新增歌曲：mp3 + lrc 一起放进 audio/，这里补一条。 */
 const BGM_TH = 3.0, BGM_EXIT = 1.5, BGM_MIN_MS = 90000, BGM_FADE_MS = 1200;
+
+// Enable the extracted Douyin track only after its audio file has been uploaded successfully.
+// A missing media file must never enter the rotation or replace a working song with a placeholder.
+fetch('audio/up-we-never.m4a', {method:'HEAD',cache:'no-store'}).then(function(r){
+  if(r.ok && /^(audio\/|video\/mp4|application\/octet-stream)/i.test(r.headers.get('content-type')||'')){
+    BGM_TRACKS.up.push({src:'audio/up-we-never.m4a',lrc:null,name:'bgmUpName3'});
+    bgmPaint();
+  }
+}).catch(function(){});
 
 let bgmOn=true, bgmBand=null, bgmCur=null, bgmCurIdx=0, bgmSince=0, bgmMoodCache=null;
 const bgmEls={}, bgmMissing={};

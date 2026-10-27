@@ -38,6 +38,7 @@ DL_FEES_API = "https://api.llama.fi/summary/fees/%s?dataType=%s"
 # STONK 官方原始供应（不是整 10 亿；同 buyback.py 的 STONK_INITIAL，2026-10-06 对账修正）
 STONK_SUPPLY = 999_969_797.91
 SF_API = "https://www.stonkfun.xyz/api/revenue"   # StonkFun 官方收入/回购/销毁（国内被墙，走海外中转）
+SF_SUMMARY_API = "https://www.stonkfun.xyz/api/v2/revenue/summary"
 SF_DAILY_API = "https://www.stonkfun.xyz/api/v2/revenue/daily"   # 官方日线（v3.18 起用于日度对账）
 SF_HIST = os.path.join(HERE, "sf-history.json")    # 官方累计值快照（每小时一条）
 SF_LEDGER = os.path.join(HERE, "sf-ledger.json")    # 官方逐笔流水账本（买回 / 销毁），滚动保留 ~110h
@@ -458,10 +459,13 @@ def sf_fetch():
     走过的坑：官方站点在 Vercel、国内直连被墙，中转本身也会抽风/限流；
     2026-10-06 起把实测最稳的 translate.goog 放第一位，其余线路兜底。
     """
-    j = _sf_get(SF_API)
-    if not j:
+    j = _sf_get(SF_API) or {}
+    summary = _sf_get(SF_SUMMARY_API) or {}
+    t = dict(j.get("totals") or {})
+    t.update(summary.get("totals") or {})
+    t.update(summary.get("config") or {})
+    if not t:
         return None
-    t = j.get("totals") or {}
     if t.get("totalRevenueUsd") is None:
         print("warn: sf api: totals missing", file=sys.stderr)
         return None
@@ -570,7 +574,8 @@ def sf_series(buckets):
         # quote 累计字段缺一端时，收入这小时不完整，留空；销毁仍可独立使用。
         qa, qb = a.get("quoteRevUsd"), b.get("quoteRevUsd")
         dr = None
-        if (qa is None) == (qb is None):
+        if ((qa is None) == (qb is None)
+                and bool(a.get("quoteRevEstimated")) == bool(b.get("quoteRevEstimated"))):
             dr = (b.get("revUsd") or 0) - (a.get("revUsd") or 0)
             if qa is not None:
                 dr += qb - qa

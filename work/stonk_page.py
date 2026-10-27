@@ -57,6 +57,8 @@ def fnum(v):
 def sf_revenue_usd(day):
     """官网 Total revenue = revenueUsd + $STONK quote revenue（向后兼容旧 API）。"""
     base_raw = fnum(day.get("revenueUsd"))
+    if base_raw is None:
+        base_raw = fnum(day.get("totalRevenueUsd"))
     base = base_raw or 0
     quote = fnum(day.get("quoteRevenueUsd"))
     if quote is None:
@@ -276,8 +278,10 @@ def main():
     gt_pools = gt_get("%s/networks/solana/tokens/%s/pools?page=1" % (GT, MINT), label="gt-pools") or {}
     rug = safe_get(RUG, tries=1, label="rugcheck") or {}
     sf_tot = H._sf_get(H.SF_API) or {}
-    sf_daily = H._sf_get(H.SF_DAILY_API) or {}
-    sf_daily_all_days = sf_daily_all() or (sf_daily.get("days") or [])   # 全量 85 天（v3.29.20 90 天收入图用）
+    sf_summary = H._sf_get(H.SF_SUMMARY_API) or {}
+    sf_daily_all_days = sf_daily_all()
+    sf_daily = {"days": sf_daily_all_days} if sf_daily_all_days else (H._sf_get(H.SF_DAILY_API) or {})
+    sf_daily_all_days = sf_daily_all_days or (sf_daily.get("days") or [])
     sf_burns = H._sf_ledger_get(H.SF_BURNS_API) or {}
     sf_fly = H._sf_get(H.SF_FLY_API) or {}
 
@@ -326,7 +330,9 @@ def main():
         main_base, main_quote_usd = fnum(main_lp.get("quote")), fnum(main_lp.get("baseUSD"))
 
     # ---- StonkFun 官方累计 ----
-    tot = (sf_tot or {}).get("totals") or {}
+    tot = dict((sf_tot or {}).get("totals") or {})
+    tot.update(sf_summary.get("totals") or {})
+    tot.update(sf_summary.get("config") or {})
     split = (sf_tot or {}).get("platformTokenSplit") or {}
     supply0 = fnum(ms.get("supply")) or float(H.STONK_SUPPLY)
     burned_tot = fnum(tot.get("stonkBurnedTokens")) or fnum(ms.get("burned"))
@@ -384,6 +390,7 @@ def main():
         return (sum(seq) / len(seq)) if seq else None
 
     rev7 = avg(dly["rev"][-7:])
+    revenue7 = sum(dly["rev"][-7:]) if dly["rev"] else None
     rev7p = avg(dly["rev"][-14:-7])
     chg7 = ((rev7 - rev7p) / rev7p) if (rev7 and rev7p) else None
     bb7 = sum(dly["buyback"][-7:]) if dly["buyback"] else None
@@ -512,10 +519,11 @@ def main():
             "rev90": rev90,
             "dates": dly["dates"], "rev": dly["rev"], "buyback": dly["buyback"], "burnTok": dly["burn"],
             "count": dly["count"],
-            "rev7": rev7, "rev7prev": rev7p, "chg7": chg7,
+            "rev7": rev7, "revenue7": revenue7, "rev7prev": rev7p, "chg7": chg7,
             "buyback7": bb7, "buybackDay": bb_day, "bought7": bought7, "avgPx7": avg_px7,
             "burn7": burn7, "burnDay": burn_day, "burnVel": burn_vel,
-            "share": buyback_share, "vsVol": vs_vol, "pxRatio": px_ratio,
+            "share": (bb7 / revenue7) if bb7 is not None and revenue7 else None,
+            "budgetShare": buyback_share, "vsVol": vs_vol, "pxRatio": px_ratio,
             "hourly": {
                 "hours": (hourly.get("hours") or []),
                 "rev": ((hourly.get("stonk") or {}).get("rev") or []),
@@ -549,7 +557,8 @@ def main():
             "rankNear": (((dd.get("leaderboard") or {}).get("board") or {}).get("total24h") or {}).get("near", {}) if isinstance(dd.get("leaderboard"), dict) else {},
             "rankUpdated": (dd.get("leaderboard") or {}).get("updated") if isinstance(dd.get("leaderboard"), dict) else None,
             "platform": {
-                "volTotal": fnum(tot.get("estimatedVolumeUsd")), "revTotal": fnum(tot.get("totalRevenueUsd")),
+                "volTotal": fnum(tot.get("estimatedVolumeUsd")),
+                "revTotal": sf_revenue_usd(tot),
                 "buybackTotal": fnum(tot.get("totalBuybackUsd")), "launches": int(fnum(split.get("launchCount")) or 0) or None,
                 "feeRate": fnum(tot.get("platformFeeRate")), "since": split.get("startedAt"),
             },

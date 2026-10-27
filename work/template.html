@@ -2791,7 +2791,7 @@ zh:{
   bbChainRkTip:'这行金额是链上最近 24 小时现读（比 DefiLlama 新）；口径与 DefiLlama 不同，所以不占用它的名次。',
   burnPeersH24:n=>'回购力度榜 · 全行业近 24 小时回购金额（共 '+n+' 个项目，已去掉「烧 gas」的公链）',
   burnPeersH30:n=>'回购力度榜 · 全行业近 30 天回购金额（共 '+n+' 个项目，已去掉「烧 gas」的公链）',
-  burnPeersNote24:'只有 Pons / StonkFun 这两行是链上现读的：PONS 一直算到最新区块（真 24 小时），STONK 用总量差值。其它项目来自 DefiLlama，它有时晚 1~2 天出数。',
+  burnPeersNote24:'只有 Pons / StonkFun 这两行是链上现读的：PONS 一直算到最新区块（真 24 小时），STONK 用官方累计回购美元支出的差值（约 24h），不把销毁现值当回购支出。其它项目来自 DefiLlama，它有时晚 1~2 天出数。',
   burnPeersNote30:'说明：数字来自 DefiLlama 的 holders-revenue，近 30 天累计；已经把「烧 gas」的公链去掉（那不叫回购）。',
   burn24:'近 24 小时回购', burn24Wait:'积累中', burn24Chain:'链上现读', burn24Snap:'链上快照', burn24Official:'官方接口',
   burnCmpCol1:'近 24 小时', burnCmpCol2:'近 30 天', burnCmpCol3:'回购占成交额', burnCmpCol4:'折合一年能买回',
@@ -3306,7 +3306,7 @@ function stats(rows, p){
   let holdSum7=0; for(let i=Math.max(0,last-6);i<=last;i++) holdSum7 += hold[i]||0;
   const peak = Math.max(...idxValid.map(i=>rev[i]));
   const peakDay = rows[idxValid[idxValid.findIndex(i=>rev[i]===peak)]].date;
-  const mcap = DATA.meta[p.id]?.mcap || p.mcapFallback;
+  const mcap = mcapOf(p.id) || p.mcapFallback;
   const priceNow = pxOf(p.id) || (rows[last]? rows[last][p.id+'_price'] : null);
   const priceArr = rows.map(r=>r[p.id+'_price']).filter(v=>v!==null);
   const ath = priceArr.length? Math.max(...priceArr) : null;
@@ -3627,6 +3627,14 @@ function pxOf(id){
   for(let i=arr.length-1;i>=0;i--){ if(arr[i] && arr[i][1]>0) return arr[i][1]; }
   return 0;
 }
+function mcapOf(id){
+  if(id==='stonkfun'){
+    const c=((burnBundle()||{}).chain||{}).stonkfun||{};
+    const px=pxOf(id), initial=c.supply, burned=c.burned;
+    if(px>0 && initial>0 && burned!=null) return px*(initial-burned);
+  }
+  return ((DATA.meta||{})[id]||{}).mcap || ((DATA.market||{})[id]||{}).mcap || 0;
+}
 /* 链上/快照读回来的 24h 回购是「代币数量」，这里统一折成美元（拿不到币价就返回 null，宁可显示 — 也不要报个数骗人） */
 function b24usd(pid, tok){
   const px=pxOf(pid);
@@ -3639,13 +3647,17 @@ function burnOf(p){
   const supply=(d.supply!=null)? d.supply : p.maxSupply;
   return {burned:burned, supply:supply, pct:(supply>0)? burned/supply*100 : 0,
           addr:d.addr||null, explorer:d.explorer||null,
-          b24:(d.burn24h!=null)? b24usd(p.id, d.burn24h) : null, b24src:d.burn24hSrc||null,
+          b24:p.id==='stonkfun'?(d.buyback24hUsd??null):((d.burn24h!=null)?b24usd(p.id,d.burn24h):null), b24src:d.burn24hSrc||null,
           b24live:!!d.burn24hLive, b24txs:(d.burn24hTxs!=null)? d.burn24hTxs : null};
 }
 /* 24 小时回购的取数优先级：链上现读 / 链上快照  >  数据源里最近的一天（会滞后） */
 function b24Of(pid, st){
   const d=((burnBundle()||{}).chain||{})[pid]||{}, x=(st||{})[pid]||{};
-  if(d.burn24h!=null){
+  if(pid==='stonkfun' && d.buyback24hUsd!=null){
+    return {v:d.buyback24hUsd,wait:false,live:false,txs:null,tag:t('burn24Official'),
+      tip:(LANG==='zh'?'官方累计回购支出差值，覆盖约 ':'Official buyback USD delta, covering about ')+(d.buyback24hHours||24)+'h'};
+  }
+  if(pid!=='stonkfun' && d.burn24h!=null){
     const usd=b24usd(pid, d.burn24h);
     if(usd!=null) return {v:usd, wait:false, live:!!d.burn24hLive, txs:(d.burn24hTxs||null),
             tag:(d.burn24hLive? t('burn24Chain') : (d.burn24hSrc==='official'? t('burn24Official') : t('burn24Snap')))};
@@ -3667,7 +3679,7 @@ function burnStats(){
     for(let i=Math.max(0,last-29);i<=last;i++){ if(hold[i]!==null && hold[i]!==undefined){ s30+=hold[i]||0; n30++; } }
     const mk=(DATA.market||{})[p.id]||{};
     const b=burnOf(p);
-    const mcap=mk.mcap || (DATA.meta[p.id]||{}).mcap || p.mcapFallback || 0;
+    const mcap=mcapOf(p.id) || p.mcapFallback || 0;
     const price=pxOf(p.id)||(b.supply? mcap/b.supply : 0);
     out[p.id]={s7:s7, s30:s30, mcap:mcap, price:price, vol:mk.vol24h||0,
       d1:(hold[last]!=null? hold[last] : null), d1date:(rows[last]? rows[last].date : null),
@@ -5608,7 +5620,7 @@ zh:{
   secNote:'口径与来源',
   navFly:'回购飞轮', navFlow:'谁在买', navRank:'飞轮名单', navModel:'收入推演',
   kMcap:'市值', kVol24:'24 小时成交', kBurned:'已销毁', kHolders:'持币地址', kDepth:'主池深度',
-  kLiq:'全市场流动性', kBuyback:'日回购', kBurnSpeed:'销毁速度',
+  kLiq:'全市场流动性', kBuyback:'上一完整日回购', kBuybackToday:'今日回购（UTC）', kBurnSpeed:'销毁速度',
   kTurnover:'换手', kOfMcap:'占市值', kPoolsN:'个资金池', kOfSupply:'占供应', kPerDay:'/天',
   kAcross:'按 7 日均值', kToNext1:'距下一个 1%',
   chipMint:'已放弃增发权限', chipFreeze:'已放弃冻结权限', chipTax:'买卖 0% 税', chipRisk:'风控库无风险标记',
@@ -5659,7 +5671,7 @@ zh:{
   flPopVol:'成交额', flPopN:'成交笔数', flPopShare:'占采样成交', flPopSide:'买卖占比（买/卖）',
   flPopFoot:'口径与上方总表一致：只统计 DEX 逐笔成交；正数＝净买入，负数＝净卖出。',
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
-  flRev7:'近 7 日收入', flBB7:'近 7 日买回', flShare:'买回 ÷ 收入', flVsVol:'买回 ÷ 24h 成交',
+  flRev7:'近 7 日收入', flBB7:'近 7 日买回', flShare:'买回 ÷ 收入', flVsVol:'日均买回 ÷ 24h 成交',
   flPx:'回购均价 vs 现价', flChg:'收入 7 日环比',
   chartDaily:'每天的收入与买回（最近 {n} 天）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
   chartHourly:'最近 72 小时', hourTabRev:'收入', hourTabBurn:'销毁', hourTabVol:'交易量',
@@ -5717,7 +5729,7 @@ en:{
   secNote:'Method & sources',
   navFly:'Flywheel', navFlow:'Who buys', navRank:'Roster', navModel:'What-if',
   kMcap:'Market cap', kVol24:'24h volume', kBurned:'Burned', kHolders:'Holders', kDepth:'Main pool depth',
-  kLiq:'Market-wide liquidity', kBuyback:'Daily buyback', kBurnSpeed:'Burn speed',
+  kLiq:'Market-wide liquidity', kBuyback:'Last full-day buyback', kBuybackToday:'Today buyback (UTC)', kBurnSpeed:'Burn speed',
   kTurnover:'Turnover', kOfMcap:'of mcap', kPoolsN:'pools', kOfSupply:'of supply', kPerDay:'/day',
   kAcross:'7-day average', kToNext1:'to next 1%',
   chipMint:'Mint authority renounced', chipFreeze:'Freeze authority renounced', chipTax:'0% transfer tax', chipRisk:'No risk flags',
@@ -5768,7 +5780,7 @@ en:{
   flPopVol:'Volume', flPopN:'Trades', flPopShare:'of sampled volume', flPopSide:'Buy/sell split (buy/sell)',
   flPopFoot:'Same basis as the table above: DEX trades only; positive = net buying, negative = net selling.',
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
-  flRev7:'Revenue, last 7d', flBB7:'Buybacks, last 7d', flShare:'Buyback ÷ revenue', flVsVol:'Buyback ÷ 24h volume',
+  flRev7:'Revenue, last 7d', flBB7:'Buybacks, last 7d', flShare:'Buyback ÷ revenue', flVsVol:'Avg daily buyback ÷ 24h volume',
   flPx:'Avg buyback price vs now', flChg:'Revenue, 7d change',
   chartDaily:'Daily revenue and buybacks (last {n} days)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
   chartHourly:'Last 72 hours', hourTabRev:'Revenue', hourTabBurn:'Burn', hourTabVol:'Volume',
@@ -5818,7 +5830,7 @@ function stkSiteInfo(){
     var b=(typeof DATA!=='undefined' && DATA) || (typeof BUNDLE!=='undefined' && BUNDLE) || {};
     var m=(b.market||{}).stonkfun||{}, mt=((b.meta||{}).stonkfun)||{}, pr=(b.price||{}).stonkfun;
     var px=(typeof pr==='number'&&pr>0)? pr : ((typeof m.price==='number'&&m.price>0)? m.price : null);
-    var mc=(typeof m.mcap==='number'&&m.mcap>0)? m.mcap : ((typeof mt.mcap==='number'&&mt.mcap>0)? mt.mcap : null);
+    var mc=mcapOf('stonkfun') || null;
     var cg=(typeof m.change24h==='number')? m.change24h : null;
     return {price:px, mcap:mc, chg:cg};
   }catch(e){ return {price:null, mcap:null, chg:null}; }
@@ -5835,6 +5847,34 @@ function stkBundle(){
     if(typeof BUNDLE!=='undefined' && BUNDLE && BUNDLE.stonkPage) return BUNDLE.stonkPage;
   }catch(e){}
   return null;
+}
+function stkSyncMetrics(d){
+  var h=d.hero||{}, fw=d.flywheel||{}, dm=d.demand||{}, val=d.value||{}, md=d.model||{};
+  var site=stkSiteInfo(), px=site.price, mc=site.mcap;
+  var chain=((burnBundle()||{}).chain||{}).stonkfun;
+  if(chain && chain.burned!=null && chain.supply>0){
+    h.burnedTok=chain.burned; h.burnPct=chain.burned/chain.supply;
+    if(d.supply){ d.supply.burned=chain.burned; d.supply.circ=chain.supply-chain.burned; }
+    md.circ=chain.supply-chain.burned;
+  }
+  if(px>0){ h.price=px; md.price=px; fw.pxRatio=fw.avgPx7>0?px/fw.avgPx7:null; }
+  if(px>0 && h.burnedTok!=null){ h.burnedUsdNow=h.burnedTok*px; if(d.supply) d.supply.burnedUsdNow=h.burnedUsdNow; }
+  if(mc>0){
+    h.mcap=mc; val.mcap=mc;
+    val.ps7=fw.rev7>0?mc/(fw.rev7*365):null;
+    dm.turnover=h.vol24!=null?h.vol24/mc:null;
+  }
+  fw.revenue7=(fw.rev||[]).slice(-7).reduce(function(s,v){return s+(v||0);},0);
+  fw.share=fw.revenue7>0?fw.buyback7/fw.revenue7:null;
+  fw.vsVol=h.vol24>0?fw.buybackDay/h.vol24:null;
+  var items=(d.score||{}).items||[];
+  items.forEach(function(i){
+    if(i.k==='valuation'){ i.v=val.ps7; i.s=i.v==null?'na':i.v<1.5?'good':i.v<4?'neu':'risk'; }
+    if(i.k==='buybackForce'){ i.v=fw.vsVol; i.s=i.v==null?'na':i.v>=0.10?'good':i.v>=0.05?'neu':'risk'; }
+    if(i.k==='depth' && mc>0){ i.v=h.reserve/mc; i.s=i.v>=0.015?'good':i.v>=0.008?'neu':'risk'; }
+    if(i.k==='liquidity' && mc>0){ i.v=((dm.liquidity||{}).total||0)/mc; i.s=i.v>=0.02?'good':i.v>=0.01?'neu':'risk'; }
+  });
+  if(d.score) d.score.tally={bull:items.filter(i=>i.s==='good').length,neu:items.filter(i=>i.s==='neu').length,risk:items.filter(i=>i.s==='risk').length,na:items.filter(i=>i.s==='na').length};
 }
 function pctS(v,d){ return (v===null||v===undefined||isNaN(v))? '—' : ((v>=0?'+':'')+(v*100).toFixed(d==null?1:d)+'%'); }
 function pxS(p){ return (p===null||p===undefined||isNaN(p))? '—' : ('$'+(p>=1? p.toFixed(3): p.toFixed(4))); }
@@ -5895,6 +5935,7 @@ function stkRender(){
   /* v3.29.8：整页重画会把锚点行一起换掉，开着的明细框先收起，避免浮在半空 */
   try{ stkFlowPopClose(); }catch(e){}
   var d=stkBundle();
+  if(d) stkSyncMetrics(d);
   var sub=document.getElementById('stkSub'); if(sub) sub.textContent=st('sub');
   var ttl=document.getElementById('stkTitleTxt'); if(ttl) ttl.textContent=st('title');
   var back=document.getElementById('stkBackTxt'); if(back) back.textContent=st('back');
@@ -5968,9 +6009,14 @@ function stkHeroHTML(h, fw, dm, sf){
      回购值改用「最近一个完整日」（与结论卡同口径），7 日均挪到小字；后 4 格为次层明细。 */
   var lastBB=(fw.buyback&&fw.buyback.length)? fw.buyback[fw.buyback.length-1] : null;
   var lastDate=(fw.dates&&fw.dates.length)? fw.dates[fw.dates.length-1] : '';
+  var current=(sfDailyBundle()||{}).current;
+  var hasToday=current && current.date===new Date().toISOString().slice(0,10) && current.hold!=null;
+  var buybackLabel=hasToday?'kBuybackToday':'kBuyback';
+  var buybackValue=hasToday?current.hold:lastBB;
+  var buybackStamp=hasToday?new Date(current.asOf*1000).toISOString().slice(11,16)+' UTC':lastDate+' UTC';
   var cells=[
     ['kMcap', fmtU(mc), '', 1],
-    ['kBuyback', (lastBB!=null? fmtU(lastBB):'—'), ((lastDate? lastDate+' · ':'')+(fw.buybackDay? (LANG==='zh'?'7 日均 ':'7d avg ')+fmtU(fw.buybackDay) : '')), 1],
+    [buybackLabel, (buybackValue!=null? fmtU(buybackValue):'—'), buybackStamp+(fw.buybackDay!=null?' · '+(LANG==='zh'?'7 日均 ':'7d avg ')+fmtU(fw.buybackDay):''), 1],
     ['kBurned', (h.burnPct!=null? (h.burnPct*100).toFixed(2)+'%' : '—'), (h.burnedTok!=null? (h.burnedTok/1e6).toFixed(2)+'M STONK' : ''), 1],
     ['kBurnSpeed', (fw.burnVel!=null? fw.burnVel.toFixed(3)+'%' : '—'), (fw.burnDay? (fw.burnDay/1e6).toFixed(2)+'M '+st('kPerDay') : ''), 1],
     ['kVol24', fmtU(h.vol24), (dm.turnover!=null? st('kTurnover')+' '+(dm.turnover*100).toFixed(1)+'%' : '')],
@@ -6026,8 +6072,8 @@ function stkVerdictHTML(d){
   var lines=[];
   if(bb24!=null && burn24!=null && bb24>0){
     lines.push(['g', LANG==='zh'
-      ? '回购没停：最近一个完整日买回 <b>'+fmtU(bb24)+'</b>，销毁 <b>'+fmtU(burn24).replace('$','')+'</b> 枚 STONK，官方买回比例 <b>'+((fw.share||0)*100).toFixed(0)+'%</b> 照常执行。'
-      : 'Buybacks keep running: <b>'+fmtU(bb24)+'</b> bought back in the last full day and <b>'+burn24.toLocaleString('en-US',{maximumFractionDigits:0})+'</b> STONK burned, at the official <b>'+((fw.share||0)*100).toFixed(0)+'%</b> share.']);
+      ? '最近一个完整 UTC 日买回 <b>'+fmtU(bb24)+'</b>，合计销毁 <b>'+nS(burn24)+'</b> 枚 STONK（含报价收入直接销毁）；近 7 日买回支出占总收入 <b>'+((fw.share||0)*100).toFixed(1)+'%</b>。'
+      : 'Last complete UTC day: <b>'+fmtU(bb24)+'</b> spent on buybacks and <b>'+nS(burn24)+'</b> STONK burned, including quote-fee burns; actual 7-day buyback spend / total revenue: <b>'+((fw.share||0)*100).toFixed(1)+'%</b>.']);
   }
   if(val.ps7!=null){
     lines.push([val.ps7<1.5?'g':(val.ps7<4?'w':'b'), LANG==='zh'
@@ -6140,10 +6186,10 @@ function stkBurnsHTML(h){
 /* ---------- 飞轮 ---------- */
 function stkFlyHTML(fw, h){
   var tiles=[
-    [st('flRev7'), fmtU(fw.rev7), LANG==='zh'?'日均 '+fmtU(fw.rev7):'avg '+fmtU(fw.rev7)+'/day'],
+    [st('flRev7'), fmtU(fw.revenue7), LANG==='zh'?'日均 '+fmtU(fw.rev7):'avg '+fmtU(fw.rev7)+'/day'],
     [st('flBB7'), fmtU(fw.buyback7), LANG==='zh'?'日均 '+fmtU(fw.buybackDay):'avg '+fmtU(fw.buybackDay)+'/day'],
-    [st('flShare'), (fw.share!=null? (fw.share*100).toFixed(0)+'%':''), LANG==='zh'?'官方口径':'official share'],
-    [st('flVsVol'), (fw.vsVol!=null? (fw.vsVol*100).toFixed(1)+'%':''), LANG==='zh'?'买回 ÷ 24h 成交':'buyback ÷ 24h volume'],
+    [st('flShare'), (fw.share!=null? (fw.share*100).toFixed(1)+'%':''), LANG==='zh'?'近 7 个完整 UTC 日':'last 7 complete UTC days'],
+    [st('flVsVol'), (fw.vsVol!=null? (fw.vsVol*100).toFixed(1)+'%':''), LANG==='zh'?'7 日均买回 ÷ 主池 24h 成交':'7d avg buyback ÷ main-pool 24h volume'],
     [st('flPx'), (fw.pxRatio!=null? fw.pxRatio.toFixed(2)+'x':''), LANG==='zh'?('回购均价 '+pxS(fw.avgPx7)):('avg buyback '+pxS(fw.avgPx7))],
     [st('flChg'), (fw.chg7!=null? pctS(fw.chg7):''), LANG==='zh'?'近 7 日 vs 前 7 日':'7d vs prior 7d']
   ];
@@ -6916,7 +6962,7 @@ function stkHover(svg, tip, n, cb){
 function stkHourLabel(ts){
   try{
     var d=new Date(ts*1000);
-    return (LANG==='zh'? (d.getMonth()+1)+'/'+d.getDate() : (d.getMonth()+1)+'/'+d.getDate())+' '+String(d.getHours()).padStart(2,'0')+':00 UTC';
+    return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+' '+String(d.getUTCHours()).padStart(2,'0')+':00 UTC';
   }catch(e){ return ''; }
 }
 function stkDrawDaily(){
@@ -6943,7 +6989,7 @@ function stkDrawDaily(){
 }
 function stkHourSeries(){
   var d=stkBundle(); if(!d) return null;
-  var hy=(d.flywheel||{}).hourly||{};
+  var hb=hourlyBundle(), hy=hb?Object.assign({hours:hb.hours},hb.stonk||{}):((d.flywheel||{}).hourly||{});
   var vals = STK_HTAB==='rev'? (hy.rev||[]) : STK_HTAB==='burn'? (hy.burn||[]) : (hy.vol||[]);
   return {hours: hy.hours||[], vals: vals};
 }
@@ -6984,8 +7030,8 @@ function stkDrawHour(withSum){
     if(sumEl){
       var avg=cnt? sum/cnt : null;
       sumEl.innerHTML = (LANG==='zh'
-        ? '最近 '+n+' 小时：合计 <b>'+(STK_HTAB==='burn'? sum.toLocaleString('en-US',{maximumFractionDigits:0})+' STONK' : fmtU(sum))+'</b>，平均每小时 <b>'+(STK_HTAB==='burn'? (avg? avg.toLocaleString('en-US',{maximumFractionDigits:0}) : '—')+' STONK' : fmtU(avg))+'</b>；空柱＝那一小时没采到样，不估算。'
-        : 'Last '+n+'h: total <b>'+(STK_HTAB==='burn'? sum.toLocaleString('en-US',{maximumFractionDigits:0})+' STONK' : fmtU(sum))+'</b>, average <b>'+(STK_HTAB==='burn'? (avg? avg.toLocaleString('en-US',{maximumFractionDigits:0}) : '—')+' STONK' : fmtU(avg))+'</b> per hour. Empty bars were not sampled — never estimated.');
+        ? '最近 '+n+' 小时：合计 <b>'+(STK_HTAB==='burn'? sum.toLocaleString('en-US',{maximumFractionDigits:0})+' STONK' : fmtU(sum))+'</b>，平均每小时 <b>'+(STK_HTAB==='burn'? (avg? avg.toLocaleString('en-US',{maximumFractionDigits:0}) : '—')+' STONK' : fmtU(avg))+'</b>；有效采样 '+cnt+' / '+n+' 小时。收入 / 销毁的完整 UTC 日小时分布按官方日额校准，为小时估算；缺失小时留空。'
+        : 'Last '+n+'h: total <b>'+(STK_HTAB==='burn'? sum.toLocaleString('en-US',{maximumFractionDigits:0})+' STONK' : fmtU(sum))+'</b>, average <b>'+(STK_HTAB==='burn'? (avg? avg.toLocaleString('en-US',{maximumFractionDigits:0}) : '—')+' STONK' : fmtU(avg))+'</b> per hour. '+cnt+' / '+n+' sampled hours. Revenue / burn hourly allocations for full UTC days are estimates calibrated to official daily totals; missing hours stay blank.');
     }
   }
 }

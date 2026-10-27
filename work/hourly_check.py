@@ -33,6 +33,14 @@ def patch_official_stonk(d):
     last = hist[-1]
     if time.time() - last["ts"] > 6 * 3600:
         return
+    # 每小时刷新官方币价，避免首页 / 深度页估值继续使用每日全量留下的旧价格。
+    price = float(last.get("priceUsd") or 0)
+    if price > 0:
+        burned = float(last.get("burnTokens") or 0)
+        mcap = price * (STONK_SUPPLY - burned)
+        d.setdefault("price", {})["stonkfun"] = price
+        d.setdefault("market", {}).setdefault("stonkfun", {}).update(price=price, mcap=mcap)
+        d.setdefault("meta", {}).setdefault("stonkfun", {})["mcap"] = mcap
     node = ((d.get("burn") or {}).get("chain") or {}).get("stonkfun")
     burned = float(last.get("burnTokens") or 0)
     if not node or burned <= 0:
@@ -48,6 +56,11 @@ def patch_official_stonk(d):
         if abs(r["ts"] - target) <= 3 * 3600 and (base is None or abs(r["ts"] - target) < abs(base["ts"] - target)):
             base = r
     if base is not None:
+        if last.get("buybackUsd") is not None and base.get("buybackUsd") is not None:
+            cash = float(last["buybackUsd"]) - float(base["buybackUsd"])
+            if cash >= 0:
+                node["buyback24hUsd"] = round(cash, 2)
+                node["buyback24hHours"] = round((last["ts"] - base["ts"]) / 3600, 2)
         delta = burned - float(base.get("burnTokens") or 0)
         if delta >= 0:
             node["burn24h"] = round(delta, 2)

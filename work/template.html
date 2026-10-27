@@ -2269,6 +2269,330 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   .stk-cell .k{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3}
 }
 
+/* v4.0: one information hierarchy and one chart language across both views. */
+:root,:root[data-theme="dark"]{
+  --bg:#0d1015;--panel:#14181f;--panel2:#191e26;--panel3:#202630;
+  --line:#282e38;--line2:#394250;--grid:#262d37;
+  --txt:#edf0f5;--mut:#a1aab8;--mut2:#929dac;
+  --pons:#a394e3;--stonk:#56bba0;--hb-pons:var(--pons);--hb-stonk:var(--stonk);
+  --accent:var(--pons);--up:#65c1a3;--down:#e78a90;--warn:#d4ad68;
+  --metric-revenue:#91a4cd;--metric-buyback:var(--stonk);
+  --card-shadow:none;--card-sheen:none;--stick-shadow:none;
+  --r-lg:14px;--r-md:9px;--r-sm:6px;--sp-card:20px;--sp-block:14px;--sp-sec:40px;
+  --chart-h:280px;--fs-10:11px;--fs-11:12px;--fs-12:13px;--fs-13:14px;--fs-14:16px;--fs-16:18px;
+}
+:root[data-theme="light"]{
+  --bg:#f5f6f8;--panel:#fff;--panel2:#f6f7f9;--panel3:#eef0f4;
+  --line:#e4e7ec;--line2:#cdd3dd;--grid:#e8ebf0;
+  --txt:#202631;--mut:#626d7c;--mut2:#75808f;
+  --pons:#7862b7;--stonk:#26866c;--up:#218565;--down:#bd5966;--warn:#9c742d;
+  --metric-revenue:#667eaa;
+}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]):not([data-theme="light"]){
+  --bg:#f5f6f8;--panel:#fff;--panel2:#f6f7f9;--panel3:#eef0f4;
+  --line:#e4e7ec;--line2:#cdd3dd;--grid:#e8ebf0;
+  --txt:#202631;--mut:#626d7c;--mut2:#75808f;
+  --pons:#7862b7;--stonk:#26866c;--up:#218565;--down:#bd5966;--warn:#9c742d;--metric-revenue:#667eaa;
+}}
+[hidden]{display:none!important}
+body{font-size:13px;line-height:1.6}
+body::before,body::after{display:none}
+.wrap{max-width:1264px!important;margin:0 auto!important;padding:28px 32px 88px}
+header{padding:0 0 20px;border-bottom:1px solid var(--line);gap:14px;margin:0}
+h1{gap:0;min-width:180px;flex:1}
+h1 #h1t{font-size:18px;font-weight:650;letter-spacing:-.6px}
+h1 .brand{filter:none;margin-right:10px}
+h1 #gen{display:block;flex-basis:100%;margin:6px 0 0 36px;font-size:11px;font-weight:400;color:var(--mut2)}
+.hdr-right{gap:6px}
+.badge{font-size:11px;border:0;background:transparent;padding:4px 8px}
+.badge.live,.badge.off{background:transparent;border:0}
+button,.tbtn{box-shadow:none;font-weight:500;min-height:34px}
+button:hover{box-shadow:none;transform:none}
+.stk-btn-entry{padding:7px 10px!important;background:var(--panel)!important;border:1px solid var(--line)!important;border-radius:8px!important;box-shadow:none!important;min-width:0;gap:7px!important}
+.stk-btn-entry::before,.stk-btn-entry::after,.se-s,.se-dot,.se-go{display:none!important}
+.stk-btn-entry .se-mark{height:20px;width:20px;box-shadow:none;background:transparent;color:var(--stonk);border-radius:0}
+.stk-btn-entry .se-mark .ic{width:17px;height:17px}
+.stk-btn-entry .se-t{font-size:12px;letter-spacing:0;font-weight:600;color:var(--stonk)}
+.page-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:32px 0 16px}
+.eyebrow{font-size:10px;font-weight:600;color:var(--mut2);letter-spacing:1.6px;line-height:1.5}
+.eyebrow span{color:var(--mut2);margin-left:6px}
+.page-intro h2{font-size:34px;font-weight:600;line-height:1.25;letter-spacing:-1px;margin:12px 0 10px}
+.page-intro p{font-size:14px;color:var(--mut);margin:0;line-height:1.8}
+.intro-credit{flex-shrink:0;font-size:12px;color:var(--mut);text-decoration:none;padding-bottom:4px}
+.intro-credit span{margin-left:12px;color:var(--txt)}
+.safe-line{border:0;border-radius:0;padding:0;margin:0 0 14px;background:none;gap:6px;font-size:11px;color:var(--mut2)}
+.safe-line::before{display:none}.safe-line .sf-ic .ic{width:12px;height:12px;color:var(--mut2)}
+.topbar,.author-mini,.tip-mini{display:none!important}
+#secNav,body.tb-on #secNav,body.stk-on #secNav,body.stk-on.tb-on #secNav{
+  position:sticky;top:0;left:auto;transform:none;width:100%;display:flex;flex-direction:row;
+  align-items:center;gap:2px;padding:8px 0;margin:0 0 24px;border:0;border-bottom:1px solid var(--line);
+  border-radius:0;box-shadow:none;background:var(--bg);backdrop-filter:none;z-index:100;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;opacity:1;pointer-events:auto;
+}
+#secNav::-webkit-scrollbar{display:none}
+#secNav.nav-hide{opacity:1;transform:none;pointer-events:auto}
+.nav-h,.nav-i .nav-dot{display:none}
+#secNav .nav-i{width:auto;flex:0 0 auto;white-space:nowrap;gap:0;border:0;background:none;box-shadow:none;backdrop-filter:none;
+  padding:8px 13px;border-radius:6px;min-height:36px;color:var(--mut);font-size:12px;font-weight:500}
+#secNav .nav-i.on{background:var(--panel);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line);font-weight:600}
+#secNav .nav-i:hover{color:var(--txt);background:var(--panel2)}
+.sec-title,#stkView .sec-title{font-size:21px;letter-spacing:-.4px;text-transform:none;font-weight:600;color:var(--txt);margin:38px 0 16px;gap:9px;scroll-margin-top:80px}
+.sec-title::after,.sec-title::before{display:none}
+.sec-title>.ic{width:18px;height:18px;padding:0;background:none;border-radius:0;box-shadow:none;fill:var(--mut2);animation:none!important;opacity:1!important;transform:none!important}
+.sec-title:hover>.ic{box-shadow:none;transform:none}
+.rank-sub{font-size:12px;line-height:1.8;margin:0 0 18px;max-width:100%;color:var(--mut)}
+.card,.chartbox,.burn-card,.share-card,.rank-card,.srcbox,.gitem,.rank-list,.bb-note{background:var(--panel);background-image:none;border:1px solid var(--line);box-shadow:none;border-radius:var(--r-lg)}
+.grid2{gap:20px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.dot,.dot::before,.dot::after,.bb-live .ic{animation:none!important;box-shadow:none}
+.dot::before,.dot::after{display:none}
+.overview-card{padding:24px;overflow:hidden}
+.proj-head{align-items:center;margin:0}
+.proj-name{font-size:16px;font-weight:600;gap:8px;letter-spacing:-.3px}
+.project-monogram{height:30px;width:30px;display:inline-grid;place-items:center;border-radius:8px;
+  background:color-mix(in srgb,var(--project) 11%,var(--panel));color:var(--project);font-size:15px;font-weight:650}
+.tick{font-size:10px;padding:2px 5px;background:none;color:var(--mut2);border:0;font-weight:500}
+.pmeta{margin:5px 0 0 38px;font-size:11px;color:var(--mut2)}
+.price .p{font-size:19px;font-weight:550;letter-spacing:-.6px}
+.price .m{font-size:11px;color:var(--mut2);margin-top:4px}
+.overview-revenue{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:26px 0 24px}
+.metric-label{font-size:12px;color:var(--mut);margin-bottom:7px}
+.revenue-value{font-size:36px;font-weight:550;letter-spacing:-1.3px;line-height:1.2}
+.revenue-value small{font-size:12px;color:var(--mut2);font-weight:400;letter-spacing:0;margin-left:6px}
+.revenue-change{font-size:17px;font-weight:550;text-align:right;font-variant-numeric:tabular-nums}
+.revenue-change.up{color:var(--up)}.revenue-change.down{color:var(--down)}
+.revenue-change small{display:block;font-weight:400;font-size:11px;color:var(--mut2);margin-top:5px}
+.overview-card .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;border:0;background:none;border-radius:0;margin:0 0 18px}
+.overview-card .kv>div{background:none;padding:0;contain:none;min-width:0}
+.overview-card .kv .k{font-size:12px;color:var(--mut);margin-bottom:5px}
+.overview-card .kv .v{font-size:19px;font-weight:550;letter-spacing:-.45px;line-height:1.3}
+.metric-hint{font-size:10px;color:var(--mut2);margin-top:5px;line-height:1.5}
+.metric-more{border-top:1px solid var(--line);padding:0;font-size:12px;color:var(--mut)}
+.metric-more>summary{padding:12px 0;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:40px}
+.metric-more>summary::after{content:'+';font-size:16px;font-weight:400;color:var(--mut2)}
+.metric-more[open]>summary::after{content:'−'}
+.metric-more[open] .kv{margin:4px 0 20px}.metric-more .kv .v{font-size:16px}
+.overview-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:10px}
+.signal-count{font-size:11px;color:var(--mut)}.signal-count.bad{color:var(--down)}.signal-count.warn{color:var(--warn)}
+.text-button{border:0;background:none;color:var(--mut);font-size:12px;padding:5px 0;white-space:nowrap;font-weight:500}
+.text-button:hover{background:none;color:var(--txt)}
+.analytics-workspace{margin-top:36px;padding:24px;border:1px solid var(--line);border-radius:14px;background:var(--panel);scroll-margin-top:78px}
+.workspace-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+.workspace-head h2{font-size:22px;font-weight:600;letter-spacing:-.5px;line-height:1.3;margin:5px 0 0}
+.view-switch{display:flex;align-items:center;gap:3px;padding:3px;background:var(--panel2);border:1px solid var(--line);border-radius:9px}
+.view-switch button{flex:0 0 auto;border:1px solid transparent;border-radius:6px;color:var(--mut);padding:7px 13px;background:none;box-shadow:none;min-height:32px;font-size:12px;white-space:nowrap;font-weight:500}
+.view-switch button[aria-selected="true"]{background:var(--panel);border-color:var(--line);color:var(--txt)}
+.workspace-panel>.sec-title{margin:0 0 10px;font-size:13px;letter-spacing:0;color:var(--mut);font-weight:500}
+.workspace-panel>.rank-sub{display:none}
+.workspace-panel .tabs{margin-bottom:18px}
+.tab{font-weight:500;border:1px solid transparent;border-radius:6px;padding:6px 11px;font-size:12px;background:none;box-shadow:none;min-height:32px}
+.tab:hover{background:var(--panel2);border-color:transparent}
+.tab.on{background:var(--panel2);border-color:var(--line);color:var(--txt);box-shadow:none;font-weight:600}
+.tab.on::before{display:none}
+.workspace-panel .chartbox,.workspace-panel .hourly-box{padding:0;border:0;background:none;border-radius:0;box-shadow:none}
+.legend,.hourly-legend{font-size:12px;gap:18px;min-height:30px;margin-bottom:10px;align-items:center}
+.legend i,.hourly-legend .lg i,.stk-legend em{height:3px;width:12px;border-radius:1px}
+.legend span,.hourly-legend .lg{display:inline-flex;align-items:center;gap:6px}
+.legend i{margin-right:0}
+.hourly-legend b{font-weight:600}.hourly-legend .lg em{font-size:10px}
+#chart,#hourlyChart{height:var(--chart-h);width:100%;display:block}
+.chart-marks{height:var(--chart-h);aspect-ratio:auto;margin-top:calc(-1 * var(--chart-h))}
+.chart-marks i,.hourly-marks i{font-family:var(--font-ui);font-size:10px;letter-spacing:0}
+.chart-marks i.pill{font-size:10px;border:0;border-radius:4px;padding:3px 6px;background:var(--panel);font-weight:600}
+.chart-marks i.y{left:0;width:5.4%}
+.chart-marks i.th{font-size:9px;opacity:.65}
+.hourly-grid,.plot-grid{stroke:var(--grid);stroke-width:1;stroke-dasharray:none;vector-effect:non-scaling-stroke;opacity:1}
+#chart line:not(.warnline),.sk-gridP{stroke:var(--grid);stroke-width:1;vector-effect:non-scaling-stroke}
+.sk-vgrid{opacity:0}.sk-gridm{stroke-dasharray:none}
+.warnline{stroke-width:1;stroke-dasharray:4 5;vector-effect:non-scaling-stroke;opacity:.45}
+.chart-caption,.section-caption,.rank-period-note{font-size:11px;color:var(--mut2);line-height:1.8;margin:12px 0 0}
+.chart-caption{border-top:1px solid var(--line);padding-top:12px}
+.hourly-now{position:static!important;display:flex;align-items:center;gap:20px;min-width:0;background:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;margin:10px 0 0;padding:12px 0 0}
+.hourly-now .h{margin:0;font-size:11px}.hourly-now .hv{display:flex;gap:24px;margin-left:auto}
+.hourly-now .r{display:flex;gap:10px;align-items:baseline}.hourly-now .r b{font-size:14px;font-weight:550}
+.hourly-now .hv .r.s{padding:0;border:0}
+.hourly-sum{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0 0}
+.hourly-sum>div{border:0;background:var(--panel2);padding:12px 14px;border-radius:8px}
+.hourly-sum .v{flex-direction:row;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}
+.hourly-sum .v .pair i{font-size:10px;font-weight:500}.hourly-sum .v .pair b{font-weight:550}
+.hourly-note,.share-note{border:0;background:none;padding:12px 0 0;margin:0;font-size:12px;border-radius:0}
+.tip,.hourly-tipbox,.stk-tip{background:var(--panel);border:1px solid var(--line2);border-radius:8px;box-shadow:0 4px 18px #00000010;backdrop-filter:none;font-size:12px;padding:10px 12px}
+.method-note{margin:14px 0 0;color:var(--mut);font-size:12px}
+.method-note>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:36px}
+.method-note>summary::after{content:'+';font-size:16px;color:var(--mut2)}.method-note[open]>summary::after{content:'−'}
+summary::-webkit-details-marker{display:none}
+.module-details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:16px}
+.module-details>summary{list-style:none;display:flex;align-items:center;gap:16px;cursor:pointer;padding:16px 20px;min-height:52px;font-size:13px;font-weight:500;color:var(--txt)}
+.module-details>summary::after{content:'+';margin-left:auto;font-size:17px;color:var(--mut2);font-weight:400}
+.module-details[open]>summary::after{content:'−'}
+.detail-meta{color:var(--mut2);font-size:10px;letter-spacing:.5px;font-weight:400}
+.details-content{padding:0 20px 20px;min-width:0}.details-content .rank-block{margin-top:12px}
+.details-content>.card{padding:12px 0;border:0;background:none}
+.signal-table{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.signal-table-head,.signal-row>summary{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 14px;align-items:center;gap:24px}
+.signal-table-head{padding:14px 24px;border-bottom:1px solid var(--line);font-size:11px;color:var(--mut2);font-weight:550}
+.signal-row+.signal-row{border-top:1px solid var(--line)}
+.signal-row>summary{padding:18px 24px;cursor:pointer;list-style:none;min-height:80px}
+.signal-row>summary:hover{background:var(--panel2)}
+.signal-dimension b{display:block;font-size:13px;font-weight:550;color:var(--txt)}
+.signal-dimension small{display:block;font-size:11px;font-weight:400;color:var(--mut2);margin-top:5px;line-height:1.6}
+.signal-reading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.signal-reading>b{font-size:18px;letter-spacing:-.4px;font-weight:550;color:var(--txt)}
+.signal-reading .tag{font-size:10px;font-weight:500;background:none;border:0;padding:0;white-space:nowrap}
+.signal-reading .tag.bad{color:var(--down)}.signal-reading .tag.warn{color:var(--warn)}.signal-reading .tag.ok{color:var(--up)}
+.disclosure-chevron{width:6px;height:6px;border-right:1px solid var(--mut2);border-bottom:1px solid var(--mut2);transform:rotate(45deg)}
+.signal-row[open] .disclosure-chevron{transform:rotate(225deg)}
+.signal-evidence{display:grid;grid-template-columns:1fr 1fr;gap:28px;padding:4px 24px 24px;font-size:12px;line-height:1.85;color:var(--mut)}
+.signal-evidence>div{min-width:0;border-top:1px solid var(--line);padding-top:16px}
+.evidence-project{font-size:11px;font-weight:600;letter-spacing:.5px}.signal-evidence p{margin:10px 0}
+.evidence-action{color:var(--txt)}.evidence-method{font-size:11px;border-top:1px dashed var(--line);padding-top:12px;margin-top:14px;color:var(--mut2)}
+#rule-legend:empty,#rankInsight:empty,.bb-note:empty{display:none}
+.burn-card,.share-card,.rank-card{padding:22px 24px}
+.burn-card::before,.share-card::before,.rank-card::before{display:none}
+.burn-head{margin-bottom:20px}.burn-ring{box-shadow:none}.brk-arc{filter:none;stroke-width:7}.brk-trk{stroke-width:7}
+.burn-hero{gap:24px}.burn-amt{font-weight:550}.burn-mile{background:none;box-shadow:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0 0}
+.burn-kv,.share-kv,.rank-kv{border:0;background:none;border-radius:0;gap:16px}
+.burn-kv span,.share-kv span,.rank-kv span{background:none;padding:0;border:0}
+.burn-kv span i,.share-kv span i,.rank-kv span i{font-weight:550;font-size:15px}
+.burn-src{font-size:10px;word-break:break-word;margin-top:14px}.bb-note{background:none;border:0;padding:0}
+.bb-tbl{font-size:12px}.bb-h{font-size:13px}.comparison-table{overflow-x:auto;margin-top:12px}
+.rank-card-head{margin-bottom:12px}.rank-big{font-size:40px;font-weight:550;letter-spacing:-1.3px;margin-bottom:0}
+.rank-big small{font-size:11px;font-weight:400;letter-spacing:0}.rank-pct{border:0;background:none;font-size:11px}
+.rank-current-value{font-size:18px;font-weight:550;letter-spacing:-.3px;margin:4px 0 20px}
+.rank-current-value small{font-size:11px;font-weight:400;letter-spacing:0;color:var(--mut2);margin-left:10px}
+.rank-kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:16px 0 0;border-top:1px solid var(--line);margin:0}
+.rank-kv em{font-size:11px}.rank-period-note{font-size:10px;margin-top:16px}.rank-gap{display:none}
+.rank-row .rr-rank.rk{border-radius:0;background:none!important;color:var(--mut2)!important;box-shadow:none;font-weight:500;width:auto}
+.rank-row:hover .rr-rank.rk{transform:none}.rank-row,.bb-row{min-height:48px;padding-top:12px;padding-bottom:12px}
+.share-big b{font-weight:550;font-size:36px;letter-spacing:-1px}.sh-chain{border:0;background:none}.share-vs{border-top:1px solid var(--line)}
+.guide-head{font-size:15px!important}.guide-head .gt-hint{font-size:10px;background:none;border:0;padding:0;font-weight:400}
+.tbl-hint{font-size:11px}#tbl thead th{font-weight:550}#tbl td{font-size:12px}
+.author{margin-top:36px;padding:20px 0;background:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;gap:20px}
+.author::before,.author::after{display:none}.author-name{font-size:13px;font-weight:600}.author-handle{font-size:11px}.author-avatar{width:36px;height:36px;box-shadow:none}
+.author-cta,.author-tip{font-size:11px;padding:7px 10px;box-shadow:none;background:var(--panel);color:var(--mut);border:1px solid var(--line);min-height:34px}
+.qtext{font-size:12px;color:var(--mut)}.q-like{border:0;background:none;box-shadow:none;font-size:11px}
+.foot{border-top:1px solid var(--line);margin-top:4px;padding-top:20px;text-align:left;color:var(--mut2);font-size:11px}
+.bgm-card{border-radius:10px;background:var(--panel);box-shadow:0 2px 10px #0000000a;border:1px solid var(--line);padding:10px 12px;min-width:0}
+.bgm-card.on{box-shadow:none}.bgm-t{font-size:12px;font-weight:550}.bgm-s{font-size:10px}.bgm-eq{color:var(--mut)}
+.stk-bar{background:none;box-shadow:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 0 22px;margin:0 0 16px}
+.stk-bar::before{display:none}.stk-mark{background:var(--panel2);color:var(--stonk);box-shadow:none;border:1px solid var(--line);border-radius:10px;width:38px;height:38px}
+.stk-title{font-size:19px;font-weight:600}.stk-title .tag{border:0;background:none;padding:0;font-size:10px}
+.stk-sub{font-size:11px}.stk-card{padding:24px}.stk-hero{padding:0}.stk-hero-main{padding:26px;grid-template-columns:minmax(200px,1fr) 2.8fr;gap:24px}
+.stk-px{font-weight:550;font-size:42px;letter-spacing:-1.7px}.stk-grid{border:0;background:none;gap:14px;border-radius:0}
+.stk-cell,.stk-cell.xl{background:none;border:0;padding:6px 0;contain:none}
+.stk-cell .k{font-size:11px;white-space:normal}.stk-cell .v{font-size:18px;font-weight:550;letter-spacing:-.5px;margin-top:7px}
+.stk-cell.xl .v{font-size:22px}.stk-cell .v small{display:block;font-size:10px;font-weight:400;letter-spacing:0;margin:5px 0 0;color:var(--mut2);line-height:1.5}
+.stk-hero .stk-chips{background:none;border-top:1px solid var(--line);padding:14px 26px;gap:16px}
+.stk-chip,.stk-chip.ok{background:none;border:0;border-radius:0;font-size:11px;padding:0;color:var(--mut)}
+.focus-strip{display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:24px}
+.focus-strip .eyebrow{flex:0 0 auto;color:var(--stonk)}.focus-strip p{font-size:12px;color:var(--mut);margin:0;line-height:1.8;flex:1}
+.stk-series-tabs{width:max-content;max-width:100%;overflow-x:auto;gap:3px;margin:18px 0 12px}
+.stk-fly-summary .stk-grid.g6{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 28px}
+.stk-chart{height:280px}.stk-axis-chart{--plot-gutter:56px;padding-left:var(--plot-gutter)}
+.stk-axis-chart svg{width:100%;height:100%}
+.plot-scale{position:absolute;top:0;bottom:0;left:0;width:48px;pointer-events:none}
+.plot-scale i{position:absolute;right:0;transform:translateY(-50%);font-style:normal;font-size:10px;color:var(--mut2);font-weight:400;white-space:nowrap}
+.stk-axis{font-size:10px;margin-top:10px;color:var(--mut2)}
+#stk-panel-daily>.stk-axis{padding-left:56px}
+.stk-series-panel .stk-legend{font-size:13px;color:var(--mut);margin-bottom:18px}
+.stk-series-panel .stk-h3{font-size:13px;color:var(--mut);font-weight:500;margin-bottom:18px}
+.sk-b{opacity:.85}.sk-b.on{opacity:1}.sk-b.sk-p{fill:var(--metric-revenue)}.sk-b.sk-s,.sk-b.sk-v{fill:var(--stonk)}.sk-b.sk-burn{fill:var(--stonk)}
+.stk-r90box{padding-left:56px}.stk-pyax span{font-size:10px;background:none;padding:0;color:var(--mut2)}
+.stk-pend,.stk-pdot,.stk-pmk{box-shadow:none!important;animation:none!important}.stk-pend::before,.stk-pend::after{display:none}
+.stk-pmtag{background:var(--panel);border:1px solid var(--line);box-shadow:none;font-size:10px;font-weight:400}
+.stk-note{font-size:11px;line-height:1.85;color:var(--mut2)}
+.stk-si,.stk-si.good,.stk-si.neu,.stk-si.risk{border-color:var(--line);background:none;border-radius:8px;padding:14px}
+.stk-si .vv{font-weight:550;font-size:17px}.stk-si .tt{margin-top:7px}.stk-pools,.stk-pool{box-shadow:none}
+.stk-pool .nm,.stk-wr b,.stk-wsum b{font-weight:550}
+.stk-mo,.stk-mresult,.stk-ms{box-shadow:none;background:var(--panel2);border-color:var(--line)}
+.stk-last{font-size:10px;color:var(--mut2)}
+@media(max-width:980px){
+  .wrap{padding:20px 24px 90px}.hdr-right{flex-wrap:wrap}.stk-hero-main{grid-template-columns:1fr}
+  .stk-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stk-grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-card{padding:20px}.proj-name{font-size:14px}
+  .overview-card .proj-head{align-items:flex-start}.price .p{font-size:17px}.revenue-value{font-size:32px}
+}
+@media(max-width:680px){
+  :root{--chart-h:240px;--sp-card:16px;--fs-10:11px;--fs-11:12px;--fs-12:13px;--fs-13:14px;--fs-14:16px;--fs-16:18px}
+  .wrap{padding:18px 16px 96px}header{gap:14px;padding-bottom:16px}h1{width:100%}h1 #gen{font-size:10px}
+  .hdr-right{width:100%;gap:6px;row-gap:6px;flex-wrap:wrap}.hdr-right .badge{flex:1 1 auto;text-align:left;font-size:10px;padding:0 6px 0 0}
+  header .tbtn,#btnRefresh{flex:0 0 auto;min-height:34px;padding:6px 9px;font-size:11px;order:0}
+  header .stk-btn-entry{flex:0 0 auto;order:0}.stk-btn-entry .se-t{font-size:11px}.stk-btn-entry .se-mark{display:none}
+  #btnRefresh{order:0}#btnRefresh .ic{width:12px;height:12px}
+  .page-intro{padding:24px 0 14px;gap:10px;align-items:flex-start}.page-intro h2{font-size:28px;margin-top:10px}
+  .page-intro .eyebrow{font-size:9px;letter-spacing:1.1px}.page-intro .eyebrow span{display:block;margin:5px 0 0}
+  .page-intro p{font-size:12px;max-width:280px}.intro-credit{font-size:10px;margin-top:4px}.intro-credit span{margin-left:3px}
+  .safe-line{font-size:10px;align-items:flex-start;margin-bottom:8px;line-height:1.7}.safe-line .sf-ic{padding-top:3px}
+  #secNav{margin-bottom:18px}#secNav .nav-i{padding:8px 11px;min-height:36px;font-size:12px}
+  .grid2{grid-template-columns:1fr;gap:14px}.overview-card{padding:20px}.proj-head{align-items:center!important}
+  .overview-card .kv{gap:18px 24px}.overview-card .kv .v{font-size:18px}.revenue-value{font-size:34px}.overview-revenue{padding:22px 0}
+  .proj-name{font-size:15px}.price .p{font-size:18px}.pmeta{font-size:10px}
+  .analytics-workspace{padding:18px 14px;margin-top:28px}.workspace-head{align-items:flex-start;flex-wrap:wrap;margin-bottom:20px;gap:16px}
+  .workspace-head h2{font-size:21px}.workspace-head .eyebrow{font-size:9px}.view-switch button{padding:6px 11px;font-size:12px;min-height:34px}
+  .workspace-head .view-switch{margin-left:auto;align-self:flex-end}
+  .workspace-panel .tabs{gap:3px;display:flex;flex-wrap:wrap;margin-bottom:12px}.tab{padding:7px 9px;font-size:11px;min-height:36px}
+  .legend,.hourly-legend{gap:10px;font-size:11px;margin-bottom:12px}.hourly-legend .lg b{font-size:12px}.hourly-legend .lg:last-child{display:none}
+  .hourly-legend .lg{flex-wrap:wrap}.hourly-legend .lg em{font-size:9px}
+  .chart-marks i.y{left:0;width:auto;text-align:left;font-size:9px}.chart-marks i.xl{font-size:9px}
+  .chart-marks i.pill{font-size:10px}.chart-marks i.th{display:none}
+  .hourly-now{flex-wrap:wrap;gap:8px}.hourly-now .h{font-size:10px;flex-basis:100%}.hourly-now .hv{margin-left:0;width:100%;justify-content:space-between;gap:10px}
+  .hourly-now .r span{font-size:10px}.hourly-now .r b{font-size:13px}.hourly-sum{gap:8px}.hourly-sum>div{padding:10px}.hourly-sum .v{flex-direction:column;gap:2px;font-size:14px}.hourly-sum .v .pair i{font-size:10px}
+  .sec-title,#stkView .sec-title{font-size:20px;margin:30px 0 14px}.rank-sub{font-size:11px;line-height:1.8;margin-bottom:16px}
+  .signal-table-head,.signal-row>summary{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr) 7px;gap:9px;padding-left:14px;padding-right:14px}
+  .signal-table-head{font-size:10px;padding-top:12px;padding-bottom:12px}.signal-row>summary{padding-top:16px;padding-bottom:16px;min-height:88px}
+  .signal-dimension b{font-size:12px}.signal-dimension small{font-size:9px;line-height:1.5}.signal-reading{flex-direction:column;gap:6px;align-items:flex-start}
+  .signal-reading>b{font-size:15px;letter-spacing:-.5px}.signal-reading .tag{font-size:10px}.signal-evidence{grid-template-columns:1fr;gap:16px;padding:0 14px 20px;font-size:12px}
+  .section-caption{font-size:10px}.burn-card,.share-card,.rank-card{padding:20px}.burn-hero{gap:18px}.burn-mile{font-size:11px}
+  .module-details>summary{padding:14px;font-size:12px;gap:8px}.detail-meta{font-size:8px;letter-spacing:0}.details-content{padding:0 14px 16px}
+  .rank-big{font-size:36px}.rank-current-value{font-size:17px}.rank-kv{gap:10px}.rank-kv span i{font-size:15px}.rank-kv span em{font-size:10px}
+  .author{flex-wrap:wrap;gap:16px;padding:20px 0}.author .qbox,.author .lyric{order:3;flex:1 1 100%}.author-acts{margin-left:auto}.author-name{font-size:12px}.author-cta{display:none}.qtext{font-size:12px}
+  .foot{font-size:10px}.foot-meta{font-size:10px}.bgm{bottom:14px;right:14px}.bgm-card{padding:8px 10px}.bgm-t{font-size:11px}.bgm-s{font-size:10px;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+  .stk-bar{padding:0 0 16px}.stk-bar-l{gap:10px}.stk-title{font-size:17px}.stk-sub{font-size:11px}.stk-bar-r{gap:5px}.stk-bar-r .tbtn{min-height:34px;font-size:11px;padding:6px 9px}
+  .stk-hero-main{padding:20px;gap:22px}.stk-px{font-size:38px}.stk-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .stk-cell .k{font-size:11px}.stk-cell .v{font-size:18px}.stk-cell.xl .v{font-size:20px}.stk-cell .v small{font-size:10px}
+  .stk-hero .stk-chips{padding:14px 20px;gap:12px}.stk-chip{font-size:10px}.stk-card{padding:18px 14px}
+  .focus-strip{align-items:flex-start;flex-wrap:wrap;gap:8px;padding:14px 0}.focus-strip p{flex:1 1 calc(100% - 80px);font-size:11px}.focus-strip .text-button{margin-left:auto;font-size:11px}
+  .stk-fly-summary .stk-grid.g6{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.stk-fly-summary .stk-cell .v small{font-size:10px}
+  .stk-series-tabs{width:100%;margin-top:16px}.stk-series-tabs button{flex:1 0 auto;font-size:11px;padding:7px 9px}
+  .stk-chart{height:240px}.stk-axis-chart{--plot-gutter:44px}.plot-scale{width:38px}.plot-scale i{font-size:9px}
+  #stk-panel-daily>.stk-axis{padding-left:44px}.stk-r90box{padding-left:44px}.stk-series-panel .stk-h3,.stk-series-panel .stk-legend{font-size:12px;line-height:1.7}
+  .stk-tip{font-size:11px;white-space:normal;max-width:calc(100% - 10px);width:max-content}.stk-note{font-size:11px}
+}
+@media(max-width:360px){
+  .wrap{padding-left:12px;padding-right:12px}.intro-credit{display:none}.hdr-right .badge{flex-basis:100%;padding:0 0 4px}.overview-card{padding:18px}
+  .analytics-workspace{padding-left:10px;padding-right:10px}.workspace-head .view-switch{margin-left:0}.signal-table-head,.signal-row>summary{gap:6px;padding-left:10px;padding-right:10px}.signal-reading>b{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+
+
+/* Refined density: all overview cards fit within the first desktop viewport. */
+.page-intro{padding-top:22px;padding-bottom:12px}.page-intro h2{font-size:30px;margin:8px 0 6px}
+.page-intro p{font-size:13px}.wrap{padding-top:22px}header{padding-bottom:14px}h1 #gen{margin-top:3px}
+#secNav{padding-top:6px;padding-bottom:6px;margin-bottom:18px}
+.overview-card{padding:20px}.overview-card .project-monogram{width:26px;height:26px;border-radius:7px;font-size:14px}
+.overview-card .pmeta{margin-top:2px;margin-left:34px}.overview-card .price .m{margin-top:2px}
+.overview-revenue{padding:18px 0}.overview-card .metric-label{margin-bottom:5px}
+.overview-card .kv{gap:18px 24px;margin-bottom:12px}.overview-card .kv .k{margin-bottom:4px}
+.metric-more>summary{min-height:30px;padding:6px 0}.overview-footer{padding-top:6px}.overview-footer .text-button{min-height:28px;padding:3px 0}
+.overview-footer .signal-count{font-size:10px}.analytics-workspace{margin-top:28px}
+.signal-reading .tag{box-shadow:none}.rank-kv{grid-template-columns:repeat(2,minmax(0,1fr))}
+.supply-headline{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.supply-percent{font-size:34px;font-weight:550;letter-spacing:-1px;line-height:1.25;margin-top:6px}
+.supply-amount{text-align:right}.supply-amount b{font-size:20px;letter-spacing:-.6px;font-weight:550;display:block}
+.supply-amount small{display:block;font-size:10px;color:var(--mut2);margin-top:4px}
+.supply-progress{height:6px;background:var(--panel3);overflow:hidden;border-radius:3px;margin:18px 0 8px}
+.supply-progress i{display:block;height:100%;border-radius:3px}
+.supply-value{font-size:10px;color:var(--mut2)}
+.burn-kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:20px}
+.burn-kv span b{font-size:11px;font-weight:400}.burn-kv span i{font-size:18px;font-weight:550;letter-spacing:-.4px}
+.burn-kv .live{background:none;border:0;padding:0;border-radius:0;box-shadow:none}.burn-kv span em{font-size:10px}
+.stk-series-panel .stk-h3{margin-bottom:10px}
+@media(max-width:680px){
+ .page-intro{padding-top:20px}.page-intro h2{font-size:27px}.page-intro p{font-size:12px}.page-intro .eyebrow span{display:inline;margin-left:4px}
+ .page-intro .eyebrow{font-size:8px;letter-spacing:.8px}.overview-card{padding:18px}.revenue-value{font-size:32px}
+ .overview-revenue{padding:18px 0}.signal-reading .tag{font-size:10px}.burn-kv{gap:16px}.burn-kv span i{font-size:17px}
+ .supply-percent{font-size:30px}.supply-amount b{font-size:18px}
+}
+
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
 <script>
@@ -2290,38 +2614,6 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs><linearGradient id="icGrad313" x1="0" y1="1" x2="1" y2="0"><stop class="gs1" offset="0"/><stop class="gs2" offset="1"/></linearGradient></defs><symbol id="ic-shield" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm-34.32,69.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></symbol><symbol id="ic-refresh" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1-5.66-13.66L180.65,72a79.48,79.48,0,0,0-54.72-22.09h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27,96,96,0,0,1,192,60.7l18.36-18.36A8,8,0,0,1,224,48ZM186.41,183.29A80,80,0,0,1,75.35,184l18.31-18.31A8,8,0,0,0,88,152H40a8,8,0,0,0-8,8v48a8,8,0,0,0,13.66,5.66L64,195.3a95.42,95.42,0,0,0,66,26.76h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol><symbol id="ic-sun" viewBox="0 0 256 256"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm8,24a64,64,0,1,0,64,64A64.07,64.07,0,0,0,128,64ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></symbol><symbol id="ic-moon" viewBox="0 0 256 256"><path d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z"/></symbol><symbol id="ic-monitor" viewBox="0 0 256 256"><path d="M232,64V176a24,24,0,0,1-24,24H48a24,24,0,0,1-24-24V64A24,24,0,0,1,48,40H208A24,24,0,0,1,232,64ZM160,216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Z"/></symbol><symbol id="ic-eye" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z"/></symbol><symbol id="ic-coffee" viewBox="0 0 256 256"><path d="M208,80H32a8,8,0,0,0-8,8v48a96.3,96.3,0,0,0,32.54,72H32a8,8,0,0,0,0,16H208a8,8,0,0,0,0-16H183.46a96.59,96.59,0,0,0,27-40.09A40,40,0,0,0,248,128v-8A40,40,0,0,0,208,80Zm24,48a24,24,0,0,1-17.2,23,95.78,95.78,0,0,0,1.2-15V97.38A24,24,0,0,1,232,120ZM112,56V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0Zm32,0V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0ZM80,56V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0Z"/></symbol><symbol id="ic-alert" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/></symbol><symbol id="ic-zap" viewBox="0 0 256 256"><path d="M213.85,125.46l-112,120a8,8,0,0,1-13.69-7l14.66-73.33L45.19,143.49a8,8,0,0,1-3-13l112-120a8,8,0,0,1,13.69,7L153.18,90.9l57.63,21.61a8,8,0,0,1,3,12.95Z"/></symbol><symbol id="ic-chev-up" viewBox="0 0 256 256"><path d="M215.39,163.06A8,8,0,0,1,208,168H48a8,8,0,0,1-5.66-13.66l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,215.39,163.06Z"/></symbol><symbol id="ic-arrow-up" viewBox="0 0 256 256"><path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z"/></symbol><symbol id="ic-activity" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm-8,96H188.64L159,188a8,8,0,0,1-6.95,4h-.46a8,8,0,0,1-6.89-4.84L103,89.92,79,132a8,8,0,0,1-7,4H48a8,8,0,0,1,0-16H67.36L97.05,68a8,8,0,0,1,14.3.82L153,166.08l24-42.05a8,8,0,0,1,6.95-4h24a8,8,0,0,1,0,16Z"/></symbol><symbol id="ic-bell" viewBox="0 0 256 256"><path d="M224,71.1a8,8,0,0,1-10.78-3.42,94.13,94.13,0,0,0-33.46-36.91,8,8,0,1,1,8.54-13.54,111.46,111.46,0,0,1,39.12,43.09A8,8,0,0,1,224,71.1ZM35.71,72a8,8,0,0,0,7.1-4.32A94.13,94.13,0,0,1,76.27,30.77a8,8,0,1,0-8.54-13.54A111.46,111.46,0,0,0,28.61,60.32,8,8,0,0,0,35.71,72Zm186.1,103.94A16,16,0,0,1,208,200H167.2a40,40,0,0,1-78.4,0H48a16,16,0,0,1-13.79-24.06C43.22,160.39,48,138.28,48,112a80,80,0,0,1,160,0C208,138.27,212.78,160.38,221.81,175.94ZM150.62,200H105.38a24,24,0,0,0,45.24,0Z"/></symbol><symbol id="ic-flame" viewBox="0 0 256 256"><path d="M143.38,17.85a8,8,0,0,0-12.63,3.41l-22,60.41L84.59,58.26a8,8,0,0,0-11.93.89C51,87.53,40,116.08,40,144a88,88,0,0,0,176,0C216,84.55,165.21,36,143.38,17.85Zm40.51,135.49a57.6,57.6,0,0,1-46.56,46.55A7.65,7.65,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68Z"/></symbol><symbol id="ic-trophy" viewBox="0 0 256 256"><path d="M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80V96a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.58c31.94-3.23,58.44-25.64,68.08-55.58H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4,.39,8ZM232,96a24,24,0,0,1-24,24h-.5a81.81,81.81,0,0,0,.5-8.9V80h24Z"/></symbol><symbol id="ic-trend" viewBox="0 0 256 256"><path d="M240,56v64a8,8,0,0,1-13.66,5.66L200,99.31l-58.34,58.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,188.69,88,162.34,61.66A8,8,0,0,1,168,48h64A8,8,0,0,1,240,56Z"/></symbol><symbol id="ic-table" viewBox="0 0 256 256"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM40,112H80v32H40Zm56,0H216v32H96ZM40,160H80v32H40Zm176,32H96V160H216v32Z"/></symbol><symbol id="ic-db" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64Zm-21.61,74.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol><symbol id="ic-book" viewBox="0 0 256 256"><path d="M240,56V200a8,8,0,0,1-8,8H160a24,24,0,0,0-24,23.94,7.9,7.9,0,0,1-5.12,7.55A8,8,0,0,1,120,232a24,24,0,0,0-24-24H24a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H88a32,32,0,0,1,32,32v87.73a8.17,8.17,0,0,0,7.47,8.25,8,8,0,0,0,8.53-8V80a32,32,0,0,1,32-32h64A8,8,0,0,1,240,56Z"/></symbol><symbol id="ic-volume" viewBox="0 0 256 256"><path d="M160,32.25V223.69a8.29,8.29,0,0,1-3.91,7.18,8,8,0,0,1-9-.56l-65.57-51A4,4,0,0,1,80,176.16V79.84a4,4,0,0,1,1.55-3.15l65.57-51a8,8,0,0,1,10,.16A8.27,8.27,0,0,1,160,32.25ZM60,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H60a4,4,0,0,0,4-4V84A4,4,0,0,0,60,80Zm126.77,20.84a8,8,0,0,0-.72,11.3,24,24,0,0,1,0,31.72,8,8,0,1,0,12,10.58,40,40,0,0,0,0-52.88A8,8,0,0,0,186.74,100.84Zm40.89-26.17a8,8,0,1,0-11.92,10.66,64,64,0,0,1,0,85.34,8,8,0,1,0,11.92,10.66,80,80,0,0,0,0-106.66Z"/></symbol><symbol id="ic-medal" viewBox="0 0 256 256"><path d="M216,96A88,88,0,1,0,72,163.83V240a8,8,0,0,0,11.58,7.16L128,225l44.43,22.21A8.07,8.07,0,0,0,176,248a8,8,0,0,0,8-8V163.83A87.85,87.85,0,0,0,216,96ZM56,96a72,72,0,1,1,72,72A72.08,72.08,0,0,1,56,96Zm16,0a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></symbol><symbol id="ic-external" viewBox="0 0 256 256"><path d="M192,136v72a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V80A16,16,0,0,1,48,64h72a8,8,0,0,1,0,16H48V208H176V136a8,8,0,0,1,16,0Zm32-96a8,8,0,0,0-8-8H152a8,8,0,0,0-5.66,13.66L172.69,72l-42.35,42.34a8,8,0,0,0,11.32,11.32L184,83.31l26.34,26.35A8,8,0,0,0,224,104Z"/></symbol></svg>
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><symbol id="ic-pie" viewBox="0 0 256 256"><path opacity=".4" d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Z"/><path d="M128 128 L128 40 A88 88 0 0 1 216 128 Z"/></symbol></svg>
 <div class="wrap">
-  <!-- ===== 作者名片（改文案改这里）===== -->
-  <div class="author">
-    <a class="author-me" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">
-      <img class="author-av" alt="阿拉斯加的狗💎" src="data:image/jpeg;base64,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">
-      <div class="author-info">
-        <div class="author-name">阿拉斯加的狗💎<svg class="vfy" viewBox="0 0 24 24" aria-label="认证账号"><path fill="#1d9bf0" d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg></div>
-        <div class="author-handle">@arych_kun</div>
-      </div>
-    </a>
-    <!-- 共勉：每次刷新随机一句；一放歌就让位给歌词 -->
-    <div class="qbox" id="qbox">
-      <div class="qtext" id="qText"></div>
-      <button class="q-like" id="qLike" type="button" onclick="qLike()" title="">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        <b id="qN">0</b>
-        <span class="q-plus" id="qPlus">+1</span>
-      </button>
-    </div>
-    <div class="lyric hidden" id="lyric">
-      <div class="ly-in">
-        <div class="ly-window"><div class="ly-track" id="lyTrack"></div></div>
-        <div class="ly-bar"><i id="lyBarI"></i></div>
-      </div>
-    </div>
-    <div class="author-acts">
-      <a class="author-cta" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        关注 @arych_kun
-      </a>
-      <button class="author-tip" onclick="openTip()" title="支持作者：请我喝杯咖啡"><svg class="ic" aria-hidden="true"><use href="#ic-coffee"/></svg> <span data-tip="btn">打赏</span></button>
-    </div>
-  </div>
   <!-- 下滑后出现的顶部渐隐条 + 左上角小头像 -->
   <div class="topbar" id="topbar"><span class="tb-t">Pons · StonkFun 收入与回购监控面板</span></div>
   <a class="author-mini" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener" title="阿拉斯加的狗💎 @arych_kun">
@@ -2365,12 +2657,39 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
     </div>
   </header>
 
+  <section class="page-intro" aria-labelledby="overviewTitle">
+    <div><div class="eyebrow">PROTOCOL OBSERVATORY <span>/ PONS × STONK</span></div>
+      <h2 id="overviewTitle" data-design="overviewTitle">协议经营观察</h2>
+      <p data-design="overviewSub">收入有没有增长，回购有没有兑现，市场如何定价。</p>
+    </div>
+    <a class="intro-credit" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">by @arych_kun <span>↗</span></a>
+  </section>
   <div class="safe-line" id="safeLine"><span class="sf-ic"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg></span><span id="safeTxt"></span></div>
 
   <nav id="secNav" class="secnav" aria-label="页面模块导航"></nav>
 
   <div class="grid2" id="cards"><div class="card sk"></div><div class="card sk"></div></div>
 
+  <section class="analytics-workspace" id="st-analytics" aria-labelledby="analyticsTitle">
+    <div class="workspace-head"><div><div class="eyebrow" data-design="analyticsEyebrow">THE BIG PICTURE</div><h2 id="analyticsTitle" data-design="analyticsTitle">经营走势</h2></div>
+      <div class="view-switch" role="tablist" aria-label="Chart time scale">
+        <button id="viewDaily" type="button" role="tab" aria-selected="true" aria-controls="dailyPanel" onclick="designChartView('daily')" data-design="dailyView">日度趋势</button>
+        <button id="viewHourly" type="button" role="tab" aria-selected="false" aria-controls="hourlyPanel" tabindex="-1" onclick="designChartView('hourly')" data-design="hourlyView">小时监控</button>
+      </div>
+    </div>
+    <div class="workspace-panel" id="dailyPanel" role="tabpanel" aria-labelledby="viewDaily">
+  <div class="sec-title" id="st-chart"><svg class="ic" aria-hidden="true"><use href="#ic-trend"/></svg>趋势图</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="chartbox">
+    <div class="legend" id="legend"></div>
+    <svg id="chart" viewBox="0 0 1200 340" preserveAspectRatio="none"></svg>
+    <div class="chart-marks" id="chartMarks" aria-hidden="true"></div>
+    <div class="tip" id="tip"></div>
+    <div class="chart-caption" id="chartCaption"></div>
+  </div>
+
+    </div>
+    <div class="workspace-panel" id="hourlyPanel" role="tabpanel" aria-labelledby="viewHourly" hidden>
   <div class="sec-title" id="st-hourly"><svg class="ic" aria-hidden="true"><use href="#ic-activity"/></svg>小时监控 · 最近 72 小时<span class="sec-live" id="hourlyLive"></span></div>
   <div class="rank-sub" id="hourlySub"></div>
   <div class="tabs" id="hourlyTabs"></div>
@@ -2388,7 +2707,10 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
     <div class="hourly-tipbox" id="hourlyTipBox"></div>
   </div>
   <div class="hourly-sum" id="hourlySum"></div>
-  <div class="hourly-note" id="hourlyNote"></div>
+<details class="method-note"><summary data-design="hourMethod">数据口径与估算</summary><div class="hourly-note" id="hourlyNote"></div></details>
+
+    </div>
+  </section>
 
   <div class="sec-title" id="st-rules"><svg class="ic" aria-hidden="true"><use href="#ic-bell"/></svg>规则引擎 · 加仓与止损信号</div>
   <div class="rule-legend" id="rule-legend"></div>
@@ -2397,6 +2719,7 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
   <div class="sec-title" id="st-burn"><svg class="ic" aria-hidden="true"><use href="#ic-flame"/></svg>回购与销毁 · 真金白银烧掉多少</div>
   <div class="rank-sub" id="burnSub"></div>
   <div class="grid2" id="burnCards"></div>
+  <details class="module-details" data-disclosure="burnPeers"><summary><span data-design="burnPeers">查看行业回购排行</span><span class="detail-meta">24H / 30D</span></summary><div class="details-content">
   <div class="rank-block">
     <div class="rank-h" id="burnPeersH"></div>
     <div class="tabs burn-tabs" id="burnTabs"></div>
@@ -2404,32 +2727,27 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
     <div class="rank-list" id="burnPeers"></div>
     <div class="bb-lag" id="burnPeersNote"></div>
   </div>
+  </div></details>
   <div class="bb-note" id="burnNote"></div>
 
   <div class="sec-title" id="st-share"><svg class="ic" aria-hidden="true"><use href="#ic-pie"/></svg>市场占有率 · 24 小时成交量份额<span class="sec-live" id="shareLive"></span></div>
   <div class="rank-sub" id="shareSub"></div>
   <div class="grid2" id="shareCards"></div>
-  <div class="share-note" id="shareNote"></div>
+<details class="method-note"><summary data-design="shareMethod">份额口径与数据来源</summary><div class="share-note" id="shareNote"></div></details>
 
   <div class="sec-title" id="st-rank"><svg class="ic" aria-hidden="true"><use href="#ic-trophy"/></svg>收入排行 · 在整个行业里的位置</div>
   <div class="rank-sub" id="rankSub"></div>
   <div class="rank-insight" id="rankInsight"></div>
   <div class="tabs" id="rankTabs"></div>
   <div class="grid2" id="rankCards"></div>
+  <details class="module-details" data-disclosure="revenuePeers"><summary><span data-design="revenuePeers">查看行业榜单与相邻项目</span><span class="detail-meta">TOP 10 + PEERS</span></summary><div class="details-content">
   <div class="rank-block">
     <div class="rank-h" id="rankTopH"></div>
     <div class="rank-list" id="rankTop"></div>
   </div>
   <div class="grid2 rank-near" id="rankNear"></div>
 
-  <div class="sec-title" id="st-chart"><svg class="ic" aria-hidden="true"><use href="#ic-trend"/></svg>趋势图</div>
-  <div class="tabs" id="tabs"></div>
-  <div class="chartbox">
-    <div class="legend" id="legend"></div>
-    <svg id="chart" viewBox="0 0 1200 340" preserveAspectRatio="none"></svg>
-    <div class="chart-marks" id="chartMarks" aria-hidden="true"></div>
-    <div class="tip" id="tip"></div>
-  </div>
+  </div></details>
 
   <div class="sec-title" id="st-table"><svg class="ic" aria-hidden="true"><use href="#ic-table"/></svg>日度明细（最近 20 天）</div>
   <div class="tbl-hint"><span class="zh">← 左右滑动看完整表格 →</span><span class="en">← Swipe to see the full table →</span></div>
@@ -2456,6 +2774,39 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
   <div class="guide-wrap" id="guideWrap">
     <div class="glegend" id="glegend"></div>
     <div class="guide" id="guide"></div>
+  </div>
+
+  <!-- ===== 作者名片（改文案改这里）===== -->
+  <div class="author">
+    <a class="author-me" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">
+      <img class="author-av" alt="阿拉斯加的狗💎" src="data:image/jpeg;base64,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">
+      <div class="author-info">
+        <div class="author-name">阿拉斯加的狗💎<svg class="vfy" viewBox="0 0 24 24" aria-label="认证账号"><path fill="#1d9bf0" d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81c-.66-1.31-1.91-2.19-3.34-2.19s-2.67.88-3.33 2.19c-1.4-.46-2.91-.2-3.92.81s-1.26 2.52-.8 3.91c-1.31.67-2.2 1.91-2.2 3.34s.89 2.67 2.2 3.34c-.46 1.39-.21 2.9.8 3.91s2.52 1.26 3.91.81c.67 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.45 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2L6.8 12.46l1.41-1.42 2.26 2.26 4.8-5.23 1.47 1.36-6.2 6.77z"/></svg></div>
+        <div class="author-handle">@arych_kun</div>
+      </div>
+    </a>
+    <!-- 共勉：每次刷新随机一句；一放歌就让位给歌词 -->
+    <div class="qbox" id="qbox">
+      <div class="qtext" id="qText"></div>
+      <button class="q-like" id="qLike" type="button" onclick="qLike()" title="">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <b id="qN">0</b>
+        <span class="q-plus" id="qPlus">+1</span>
+      </button>
+    </div>
+    <div class="lyric hidden" id="lyric">
+      <div class="ly-in">
+        <div class="ly-window"><div class="ly-track" id="lyTrack"></div></div>
+        <div class="ly-bar"><i id="lyBarI"></i></div>
+      </div>
+    </div>
+    <div class="author-acts">
+      <a class="author-cta" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        关注 @arych_kun
+      </a>
+      <button class="author-tip" onclick="openTip()" title="支持作者：请我喝杯咖啡"><svg class="ic" aria-hidden="true"><use href="#ic-coffee"/></svg> <span data-tip="btn">打赏</span></button>
+    </div>
   </div>
 
   <div class="foot" id="foot">
@@ -2706,7 +3057,7 @@ zh:{
   gMomF:'收入对比上周 ＝ <b class="hi">最近 7 天的平均收入</b> vs <b class="hi">再往前 7 天的平均收入</b>',
   gMomL:'这是所有数字里<b class="hl">最早报警</b>的一个。因为回购的钱来自收入：<b>收入 ↓ → 回购的钱 ↓ → 买盘 ↓ → 价格失去支撑</b>。盯收入，比盯回购更早。',
   gMomBands:[['&gt; −15%','g-ok','收入平稳，维持仓位'],['−15% ~ −25%','g-warn','走弱，只观察不加仓'],['&lt; −25%','g-bad','骤降，暂停一切加仓']],
-  gMomFoot:'两家都在 <b class="hi">−35%</b> 附近 → 已越过 −25% 触发线，按规则＝<b class="hl">暂停加仓</b>',
+  gMomFoot:'分别对照两家的实际环比；仅当指标越过设定阈值时触发对应信号。',
   gMsT:'市场占有率（24h 成交量份额）',
   gMsF:'占比 = <b class="hi">本品 24 小时成交量</b> ÷ <b class="hi">所在链全部 DEX 成交量</b>（DefiLlama 口径）',
   gMsL:'它回答的是「在整条链里，你占多大位置」。链越大分母越大，占比天然越小 —— 别看绝对值大小，看三件事：<b class="hl">跟自己比</b>（占比在升还是降）、<b class="hl">跟同链龙头比</b>（还差多少倍）、<b class="hl">全链在放量还是缩量</b>（决定占比变化是不是假象）。',
@@ -3029,7 +3380,7 @@ en:{
   gMomF:'Revenue vs previous week = <b class="hi">average of the last 7 days</b> vs <b class="hi">the 7 days before that</b>',
   gMomL:'This is the first number to flash. The buyback is funded by revenue: revenue ↓ → buyback ↓ → bid ↓ → price loses support. Watching revenue gets you ahead of the buyback.',
   gMomBands:[['&gt; −15%','g-ok','Stable — keep position'],['−15% ~ −25%','g-warn','Weakening — watch, do not add'],['&lt; −25%','g-bad','Sharp drop — pause all buying']],
-  gMomFoot:'Both are near <b class="hi">−35%</b> → past the −25% trigger, which means: <b class="hl">pause all buying</b>',
+  gMomFoot:'Compare each project’s actual change with its preset thresholds; signals trigger independently.',
   gMsT:'Market share (24h trading volume)',
   gMsF:'Share = <b class="hi">protocol 24h volume</b> ÷ <b class="hi">all DEX volume on its chain</b> (DefiLlama)',
   gMsL:'It answers "how big is this platform inside its whole chain". The bigger the chain, the smaller the share by construction — so read three things, not the absolute number: <b class="hl">vs its own history</b> (rising or falling), <b class="hl">vs the chain leader</b> (how many times behind), and <b class="hl">whether the chain itself is expanding or shrinking</b>.',
@@ -3373,8 +3724,49 @@ function renderStatic(){
       '<span class="lg"><span class="tag ok">'+t('lvOk')+'</span>'+t('legendOk')+'</span>'+
       '<span class="lg"><span class="tag warn">'+t('lvWarn')+'</span>'+t('legendWarn')+'</span>'+
       '<span class="lg"><span class="tag bad">'+t('lvBad')+'</span>'+t('legendBad')+'</span>';
+  designCopy();
   navBuild();                        /* v3.20：导航文案跟着语言一起换 */
 }
+
+/* Shared presentation state: live refreshes preserve open evidence and chart selection. */
+const DESIGN_COPY={
+  zh:{overviewTitle:'协议经营观察',overviewSub:'收入有没有增长，回购有没有兑现，市场如何定价。',analyticsEyebrow:'THE BIG PICTURE',analyticsTitle:'经营走势',dailyView:'日度趋势',hourlyView:'小时监控',hourMethod:'数据口径与估算',shareMethod:'份额口径与数据来源',burnPeers:'查看行业回购排行',revenuePeers:'查看行业榜单与相邻项目',moreMetrics:'其他指标',signals:'查看信号',evidence:'计算与解读',signalNote:'按本站预设阈值观察风险；展开查看计算过程与判断依据。',metric:'观察维度',date:'完整 UTC 日',period:'统计周期不同，名次不能视为历史升降。'},
+  en:{overviewTitle:'Protocol fundamentals',overviewSub:'Follow the revenue. Verify the buybacks. Understand the valuation.',analyticsEyebrow:'THE BIG PICTURE',analyticsTitle:'Operating trends',dailyView:'Daily trends',hourlyView:'Hourly monitor',hourMethod:'Sources & estimates',shareMethod:'Market-share methodology',burnPeers:'Explore industry buybacks',revenuePeers:'Explore industry leaders & peers',moreMetrics:'More metrics',signals:'View signals',evidence:'Calculation & interpretation',signalNote:'Signals use the dashboard’s preset thresholds. Expand a row to inspect its calculation and reasoning.',metric:'Observation',date:'Complete UTC day',period:'Rankings use different periods; they are not historical rank changes.'}
+};
+function dt(k){return (DESIGN_COPY[LANG]||DESIGN_COPY.zh)[k]||k;}
+const DESIGN_OPEN=new Set();
+document.addEventListener('toggle',function(e){
+  var key=e.target.dataset&&e.target.dataset.disclosure;
+  if(key){ if(e.target.open) DESIGN_OPEN.add(key); else DESIGN_OPEN.delete(key); }
+},true);
+function disclosureAttr(key){return ' data-disclosure="'+key+'"'+(DESIGN_OPEN.has(key)?' open':'');}
+function designCopy(){
+  document.querySelectorAll('[data-design]').forEach(function(e){e.textContent=dt(e.dataset.design);});
+  const heads=LANG==='zh'?{h1t:'PonsPulse', 'st-rules':'信号与依据','st-burn':'回购与供应','st-share':'市场份额','st-rank':'行业位置','st-chart':'日度趋势'}:{h1t:'PonsPulse','st-rules':'Signals & evidence','st-burn':'Buybacks & supply','st-share':'Market share','st-rank':'Industry position','st-chart':'Daily trends'};
+  Object.keys(heads).forEach(function(id){const e=document.getElementById(id);if(e)e.textContent=heads[id];});
+  const safe=document.getElementById('safeTxt');if(safe)safe.textContent=LANG==='zh'?'公开数据 · 无需连接钱包 · 收入与回购按来源独立核验':'Public data · No wallet connection · Revenue and buybacks independently sourced';
+  const leg=document.getElementById('rule-legend');if(leg)leg.innerHTML='';
+  document.querySelectorAll('[data-nav="st-analytics"] .nav-t').forEach(e=>e.textContent=LANG==='zh'?'经营走势':'Trends');
+  document.querySelectorAll('[data-nav="st-rules"] .nav-t').forEach(e=>e.textContent=LANG==='zh'?'信号依据':'Signals');
+}
+var DESIGN_VIEW='daily';
+function designChartView(view){
+  DESIGN_VIEW=view==='hourly'?'hourly':'daily';
+  ['daily','hourly'].forEach(function(k){
+    var on=k===DESIGN_VIEW, panel=document.getElementById(k+'Panel'), btn=document.getElementById(k==='daily'?'viewDaily':'viewHourly');
+    if(panel) panel.hidden=!on;
+    if(btn){btn.setAttribute('aria-selected',String(on));btn.tabIndex=on?0:-1;}
+  });
+  if(DESIGN_VIEW==='daily') renderChart(); else renderHourly();
+  if(window.__navSpy) window.__navSpy();
+}
+document.addEventListener('keydown',function(e){
+  var tab=e.target.closest&&e.target.closest('[role="tablist"] [role="tab"]');
+  if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) return;
+  var list=Array.from(tab.parentElement.querySelectorAll('[role="tab"]')), i=list.indexOf(tab);
+  i=e.key==='Home'?0:e.key==='End'?list.length-1:(i+(e.key==='ArrowRight'?1:-1)+list.length)%list.length;
+  e.preventDefault();list[i].click();list[i].focus();
+});
 
 /* ---------- 收入排行：DefiLlama peers + StonkFun 官方 Total revenue ---------- */
 const RANK_METRICS=[{k:'total24h',zh:'24 小时',en:'24H'},{k:'total7d',zh:'7 日',en:'7D'},{k:'total30d',zh:'30 日',en:'30D'}];
@@ -3524,21 +3916,7 @@ function renderRank(){
       return '<button class="tab'+(m.k===RANK_BY?' on':'')+'" onclick="RANK_BY=\''+m.k+'\';renderRank();">'+rankTabLabel(m.k)+'</button>';
     }).join('');
   }
-  const ins=document.getElementById('rankInsight');
-  if(ins){
-    const r30all=b.board.total30d&&b.board.total30d.rank||{};
-    ins.innerHTML = '<span class="ri-t">'+t('rankMonth')+'</span>'+RANK_TARGET_IDS.map(function(tid){
-      const p=PROJECTS.find(function(x){return x.id===tid;})||{ticker:tid,color:'var(--mut)'};
-      const r=rk[tid], r30=r30all[tid];
-      if(!r||!r30) return '';
-      const d=r30-r;
-      const tail = d>0? '<em class="rd-up">'+t('rankInsightUp')(d)+'</em>'
-                 : d<0? '<em class="rd-down">'+t('rankInsightDown')(-d)+'</em>'
-                 : '<em class="rd-flat">'+t('rankInsightFlat')+'</em>';
-      return '<span class="ri-p"><b style="color:'+p.color+'">'+p.ticker+'</b>'
-           + '<i>#'+r30+' → #'+r+'</i>'+tail+'</span>';
-    }).join('');
-  }
+  const ins=document.getElementById('rankInsight'); if(ins) ins.innerHTML='';
 
   if(cards){
     cards.innerHTML = RANK_TARGET_IDS.map(function(tid){
@@ -3576,13 +3954,13 @@ function renderRank(){
         +   '<span class="rank-pct">'+t('rankPct')(pct)+'</span>'
         + '</div>'
         + '<div class="rank-big">#'+r+'<small>'+t('rankOf')+fmtN(total,0)+'</small></div>'
-        + '<div class="rank-scale"><div class="rs-track"><i style="left:'+rankPos(r,total).toFixed(2)+'%"></i></div><div class="rs-ticks">'+ticks+'</div></div>'
-        + '<div class="rank-kv">'+RANK_METRICS.map(function(m){
+        + '<div class="rank-current-value">'+fmtU(meRow.v)+'<small>'+rankTabLabel(RANK_BY)+'</small></div>'
+        + '<div class="rank-kv">'+RANK_METRICS.filter(m=>m.k!==RANK_BY).map(function(m){
             const rr=b.board[m.k]&&b.board[m.k].rank? b.board[m.k].rank[tid]:null;
             const vv=b.board[m.k]&&b.board[m.k].near&&b.board[m.k].near[tid]? (b.board[m.k].near[tid].find(function(x){return x.me;})||{}).v : null;
             return '<span><b>'+rankTabLabel(m.k)+'</b><i>'+(rr?'#'+rr:'—')+'</i><em>'+fmtU(vv)+'</em></span>';
           }).join('')+'</div>'
-        + '<div class="rank-delta">'+deltaHTML+'</div>'
+        + '<div class="rank-period-note">'+dt('period')+'</div>'
         + (gapHTML? '<div class="rank-gap">'+gapHTML+'</div>' : '')
         + '</div>';
     }).join('');
@@ -3723,11 +4101,10 @@ function renderBurn(){
   if(sub){
     const stamp=esc(new Date(DATA.generated||BUNDLE.generated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'));
     const msv=(msBundle()||{}).versus||{};
-    sub.innerHTML = IC.zap + esc(t('burnSub')(stamp))
-      + (CHAIN_STATE? ' <b class="lk">'+IC.zap+esc(t('burnLiveOk')(CHAIN_STATE))+'</b>'
-                    : (CHAIN_TRIED? ' <b class="lk mut">'+IC.zap+esc(t('burnLiveFail'))+'</b>' : ''))
-      + (msv.ratio? ' · '+esc(t('msSub')(msv.faster, msv.ratio.toFixed(1))) : '')
-      + ' <a class="qi" href="#gloss-milestone" title="'+esc(t('gMmT'))+'">?</a>';
+    const h=hourlyBundle()||{}, ts=h.generated||0;
+    sub.textContent=(LANG==='zh'?'累计销毁与实际回购支出分别统计 · 来源：链上 / StonkFun / DefiLlama':'Burned supply and actual buyback spend are reported separately · On-chain / StonkFun / DefiLlama')
+      +(ts?' · '+new Date(ts*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'):'');
+
   }
 
   if(cards) cards.innerHTML=PROJECTS.map(function(p){
@@ -3759,19 +4136,9 @@ function renderBurn(){
       +   '<span class="proj-name"><span class="dot" style="background:'+p.color+';color:'+p.color+'"></span>'+p.ticker+'</span>'
       +   '<span class="bn-chain">'+esc(p.chain)+'</span>'+link
       + '</div>'
-      + '<div class="burn-hero">'
-      +   '<div class="burn-ring" title="'+esc(t('burnPctOf'))+' '+(b.pct!=null? b.pct.toFixed(2)+'%':'—')+'">'
-      +     '<svg viewBox="0 0 120 120" aria-hidden="true">'
-      +       '<circle class="brk-trk" cx="60" cy="60" r="52"/>'
-      +       '<circle class="brk-arc" cx="60" cy="60" r="52" style="stroke:'+p.color+';stroke-dasharray:'+arcFill+' '+ARC.toFixed(2)+'"/>'
-      +     '</svg>'
-      +     '<div class="brk-c"><b>'+(b.pct!=null? b.pct.toFixed(2):'—')+'<em>%</em></b><span>'+esc(t('burnPctOf'))+'</span></div>'
-      +   '</div>'
-      +   '<div class="burn-hero-txt">'
-      +     '<div class="burn-big">'+fmtN(b.burned/1e6,2)+'M<small>'+p.ticker+' '+t('burnBurned')+'</small></div>'
-      +     '<div class="burn-husd">'+t('burnValue')+' <b>'+fmtU(usd)+'</b></div>'
-      +   '</div>'
-      + '</div>'
+      + '<div class="supply-headline"><div><span class="metric-label">'+esc(t('burnPctOf'))+'</span><div class="supply-percent">'+(b.pct!=null?b.pct.toFixed(2)+'%':'—')+'</div></div><div class="supply-amount"><b>'+fmtN(b.burned/1e6,2)+'M</b><small>'+p.ticker+' '+t('burnBurned')+'</small></div></div>'
+      + '<div class="supply-progress" role="meter" aria-label="'+p.ticker+' '+esc(t('burnBurned'))+'" aria-valuenow="'+(b.pct||0).toFixed(2)+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+Math.max(0,Math.min(100,b.pct||0))+'%;background:'+p.color+'"></i></div>'
+      + '<div class="supply-value">'+t('burnValue')+' '+fmtU(usd)+'</div>'
       + mile
       + '<div class="burn-kv">'+ chip
       +   '<span><b>'+t('burn30d')+'</b><i>'+fmtU(s.s30)+'</i></span>'
@@ -3848,7 +4215,7 @@ function renderBurn(){
       stonk7:fmtU(sk.s7), ponsPct:burnOf(PROJECTS[0]).pct.toFixed(2)+'%', stonkPct:burnOf(PROJECTS[1]).pct.toFixed(2)+'%',
       pons24:(po24.wait? '—' : fmtU(po24.v)), pons24tx:(po24.txs||null), stonk24:(sk24.wait? t('burn24Wait') : fmtU(sk24.v)),
       foot:t('burnFoot')};
-    note.innerHTML='<div class="bb-h">'+t('burnNoteH')+'</div>'+tbl+t('burnBody')(o);
+    note.innerHTML='<details class="method-note"'+disclosureAttr('buybackCompare')+'><summary>'+(LANG==='zh'?'与 pump.fun 对照 · 计算口径':'Compare with pump.fun · methodology')+'</summary><div class="comparison-table">'+tbl+'</div><p class="section-caption">'+(LANG==='zh'?'回购支出与销毁代币现值分开统计；年化指标是按最近 30 天速度折算，不代表未来回购。':'Buyback spend is separate from the current value of burned tokens. Annualisation extrapolates the last 30 days.')+'</p></details>';
   }
 }
 
@@ -3977,10 +4344,10 @@ function renderHourly(){
   let body='<defs>'
       +'<linearGradient id="hbPG" x1="0" y1="0" x2="0" y2="1">'
       +'<stop offset="0" stop-color="var(--hb-pons)" stop-opacity="1"/>'
-      +'<stop offset="1" stop-color="var(--hb-pons)" stop-opacity=".72"/></linearGradient>'
+      +'<stop offset="1" stop-color="var(--hb-pons)" stop-opacity="1"/></linearGradient>'
       +'<linearGradient id="hbSG" x1="0" y1="0" x2="0" y2="1">'
       +'<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity="1"/>'
-      +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".72"/></linearGradient>'
+      +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity="1"/></linearGradient>'
       +'</defs>', marks='';
   [1,0.5].forEach(function(f){
     const yy=yv(max*f).toFixed(1);
@@ -4149,7 +4516,7 @@ function renderHourly(){
       + '<span class="lg"><em>'+esc(t('hourEach'))+'</em></span>';
   }
   if(sm){
-    sm.innerHTML=[[1,'hourH1'],[6,'hourH6'],[24,'hourH24'],[72,'hourH72']].map(function(w){
+    sm.innerHTML=[[6,'hourH6'],[24,'hourH24']].map(function(w){
       const a=hourSum(s.pons,w[0]), b=hourSum(s.stonk,w[0]);
       return '<div><div class="k">'+t(w[1])+'</div><div class="v">'
         +'<span class="pair p"><b>'+hourTxt(a)+'</b><i>PONS</i></span>'
@@ -4230,6 +4597,7 @@ function live24(id){
   return {rev:sum, n:n};
 }
 function jumpHourly(){
+  designChartView('hourly');
   try{ HOUR_TAB='rev'; renderHourly(); }catch(e){}
   const el=document.getElementById('st-hourly');
   if(el){ try{ el.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){ el.scrollIntoView(); } }
@@ -4324,57 +4692,32 @@ function msDayTxt(d){ return (d===null||d===undefined||isNaN(d))?'—':(d<10? d.
 function msPriceTxt(p){ return '$'+(p>=1? p.toFixed(3) : p.toFixed(4)); }
 /* v3.16：原「销毁里程碑」独立板块已并入「回购与销毁」卡片（速度 + 下一关），渲染函数删除 */
 function renderCards(){
-  const rows = build();
-  const el = document.getElementById('cards');
-  el.innerHTML = PROJECTS.map(p=>{
-    const s = stats(rows,p);
-    const d = (s.avg7-s.avg7p)/(s.avg7p||1);
-    const status = s.avg7 < p.danger ? ['bad',t('stBad')]
-                 : s.avg7 < p.warn   ? ['warn',t('stWarn')]
-                 : (d<-0.25)         ? ['warn',t('stMom')]
-                 : (d>0.05)          ? ['good',t('stUp')]
-                 : ['good',t('stFlat')];
-    const pct = v => v===null||isNaN(v)? '—' : (v>=0?'+':'')+(v*100).toFixed(1)+'%';
-    const dd = s.ath? (s.psv-s.ath)/s.ath : null;
-    const stTxt = status[0]==='bad'? ('● '+t('lvBad')) : status[0]==='warn'? ('● '+t('lvWarn')) : ('● '+t('lvOk'));
-    return `<div class="card">
-      <div class="proj-head">
-        <div>
-          <div class="proj-name"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span>${s.lag>0? `<span class="lagtag" title="${t('lagTip')}">${t('lagBadge')(s.lag)}</span>`:''}${(()=>{ if(!(s.lag>0)) return ''; const lv=live24(p.id); if(!lv) return ''; return `<span class="livechip" title="${t('liveChipTip')}" onclick="jumpHourly()"><i></i>${t('liveChip')(fmtU(lv.rev))}</span>`; })()}</div>
-          <div class="pmeta"><span class="pch">${p.chain}</span><span class="pbn">${t('burned')}${(s.burnPct*100).toFixed(1)}% (${fmtN(s.burnAmt/1e6,1)}M ${p.ticker})</span></div>
-        </div>
-        <div class="price">
-          <div class="p mono" id="px-${p.id}"><span class="pxv">$${fmtN(s.psv,4)}</span></div>
-          <div class="m">${t('mcap')}${fmtU(s.mcap)}</div>
-          <div class="pill ${dd>=0?'up':'down'}">${t('fromAth')}${pct(dd)}</div>
-        </div>
-      </div>
-      <div class="kv">
-        <div><div class="k">${t('kAvg7')}</div><div class="v">${fmtU(s.avg7)}<small>${t('perDay')}</small></div></div>
-        <div><div class="k">${t('kMom')}</div><div class="v" style="color:${d>=0?'var(--up)':'var(--down)'}">${pct(d)}</div></div>
-        <div><div class="k">${t('kLast')}${s.lag>0 && s.lastDate? ' <span style="opacity:.62">· '+s.lastDate.slice(5)+'</span>':''}</div><div class="v">${fmtU(s.lastRev)}</div></div>
-        <div><div class="k">${t('kPeak')}</div><div class="v">${fmtU(s.peak)}</div></div>
-        <div title="${t('tipPs')}"><div class="k">${t('kPs7')} <a class="qi" href="#gloss-ps">?</a></div><div class="v">${s.ps7?fmtN(s.ps7,2)+'x':'—'}</div></div>
-        <div title="${t('tipPs30')}"><div class="k">${t('kPs30')} <a class="qi" href="#gloss-ps">?</a></div><div class="v">${s.ps30?fmtN(s.ps30,2)+'x':'—'}</div></div>
-        <div><div class="k">${t('kFromPeak')}</div><div class="v" style="color:var(--down)">${s.peak?((s.lastRev-s.peak)/s.peak*100).toFixed(0)+'%':'—'}</div></div>
-        <div title="${t('tipBurnYield')}"><div class="k">${t('kBurnYield')} <a class="qi" href="#gloss-to">?</a></div><div class="v">${s.burnYield!==null?fmtN(s.burnYield*100,0)+'%':'—'}</div></div>
-        <div><div class="k">${t('kBurn7')}</div><div class="v">${fmtU(s.holdSum7)}</div></div>
-        <div title="${t('tipBurnForce')}"><div class="k">${t('kBurnForce')} <a class="qi" href="#gloss-bp">?</a></div><div class="v" style="color:${s.burnForce===null?'inherit':s.burnForce>=0.05?'var(--up)':s.burnForce>=0.02?'var(--warn)':'var(--down)'}">${s.burnForce===null?'—':(s.burnForce*100).toFixed(2)+'%'}</div></div>
-        <div title="${t('tipVol')}"><div class="k">${t('kVol24')}</div><div class="v">${fmtU(s.vol24)}</div></div>
-        <div title="${t('tipVol')}"><div class="k">${t('kTurnover')} <a class="qi" href="#gloss-to">?</a></div><div class="v">${s.turnover!==null?(s.turnover*100).toFixed(1)+'%':'—'}</div></div>
-      </div>
-      <div class="status ${status[0]}"><span class="lbl">${stTxt}</span><span>${status[1]}</span></div>
-    </div>`;
+  const rows=build(), el=document.getElementById('cards');
+  el.innerHTML=PROJECTS.map(function(p){
+    const s=stats(rows,p), r=ruleItems(rows,p), change=s.avg7p?(s.avg7/s.avg7p-1):null;
+    const pct=v=>v==null?'—':(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+    const bad=Object.values(r.it).filter(x=>x.level==='bad').length;
+    const warn=Object.values(r.it).filter(x=>x.level==='warn').length;
+    const state=bad?'bad':warn?'warn':'ok';
+    const date=s.lastDate?s.lastDate.slice(5):'—';
+    const cell=(key,value,hint)=>'<div><div class="k">'+key+'</div><div class="v">'+value+'</div>'+(hint?'<div class="metric-hint">'+hint+'</div>':'')+'</div>';
+    return '<article class="card overview-card" style="--project:'+p.color+'">'
+      +'<div class="proj-head"><div><div class="proj-name"><span class="project-monogram">'+p.ticker.charAt(0)+'</span>'+p.name+'<span class="tick">'+p.ticker+'</span></div><div class="pmeta">'+esc(p.chain)+'</div></div>'
+      +'<div class="price"><div class="p" id="px-'+p.id+'"><span class="pxv">$'+fmtN(s.psv,4)+'</span></div><div class="m">'+t('mcap')+' '+fmtU(s.mcap)+'</div></div></div>'
+      +'<div class="overview-revenue"><div><div class="metric-label">'+t('kAvg7')+'</div><div class="revenue-value">'+fmtU(s.avg7)+'<small>'+t('perDay')+'</small></div></div>'
+      +'<div class="revenue-change '+(change>=0?'up':'down')+'">'+pct(change)+'<small>'+t('kMom')+'</small></div></div>'
+      +'<div class="kv overview-kv">'
+      +cell(t('kLast')+' · '+date,fmtU(s.lastRev),'')
+      +cell(t('kBurn7'),fmtU(s.holdSum7),'')
+      +cell(LANG==='zh'?'市值 / 年化收入':'Market cap / annualised revenue',s.ps7?fmtN(s.ps7,2)+'x':'—','')
+      +cell(t('kVol24'),fmtU(s.vol24),'')+'</div>'
+      +'<details class="metric-more"'+disclosureAttr('metrics-'+p.id)+'><summary>'+dt('moreMetrics')+'</summary><div class="kv">'
+      +cell(t('kPs30'),s.ps30?fmtN(s.ps30,2)+'x':'—','30D')
+      +cell(t('kBurnYield'),s.burnYield!=null?(s.burnYield*100).toFixed(0)+'%':'—','7D → 365D')
+      +cell(t('kTurnover'),s.turnover!=null?(s.turnover*100).toFixed(1)+'%':'—','24H')
+      +cell(t('fromAth'),s.ath?pct((s.psv-s.ath)/s.ath):'—','')+'</div></details>'
+      +'<div class="overview-footer"><span class="signal-count '+state+'">'+(LANG==='zh'?(bad+' 项预警 · '+warn+' 项留意'):(bad+' alerts · '+warn+' watch'))+'</span><button type="button" class="text-button" onclick="navGo(\'st-rules\')">'+dt('signals')+' ↗</button></div></article>';
   }).join('');
-  /* v3.13.3：记住这次真实卡高，下次打开时骨架直接按它占位（分断点存，手机/电脑互不干扰） */
-  try{
-    var kids = el.children, mx = 0;
-    for(var i=0;i<kids.length;i++) mx = Math.max(mx, kids[i].offsetHeight);
-    if(mx > 60){
-      var bk = (window.innerWidth<=680?'m':(window.innerWidth<=900?'t':'d'));
-      localStorage.setItem('ponsCardsH-'+bk, String(Math.round(mx)));
-    }
-  }catch(e){}
 }
 
 /* ---------- rules ---------- */
@@ -4556,106 +4899,32 @@ function sumActionOf(it){
 }
 
 function renderRules(){
-  const rows = build();
-  const A = PROJECTS[0], B = PROJECTS[1];
-  const ra = ruleItems(rows, A), rb = ruleItems(rows, B);
-  const da = deepFor(A, ra.s), db = deepFor(B, rb.s);
-  const DIMS = dims();
-  const VKEY={floor:'vFloor',mom:'vMom',burn:'vBurn',burnpower:'vBurnpower',ps:'vPs'};
-
-  const verdict = {};
-  DIMS.forEach(dim=>{
-    const x = ra.it[dim.key].score, y = rb.it[dim.key].score;
-    if(x===null||y===null||!isFinite(x)||!isFinite(y)){ verdict[dim.key]={text:t('verdictNoData'), tie:true}; return; }
-    const rel = Math.abs(x-y)/(Math.abs(x)+Math.abs(y)||1);
-    if(rel < 0.10){ verdict[dim.key]={text:t('verdictTie'), tie:true}; return; }
-    const w = x>y ? A : B;
-    verdict[dim.key] = {text:t('verdictWin')(w.ticker+' '+t(VKEY[dim.key])), tie:false};
-  });
-
-  const lvName = lvl => t(lvl==='ok'?'lvOk':lvl==='warn'?'lvWarn':'lvBad');
-  const card = (p, item, deep) =>
-    `<div class="rule ${item.level}">
-       ${item.level==='bad'?`<span class="badflag">${IC.alert}${t('badFlag')}</span>`:''}
-       <div class="rtop"><span class="tag ${item.level}">${lvName(item.level)}</span><span class="pname" style="color:${p.color}">● ${p.name}</span></div>
-       <div class="s">${item.s}</div>
-       <div class="act ${item.level}">${t('advice')}${item.act}</div>
-       ${deep?`<div class="deep"><span class="dh">${t('deepTag')}</span>${deep}</div>`:''}
-     </div>`;
-
-  const head = `<div class="cmp-head">
-      <div class="col"><span class="dot" style="background:${A.color};color:${A.color}"></span>${A.name}<span class="tick">${A.ticker}</span><span class="cnt">${t('cmpHead')(ra.ok, Object.keys(ra.it).length)}</span></div>
-      <div class="col"><span class="dot" style="background:${B.color};color:${B.color}"></span>${B.name}<span class="tick">${B.ticker}</span><span class="cnt">${t('cmpHead')(rb.ok, Object.keys(rb.it).length)}</span></div>
-    </div>`;
-
-  const body = DIMS.map((dim,i)=>{
-    const v = verdict[dim.key];
-    return `<div class="cmp-row">
-      <div class="cmp-label"><b>${i+1}. ${dim.label}</b><span class="hint">${dim.hint}</span>
-        <span class="verdict${v.tie?'':' win'}">${t('verdict')}${v.text}</span></div>
-      <div class="cmp-pair">${card(A, ra.it[dim.key], da[dim.key])}${card(B, rb.it[dim.key], db[dim.key])}</div>
-    </div>`;
+  const rows=build(), items=PROJECTS.map(p=>({p:p,r:ruleItems(rows,p)}));
+  const value=(key,r)=>{
+    const s=r.s;
+    if(key==='floor') return fmtU(s.avg7)+(LANG==='zh'?'/天':'/day');
+    if(key==='mom') return (r.d>=0?'+':'')+(r.d*100).toFixed(1)+'%';
+    if(key==='burn') return fmtU(s.holdSum7);
+    if(key==='burnpower') return s.burnForce!=null?(s.burnForce*100).toFixed(2)+'%':'—';
+    return s.ps7?fmtN(s.ps7,2)+'x':'—';
+  };
+  const names=LANG==='zh'?['收入底线','收入动量','回购持续性','回购 / 成交额','收入估值']:['Revenue floor','Revenue momentum','Buyback continuity','Buybacks / volume','Revenue valuation'];
+  const body=dims().map(function(dim,i){
+    const key='signal-'+dim.key;
+    return '<details class="signal-row"'+disclosureAttr(key)+'><summary><span class="signal-dimension"><b>'+names[i]+'</b><small>'+dim.hint+'</small></span>'
+      +items.map(function(x){const item=x.r.it[dim.key];return '<span class="signal-reading"><b>'+value(dim.key,x.r)+'</b><span class="tag '+item.level+'">'+t(item.level==='ok'?'lvOk':item.level==='warn'?'lvWarn':'lvBad')+'</span></span>';}).join('')
+      +'<i class="disclosure-chevron" aria-hidden="true"></i></summary><div class="signal-evidence">'
+      +items.map(function(x){const item=x.r.it[dim.key], deep=deepFor(x.p,x.r.s);return '<div><span class="evidence-project" style="color:'+x.p.color+'">'+x.p.ticker+'</span><p>'+item.s+'</p><p class="evidence-action">'+item.act+'</p><div class="evidence-method">'+deep[dim.key]+'</div></div>';}).join('')
+      +'</div></details>';
   }).join('');
-
-  const money = v => (v===null||v===undefined||!isFinite(v))? '—' : fmtU(v);
-  const chip = (label,val,cls) => `<span class="chip">${label} <b${cls?` class="${cls}"`:''}>${val}</b></span>`;
-  /* 关键数字按健康度上色：危险红 / 警戒黄 / 健康绿 —— 一眼看出哪个数是坏的 */
-  const cMom = x => x.d < -0.25 ? 'hi-dn' : (x.d > 0.05 ? 'hi-up' : '');
-  const cBp  = x => (x.s.burnForce===null||!isFinite(x.s.burnForce)) ? '' :
-                    (x.s.burnForce < 0.02 ? 'hi-dn' : (x.s.burnForce >= 0.05 ? 'hi-up' : 'hi-wn'));
-  const cPs  = x => (x.s.ps7===null||!isFinite(x.s.ps7)) ? '' :
-                    (x.s.ps7 < 1.5 ? 'hi-up' : (x.s.ps7 > 4 ? 'hi-wn' : ''));
-  const projBlock = (p, s2, act) => `<div class="sum-proj ${act[0]}">
-      <div class="sp-top"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span>
-        <span class="tag ${act[0]}">${lvName(act[0])}</span></div>
-      <div class="sp-act">${act[1]}</div>
-      <div class="sum-chips">
-        ${chip(t('chipRev'), money(s2.s.avg7), s2.it.floor.level==='ok'?'':'hi-wn')}
-        ${chip(t('chipMom'), ((s2.d*100).toFixed(1)+'%'), cMom(s2))}
-        ${chip(t('chipBp'), (s2.s.burnForce!==null&&isFinite(s2.s.burnForce)? (s2.s.burnForce*100).toFixed(2)+'%':'—'), cBp(s2))}
-        ${chip(t('chipPs'), (s2.s.ps7? fmtN(s2.s.ps7,2)+'x':'—'), cPs(s2))}
-      </div>
-    </div>`;
-
-  const sa = sumActionOf(ra.it), sb = sumActionOf(rb.it);
-  const cheaper = (ra.s.ps7 && rb.s.ps7) ? (ra.s.ps7 < rb.s.ps7 ? A : B) : null;
-  const action = cheaper ? t('priority')(cheaper.ticker) : t('priorityNone');
-
-  /* v3.19：把推理链摊在结论下面 —— 跌势结构 / 回购托底 / 估值安全垫 / 实时拐点 / 反转条件 */
-  const deepCol = (p, r2) => `<div class="sd-col">
-      <div class="sd-proj"><span class="dot" style="background:${p.color};color:${p.color}"></span>${p.name}<span class="tick">${p.ticker}</span></div>
-      ${deepReview(p, r2.s, rows)}
-    </div>`;
-  const deepBlock = `<div class="sum-deep">
-      <div class="sd-head"><span class="sd-ic">${IC.book}</span>${t('drHead')}<span class="sd-hint">${t('drHint')}</span></div>
-      <div class="sd-grid">${deepCol(A, ra)}${deepCol(B, rb)}</div>
-    </div>`;
-
-  const summary = `<div class="summary">
-      <div class="sum-head"><span class="sum-badge">${t('conclusion')}</span>
-        <span class="sum-line"><span class="pnm">${A.name}</span> <b class="${sa[0]}">${sa[1]}</b>　·　<span class="pnm">${B.name}</span> <b class="${sb[0]}">${sb[1]}</b></span></div>
-      <div class="sum-grid">${projBlock(A, ra, sa)}${projBlock(B, rb, sb)}</div>
-      ${deepBlock}
-      <div class="sum-foot">${action}<br><span style="color:var(--mut2)">${t('sumHint')}</span></div>
-    </div>`;
-
-  const badList = [];
-  DIMS.forEach(dim=>{
-    if(ra.it[dim.key].level==='bad') badList.push(A.ticker+' · '+dim.short);
-    if(rb.it[dim.key].level==='bad') badList.push(B.ticker+' · '+dim.short);
-  });
-  const alert = badList.length
-    ? `<div class="alertbar"><b>${IC.alert}${t('alertTitle')}</b><span>${badList.join('　·　')}</span><span class="ah">${t('alertHint')}</span></div>`
-    : '';
-
-  document.getElementById('rules').innerHTML = alert + summary + head + body;
+  document.getElementById('rules').innerHTML='<div class="signal-table"><div class="signal-table-head"><span>'+dt('metric')+'</span><span style="color:var(--pons)">PONS</span><span style="color:var(--stonk)">STONK</span><i></i></div>'+body+'</div><p class="section-caption">'+dt('signalNote')+'</p>';
 }
 
 /* ---------- chart ---------- */
 function tabs(){ return [
   {id:'rev',  label:t('tabRev')},
   {id:'rev7', label:t('tabRev7')},
-  {id:'cum',  label:t('tabCum')},
+  {id:'cum',  label:(LANG==='zh'?'区间累计回购':'Window buybacks')},
   {id:'price',label:t('tabPrice')}
 ];}
 function renderTabs(){
@@ -4667,7 +4936,7 @@ function renderChart(){
   const N = MODE==='price'? 90 : 60;
   const sub = rows.slice(-N);
   const svg = document.getElementById('chart');
-  const W=1200,H=340, P={l:64,r:104,t:14,b:30};
+  const W=1200,H=340, P={l:78,r:98,t:22,b:36};
   const iw = W-P.l-P.r, ih = H-P.t-P.b;
   /* 覆盖层的字是固定 CSS 字号（手机 11.5px），SVG 里的字会跟着缩放 ——
      所以末端胶囊的贴合/防溢出必须按「真实 CSS 像素」算，不能沿用 SVG 单位。
@@ -4675,6 +4944,7 @@ function renderChart(){
   const cw = (function(){ const el=document.getElementById('chartMarks'); if(!el) return 0;
                           const w=el.getBoundingClientRect().width; return w>0? w : 0; })();
   const shellW = cw>0? cw : W, svgScale = cw>0? cw/W : 0;
+  const scaleY=svg.getBoundingClientRect().height/H || svgScale;
   let series=[], thresholds=[], yfmt = fmtU;
 
   if(MODE==='price'){
@@ -4686,7 +4956,7 @@ function renderChart(){
     series = PROJECTS.map(p=>({name:p.name,color:p.color,
       pts: sub.map((r,i)=>({i, v: r[p.id+'_price']!==null&&base[p.id]? r[p.id+'_price']/base[p.id]*100 : null}))}));
     yfmt = v => fmtN(v,0);
-    thresholds=[{v:100,label:'基准 100',color:'var(--mut2)'}];
+    thresholds=[{v:100,label:LANG==='zh'?'基准 100':'Base 100',color:'var(--mut2)'}];
   } else if(MODE==='cum'){
     let cum = {}; PROJECTS.forEach(p=>cum[p.id]=0);
     const allRows = rows;
@@ -4703,7 +4973,7 @@ function renderChart(){
       const filled = vals.map((v,i)=> v===null? null : (MODE==='rev7'? smaAt(vals.map(x=>x??0), i, 7) : v));
       return {name:p.name, color:p.color, pts: filled.map((v,i)=>({i, v}))};
     });
-    PROJECTS.forEach(p=>thresholds.push({v:p.danger,label:t('stopLoss')(p.ticker),color:p.colorDim}));
+    // Thresholds live in Signals & evidence; the plot focuses on the observed series.
   }
 
   const allV = series.flatMap(s=>s.pts.map(p=>p.v)).filter(v=>v!==null&&isFinite(v));
@@ -4717,7 +4987,7 @@ function renderChart(){
   /* 坐标文字走 HTML 覆盖层（#chartMarks）：SVG 被 preserveAspectRatio="none" 拉伸后
      里面的字在手机上只剩 3~4px，2026-10-07 起统一搬进原生 HTML，字号真实、永久清晰。 */
   let g='', marks='';
-  const TICKS=5;
+  const TICKS=4;
   for(let k=0;k<=TICKS;k++){
     const v = min + (max-min)*k/TICKS, y = Y(v);
     g += `<line x1="${P.l}" x2="${W-P.r}" y1="${y}" y2="${y}" style="stroke:var(--grid)"/>`;
@@ -4742,23 +5012,13 @@ function renderChart(){
       cur.push({x:X(pt.i), y:Y(pt.v), v:pt.v});
     });
     if(cur.length) segs.push(cur);
-    const clamp = y => Math.max(P.t-6, Math.min(P.t+ih+6, y));
     let d='';
-    segs.forEach(seg=>{
-      if(seg.length===1){ d += 'M'+seg[0].x.toFixed(1)+' '+seg[0].y.toFixed(1)+' L'+(seg[0].x+0.01).toFixed(2)+' '+seg[0].y.toFixed(1); return; }
-      d += 'M'+seg[0].x.toFixed(1)+' '+seg[0].y.toFixed(1);
-      for(let i=0;i<seg.length-1;i++){
-        const p0=seg[i-1]||seg[i], p1=seg[i], p2=seg[i+1], p3=seg[i+2]||p2;
-        const c1x=p1.x+(p2.x-p0.x)/6, c1y=p1.y+(p2.y-p0.y)/6;
-        const c2x=p2.x-(p3.x-p1.x)/6, c2y=p2.y-(p3.y-p1.y)/6;
-        d += ' C'+c1x.toFixed(1)+' '+clamp(c1y).toFixed(1)+','+c2x.toFixed(1)+' '+clamp(c2y).toFixed(1)+','+p2.x.toFixed(1)+' '+p2.y.toFixed(1);
-      }
-    });
-    g += `<path d="${d}" fill="none" style="stroke:${s.color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+    segs.forEach(seg=>{ d+=seg.map((pt,i)=>(i?' L':' M')+pt.x.toFixed(1)+' '+pt.y.toFixed(1)).join(''); });
+    g += `<path d="${d}" fill="none" style="stroke:${s.color}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>`;
     const lastSeg = segs[segs.length-1];
     const lastPt = lastSeg? lastSeg[lastSeg.length-1] : null;
     if(lastPt){
-      g += `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="8" fill="none" style="stroke:${s.color}" stroke-opacity=".3" stroke-width="1.5"/>`;
+
       g += `<circle cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="4.2" style="fill:${s.color}"/>`;
       endLabels.push({x:lastPt.x, y:lastPt.y, color:s.color,
         text:(MODE==='price'? fmtN(lastPt.v,1) : fmtU(lastPt.v))});
@@ -4780,7 +5040,7 @@ function renderChart(){
   /* 先把 y 刻度 + 日期行放进覆盖层，量出「日期行顶部」的真实像素（后续两步的底线） */
   if(cm) cm.innerHTML = marks;
   const xRowTopPx = (function(){
-    const fallback = (H-P.b)*svgScale;
+    const fallback = (H-P.b)*scaleY;
     if(!cm) return fallback;
     const xs=[...cm.querySelectorAll('i.xl')].filter(e=>e.offsetParent!==null&&e.offsetWidth>0);
     if(!xs.length) return fallback;
@@ -4793,7 +5053,7 @@ function renderChart(){
   if(svgScale>0){
     const thFs = isNarrow? 11.5 : 10.5, thH = Math.round(thFs*1.05)+3;
     const thPx = thresholds.filter(th=>th.v!==undefined&&th.v!==null&&isFinite(th.v))
-                          .map(th=>({th, y: Y(th.v)*svgScale}));
+                          .map(th=>({th, y: Y(th.v)*scaleY}));
     thPx.sort((a,b)=>a.y-b.y);
     for(let i=1;i<thPx.length;i++) if(thPx[i].y - thPx[i-1].y < thH+2) thPx[i].y = thPx[i-1].y + thH + 2;
     const floor = xRowTopPx + 3;           /* 标签底 = 线 - 3 → 线最多抬到日期行这里 */
@@ -4806,27 +5066,27 @@ function renderChart(){
   }
   thresholds.forEach(th=>{
     if(th.v===undefined||th.v===null) return;
-    const pct = (svgScale>0 && th.px!==undefined)? (th.px/svgScale)/H*100 : Y(th.v)/H*100;
+    const pct = (svgScale>0 && th.px!==undefined)? (th.px/scaleY)/H*100 : Y(th.v)/H*100;
     marks += `<i class="th" style="top:${pct.toFixed(2)}%;color:${th.color}">${th.label}</i>`;
   });
   const thBoxes = thresholds.filter(th=>th.v!==undefined&&th.v!==null&&isFinite(th.v)).map(th=>{
     const tw = txtW(th.label, isNarrow? 11.5 : 10.5);
     const rgt = cw>0? cw*0.91 : W*0.91;
-    const yl = (th.px!==undefined && svgScale>0)? th.px : Y(th.v)*svgScale;
+    const yl = (th.px!==undefined && svgScale>0)? th.px : Y(th.v)*scaleY;
     return { x1: (isNarrow? 58 : rgt-tw)-4, x2: (isNarrow? 58+tw : rgt)+4,
              y1: yl - Math.round((isNarrow?11.5:10.5)*1.05) - 5, y2: yl + 2 };
   });
   const minY = P.t - 6, maxYBase = H - P.b - 11;
   /* ② 可用高度受日期行限制：胶囊是 translateY(-50%) 挂在锚点上的，下限按真实像素算 */
-  const maxY = svgScale>0? Math.min(maxYBase, (xRowTopPx - 3 - pillH/2)/svgScale) : maxYBase;
+  const maxY = svgScale>0? Math.min(maxYBase, (xRowTopPx - 3 - pillH/2)/scaleY) : maxYBase;
   endLabels.sort((a,b)=>a.y-b.y);
   /* ③ 让开阈值标签（桌面两端标签都在右侧，会叠在一起） */
   if(cw>0 && thBoxes.length) endLabels.forEach(l=>{
-    const px = pillX(l) - 13, x2 = px + pillW(l.text), py = l.y*svgScale;
+    const px = pillX(l) - 13, x2 = px + pillW(l.text), py = l.y*scaleY;
     thBoxes.forEach(bx=>{
       if(x2 > bx.x1 && px < bx.x2 && py+10 > bx.y1 && py-10 < bx.y2){
-        const pick = (bx.y1 - 12 >= minY*svgScale) ? (bx.y1 - 12) : (bx.y2 + 12);
-        l.y = pick/svgScale;
+        const pick = (bx.y1 - 12 >= minY*scaleY) ? (bx.y1 - 12) : (bx.y2 + 12);
+        l.y = pick/scaleY;
       }
     });
   });
@@ -4834,7 +5094,7 @@ function renderChart(){
   endLabels.forEach(l=>{ l.y = Math.max(minY, Math.min(maxY, l.y)); });
   /* ⑤ 两个系列末值挨太近就错开：间距按真实像素（手机图表只有 ~94px 高，
      沿用 SVG 单位的 18 会挤成 5px，两枚胶囊叠在一起）。 */
-  const minGap = svgScale>0? 26/svgScale : 18;
+  const minGap = svgScale>0? 26/scaleY : 18;
   for(let i=1;i<endLabels.length;i++){
     if(endLabels[i].y - endLabels[i-1].y < minGap){
       const down = endLabels[i-1].y + minGap;
@@ -4848,6 +5108,7 @@ function renderChart(){
   });
   svg.innerHTML = g;
   if(cm) cm.innerHTML = marks;
+  const caption=document.getElementById('chartCaption'); if(caption) caption.textContent=(LANG==='zh'?'最近 '+N+' 天 · UTC 日线 · 悬停或轻点查看数据':'Last '+N+' days · UTC daily series · Hover or tap to inspect');
   document.getElementById('legend').innerHTML = series.map(s=>
     `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('') +
     (MODE==='price'?'<span style="color:var(--mut2)">'+t('start100')+'</span>':'');
@@ -4868,9 +5129,10 @@ function renderChart(){
     tip.innerHTML = html;
     tip.style.display='block';
     const px = X(i)/W*r.width;
-    tip.style.left = Math.min(px+14, r.width-190)+'px';
-    tip.style.top = (e.clientY - r.top - 20)+'px';
+    tip.style.left = Math.max(0,Math.min(px+14,r.width-tip.offsetWidth-4))+'px';
+    tip.style.top = Math.max(30,Math.min(r.height-tip.offsetHeight,e.clientY-r.top+26))+'px';
   };
+  svg.onclick=svg.onmousemove;
   svg.onmouseleave = ()=> tip.style.display='none';
 }
 /* 横竖屏切换 / 窗口缩放后，胶囊的像素级防重叠要重算一次 */
@@ -5234,12 +5496,11 @@ function guideHashInit(){
    ========================================================================== */
 const NAV_ITEMS=[
   {id:'top',       ic:'zap',      k:'navTop'},
-  {id:'st-hourly', ic:'activity', k:'navHourly'},
+  {id:'st-analytics', ic:'trend', k:'navChart'},
   {id:'st-rules',  ic:'bell',     k:'navRules'},
   {id:'st-burn',   ic:'flame',    k:'navBurn'},
   {id:'st-share',  ic:'pie',      k:'navShare'},
   {id:'st-rank',   ic:'trophy',   k:'navRank'},
-  {id:'st-chart',  ic:'trend',    k:'navChart'},
   {id:'st-table',  ic:'table',    k:'navTable'},
   {id:'st-src',    ic:'db',       k:'navSrc'},
   {id:'st-guide',  ic:'book',     k:'navGuide'}
@@ -5273,7 +5534,7 @@ function navBuild(){
   nav.innerHTML='<div class="nav-h" aria-hidden="true">'+esc(t('navTitle'))+'</div>'
     +navItems().map(function(it){
     /* v3.29.8：深度页板块的文案在 STK_I18N 里（secFly 等），总览的走 I18N —— 谁的词典里有就用谁 */
-    const dict=(typeof STK_I18N!=='undefined' && STK_I18N[LANG])? STK_I18N[LANG] : null;
+    const dict=(document.body.classList.contains('stk-on') && typeof STK_I18N!=='undefined' && STK_I18N[LANG])? STK_I18N[LANG] : null;
     /* v3.29.9：有短标签（nk）就用短标签，侧边栏不再截断；板块标题不受影响 */
     const kk=(it.nk && dict && dict[it.nk]!==undefined)? it.nk : it.k;
     const lab=(dict && dict[kk]!==undefined)? st(kk) : t(kk);
@@ -5281,6 +5542,7 @@ function navBuild(){
       + '<span class="nav-dot">'+IC[it.ic]+'</span><span class="nav-t">'+esc(lab)+'</span></button>';
   }).join('');
   NAV_NOW=null; navSpy();
+  designCopy();
 }
 function navSet(id){
   const nav=document.getElementById('secNav'); if(!nav || id===NAV_NOW) return;
@@ -5315,14 +5577,14 @@ function navSpy(){
     /* 已在页底：页尾几节都贴着屏幕，取「最上面那个可见的」当当前 —— 否则点「数据体检」
        这种倒数第二节会因为滚不到顶而错亮最后一节 */
     for(let i=1;i<NAV_ELS.length;i++){
-      const el=NAV_ELS[i]; if(!el) continue;
+      const el=NAV_ELS[i]; if(!el || !el.getClientRects().length) continue;
       const t=el.getBoundingClientRect().top;
       if(t>=0 && t<=vh*0.6){ cur=items[i].id; break; }
     }
     if(cur==='top') cur=items[items.length-1].id;
   }else{
     for(let i=1;i<NAV_ELS.length;i++){
-      const el=NAV_ELS[i]; if(!el) continue;
+      const el=NAV_ELS[i]; if(!el || !el.getClientRects().length) continue;
       /* 判定线（视口坐标）：标题滚进上缘 132px 内就算「当前」（比锚点落位 80/114 略大，点完不会差一格） */
       if(el.getBoundingClientRect().top<=132) cur=items[i].id;
     }
@@ -5341,7 +5603,10 @@ function navGo(id){
     try{ window.scrollTo({top:0,behavior:navReduce()?'auto':'smooth'}); }catch(e){ window.scrollTo(0,0); }
     navSet('top'); return;
   }
+  if(id==='st-hourly') designChartView('hourly');
+  if(id==='st-chart') designChartView('daily');
   const el=document.getElementById(id); if(!el) return;
+  const next=el.nextElementSibling; if(next&&next.tagName==='DETAILS') next.open=true;
   const go=function(){
     try{ el.scrollIntoView({behavior:navReduce()?'auto':'smooth',block:'start'}); }catch(e){ el.scrollIntoView(); }
     el.classList.remove('nflash'); void el.offsetWidth; el.classList.add('nflash');
@@ -5367,24 +5632,9 @@ function navGo(id){
    桌面端（≥1024px）不走这套逻辑，完全不受影响。 */
 function navCoarse(){ try{ return window.matchMedia('(max-width:1023px)').matches; }catch(e){ return window.innerWidth<1024; } }
 function navShow(){
-  const nav=document.getElementById('secNav'); if(!nav) return;
-  if(NAV_HIDE_T){ clearTimeout(NAV_HIDE_T); NAV_HIDE_T=null; }
-  nav.classList.remove('nav-hide');
-  if(!navCoarse()) return;
-  NAV_HIDE_T=setTimeout(function(){
-    NAV_HIDE_T=null;
-    if(!navCoarse()) return;
-    let focus=false; try{ focus=nav.matches(':focus-within'); }catch(e){}
-    if(focus) return;                                    /* 焦点还在导航上：不收 */
-    const y=window.pageYOffset||document.documentElement.scrollTop||0;
-    if(y<40) return;                                     /* 页面顶部：横条本来就该在 */
-    /* v3.29.8：吸顶阈值不再写死 6/66，改读导航自己的 CSS top —— 深度页是 54px（让开打赏浮标），
-       写死会永远判不到「已吸顶」，停手收起就失效（与 v3.29.7 修 stk-nav 同一个坑）。 */
-    const stuck=(parseFloat(getComputedStyle(nav).top)||6)+2;
-    if(nav.getBoundingClientRect().top>stuck) return;    /* 还没吸顶：收起会留空档 */
-    nav.classList.add('nav-hide');
-  },1500);
+  const nav=document.getElementById('secNav'); if(nav) nav.classList.remove('nav-hide');
 }
+
 (function(){
   const nav=document.getElementById('secNav'); if(!nav) return;
   nav.addEventListener('click',function(ev){
@@ -5396,7 +5646,7 @@ function navShow(){
   window.addEventListener('load',navReq);
   window.__navSpy=navReq;               /* 数据落地后布局变了，renderAll 会再叫一次 */
 })();
- 
+
 /* ---------- live ---------- */
 async function fetchJSON(u, ms){
   /* 统一超时：第三方接口偶尔挂起，没有超时会把「刷新中」状态卡死 */
@@ -5905,6 +6155,8 @@ function stkPctCls(v){ return v>0? 'up' : (v<0? 'down':''); }
 /* ---------- 打开 / 关闭 ---------- */
 function stkOpen(on, push){
   document.body.classList.toggle('stk-on', !!on);
+  var nav=document.getElementById('secNav');
+  if(nav){if(on)document.querySelector('.stk-bar').after(nav);else document.getElementById('cards').before(nav);}
   /* v3.29.8：总览 ⇄ 深度页换一套侧边栏板块（#secNav 同一套导航，图标+文字） */
   try{ navResync(); }catch(e){}
   if(on){
@@ -5982,7 +6234,7 @@ function stkRender(){
   body['stk-s-supply']=stkSupplyHTML(sup, h);
   body['stk-s-value']=stkValueHTML(val, md);
   body['stk-s-rank']=stkRankHTML(d.flywheelRank);
-  body['stk-s-score']=stkScoreHTML(sc);
+  body['stk-s-score']='<details class="module-details"'+disclosureAttr('stkScore')+'><summary>'+(LANG==='zh'?'展开全部阈值与评分依据':'Inspect all thresholds & scores')+'</summary><div class="details-content">'+stkScoreHTML(sc)+'</div></details>';
   body['stk-s-model']=stkModelHTML(md);
   body['stk-s-note']=stkNoteHTML(d);
   /* v3.29.8：板块导航统一交给全站侧边栏 #secNav（见 NAV_STK_ITEMS），这里不再生成胶囊条 */
@@ -6077,55 +6329,9 @@ function stkChipsHTML(sf, lq, hd){
 
 /* ---------- 结论卡：先给结论，再展开数据 ---------- */
 function stkVerdictHTML(d){
-  var h=d.hero||{}, fw=d.flywheel||{}, dm=d.demand||{}, val=d.value||{}, sc=d.score||{}, md=d.model||{}, sup=d.supply||{};
-  var tl=sc.tally||{};
-  var bb24=(fw.buyback&&fw.buyback.length)? fw.buyback[fw.buyback.length-1] : null;
-  var burn24=(fw.burnTok&&fw.burnTok.length)? fw.burnTok[fw.burnTok.length-1] : null;
-  var lines=[];
-  if(bb24!=null && burn24!=null && bb24>0){
-    lines.push(['g', LANG==='zh'
-      ? '最近一个完整 UTC 日买回 <b>'+fmtU(bb24)+'</b>，合计销毁 <b>'+nS(burn24)+'</b> 枚 STONK（含报价收入直接销毁）；近 7 日买回支出占总收入 <b>'+((fw.share||0)*100).toFixed(1)+'%</b>。'
-      : 'Last complete UTC day: <b>'+fmtU(bb24)+'</b> spent on buybacks and <b>'+nS(burn24)+'</b> STONK burned, including quote-fee burns; actual 7-day buyback spend / total revenue: <b>'+((fw.share||0)*100).toFixed(1)+'%</b>.']);
-  }
-  if(val.ps7!=null){
-    lines.push([val.ps7<1.5?'g':(val.ps7<4?'w':'b'), LANG==='zh'
-      ? '估值：市值 ÷ 年化收入 = <b>'+val.ps7.toFixed(2)+'x</b>（'+(val.ps7<1.5?'便宜区，< 1.5x':(val.ps7<4?'中性区':'偏贵区，> 4x'))+'）。年化按近 7 日均收入 '+fmtU(fw.rev7)+'/天 折算。'
-      : 'Valuation: market cap ÷ annualised revenue = <b>'+val.ps7.toFixed(2)+'x</b> ('+(val.ps7<1.5?'cheap, < 1.5x':(val.ps7<4?'neutral':'rich, > 4x'))+'). Annualised from the 7-day average of '+fmtU(fw.rev7)+'/day.']);
-  }
-  if(fw.chg7!=null){
-    var up=fw.chg7>0.02, down=fw.chg7<-0.25;
-    lines.push([up?'g':(down?'b':'w'), LANG==='zh'
-      ? '收入环比：近 7 日均 <b>'+fmtU(fw.rev7)+'</b>，比前 7 日 <b>'+pctS(fw.chg7)+'</b>'+(down?' —— 已经跌破 -25% 的警戒线，回购钱包会跟着变薄。':'。')
-      : 'Revenue trend: 7-day average <b>'+fmtU(fw.rev7)+'</b>, <b>'+pctS(fw.chg7)+'</b> vs the prior week'+(down?' — past the -25% warning line, so the buyback wallet thins with it.':'.')]);
-  }
-  if(fw.burnVel!=null){
-    var days1 = (md.supply&&fw.burnDay)? (md.supply*0.01)/fw.burnDay : null;
-    lines.push([fw.burnVel>=0.10?'g':(fw.burnVel>=0.05?'w':'b'), LANG==='zh'
-      ? '销毁：每天烧掉供应的 <b>'+fw.burnVel.toFixed(3)+'%</b>'+(days1? '，按这个速度 <b>'+days1.toFixed(1)+' 天</b>再过 1%（累计已烧 '+((h.burnPct||0)*100).toFixed(2)+'%）。':'。')
-      : 'Burns: <b>'+fw.burnVel.toFixed(3)+'%</b> of supply per day'+(days1? ', so the next 1% takes about <b>'+days1.toFixed(1)+' days</b> (already burned '+((h.burnPct||0)*100).toFixed(2)+'%).':'.')]);
-  }
-  if(dm.buyShare!=null){
-    lines.push([dm.buyShare>=0.55?'g':(dm.buyShare>=0.45?'w':'b'), LANG==='zh'
-      ? '盘面：24 小时 <b>'+nS(dm.buys)+'</b> 笔买 / <b>'+nS(dm.sells)+'</b> 笔卖，买盘占 <b>'+(dm.buyShare*100).toFixed(0)+'%</b>'+(dm.net24h!=null? (dm.net24h>=0? '，主池净买入 <b>'+fmtU(Math.abs(dm.net24h))+'</b>。':'，主池净卖出 <b>'+fmtU(Math.abs(dm.net24h))+'</b>。') : '（净流入还在采样，满 24 小时后显示）。')
-      : 'Tape: <b>'+nS(dm.buys)+'</b> buys vs <b>'+nS(dm.sells)+'</b> sells in 24h — buy share <b>'+(dm.buyShare*100).toFixed(0)+'%</b>'+(dm.net24h!=null? (dm.net24h>=0? ', main pool net buying <b>'+fmtU(Math.abs(dm.net24h))+'</b>.':' , main pool net selling <b>'+fmtU(Math.abs(dm.net24h))+'</b>.') : ' (net flow still sampling; shows after 24h).')]);
-  }
-  var tallyHTML='<div class="stk-tally">'
-    + '<i class="t-good"><b>'+tl.bull+'</b> '+esc(LANG==='zh'?'项正常':'healthy')+'</i>'
-    + '<i class="t-neu"><b>'+(tl.neu||0)+'</b> '+esc(LANG==='zh'?'项留意':'watch')+'</i>'
-    + '<i class="t-risk"><b>'+(tl.risk||0)+'</b> '+esc(LANG==='zh'?'项预警':'warning')+'</i>'
-    + (tl.na? '<i><b>'+tl.na+'</b> '+esc(LANG==='zh'?'项待采样':'pending')+'</i>':'')
-    + '</div>';
-  return '<div class="card stk-verdict">'
-    + '<div class="stk-vh"><span class="h"><svg class="ic" aria-hidden="true"><use href="#ic-zap"/></svg>'
-    + (LANG==='zh'? '一句话结论' : 'In one line') + '</span>' + tallyHTML + '</div>'
-    + '<div class="stk-vlines">'
-    + lines.map(function(l){ return '<div><i class="dotm '+l[0]+'"></i><span>'+l[1]+'</span></div>'; }).join('')
-    + '</div>'
-    + '<div class="stk-note" style="border-top:1px solid var(--line);padding-top:11px">'
-    + (LANG==='zh'
-      ? '回购是<b>持续的买盘</b>，不是价格开关；销毁是<b>不可逆的减供应</b>。价格涨跌由买卖双方决定 —— 右边的评分卡把每一格的真实数值和阈值都摊开，自己看一眼比听结论更靠谱。'
-      : 'A buyback is a <b>persistent bid</b>, not a price switch; a burn is an <b>irreversible supply cut</b>. Price is decided by buyers and sellers — the scorecard below lays out every value and threshold, so check the numbers yourself.')
-    + '</div></div>';
+  const fw=d.flywheel||{}, tally=(d.score||{}).tally||{};
+  const trend=fw.chg7==null?(LANG==='zh'?'收入趋势待更新':'Revenue trend pending'):fw.chg7<-0.25?(LANG==='zh'?'收入动量触发预警':'Revenue momentum has crossed its warning threshold'):fw.chg7>0?(LANG==='zh'?'收入较前一周改善':'Revenue improved over the prior week'):(LANG==='zh'?'收入较前一周回落':'Revenue softened over the prior week');
+  return '<div class="focus-strip"><span class="eyebrow">'+(LANG==='zh'?'当前关注':'IN FOCUS')+'</span><p>'+trend+'。'+(LANG==='zh'?'回购持续性与市场买盘，结合下方数据判断。':'Review buyback continuity alongside market demand.')+'</p><button type="button" class="text-button" onclick="navGo(\'stk-s-score\')">'+(LANG==='zh'?(tally.risk||0)+' 项预警 · 查看依据':'Inspect '+(tally.risk||0)+' alerts')+' ↗</button></div>';
 }
 
 /* ---------- 供应与安全 ---------- */
@@ -6211,13 +6417,16 @@ function stkFlyHTML(fw, h){
     if(i===4 && fw.pxRatio!=null) vcls=fw.pxRatio>=1? 'up':'down';
     return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v '+vcls+'">'+(c[1]||'—')+'<small>'+esc(c[2]||'')+'</small></div></div>';
   }).join('')+'</div>';
-  return '<div class="card stk-card stk-sec">'+grid
-    + '<div style="height:14px"></div>'
-    + '<div class="stk-h3">'+esc(st('chartDaily').replace('{n}', (fw.dates||[]).length || 0))+' <span style="opacity:.66">· '+esc(st('chartDailyHint'))+'</span></div>'
-    + '<div class="stk-chart"><svg id="stkDChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkDTip"></div></div>'
+  var chartTabs=[['daily',LANG==='zh'?'收入与回购':'Revenue & buybacks'],['hourly',LANG==='zh'?'小时监控':'Hourly monitor'],['price',LANG==='zh'?'价格走势':'Price'],['history',LANG==='zh'?'收入历史':'Revenue history']];
+  return '<div class="card stk-card stk-sec stk-fly-summary">'+grid+'</div>'
+    + '<div class="stk-series-tabs view-switch" role="tablist" aria-label="STONK charts">'+chartTabs.map(function(x){var on=STK_CTAB===x[0];return '<button type="button" id="stk-tab-'+x[0]+'" role="tab" aria-selected="'+on+'" aria-controls="'+(x[0]==='price'?'stkPCard':'stk-panel-'+x[0])+'" tabindex="'+(on?'0':'-1')+'" data-series-tab="'+x[0]+'" onclick="stkChartView(\''+x[0]+'\')">'+x[1]+'</button>';}).join('')+'</div>'
+    + '<div class="card stk-card stk-sec stk-series-panel" id="stk-panel-daily" role="tabpanel" aria-labelledby="stk-tab-daily" data-series="daily"'+(STK_CTAB!=='daily'?' hidden':'')+'>'
+    + '<div class="stk-h3">'+esc(st('chartDaily').replace('{n}', (fw.dates||[]).length || 0))+'</div>'
+    + '<div class="stk-legend"><span><em style="background:var(--metric-revenue)"></em>'+(LANG==='zh'?'平台收入':'Revenue')+'</span><span><em style="background:var(--stonk)"></em>'+(LANG==='zh'?'回购支出':'Buyback spend')+'</span></div>'
+    + '<div class="stk-chart stk-axis-chart"><div class="plot-scale" id="stkDScale"></div><svg id="stkDChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkDTip"></div></div>'
     + '<div class="stk-axis"><span>'+esc(((fw.dates||[])[0]||''))+'</span><span>'+esc(((fw.dates||[])[(fw.dates||[]).length-1]||''))+'</span></div>'
     + '</div>'
-    + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
+    + '<div class="card stk-card stk-sec stk-series-panel" id="stk-panel-hourly" role="tabpanel" aria-labelledby="stk-tab-hourly" data-series="hourly"'+(STK_CTAB!=='hourly'?' hidden':'')+'>'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartHourly'))+'</span></div>'
     +   '<div class="tabs" id="stkHourTabs">'
     +     ['rev','burn','vol'].map(function(k){
@@ -6225,10 +6434,10 @@ function stkFlyHTML(fw, h){
             return '<button class="tab'+(on?' on':'')+'" type="button" onclick="stkHourTab(\''+k+'\')">'+esc(st(k==='rev'?'hourTabRev':(k==='burn'?'hourTabBurn':'hourTabVol')))+'</button>';
           }).join('')
     +   '</div>'
-    +   '<div class="stk-chart"><svg id="stkHChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkHTip"></div></div>'
+    +   '<div class="stk-chart stk-axis-chart"><div class="plot-scale" id="stkHScale"></div><svg id="stkHChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkHTip"></div></div>'
     +   '<div class="stk-note" id="stkHSum" style="margin-top:10px"></div>'
     + '</div>'
-    + '<div class="card stk-card stk-sec" id="stkPCard" style="margin-top:var(--sp-card)">'
+    + '<div class="card stk-card stk-sec stk-series-panel" id="stkPCard" role="tabpanel" aria-labelledby="stk-tab-price" data-series="price"'+(STK_CTAB!=='price'?' hidden':'')+'>'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartPrice').replace('{n}', ((stkBundle()||{}).priceHist||[]).length || 0))+'</span></div>'
     +   '<div class="tabs" id="stkPTabs" style="margin-bottom:10px">'
     +     ['px','fdv'].map(function(k){
@@ -6249,10 +6458,10 @@ function stkFlyHTML(fw, h){
     +   '</div>'
     +   '<div class="stk-paxwrap" id="stkPAxWrap"><div class="stk-axis stk-paxax" id="stkPAx"></div></div>'
     + '</div>'
-    + '<div class="card stk-card stk-sec" style="margin-top:var(--sp-card)">'
-    +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartRev90').replace('{n}', (((stkBundle()||{}).flywheel||{}).rev90||{}).n || 0))+'</span></div>'
+    + '<div class="card stk-card stk-sec stk-series-panel" id="stk-panel-history" role="tabpanel" aria-labelledby="stk-tab-history" data-series="history"'+(STK_CTAB!=='history'?' hidden':'')+'>'
+    +   '<div class="stk-legend"><span><em style="background:var(--metric-revenue)"></em>'+esc(st('chartRev90').replace('{n}', (((stkBundle()||{}).flywheel||{}).rev90||{}).n || 0))+'</span></div>'
     +   '<div class="stk-grid g3r90" id="stkR90Stat"></div>'
-    +   '<div class="stk-chart stk-r90box" style="margin-top:10px">'
+    +   '<div class="stk-chart stk-r90box" style="margin-top:10px"><div class="plot-scale" id="stkR90Scale"></div>'
     +     '<div class="stk-r90scroll" id="stkR90Scroll"><svg class="stk-r90svg" id="stkR90Chart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg></div>'
     +     '<div class="stk-r90cross" id="stkR90Cross"></div>'
     +     '<div class="stk-r90swipe off" id="stkR90Swipe">'+esc(st('r90Swipe'))+'</div>'
@@ -6930,6 +7139,14 @@ function stkNoteHTML(d){
 }
 
 /* ---------- 图表（纯 SVG，零依赖；鼠标/手指滑过可看具体数值） ---------- */
+var STK_CTAB='daily';
+function stkChartView(key){
+  if(!['daily','hourly','price','history'].includes(key))return;
+  STK_CTAB=key;
+  document.querySelectorAll('[data-series]').forEach(e=>e.hidden=e.dataset.series!==key);
+  document.querySelectorAll('[data-series-tab]').forEach(e=>{var on=e.dataset.seriesTab===key;e.setAttribute('aria-selected',String(on));e.tabIndex=on?0:-1;});
+  stkDraw();
+}
 var STK_HTAB='rev';
 /* v3.29.21：价格走势卡的两档视图 —— 价格 / FDV（FDV = 当日收盘价 × 当前总供应，同形切换）
    v3.29.23：供应量口径修正 —— 用「当前总供应」（初始 − 已销毁），不是初始供应 */
@@ -6977,6 +7194,12 @@ function stkHourLabel(ts){
     return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+' '+String(d.getUTCHours()).padStart(2,'0')+':00 UTC';
   }catch(e){ return ''; }
 }
+function plotGrid(id,max,format,top,bottom){
+  var labels=document.getElementById(id), grid='', marks='';
+  [1,2/3,1/3,0].forEach(function(f){var y=top+(1-f)*(300-top-bottom);grid+='<line class="plot-grid" x1="0" x2="1200" y1="'+y+'" y2="'+y+'"/>';marks+='<i style="top:'+(y/3)+'%">'+format(max*f)+'</i>';});
+  if(labels)labels.innerHTML=marks;
+  return grid;
+}
 function stkDrawDaily(){
   var d=stkBundle(); if(!d) return;
   var fw=d.flywheel||{}; var svg=document.getElementById('stkDChart'), tip=document.getElementById('stkDTip');
@@ -6987,7 +7210,7 @@ function stkDrawDaily(){
   var mx=0; for(var i=0;i<n;i++) mx=Math.max(mx, rev[i]||0, bb[i]||0);
   mx=mx||1;
   var step=1200/n, bw=Math.min(17, Math.max(2.2, step*0.32));
-  var parts=[];
+  var parts=[plotGrid('stkDScale',mx,fmtU,padT,padB)];
   for(var i=0;i<n;i++){
     var x=i*step+step/2;
     var h1=innerH*(rev[i]||0)/mx, h2=innerH*(bb[i]||0)/mx;
@@ -7023,7 +7246,7 @@ function stkDrawHour(withSum){
   mx=mx||1;
   var cls = STK_HTAB==='rev'? 'sk-p' : (STK_HTAB==='burn'? 'sk-burn' : 'sk-v');
   var step=1200/n, bw=Math.max(2.2, step*0.6);
-  var parts=[];
+  var parts=[plotGrid('stkHScale',mx,STK_HTAB==='burn'?function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':v.toFixed(0);}:fmtU,padT,padB)];
   for(var i=0;i<n;i++){
     var v=vals[i], h=innerH*((v==null||!isFinite(v))?0:v)/mx;
     var x=i*step+(step-bw)/2;
@@ -7142,16 +7365,9 @@ function stkDrawPrice(){
     var gx=X(xIds[k]).toFixed(1);
     return '<line class="sk-vgrid" x1="'+gx+'" x2="'+gx+'" y1="0" y2="300"></line>';
   }).join('');
-  /* 折线发光：同一条路径叠两层宽而淡的描边（比 SVG 高斯模糊便宜，手机上不掉帧） */
-  svg.innerHTML='<defs><linearGradient id="stkPG" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity=".42"></stop>'
-    + '<stop offset=".55" stop-color="var(--hb-stonk)" stop-opacity=".13"></stop>'
-    + '<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".02"></stop></linearGradient></defs>'
-    + grid + vgrid
-    + '<path d="'+area+'" fill="url(#stkPG)"></path>'
-    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="9" stroke-opacity=".07" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>'
-    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="5" stroke-opacity=".13" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>'
-    + '<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="2.8" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>';
+  svg.innerHTML=grid+vgrid
+    +'<path d="'+area+'" fill="var(--hb-stonk)" opacity=".045"></path>'
+    +'<path d="'+line+'" fill="none" stroke="var(--hb-stonk)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></path>';
   /* 终点圆点：HTML 定位（百分比高度 + calc 水平），任何宽高比下都是正圆 */
   if(end){ end.style.left=XL(1); end.style.top=(ly/300*100).toFixed(2)+'%'; end.classList.add('on'); }
   /* v3.29.24：区间峰值 / 谷值 —— 各标一枚圆点 + 日期标签，不用 hover 也能看出最高最低在哪天。
@@ -7323,9 +7539,9 @@ function stkDrawRev90(){
   for(var i=0;i<n;i++){ var v=rev[i]; if(v!=null&&isFinite(v)) mx=Math.max(mx,v); }
   mx=mx||1;
   var step=1200/n, bw=Math.min(20, Math.max(2.6, step*0.68));
-  var parts=['<defs><linearGradient id="stkR90G" x1="0" y1="0" x2="0" y2="1">'
-    +'<stop offset="0" stop-color="var(--hb-stonk)" stop-opacity="1"></stop>'
-    +'<stop offset="1" stop-color="var(--hb-stonk)" stop-opacity=".58"></stop></linearGradient></defs>'];
+  var parts=[plotGrid('stkR90Scale',mx,fmtU,padT,padB),'<defs><linearGradient id="stkR90G" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="var(--metric-revenue)" stop-opacity="1"></stop>'
+    +'<stop offset="1" stop-color="var(--metric-revenue)" stop-opacity="1"></stop></linearGradient></defs>'];
   for(var j=0;j<n;j++){
     var vv=rev[j], bad=(vv==null||!isFinite(vv));
     var hh=bad? 0.9 : Math.max(1.2, innerH*vv/mx);

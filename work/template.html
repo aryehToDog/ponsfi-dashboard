@@ -2593,6 +2593,85 @@ summary::-webkit-details-marker{display:none}
  .supply-percent{font-size:30px}.supply-amount b{font-size:18px}
 }
 
+/* v4.0.1: paired violet / mint identity, shared by charts and project surfaces. */
+:root,:root[data-theme="dark"]{
+  --bg:#0d1220;--panel:#151d2c;--panel2:#1b2536;--panel3:#253146;
+  --line:#2b3649;--line2:#43516a;--grid:#2a3548;
+  --txt:#eef2fa;--mut:#abb7ca;--mut2:#91a0b8;
+  --pons:#b09aff;--stonk:#49d4ad;--pons-dim:#b09aff88;--stonk-dim:#49d4ad88;
+  --metric-revenue:#94b6f2;--up:#49d4ad;--down:#f28d9d;--warn:#e4b96c;
+  --surface-shadow:0 6px 20px -12px #00000045;
+}
+:root[data-theme="light"]{
+  --bg:#eef1f8;--panel:#fcfdff;--panel2:#e9edf7;--panel3:#e0e6f1;
+  --line:#d9dfec;--line2:#b8c5dc;--grid:#e1e6f1;
+  --txt:#202b43;--mut:#566680;--mut2:#61718a;
+  --pons:#7751cf;--stonk:#127e63;--pons-dim:#7751cf88;--stonk-dim:#127e6388;
+  --metric-revenue:#466bb1;--up:#127e63;--down:#b94c64;--warn:#93651d;
+  --surface-shadow:0 6px 22px -14px #3d507240;
+}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]):not([data-theme="light"]){
+  --bg:#eef1f8;--panel:#fcfdff;--panel2:#e9edf7;--panel3:#e0e6f1;
+  --line:#d9dfec;--line2:#b8c5dc;--grid:#e1e6f1;
+  --txt:#202b43;--mut:#566680;--mut2:#61718a;
+  --pons:#7751cf;--stonk:#127e63;--pons-dim:#7751cf88;--stonk-dim:#127e6388;
+  --metric-revenue:#466bb1;--up:#127e63;--down:#b94c64;--warn:#93651d;
+  --surface-shadow:0 6px 22px -14px #3d507240;
+}}
+body{background:radial-gradient(ellipse 700px 430px at 0 0,color-mix(in srgb,var(--pons) 7%,transparent),transparent),radial-gradient(ellipse 600px 400px at 100% 15%,color-mix(in srgb,var(--stonk) 4%,transparent),transparent),var(--bg)}
+h1 #h1t{letter-spacing:-.7px}h1 #h1t .wordmark-pulse{color:var(--pons)}
+header{border-bottom-color:color-mix(in srgb,var(--pons) 22%,var(--line))}
+.page-intro{position:relative;isolation:isolate;overflow:hidden;padding:14px 20px;margin:12px 0 10px;border:1px solid color-mix(in srgb,var(--pons) 24%,var(--line));border-radius:16px;background:linear-gradient(115deg,color-mix(in srgb,var(--pons) 12%,var(--panel)),var(--panel) 54%,color-mix(in srgb,var(--stonk) 10%,var(--panel)));box-shadow:var(--surface-shadow)}
+.page-intro::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:linear-gradient(var(--pons),var(--stonk));z-index:-1}
+.page-intro::after{content:'';position:absolute;inset:0 0 0 55%;z-index:-1;opacity:.35;mask-image:linear-gradient(90deg,transparent,#000);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+.page-intro .eyebrow{color:var(--pons);letter-spacing:1.4px}.page-intro .eyebrow span{color:var(--stonk)}
+.page-intro h2{font-weight:650;margin:8px 0}.intro-signature{align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;flex:0 0 190px;gap:4px}
+.pulse-signature{width:190px;height:62px;display:block;overflow:visible;color:var(--pons)}
+.pulse-signature path{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.intro-credit{font-size:10px;padding:0}.intro-credit span{color:var(--stonk)}
+.safe-line{padding-left:3px}.safe-line .sf-ic .ic{color:var(--stonk)}
+#secNav .nav-i.on{color:var(--pons);background:color-mix(in srgb,var(--pons) 11%,var(--panel));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pons) 26%,var(--line))}
+body.stk-on #secNav .nav-i.on{color:var(--stonk);background:color-mix(in srgb,var(--stonk) 11%,var(--panel));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--stonk) 26%,var(--line))}
+.overview-card{position:relative;border-color:color-mix(in srgb,var(--project) 29%,var(--line));background:radial-gradient(ellipse at 100% 0,color-mix(in srgb,var(--project) 10%,transparent),transparent 65%),var(--panel);box-shadow:var(--surface-shadow)}
+.overview-card::before{content:'';position:absolute;left:20px;right:20px;top:0;height:2px;background:var(--project);opacity:.8}
+.overview-card .project-monogram{background:color-mix(in srgb,var(--project) 16%,var(--panel));border:1px solid color-mix(in srgb,var(--project) 28%,transparent);box-shadow:inset 0 1px 0 #ffffff12}
+.overview-card .tick{color:var(--project)}.overview-card .revenue-value{color:var(--project)}
+.overview-card .overview-revenue{padding:14px 0}
+.overview-card .overview-kv{border:1px solid color-mix(in srgb,var(--project) 12%,var(--line));border-radius:10px;padding:10px;background:color-mix(in srgb,var(--project) 3%,var(--panel))}
+.overview-card .text-button{color:var(--project)}
+.analytics-workspace{box-shadow:var(--surface-shadow);border-top:2px solid color-mix(in srgb,var(--pons) 50%,var(--line))}
+.workspace-head .eyebrow{color:var(--pons)}
+.view-switch button[aria-selected="true"],.tab.on{color:var(--pons);border-color:color-mix(in srgb,var(--pons) 25%,var(--line));background:color-mix(in srgb,var(--pons) 10%,var(--panel))}
+body.stk-on .view-switch button[aria-selected="true"],body.stk-on .tab.on{color:var(--stonk);border-color:color-mix(in srgb,var(--stonk) 28%,var(--line));background:color-mix(in srgb,var(--stonk) 10%,var(--panel))}
+.sec-title>.ic,#stkView .sec-title>.ic{fill:var(--pons);color:var(--pons)}#stkView .sec-title>.ic{fill:var(--stonk);color:var(--stonk)}
+.signal-table{box-shadow:var(--surface-shadow)}.signal-table-head{background:linear-gradient(100deg,color-mix(in srgb,var(--pons) 8%,var(--panel)),color-mix(in srgb,var(--stonk) 7%,var(--panel)))}
+.signal-table-head>span:nth-child(2){color:var(--pons)}.signal-table-head>span:nth-child(3){color:var(--stonk)}
+.signal-row[open]>summary{background:var(--panel2)}.signal-row[open] .disclosure-chevron{border-color:var(--pons)}
+.signal-reading .tag{padding:2px 6px;border-radius:4px;line-height:1.5}
+.signal-reading .tag.bad{background:color-mix(in srgb,var(--down) 12%,transparent)}.signal-reading .tag.warn{background:color-mix(in srgb,var(--warn) 12%,transparent)}.signal-reading .tag.ok{background:color-mix(in srgb,var(--up) 12%,transparent)}
+.burn-card{border-color:color-mix(in srgb,var(--bc) 22%,var(--line));background:linear-gradient(130deg,color-mix(in srgb,var(--bc) 6%,var(--panel)),var(--panel) 65%);box-shadow:var(--surface-shadow)}
+.share-card{border-color:color-mix(in srgb,var(--sc) 22%,var(--line));background:linear-gradient(130deg,color-mix(in srgb,var(--sc) 6%,var(--panel)),var(--panel) 65%);box-shadow:var(--surface-shadow)}
+.rank-card.rc-pons{--rank-color:var(--pons)}.rank-card.rc-stonkfun{--rank-color:var(--stonk)}
+.rank-card{background:linear-gradient(130deg,color-mix(in srgb,var(--rank-color,var(--pons)) 6%,var(--panel)),var(--panel) 65%);border-color:color-mix(in srgb,var(--rank-color,var(--pons)) 22%,var(--line));box-shadow:var(--surface-shadow)}
+.rank-big,.supply-percent{color:var(--txt)}.rank-card .rank-big{color:var(--rank-color,var(--txt))}
+.stk-hero{border-color:color-mix(in srgb,var(--stonk) 30%,var(--line));background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--stonk) 12%,transparent),transparent 65%),var(--panel);box-shadow:var(--surface-shadow)}
+.stk-mark{background:color-mix(in srgb,var(--stonk) 13%,var(--panel));border-color:color-mix(in srgb,var(--stonk) 30%,var(--line))}.stk-px{color:var(--stonk)}
+.stk-cell.xl{padding-left:12px;border-left:2px solid color-mix(in srgb,var(--stonk) 55%,var(--line))}
+.focus-strip{padding:14px 16px;border:1px solid color-mix(in srgb,var(--stonk) 22%,var(--line));border-left:3px solid var(--stonk);border-radius:10px;background:color-mix(in srgb,var(--stonk) 5%,var(--panel))}
+.bgm-card{border-color:color-mix(in srgb,var(--pons) 28%,var(--line));box-shadow:var(--surface-shadow)}.bgm-eq{color:var(--pons)}
+.bgm-card.on{border-color:var(--pons);box-shadow:0 0 0 3px color-mix(in srgb,var(--pons) 9%,transparent)}
+button:focus-visible,summary:focus-visible,a:focus-visible,[role="tab"]:focus-visible{outline:2px solid var(--pons);outline-offset:3px}
+@media(hover:hover){.overview-card{transition:border-color .18s,box-shadow .18s}.overview-card:hover{border-color:color-mix(in srgb,var(--project) 55%,var(--line));box-shadow:0 8px 24px -14px color-mix(in srgb,var(--project) 35%,transparent)}}
+@media(max-width:680px){
+ :root,:root[data-theme]{--chart-h:240px}
+ .page-intro{padding:18px;margin-top:16px;gap:8px}.page-intro h2{font-size:26px}.page-intro .eyebrow{font-size:8px;letter-spacing:.8px}
+ .intro-signature{flex:0 0 62px;justify-content:center}.pulse-signature{width:62px;height:40px}.intro-credit{display:none}
+ .page-intro p{font-size:11px;line-height:1.8}.page-intro .eyebrow span{display:block;margin:3px 0 0}
+ .overview-card .overview-kv{padding:11px;gap:16px 14px}.overview-card::before{left:18px;right:18px}
+ .signal-reading .tag{font-size:9px;padding:2px 4px}.focus-strip{padding:12px}
+}
+@media(max-width:360px){.intro-signature{display:none}.page-intro h2{font-size:25px}}
+
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
 <script>
@@ -2662,7 +2741,14 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
       <h2 id="overviewTitle" data-design="overviewTitle">协议经营观察</h2>
       <p data-design="overviewSub">收入有没有增长，回购有没有兑现，市场如何定价。</p>
     </div>
-    <a class="intro-credit" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">by @arych_kun <span>↗</span></a>
+    <div class="intro-signature">
+      <svg class="pulse-signature" viewBox="0 0 190 62" aria-hidden="true" focusable="false">
+        <path d="M2 27H40L51 15L65 45L82 7L99 34L110 27H187" stroke="var(--pons)"/>
+        <path d="M2 39H34L44 33L57 51L75 24L91 45L104 39H187" stroke="var(--stonk)" opacity=".7"/>
+        <circle cx="187" cy="27" r="3" fill="var(--pons)"/><circle cx="187" cy="39" r="3" fill="var(--stonk)"/>
+      </svg>
+      <a class="intro-credit" href="https://x.com/arych_kun" data-xlink target="_blank" rel="noopener">by @arych_kun <span>↗</span></a>
+    </div>
   </section>
   <div class="safe-line" id="safeLine"><span class="sf-ic"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg></span><span id="safeTxt"></span></div>
 
@@ -3744,6 +3830,7 @@ function designCopy(){
   document.querySelectorAll('[data-design]').forEach(function(e){e.textContent=dt(e.dataset.design);});
   const heads=LANG==='zh'?{h1t:'PonsPulse', 'st-rules':'信号与依据','st-burn':'回购与供应','st-share':'市场份额','st-rank':'行业位置','st-chart':'日度趋势'}:{h1t:'PonsPulse','st-rules':'Signals & evidence','st-burn':'Buybacks & supply','st-share':'Market share','st-rank':'Industry position','st-chart':'Daily trends'};
   Object.keys(heads).forEach(function(id){const e=document.getElementById(id);if(e)e.textContent=heads[id];});
+  const wordmark=document.getElementById('h1t');if(wordmark)wordmark.innerHTML='Pons<span class="wordmark-pulse">Pulse</span>';
   const safe=document.getElementById('safeTxt');if(safe)safe.textContent=LANG==='zh'?'公开数据 · 无需连接钱包 · 收入与回购按来源独立核验':'Public data · No wallet connection · Revenue and buybacks independently sourced';
   const leg=document.getElementById('rule-legend');if(leg)leg.innerHTML='';
   document.querySelectorAll('[data-nav="st-analytics"] .nav-t').forEach(e=>e.textContent=LANG==='zh'?'经营走势':'Trends');

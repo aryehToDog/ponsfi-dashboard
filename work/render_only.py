@@ -9,6 +9,10 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     ponsfi.xyz 看板 · 版本 v3.29.36「STONK 当天收入直接使用官方 UTC 日线」· 2026-10-27
+     【修正】当天收入 / 回购不再使用跨午夜的累计快照差值，改为官方 daily 当天累计值；
+       收入＝revenueUsd＋stonkQuoteRevenueUsd。标注进行中、UTC 日期和快照时间；
+       未完日不计入完整日均值，官方接口不可用时不退回旧的跨日估值。
      ---------------------------------------------------------------------------
      ponsfi.xyz 看板 · 版本 v3.29.35「STONK 小时收入计入报价收入并按官网日额校准」· 2026-10-27
      【修正】官方实时累计接口缺少独立的 quoteRevenueUsd：未完日用 quoteRevenueBurnUsd / buybackShare
@@ -1183,10 +1187,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v3.29.35-2026-10-27">
+<meta name="dashboard-version" content="v3.29.36-2026-10-27">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v3.29.35 · 2026-10-27"
+VER = "v3.29.36 · 2026-10-27"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

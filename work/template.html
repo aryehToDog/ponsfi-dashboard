@@ -2655,13 +2655,15 @@ zh:{
   tabRev:'日收入', tabRev7:'7 日均线收入', tabCum:'累计回购销毁', tabPrice:'价格对比（归一）',
   base100:'基准 100', start100:'起点=100', stopLoss:t=>t+' 止损线',
   cumName:n=>n+' 累计回购（窗口内）',
-  thDate:'日期', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
+  thDate:'日期（UTC）', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
   pendingCell:'待更新',
   pendingTip:'DefiLlama 还没出这天的数字（不是看板坏了）。出数后刷新一下就自动补上。',
   suppNew:'最新',
   suppNewPart:h=>'最新·'+h+'h',
+  suppOfficial:'进行中·UTC',
+  suppOfficialTip:stamp=>'官方 UTC 当天累计值，直接来自 StonkFun 日线接口；收入＝Revenue＋$STONK quote revenue。快照 '+stamp+' UTC；当天尚未结束，不计入完整日均值。',
   suppWhoPons:'PONS 来自链上回购（收入＝回购支出×逐日校准比率）',
-  suppWhoStonk:'STONK 来自官方接口（累计值做差，与官网一致）',
+  suppWhoStonk:'STONK 来自官方 UTC 日线接口',
   suppTip:(h,p,who,off)=>'DefiLlama 还没出这天的数，这里显示的是'+(p? ('部分时段（'+h+' 小时）') : '整天（24 小时）')+'的真值 —— '+who+(off? '；这就是全表用的官方口径，今天结束后自动补全。' : '。换算比率按最近 3 个完整日的官方日线自动校准，量级和 DefiLlama 对齐。'),
   srcLatest:d=>'数据源最新 '+d,
   lagBadge:d=>'数据晚了 '+d+' 天',
@@ -2975,13 +2977,15 @@ en:{
   tabRev:'Daily revenue', tabRev7:'7-day average', tabCum:'Cumulative buyback', tabPrice:'Price (rebased)',
   base100:'Base 100', start100:'start = 100', stopLoss:t=>t+' stop-loss',
   cumName:n=>n+' cumulative buyback (window)',
-  thDate:'Date', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
+  thDate:'Date (UTC)', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
   pendingCell:'pending',
   pendingTip:'DefiLlama has not published this day yet (the dashboard is fine). It fills in on the next refresh.',
   suppNew:'Latest',
   suppNewPart:h=>'Latest·'+h+'h',
+  suppOfficial:'In progress·UTC',
+  suppOfficialTip:stamp=>'Official UTC day-to-date values from StonkFun daily API; revenue = Revenue + $STONK quote revenue. Snapshot '+stamp+' UTC; this unfinished day is excluded from complete-day averages.',
   suppWhoPons:'PONS from on-chain buybacks (revenue = buyback spend × a per-day calibrated ratio)',
-  suppWhoStonk:'STONK from the official API (cumulative diff, matches the official site)',
+  suppWhoStonk:'STONK from the official UTC daily API',
   suppTip:(h,p,who,off)=>'DefiLlama has not published this day yet; the figure shown is the real value for '+(p? ('a part of the day ('+h+'h)') : 'the full day (24h)')+' — '+who+(off? '; this is the same official basis used across the table and fills in automatically when the day ends.' : '. The conversion is calibrated to the last 3 complete days of official daily data, so it lines up with the DefiLlama basis.'),
   srcLatest:d=>'latest '+d,
   lagBadge:d=>d+'d late',
@@ -3257,7 +3261,12 @@ function build(){
       if(r.hold!=null) hold['stonkfun'][d]=r.hold;
     });
   }
+  // Today's official day-to-date total is displayed separately, outside full-day averages.
+  const utcToday=new Date().toISOString().slice(0,10);
+  delete rev.stonkfun[utcToday];
+  delete hold.stonkfun[utcToday];
   const all = new Set();
+  if(sfD && sfD.current && sfD.current.date===utcToday) all.add(utcToday);
   Object.values(rev).forEach(m=>Object.keys(m).forEach(k=>all.add(k)));
   Object.values(price).forEach(m=>Object.keys(m).forEach(k=>all.add(k)));
   const days = [...all].sort();
@@ -4941,7 +4950,13 @@ function renderTable(){
   /* 补充值：DefiLlama 还没出的日子，用更快的源补上（链上 / 官方），并标明覆盖了多久 */
   const suppData=(hourlyBundle()&&hourlyBundle().dailySupp)||{};
   const suppOf=(id,day,key)=>{
-    const d=(suppData[id==='pons'?'pons':'stonk']||{})[day];
+    if(id!=='pons'){
+      const official=sfDailyBundle(), d=official&&official.current;
+      if(!d || d.date!==day || day!==new Date().toISOString().slice(0,10) || d.source!=='official-daily' || d[key]==null) return null;
+      const stamp=new Date(d.asOf*1000).toISOString().slice(0,16).replace('T',' ');
+      return {v:d[key], tag:t('suppOfficial'), tip:t('suppOfficialTip')(stamp)};
+    }
+    const d=(suppData.pons||{})[day];
     if(!d || d[key]==null) return null;
     return { v:d[key],
       tag:(d.partial? t('suppNewPart')(d.hours) : t('suppNew')),

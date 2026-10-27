@@ -495,7 +495,7 @@ def sf_fetch():
 
 
 def sf_official_daily():
-    """官方日线（/api/v2/revenue/daily）→ {日期: {rev, hold, burn}}（剔除今天：可能不满一天）。
+    """官方 UTC 日线；完整日放 days，进行中的当天单独放 current。
 
     v3.18 新增：STONK 日度明细改读官方口径（与 stonkfun.xyz 一致），
     前端 build() 用它覆盖 DefiLlama 序列；官方断流时才退回 DefiLlama。
@@ -504,10 +504,11 @@ def sf_official_daily():
     if not j or not isinstance(j.get("days"), list):
         return None
     today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
-    days = {}
+    days, current = {}, None
+    generated = int(time.time())
     for r in j["days"]:
         d = (r.get("date") or "")[:10]
-        if not d or d >= today:          # 今天不满一天，不混进来
+        if not d or d > today:
             continue
         # 官网现将收入拆成基础收入 + $STONK 计价收入；看板收入列按两项相加
         # 对齐官网「Total revenue」。只有组件字段缺失时才退回总值旧字段。
@@ -519,14 +520,19 @@ def sf_official_daily():
         total = base + float(quote or 0)
         if r.get("revenueUsd") is None and r.get("totalRevenueUsd") is not None:
             total = float(r["totalRevenueUsd"])
-        days[d] = {"rev": round(total, 2),
+        row = {"rev": round(total, 2),
                    "baseRev": round(base, 2),
                    "quoteRev": round(float(quote or 0), 2),
                    "hold": round(float(r.get("buybackUsd") or 0), 2),
                    "burn": round(float(r.get("stonkBurnedTokens") or 0), 2)}
-    if not days:
+        if d == today:
+            current = dict(row, date=d, source="official-daily", partial=True,
+                           asOf=generated)
+        else:
+            days[d] = row
+    if not days and current is None:
         return None
-    return {"days": days, "generated": int(time.time())}
+    return {"days": days, "current": current, "generated": generated}
 
 
 def sf_record(cur):
@@ -1032,7 +1038,7 @@ def main():
 
     # 日度补充（v3.9.1）：DefiLlama 日度会晚 1~2 天出数，缺的那几天用更快的源补上 ——
     #   PONS ＝链上（收入＝回购支出×逐日校准比率，与小时级同一口径；回购＝链上回购量×价格）
-    #   STONK＝官方接口累计快照差值
+    #   STONK＝官方 UTC 日线（含当天）；禁止用跨午夜累计差值冒充当天收入。
     #   差几个小时就标几个小时（front-end 会写明「链上·8h」这种），绝不拿半天冒充整天。
     #   前端只在「待更新」的格子里用它，不混进 DefiLlama 序列。
     def daily_supp():
@@ -1050,33 +1056,17 @@ def main():
             d["rev"] = round(d["rev"], 2)
             d["hold"] = round(d["hold"], 2)
             d["partial"] = d["hours"] < 24
-        hist = [h for h in sf_load_hist() if isinstance(h, dict) and h.get("ts")]
-        hist.sort(key=lambda h: h["ts"])
-        by_day = {}
-        for h in hist:
-            by_day.setdefault(datetime.datetime.utcfromtimestamp(h["ts"]).strftime("%Y-%m-%d"), []).append(h)
-        days = sorted(by_day)
-        for i, b in enumerate(days):
-            hb = by_day[b][-1]
-            # 起点：上一天的最后一条；没有上一天（我们刚开始记录）就用当天第一条 —— 覆盖几小时就标几小时
-            ha = by_day[days[i - 1]][-1] if i > 0 else by_day[b][0]
-            gap = hb["ts"] - ha["ts"]
-            if not (6 * 3600 <= gap <= 26 * 3600):
-                continue
-            supp["stonk"][b] = {
-                "rev": round((hb.get("revUsd") or 0) - (ha.get("revUsd") or 0)
-                              + ((hb.get("quoteRevUsd") or 0) - (ha.get("quoteRevUsd") or 0)
-                                 if ha.get("quoteRevUsd") is not None and hb.get("quoteRevUsd") is not None else 0), 2),
-                "hold": round((hb.get("buybackUsd") or 0) - (ha.get("buybackUsd") or 0), 2),
-                "hours": round(gap / 3600, 1),
-                "partial": gap < 22 * 3600,
-            }
+        official = sfday_now or (old.get("sfDaily") or {})
+        current = official.get("current")
+        if current and current.get("date") == ts_day(now):
+            supp["stonk"][current["date"]] = dict(current)
         return supp
     try:
         out["dailySupp"] = daily_supp()
     except Exception as exc:
         print("warn: dailySupp: %s" % exc, file=sys.stderr)
-        out["dailySupp"] = old.get("dailySupp") if isinstance(old, dict) else None
+        # 旧快照的 STONK 补充值来自跨午夜差值，不能因抓取失败重新展示。
+        out["dailySupp"] = {"pons": (old.get("dailySupp") or {}).get("pons", {}), "stonk": {}}
 
     # 官方口径日线（另一套统计基准，只用于「数据源体检」板块，不混进 DefiLlama 那条序列）
     try:

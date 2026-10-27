@@ -205,10 +205,11 @@ def _sf_relays(target):
     其余是历史备胎：cors.lol 会限流、allorigins/codetabs 经常 5xx、jina 偶尔超时。
     """
     q = urllib.parse.quote(target, safe="")
-    path = urllib.parse.urlparse(target).path
+    parsed = urllib.parse.urlparse(target)
+    path = parsed.path
     return [
         "https://www-stonkfun-xyz.translate.goog" + path
-        + "?_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en",
+        + "?" + (parsed.query + "&" if parsed.query else "") + "_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en",
         "https://api.cors.lol/?url=" + q,
         "https://r.jina.ai/" + target,
         "https://api.allorigins.win/raw?url=" + q,
@@ -504,7 +505,7 @@ def sf_official_daily():
     v3.18 新增：STONK 日度明细改读官方口径（与 stonkfun.xyz 一致），
     前端 build() 用它覆盖 DefiLlama 序列；官方断流时才退回 DefiLlama。
     """
-    j = _sf_get(SF_DAILY_API)
+    j = _sf_get(SF_DAILY_API + "?limit=100")
     if not j or not isinstance(j.get("days"), list):
         return None
     today = datetime.datetime.utcnow().strftime("%Y-%m-%d")

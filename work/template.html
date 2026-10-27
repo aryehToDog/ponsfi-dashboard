@@ -3694,6 +3694,10 @@ function pctS(v){ return (v===null||v===undefined||isNaN(v))?'—':(v*100).toFix
 
 /* 榜单里自家两家用链上口径覆盖（DefiLlama 会晚 1~2 天出数），其余协议走 DefiLlama */
 function burnPeerVal(x, by){
+  if(by==='d30' && x.slug==='stonkfun'){
+    const fw=((DATA.stonkPage||{}).flywheel||{}), a=(fw.buyback||[]).slice(-30);
+    if(a.length===30) return {v:a.reduce((s,v)=>s+(v||0),0),live:false,official:true};
+  }
   if(by!=='h24') return {v:x.d30, live:false};
   let b=null;
   if(x.slug==='pons-v1')  b=burnOf(PROJECTS[0]);
@@ -3792,19 +3796,20 @@ function renderBurn(){
   if(pl) pl.innerHTML=peers.slice().sort(function(a,b){
       /* 按「这一列实际显示的金额」排。以前按 DefiLlama 的名次排，而自家两行显示的是链上现读数，
          于是出现「钱少的在上面、钱多的在下面」（2026-10-05 用户发现）。 */
-      const va=(BURN_BY==='h24')? (burnPeerVal(a,'h24').v||0) : (a.d30||0);
-      const vb=(BURN_BY==='h24')? (burnPeerVal(b,'h24').v||0) : (b.d30||0);
+      const va=burnPeerVal(a,BURN_BY).v||0;
+      const vb=burnPeerVal(b,BURN_BY).v||0;
       return vb-va;
     }).map(function(x){
       const v24=burnPeerVal(x,'h24');       /* 自家两家这里会用链上现读数覆盖 */
-      const override=(BURN_BY==='h24') && (x.slug==='pons-v1'||x.slug==='stonkfun') && v24.v!=null;
+      const v30=burnPeerVal(x,'d30');
+      const override=((BURN_BY==='h24') && (x.slug==='pons-v1'||x.slug==='stonkfun') && v24.v!=null) || (BURN_BY==='d30' && v30.official);
       return '<div class="bb-row'+(x.me?' me':'')+'">'
         + '<span class="bb-rank">'+(override? '<em class="bb-chainrk" title="'+esc(t('bbChainRkTip'))+'">'+esc(t('bbChainRk'))+'</em>' : '#'+x[byK])+'</span>'
         + '<span class="bb-name"><b>'+esc(x.n)+(x.me?' <em class="rr-me">'+t('rankMe')+'</em>':'')+'</b>'
         +   '<i>'+esc(x.c)+'</i></span>'
         + '<span class="bb-v'+(BURN_BY==='h24'?' on':'')+'">'+fmtU(v24.v)
         +   (v24.live? '<em class="bb-live">'+IC.zap+'</em>':'')+'</span>'
-        + '<span class="bb-v'+(BURN_BY==='d30'?' on':'')+'">'+fmtU(x.d30)+'</span></div>';
+        + '<span class="bb-v'+(BURN_BY==='d30'?' on':'')+'">'+fmtU(v30.v)+'</span></div>';
     }).join('');
 
   if(note){

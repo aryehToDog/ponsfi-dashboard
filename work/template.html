@@ -1965,7 +1965,7 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 
 /* v3.29：飞轮名单（平台代币 Top10）+ 钱包分层净流入 */
 .stk-rank{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
-.stk-rank .row{background:var(--panel2);display:grid;grid-template-columns:30px minmax(0,1.6fr) minmax(96px,1fr) 108px;gap:10px;align-items:center;padding:8px 12px;font-size:var(--fs-12)}
+.stk-rank .row{background:var(--panel2);display:grid;grid-template-columns:30px minmax(0,1.6fr) minmax(96px,1fr) 108px 108px;gap:10px;align-items:center;padding:8px 12px;font-size:var(--fs-12)}
 .stk-rank .rk{font-weight:800;color:var(--mut2);font-variant-numeric:tabular-nums;font-size:var(--fs-11)}
 .stk-rank .nm{display:flex;align-items:center;gap:8px;min-width:0}
 .stk-rank .ava{position:relative;flex:0 0 auto;width:22px;height:22px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--mut);background:color-mix(in srgb,var(--hb-stonk) 16%,var(--panel))}
@@ -1983,7 +1983,9 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   .stk-rank .rk{grid-row:1;grid-column:1}
   .stk-rank .nm{grid-row:1;grid-column:2}
   .stk-rank .num{grid-row:1;grid-column:3}
-  .stk-rank .wt{grid-row:2;grid-column:2/4;justify-content:flex-start}
+  .stk-rank .wt{grid-row:2;grid-column:2;justify-content:flex-start}
+  .stk-rank .vol{grid-row:2;grid-column:3;font-size:13px}
+  .stk-rank .vol small{font-size:10px}
 }
 .stk-flow{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
 .stk-flow .row{background:var(--panel2);display:grid;grid-template-columns:150px minmax(0,1fr) 150px;gap:12px;align-items:center;padding:9px 12px;font-size:var(--fs-12)}
@@ -5978,7 +5980,7 @@ zh:{
   sSrc1:'回购销毁', sSrc2:'计价收入销毁', sSrc3:'手续费销毁（USD）',
   sTotal:'累计销毁', sAtBurn:'按当时的价', sAtNow:'按现价折算',
   sBuybackN:'累计买回笔数', sLastBuyback:'最近一次买回',
-  rkTitle:'当前名单与权重', rkMcap:'市值',
+  rkTitle:'当前名单与权重', rkMcap:'市值', rkVol24:'24h 交易量', rkVolSource:'交易量：StonkFun 官方代币接口 · 滚动 24 小时 · USD · 按合约地址匹配；缺失显示 —。',
   rkTotVal:'累计回购金额', rkTotN:'累计回购笔数', rkTotT:'曾进过名单的代币',
   rkNote:'飞轮把平台手续费的一部分，按市值权重花在这些代币上（买回并销毁）。权重随市值变化；列入名单不等于承诺对每枚都回购。数据：StonkFun 官方接口，云端每小时更新。',
   rkEmpty:'这一轮官方名单还没抓到（下轮自动补）',
@@ -6087,7 +6089,7 @@ en:{
   sSrc1:'buyback burns', sSrc2:'quote-revenue burns', sSrc3:'fee burns (USD)',
   sTotal:'Total burned', sAtBurn:'at burn prices', sAtNow:'at today’s price',
   sBuybackN:'Buyback transactions', sLastBuyback:'Last buyback',
-  rkTitle:'Current roster and weights', rkMcap:'market cap',
+  rkTitle:'Current roster and weights', rkMcap:'market cap', rkVol24:'24h volume', rkVolSource:'Volume: official StonkFun token API · rolling 24 hours · USD · matched by mint; unavailable values show —.',
   rkTotVal:'Buybacks to date', rkTotN:'Buybacks executed', rkTotT:'Tokens that reached the roster',
   rkNote:'A share of platform fees is spent on these tokens by market-cap weight (bought back and burned). Weights move with market cap; inclusion is not a commitment to buy. Source: official StonkFun API, updated hourly in the cloud.',
   rkEmpty:'Official roster was not available this round — the next build catches up.',
@@ -6632,6 +6634,7 @@ function stkRankHTML(fr){
       +   '<span class="tt"><b>'+esc(r.sym)+'</b><small>'+esc(sub)+'</small></span></span>'
       + '<span class="wt"><i style="width:'+wpx.toFixed(1)+'px"></i><b>'+wpct+'</b></span>'
       + '<span class="num">'+fmtU(r.mcap)+'<small>'+esc(st('rkMcap'))+'</small></span>'
+      + '<span class="num vol">'+fmtU(r.vol24)+'<small>'+esc(st('rkVol24'))+'</small></span>'
       + '</div>';
   }).join('');
   var tiles=[
@@ -6645,7 +6648,8 @@ function stkRankHTML(fr){
     + '<div class="stk-grid g3" style="margin-top:12px">'+tiles.map(function(c){
         return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+'</div></div>';
       }).join('')+'</div>'
-    + '<div class="stk-model-note">'+esc(st('rkNote'))+'</div>'
+    + '<div class="stk-model-note">'+esc(st('rkNote'))+'<br>'+esc(st('rkVolSource'))
+      +(fr.volumeUpdated?' · '+esc(new Date(fr.volumeUpdated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')):'')+'</div>'
     + '</div>';
 }
 

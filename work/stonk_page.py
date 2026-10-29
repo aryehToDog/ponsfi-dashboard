@@ -15,7 +15,7 @@
   · 持币人数变化、主池净流入这类「历史差」靠 work/stonk-page.json 自己采样积累，
     采样不足时前端明确写「记录中」。
 """
-import datetime, json, os, sys, time
+import datetime, json, math, os, sys, time
 import urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -165,13 +165,18 @@ def parse_gt_pools(src):
     return out
 
 
-def parse_flywheel(sf_fly):
+def parse_flywheel(sf_fly, sf_tokens=None):
     """StonkFun 飞轮名单 → 前端精简结构；拿不到就 None（前端隐藏该板块）。
 
     字段口径（2026-10-11 实测 /api/flywheel）：
       roster[]: rank / symbol / name / imageUrl / quoteSymbol / marketCapUsd / weight(小数)
-      totals:   totalValueUsd（名单代币总市值）/ buybackCount（累计回购笔数）/ targetCount
+      totals:   totalValueUsd（累计回购金额）/ buybackCount（累计回购笔数）/ targetCount
+      24h 交易量：公开 /api/public/v1/tokens 的 market.volume24hUsd，按 mint 匹配。
     """
+    sf_tokens = sf_tokens or {}
+    token_rows = (sf_tokens.get("data") or {}).get("tokens") or []
+    markets = {t["mint"]: t.get("market") or {} for t in token_rows
+               if isinstance(t, dict) and t.get("mint")}
     roster = []
     for r in (sf_fly.get("roster") or []):
         if not isinstance(r, dict) or not r.get("symbol"):
@@ -180,7 +185,12 @@ def parse_flywheel(sf_fly):
             rank = int(fnum(r.get("rank")) or len(roster) + 1)
         except Exception:
             rank = len(roster) + 1
+        volume = fnum(markets.get(r.get("mint"), {}).get("volume24hUsd"))
+        if volume is not None and (not math.isfinite(volume) or volume < 0):
+            volume = None
         roster.append({
+            "mint": r.get("mint") or "",
+            "vol24": volume,
             "rank": rank,
             "sym": str(r.get("symbol")),
             "name": str(r.get("name") or r.get("symbol")),
@@ -202,6 +212,8 @@ def parse_flywheel(sf_fly):
         "buybackCount": int(fnum(totals.get("buybackCount")) or 0) or None,
         "targetCount": int(fnum(totals.get("targetCount")) or 0) or None,
         "pending": bool(sf_fly.get("marketDataPending")),
+        "volumeUpdated": (sf_tokens.get("meta") or {}).get("generatedAt")
+                         if any(r["vol24"] is not None for r in roster) else None,
     }
 
 
@@ -284,6 +296,8 @@ def main():
     sf_daily_all_days = sf_daily_all_days or (sf_daily.get("days") or [])
     sf_burns = H._sf_ledger_get(H.SF_BURNS_API) or {}
     sf_fly = H._sf_get(H.SF_FLY_API) or {}
+    # One market-cap page covers the flywheel leaders; missing mints stay unavailable.
+    sf_tokens = (H._sf_get("https://www.stonkfun.xyz/api/public/v1/tokens?sort=marketCap&pageSize=100") or {}) if sf_fly.get("roster") else {}
 
     # ---- GeckoTerminal 主池 ----
     pa = ((gt_pool.get("data") or {}).get("attributes") or {})
@@ -576,7 +590,7 @@ def main():
         },
         "priceHist": ph,
         "snaps": snaps,
-        "flywheelRank": parse_flywheel(sf_fly),
+        "flywheelRank": parse_flywheel(sf_fly, sf_tokens),
         "walletFlow": wf,
         "srcNote": "StonkFun 官方 API + GeckoTerminal + RugCheck + DefiLlama",
     }

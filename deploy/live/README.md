@@ -5,7 +5,8 @@ The detail hero uses the official daily row for the current UTC date:
 It does not use all-time balance deltas, rolling 24h revenue, or estimates.
 
 The domestic server cannot reliably reach StonkFun. `stonk-live.yml` therefore
-runs an overseas collector and posts the official response to the fixed
+runs an overseas collector, bypasses cached daily API responses with a per-request
+query timestamp, and posts the official response to the fixed
 `/api/stonk-revenue` receiver every 60 seconds. A scheduled runner starts every
 30 minutes and replaces the previous collector; each collector can bridge a
 missed schedule for up to 110 minutes. GitHub scheduling/outages may delay data;

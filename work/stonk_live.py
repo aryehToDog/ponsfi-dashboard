@@ -14,7 +14,7 @@ DESTINATION = 'https://stonk1000x.top/api/stonk-revenue'
 
 
 def publish():
-    request = urllib.request.Request(SOURCE, headers={'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (compatible; PonsPulse/4.0.3)'})
+    request = urllib.request.Request(SOURCE + '&_live=' + str(int(time.time())), headers={'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0', 'Cache-Control': 'no-cache'})
     with urllib.request.urlopen(request, timeout=20) as response:
         official = json.load(response)
     # The receiver validates all dates, timestamps and components before storing.

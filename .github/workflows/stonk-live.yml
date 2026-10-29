@@ -1,0 +1,25 @@
+name: STONK 实时收入
+on:
+  schedule:
+    - cron: '11,41 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - work/stonk_live.py
+      - .github/workflows/stonk-live.yml
+concurrency:
+  group: stonk-live-revenue
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: 每分钟同步官网 UTC 当天收入
+        env:
+          STONK_LIVE_PUSH_TOKEN: ${{ secrets.STONK_LIVE_PUSH_TOKEN }}
+        run: python3 work/stonk_live.py

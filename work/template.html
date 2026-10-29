@@ -1733,6 +1733,20 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .stk-hero{display:block;padding:0;overflow:hidden;margin-bottom:var(--sp-card)}
 .stk-hero-main{display:grid;grid-template-columns:minmax(230px,1fr) 2.6fr;gap:20px;align-items:center;padding:18px 20px}
 @media (max-width:980px){.stk-hero-main{grid-template-columns:1fr;gap:14px;padding:16px 16px 14px}}
+/* Official UTC revenue: independent live strip; retain the existing 4 x 2 metric grid. */
+.stk-income{display:grid;grid-template-columns:minmax(200px,1fr) minmax(0,1.6fr);gap:16px;align-items:center;margin:0 20px 16px;padding:16px 18px;border:1px solid color-mix(in srgb,var(--hb-stonk) 25%,var(--line));border-radius:var(--r-md);background:linear-gradient(110deg,color-mix(in srgb,var(--hb-stonk) 9%,var(--panel)),var(--panel))}
+.stk-income-label{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:var(--fs-11);color:var(--mut)}
+.stk-income-label b{color:var(--txt);font-weight:650}
+.stk-income-total{font-size:clamp(27px,4vw,34px);font-weight:800;letter-spacing:-1px;line-height:1.2;margin-top:5px;font-variant-numeric:tabular-nums;color:var(--hb-stonk)}
+.stk-income-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--mut)}
+.stk-income-status::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.stk-income-status.fresh{color:var(--hb-stonk)}
+.stk-income-status.delayed{color:var(--warn)}
+.stk-income-parts{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:var(--fs-11);color:var(--mut)}
+.stk-income-parts b{font-weight:650;color:var(--txt);font-variant-numeric:tabular-nums;margin-left:5px}
+.stk-income-meta{font-size:var(--fs-10);line-height:1.7;color:var(--mut);margin-top:7px;overflow-wrap:anywhere}
+.stk-income-meta a{color:var(--hb-stonk);text-decoration:none}
+@media(max-width:600px){.stk-income{grid-template-columns:1fr;gap:10px;margin:0 16px 14px;padding:14px}.stk-income-parts{gap:8px 14px}}
 .stk-px{font-size:clamp(34px,6vw,46px);font-weight:800;letter-spacing:-1.6px;line-height:1;font-variant-numeric:tabular-nums}
 .stk-px .cur{font-size:.52em;opacity:.45;margin-right:2px}
 .stk-px-sub{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;font-size:var(--fs-11);color:var(--mut)}
@@ -6251,6 +6265,7 @@ function stkOpen(on, push){
   if(on){
     try{ stkRender(); }catch(e){ console.error('stk render', e); }
     try{ stkLive(); }catch(e){}
+    try{ stkRevenueRefresh(); }catch(e){}
   }
   if(push!==false){
     try{
@@ -6349,6 +6364,52 @@ function stkSecHead(id, icon, title, sub){
     + (sub? '<div class="rank-sub">'+esc(sub)+'</div>' : '');
 }
 
+/* v4.0.3: official Total revenue for the current UTC day, refreshed independently. */
+var STK_REVENUE_LIVE=null, STK_REVENUE_BUSY=false, STK_REVENUE_FAILED=false;
+function stkRevenueView(now){
+  now=now||Date.now();
+  var today=new Date(now).toISOString().slice(0,10);
+  var row=(STK_REVENUE_LIVE&&STK_REVENUE_LIVE.current)||(sfDailyBundle()||{}).current;
+  var valid=row&&row.date===today&&['rev','baseRev','quoteRev'].every(function(k){return typeof row[k]==='number'&&Number.isFinite(row[k])&&row[k]>=0;});
+  var stamp=valid&&Number.isFinite(row.asOf)?row.asOf:0;
+  var fresh=!!(valid&&stamp&&now/1000-stamp<=180&&now/1000-stamp>=-60&&!STK_REVENUE_FAILED);
+  var money=function(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0,minimumFractionDigits:0});};
+  return {today:today,valid:!!valid,fresh:fresh,total:valid?money(row.rev):'—',base:valid?money(row.baseRev):'—',quote:valid?money(row.quoteRev):'—',
+    stamp:stamp?new Date(stamp*1000).toISOString().slice(0,19).replace('T',' ')+' UTC':'',
+    status:LANG==='zh'?(fresh?'实时同步':valid?'数据延迟':'等待当天数据'):(fresh?'Live':valid?'Delayed':'Awaiting today’s data')};
+}
+function stkRevenueHTML(){
+  var v=stkRevenueView();
+  return '<section class="stk-income" id="stkRevenue" aria-label="'+(LANG==='zh'?'STONK 今日收入':'STONK today’s revenue')+'">'
+    +'<div><div class="stk-income-label"><b>'+(LANG==='zh'?'今日收入':'Today’s revenue')+'</b><span>UTC</span><span id="stkRevenueStatus" class="stk-income-status '+(v.fresh?'fresh':'delayed')+'">'+esc(v.status)+'</span></div>'
+    +'<div class="stk-income-total" id="stkRevenueTotal" aria-live="polite">'+v.total+'</div></div>'
+    +'<div><div class="stk-income-parts"><span>'+(LANG==='zh'?'基础收入':'Base revenue')+'<b id="stkRevenueBase">'+v.base+'</b></span><span>+ $STONK '+(LANG==='zh'?'计价收入':'quote revenue')+'<b id="stkRevenueQuote">'+v.quote+'</b></span></div>'
+    +'<div class="stk-income-meta"><span id="stkRevenueStamp">'+esc(v.stamp||(v.today+' UTC'))+'</span> · '+(LANG==='zh'?'每 60 秒同步 · 当天累计，进行中':'Syncs every 60s · UTC day in progress')+'<br><a href="https://www.stonkfun.xyz/revenue" target="_blank" rel="noopener">'+(LANG==='zh'?'官网 Total revenue ↗':'Official Total revenue ↗')+'</a></div></div></section>';
+}
+function stkRevenuePaint(){
+  var root=document.getElementById('stkRevenue'); if(!root)return;
+  var v=stkRevenueView();
+  [['stkRevenueTotal',v.total],['stkRevenueBase',v.base],['stkRevenueQuote',v.quote],['stkRevenueStamp',v.stamp||(v.today+' UTC')]].forEach(function(x){var el=document.getElementById(x[0]);if(el)el.textContent=x[1];});
+  var status=document.getElementById('stkRevenueStatus');if(status){status.textContent=v.status;status.className='stk-income-status '+(v.fresh?'fresh':'delayed');}
+}
+async function stkRevenueRefresh(){
+  if(document.hidden||!document.body.classList.contains('stk-on')||STK_REVENUE_BUSY)return;
+  STK_REVENUE_BUSY=true;
+  stkRevenuePaint(); // Clear yesterday immediately, even if this request fails.
+  try{
+    var result=await fetchJSON('/api/stonk-revenue',12000);
+    if(result.source!=='official-daily')throw new Error('Revenue not ready');
+    var row=result.current;
+    if(row&&(!Number.isFinite(row.asOf)||!['rev','baseRev','quoteRev'].every(function(k){return typeof row[k]==='number'&&Number.isFinite(row[k])&&row[k]>=0;})||Math.abs(row.rev-row.baseRev-row.quoteRev)>0.02))throw new Error('Invalid revenue');
+    STK_REVENUE_LIVE=result;STK_REVENUE_FAILED=false;
+  }catch(e){STK_REVENUE_FAILED=true;}
+  finally{STK_REVENUE_BUSY=false;stkRevenuePaint();}
+}
+setInterval(stkRevenueRefresh,60000);
+// Check UTC rollover and timestamp age even during an upstream outage.
+setInterval(function(){if(!document.hidden&&document.body.classList.contains('stk-on'))stkRevenuePaint();},1000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)stkRevenueRefresh();});
+
 /* ---------- 首屏 ---------- */
 function stkHeroHTML(h, fw, dm, sf){
   var hd=(dm&&dm.holders)||{};
@@ -6399,6 +6460,7 @@ function stkHeroHTML(h, fw, dm, sf){
       }).join('')
     + '</div>'
     + '</div>'
+    + stkRevenueHTML()
     + stkChipsHTML(sf||{}, (dm&&dm.liquidity)||{}, hd)
     + '</div>';
 }

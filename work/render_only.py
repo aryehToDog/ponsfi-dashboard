@@ -9,6 +9,10 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     PonsPulse 看板 · 版本 v4.0.3「STONK 实时收入」· 2026-10-29
+     【新增】首屏展示官方 UTC 当天 Total revenue、两项构成与源数据时间；每分钟独立刷新，
+       跨日隐藏旧额、延迟显式标注；海外采集推送服务独立于历史快照和完整日计算。
+     ---------------------------------------------------------------------------
      PonsPulse 看板 · 版本 v4.0.2「飞轮名单 24h 交易量」· 2026-10-29
      【新增】按 mint 匹配官方公开代币接口的 24h USD 交易量，加入飞轮 Top 10；
        缺失数据留空，保留零成交额，桌面与手机布局及中英文同步更新。
@@ -1204,10 +1208,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v4.0.2-2026-10-29">
+<meta name="dashboard-version" content="v4.0.3-2026-10-29">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v4.0.2 · 2026-10-29"
+VER = "v4.0.3 · 2026-10-29"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

@@ -1,0 +1,12 @@
+[Unit]
+Description=Check STONK live collector every minute
+
+[Timer]
+OnBootSec=20s
+OnUnitInactiveSec=60s
+AccuracySec=5s
+Persistent=true
+Unit=pons-live-watchdog.service
+
+[Install]
+WantedBy=timers.target

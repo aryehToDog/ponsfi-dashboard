@@ -10,7 +10,8 @@ on:
       - .github/workflows/stonk-live.yml
 concurrency:
   group: stonk-live-revenue
-  cancel-in-progress: true
+  # Queue a successor; cron must never interrupt a healthy collector.
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:

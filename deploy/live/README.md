@@ -8,8 +8,11 @@ The domestic server cannot reliably reach StonkFun. `stonk-live.yml` therefore
 runs an overseas collector, bypasses cached daily API responses with a per-request
 query timestamp, and posts the official response to the fixed
 `/api/stonk-revenue` receiver every 60 seconds. A scheduled runner starts every
-30 minutes and replaces the previous collector; each collector can bridge a
-missed schedule for up to 110 minutes. GitHub scheduling/outages may delay data;
+30 minutes and queues behind the previous collector; each collector runs for
+110 minutes. A server-side systemd watchdog checks every minute, starts a
+collector if none is active, prequeues a successor after 95 minutes, and replaces
+a runner stalled for over 5 minutes. This avoids relying on GitHub cron, which
+may skip scheduled starts for hours. Healthy runs are never cancelled by cron. GitHub scheduling/outages may delay data;
 the page marks source data older than 180 seconds as delayed. This does not
 change historical charts, snapshot commits, completed-day averages, or counters.
 
@@ -42,3 +45,9 @@ workflow stops updates; the UI will then show the last source time and delayed
 status. Python standard library only; no runtime packages are required.
 
 Validation: `python3 -m unittest discover -s deploy/live -p 'test_*.py'`.
+
+Install `watchdog.py` at `/opt/pons-live/watchdog.py` and the supplied watchdog
+service/timer in `/etc/systemd/system/`, then enable `pons-live-watchdog.timer`.
+It uses the existing protected deployment GitHub token through the ubuntu
+service account, never exposes it, and writes only its dispatch cooldown state.
+Check `journalctl -u pons-live-watchdog.service` for recovery attempts.

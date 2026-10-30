@@ -1,0 +1,17 @@
+[Unit]
+Description=Recover and prequeue the STONK live revenue collector
+After=network-online.target pons-live.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/pons-live/watchdog.py
+User=ubuntu
+Group=ubuntu
+StateDirectory=pons-live-watchdog
+TimeoutStartSec=75
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadWritePaths=/var/lib/pons-live-watchdog

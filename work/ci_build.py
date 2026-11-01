@@ -89,6 +89,19 @@ def merge_hourly():
     atomic_json(d, dp)
 
 
+def refresh_launchpads(previous=None):
+    """Keep Blockworks cohort shares separate from official STONK revenue totals."""
+    try:
+        from launchpad import fetch_launchpads
+        dp = os.path.join(HERE, "dashboard-data.json")
+        with open(dp, encoding="utf-8") as handle:
+            data = json.load(handle)
+        data["launchpads"] = fetch_launchpads(data.get("launchpads") or previous)
+        atomic_json(data, dp)
+    except Exception as exc:
+        log("Launchpad source refresh unavailable: " + str(exc))
+
+
 def refresh_leaderboard():
     """每轮页面渲染前更新全站排行，确保官方 STONK 总收入及时参与重排。"""
     try:
@@ -254,6 +267,13 @@ def main():
     ap.add_argument("--mode", choices=["auto", "hourly", "daily"], default="auto")
     ap.add_argument("--push", action="store_true", help="跑完把产物压回 snapshots 分支")
     args = ap.parse_args()
+    # The daily rebuild replaces dashboard-data.json; retain this independent
+    # source cache before it runs so a source outage does not erase good data.
+    try:
+        with open(os.path.join(HERE, "dashboard-data.json"), encoding="utf-8") as handle:
+            previous_launchpads = json.load(handle).get("launchpads")
+    except (OSError, ValueError):
+        previous_launchpads = None
     mode = args.mode
     if mode == "auto":
         if time.gmtime().tm_hour == 1:
@@ -279,6 +299,7 @@ def main():
     run([sys.executable, os.path.join(HERE, "stonk_page.py")])
     # STONK 官方收入已进入全站排名，每轮渲染前重抓同行榜并用刚生成的 rev90 重排。
     refresh_leaderboard()
+    refresh_launchpads(previous_launchpads)
     run([sys.executable, os.path.join(HERE, "render_only.py")])
     publish_deploy()
     if args.push:

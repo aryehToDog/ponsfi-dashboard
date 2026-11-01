@@ -9,6 +9,10 @@ assert "/*__VER__*/" in tpl
 
 # ---- 版本标识：写进产出的 HTML，方便以后一眼确认"线上跑的是哪一版" ----
 BANNER = """<!-- ==========================================================================
+     PonsPulse 看板 · 版本 v4.1.0「小时趋势与生态份额」· 2026-11-01
+     【新增】STONK 独立小时监控，6/24/72h 趋势、相邻小时与六小时比较，缺失样本不补零；
+       Blockworks 发射平台收入、发行代币市值与交易量占比，30日趋势、平台排名、数据日期与覆盖说明。
+     ---------------------------------------------------------------------------
      PonsPulse 看板 · 版本 v4.0.3「STONK 实时收入」· 2026-10-29
      【新增】首屏展示官方 UTC 当天 Total revenue、两项构成与源数据时间；每分钟独立刷新，
        跨日隐藏旧额、延迟显式标注；海外采集推送服务独立于历史快照和完整日计算。
@@ -1208,10 +1212,10 @@ BANNER = """<!-- ===============================================================
      回退方法：解压备份 zip → 用里面的 index.html 覆盖 deploy/index.html 重新上传。
      注意：回退 index.html 不影响歌词文件；服务器上 down-v2.lrc 与 down.lrc 都在。
      ========================================================================== -->
-<meta name="dashboard-version" content="v4.0.3-2026-10-29">
+<meta name="dashboard-version" content="v4.1.0-2026-11-01">
 """
 assert "<!DOCTYPE html>" in tpl
-VER = "v4.0.3 · 2026-10-29"
+VER = "v4.1.0 · 2026-11-01"
 out_html = tpl.replace("/*__VER__*/ 'v1.0'", repr(VER)).replace("/*__DATA__*/", data).replace("<!DOCTYPE html>", "<!DOCTYPE html>\n" + BANNER, 1)
 
 out = os.path.join(ROOT, "outputs", "pons-stonkfun-monitor.html")

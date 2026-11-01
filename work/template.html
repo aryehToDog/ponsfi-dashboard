@@ -1704,7 +1704,7 @@ header button .ic,.tbtn .ic{width:15px;height:15px}
    ========================================================================== */
 /* v3.29.11：深度页不再显示左上角打赏浮标（.tip-mini 一并隐藏），
    头部到导航之间不再需要为它留位置；打赏弹窗 .tip-modal 保留，供页脚入口调用 */
-body.stk-on .wrap > :not(#stkView):not(.bgm):not(.tip-modal):not(.toast):not(#secNav):not(script){display:none !important}
+body.stk-on .wrap > :not(#stkView):not(#pageNav):not(.bgm):not(.tip-modal):not(.toast):not(#secNav):not(script){display:none !important}
 #stkView{display:none}
 body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 @keyframes stkIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -2275,7 +2275,7 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
   .stk-mark .ic{width:20px;height:20px}
   .stk-bar-r .tbtn{min-height:38px;padding:7px 11px;display:inline-flex;align-items:center;justify-content:center}
   .stk-bar-r{width:100%;gap:6px}
-  .stk-bar-r .tbtn:last-child{flex:1 1 auto}
+  .stk-bar-r .tbtn:last-child{flex:0 0 auto}
   .stk-px{font-size:38px}
   .stk-hero-main{padding:14px 14px 12px}
   .stk-hero .stk-chips{padding:11px 14px 13px;gap:6px}
@@ -2728,6 +2728,37 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role="tab"]:focus-vi
 @media(max-width:980px){.stk-lp-grid{grid-template-columns:minmax(0,1fr)}.stk-lp-grid .stk-chart{height:240px}}
 @media(max-width:680px){.stk-lp-cards{grid-template-columns:minmax(0,1fr);gap:8px}.stk-lp-card{padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;align-items:center}.stk-lp-card strong{grid-column:2;grid-row:1/4;font-size:30px;margin:0}.stk-lp-card small{grid-column:1}.stk-lp-card small:last-child{grid-column:1/-1}.stk-lp-table td,.stk-lp-table th{padding:10px 4px;font-size:10px}.stk-lp-table i{display:none}.stk-lp-intro{gap:8px}.stk-lp-grid{gap:24px}.stk-lp-value b{margin-left:0;display:inline}.stk-lp-table td:nth-child(2){max-width:105px;overflow:hidden;text-overflow:ellipsis}}
 
+
+/* v4.1.1: page destinations are primary navigation, separate from utilities. */
+.page-nav{margin:20px 0 22px}
+.page-nav-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;font-size:10px;color:var(--mut2)}
+.page-nav-heading>span:first-child{font-weight:600;color:var(--mut)}
+.page-nav-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.page-link{--page-color:var(--pons);position:relative;display:flex;align-items:center;gap:12px;min-width:0;min-height:84px;padding:16px 18px;text-decoration:none;color:var(--txt);border:1px solid color-mix(in srgb,var(--page-color) 35%,var(--line));border-radius:12px;background:var(--panel);transition:background .15s,border-color .15s,box-shadow .15s;isolation:isolate}
+.page-link-stonk{--page-color:var(--stonk)}
+.page-link::before{content:'';position:absolute;left:-1px;top:19px;bottom:19px;width:3px;border-radius:3px;background:var(--page-color);opacity:0}
+.page-link[aria-current="page"]{background:color-mix(in srgb,var(--page-color) 9%,var(--panel));border-color:color-mix(in srgb,var(--page-color) 60%,var(--line))}
+.page-link[aria-current="page"]::before{opacity:1}
+.page-link:hover{background:color-mix(in srgb,var(--page-color) 12%,var(--panel));border-color:var(--page-color);box-shadow:0 5px 16px -12px var(--page-color)}
+.page-link:focus-visible{outline:3px solid var(--page-color);outline-offset:3px}
+.page-link-mark{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--page-color);background:color-mix(in srgb,var(--page-color) 12%,var(--panel));flex:0 0 auto}
+.page-link-mark .ic{width:20px;height:20px}
+.page-link-body{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.page-link-body strong{font-size:16px;line-height:1.35;font-weight:650;letter-spacing:-.2px}
+.page-link-body>span{font-size:11px;color:var(--mut);line-height:1.6;overflow-wrap:anywhere}
+.page-link-action{font-size:11px;font-weight:600;color:var(--page-color);white-space:nowrap;flex:0 0 auto;padding:6px 9px;border-radius:6px;background:color-mix(in srgb,var(--page-color) 9%,var(--panel))}
+.page-link[aria-current="page"] .page-link-action{background:transparent;font-size:10px;color:var(--mut)}
+@media(max-width:980px){.page-link{padding:14px;gap:10px}.page-link-action{padding:5px 6px;font-size:10px}.page-link-body strong{font-size:15px}.page-link-mark{width:30px;height:30px}}
+@media(max-width:680px){
+ .page-nav{margin:16px 0 18px}.page-nav-links{gap:8px}.page-nav-heading{font-size:10px;margin-bottom:8px}
+ .page-link{display:grid;grid-template-columns:24px minmax(0,1fr);gap:9px 7px;align-content:start;align-items:center;padding:13px 11px;min-height:118px;border-radius:10px}
+ .page-link-mark{width:24px;height:24px;border-radius:7px}.page-link-mark .ic{width:15px;height:15px}
+ .page-link-body{display:contents}.page-link-body strong{font-size:13px;letter-spacing:-.2px;overflow-wrap:anywhere}
+ .page-link-body>span{grid-column:1/-1;font-size:10px;line-height:1.7;min-height:34px}
+ .page-link-action{grid-column:1/-1;justify-self:start;font-size:10px;padding:3px 6px;line-height:1.5}
+ .page-link[aria-current="page"] .page-link-action{padding-left:0}
+}
+
 </style>
 <!-- v3.13.2：先给 <html> 打上 ic-motion，图标入场动画的初始态才不会闪一下（没 JS 时图标照常显示） -->
 <script>
@@ -2779,18 +2810,25 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
       <span class="badge" id="src">加载中…</span>
       <button class="tbtn" id="tbtn" onclick="cycleTheme()" title="切换主题：跟随系统 / 浅色 / 深色"><svg class="ic" aria-hidden="true"><use href="#ic-monitor"/></svg> 系统</button>
       <button class="tbtn" id="lbtn" onclick="cycleLang()" title="中文 / English">EN</button>
-      <!-- v3.29.22：STONK 深度页入口 —— 独立页启动卡（品牌绿 logo + 两行文案 + 呼吸点 + 箭头） -->
-      <button class="tbtn stk-btn-entry" id="stkEntry" onclick="stkToggle()" title="STONK 深度页">
-        <span class="se-mark" aria-hidden="true"><svg class="ic"><use href="#ic-zap"/></svg></span>
-        <span class="se-body">
-          <span class="se-t"><span id="stkEntryTxt">STONK 深度页</span><span class="se-dot" aria-hidden="true"></span></span>
-          <span class="se-s" id="stkEntrySub">回购 · 销毁 · 估值 · 飞轮</span>
-        </span>
-        <span class="se-go" aria-hidden="true"><svg class="ic"><use href="#ic-chev-up"/></svg></span>
-      </button>
       <button id="btnRefresh" onclick="loadLive()"><svg class="ic" aria-hidden="true"><use href="#ic-refresh"/></svg> 刷新数据</button>
     </div>
   </header>
+
+  <nav class="page-nav" id="pageNav" aria-label="看板页面">
+    <div class="page-nav-heading"><span data-page-copy="heading">选择看板</span><span data-page-copy="hint">点击卡片切换页面</span></div>
+    <div class="page-nav-links">
+      <a class="page-link page-link-overview" href="/" data-page="overview" aria-current="page" onclick="return pageNavigate(event,false)">
+        <span class="page-link-mark" aria-hidden="true"><svg class="ic"><use href="#ic-pie"/></svg></span>
+        <span class="page-link-body"><strong data-page-copy="overview">总览看板</strong><span data-page-copy="overviewSub">PONS × STONK · 收入与回购</span></span>
+        <span class="page-link-action" data-page-action="overview">当前页面</span>
+      </a>
+      <a class="page-link page-link-stonk" href="?page=stonk" data-page="stonk" onclick="return pageNavigate(event,true)">
+        <span class="page-link-mark" aria-hidden="true"><svg class="ic"><use href="#ic-zap"/></svg></span>
+        <span class="page-link-body"><strong data-page-copy="stonk">STONK 深度</strong><span data-page-copy="stonkSub">小时变化 · 生态份额 · 资金流</span></span>
+        <span class="page-link-action" data-page-action="stonk">进入深度页 →</span>
+      </a>
+    </div>
+  </nav>
 
   <section class="page-intro" aria-labelledby="overviewTitle">
     <div><div class="eyebrow">PROTOCOL OBSERVATORY <span>/ PONS × STONK</span></div>
@@ -2975,7 +3013,6 @@ window.__pxBootT=setTimeout(function(){document.documentElement.classList.remove
         <span class="badge" id="stkLiveBadge"></span>
         <button class="tbtn" onclick="cycleTheme()" title="切换主题：跟随系统 / 浅色 / 深色"><svg class="ic" aria-hidden="true"><use href="#ic-monitor"/></svg></button>
         <button class="tbtn" id="stkLangBtn" onclick="cycleLang()" title="中文 / English">EN</button>
-        <button class="tbtn" onclick="stkToggle(false)"><span id="stkBackTxt">← 返回总览</span></button>
       </div>
     </div>
     <div id="stkRoot"></div>
@@ -6306,6 +6343,8 @@ function stkOpen(on, push){
   document.body.classList.toggle('stk-on', !!on);
   var nav=document.getElementById('secNav');
   if(nav){if(on)document.querySelector('.stk-bar').after(nav);else document.getElementById('cards').before(nav);}
+  var pages=document.getElementById('pageNav');if(pages){var heading=on?document.querySelector('.stk-bar'):document.querySelector('.wrap > header');if(heading)heading.after(pages);}
+  stkEntryLabel();
   /* v3.29.8：总览 ⇄ 深度页换一套侧边栏板块（#secNav 同一套导航，图标+文字） */
   try{ navResync(); }catch(e){}
   if(on){
@@ -6317,8 +6356,9 @@ function stkOpen(on, push){
     try{
       var u=new URL(location.href);
       if(on) u.searchParams.set('page','stonk'); else u.searchParams.delete('page');
-      var q=u.searchParams.toString();
-      history.replaceState(null,'',u.pathname+(q? '?'+q : '')+u.hash);
+      if(u.hash==='#stonk')u.hash='';
+      var q=u.searchParams.toString(),target=u.pathname+(q?'?'+q:'')+u.hash;
+      if(target!==location.pathname+location.search+location.hash)history.pushState(null,'',target);
     }catch(e){}
   }
   try{ window.scrollTo(0,0); }catch(e){}
@@ -6335,13 +6375,28 @@ function stkToggle(force){
   var on=(force===undefined)? !document.body.classList.contains('stk-on') : !!force;
   stkOpen(on);
 }
-function stkEntryLabel(){
-  var b=document.getElementById('stkEntryTxt');
-  if(b) b.textContent=st('entry');
-  /* v3.29.22：入口副行 —— 一眼说明深度页里有什么（中英各一份） */
-  var s=document.getElementById('stkEntrySub');
-  if(s) s.textContent=st('entrySub');
+function pageNavigate(event,on){
+  if(event&&(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey))return true;
+  if(event)event.preventDefault();
+  if(document.body.classList.contains('stk-on')!==on)stkOpen(on);
+  return false;
 }
+function stkEntryLabel(){
+  var nav=document.getElementById('pageNav');if(!nav)return;
+  var zh=LANG==='zh',on=document.body.classList.contains('stk-on');
+  var copy=zh?{heading:'选择看板',hint:'点击卡片切换页面',overview:'总览看板',overviewSub:'PONS × STONK · 收入与回购',stonk:'STONK 深度',stonkSub:'小时变化 · 生态份额 · 资金流'}:{heading:'Explore dashboards',hint:'Select a page to explore',overview:'Overview',overviewSub:'PONS × STONK · revenue & buybacks',stonk:'STONK deep dive',stonkSub:'Hourly trends · ecosystem share · flows'};
+  nav.setAttribute('aria-label',zh?'看板页面':'Dashboard pages');
+  nav.querySelectorAll('[data-page-copy]').forEach(function(el){el.textContent=copy[el.dataset.pageCopy]||'';});
+  nav.querySelectorAll('[data-page]').forEach(function(link){
+    var isStonk=link.dataset.page==='stonk',current=isStonk===on;
+    if(current)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
+    var action=link.querySelector('[data-page-action]');if(action)action.textContent=current?(zh?'当前页面':'Viewing'):(isStonk?(zh?'进入深度页 →':'Explore →'):(zh?'返回总览 →':'Open overview →'));
+    try{var u=new URL(location.href);if(isStonk)u.searchParams.set('page','stonk');else u.searchParams.delete('page');u.hash='';link.href=u.pathname+u.search;}catch(e){}
+  });
+}
+window.addEventListener('popstate',function(){
+  var q=new URLSearchParams(location.search);stkOpen(q.get('page')==='stonk'||location.hash==='#stonk',false);
+});
 
 /* ---------- 整页渲染 ---------- */
 function stkRender(){

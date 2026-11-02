@@ -2705,14 +2705,14 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role="tab"]:focus-vi
 .stk-hour-gap{fill:var(--mut2);opacity:.08}.stk-hour-cursor{stroke:var(--mut);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;pointer-events:none}
 .stk-hour-dot{fill:var(--hb-stonk);stroke:var(--panel);stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
 .stk-hour-axis{padding-left:56px;display:flex;justify-content:space-between;gap:6px;font-size:10px;color:var(--mut2);margin-top:10px;font-variant-numeric:tabular-nums}
-.stk-hour-inspect{display:flex;align-items:center;gap:14px;background:color-mix(in srgb,var(--hb-stonk) 5%,var(--panel));border:1px solid var(--line);border-radius:8px;padding:12px;margin:20px 0 12px}
-.stk-hour-inspect>button{flex:0 0 34px;width:34px;min-height:36px;border:1px solid var(--line);background:var(--panel);color:var(--txt);border-radius:6px;cursor:pointer}.stk-hour-inspect>button:disabled{opacity:.3;cursor:default}
-#stkHReading{flex:1;display:flex;justify-content:space-between;gap:8px;align-items:center;min-width:0;font-size:11px;color:var(--mut)}
-#stkHReading>div{display:flex;gap:18px;align-items:center;flex-wrap:wrap}#stkHReading b{font-size:18px;color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+.stk-hour-tooltip{position:absolute;z-index:4;pointer-events:none;max-width:calc(100% - 16px);padding:10px 12px;border:1px solid var(--line2);border-radius:9px;background:var(--panel);box-shadow:0 4px 18px #00000014;color:var(--txt);font-size:11px;line-height:1.5;font-variant-numeric:tabular-nums}
+.stk-hour-tooltip-time{display:block;color:var(--mut);font-size:10px;margin-bottom:5px;white-space:nowrap}
+.stk-hour-tooltip-value{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}.stk-hour-tooltip-value>span{color:var(--mut);font-size:10px}.stk-hour-tooltip-value b{font-size:17px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}
+.stk-hour-tooltip-change{display:block;color:var(--mut);font-size:10px;margin-top:5px}.stk-hour-tooltip-change.up{color:var(--up)}.stk-hour-tooltip-change.down{color:var(--down)}
 .stk-hour-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--mut2);font-size:10px;margin:10px 0 16px}
 .stk-hour-details{border-top:1px solid var(--line);padding-top:14px}.stk-hour-details summary{cursor:pointer;font-size:12px;color:var(--mut)}.stk-hour-details p{margin:16px 0}
 .stk-hour-table{max-height:350px;overflow:auto}.stk-hour-table table{width:100%;border-collapse:collapse;text-align:left;font-size:11px;font-variant-numeric:tabular-nums}.stk-hour-table th{color:var(--mut);font-weight:500;position:sticky;top:0;background:var(--panel)}.stk-hour-table td,.stk-hour-table th{padding:10px 8px;border-bottom:1px solid var(--line)}.stk-hour-table td:nth-child(n+2),.stk-hour-table th:nth-child(n+2){text-align:right}
-@media(max-width:680px){.stk-hour-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}.stk-hour-stats b{font-size:22px}.stk-hour-chart{height:250px}.stk-hour-axis{padding-left:44px;font-size:9px}.stk-hour-axis span:nth-child(2){display:none}.stk-hour-inspect{gap:8px;padding:10px}#stkHReading,#stkHReading>div{flex-direction:column;align-items:flex-start;gap:4px}#stkHReading b{font-size:17px}.stk-hour-stats small{font-size:10px}.stk-hour-table td{white-space:nowrap}}
+@media(max-width:680px){.stk-hour-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}.stk-hour-stats b{font-size:22px}.stk-hour-chart{height:250px}.stk-hour-axis{padding-left:44px;font-size:9px}.stk-hour-axis span:nth-child(2){display:none}.stk-hour-tooltip{padding:8px 10px}.stk-hour-tooltip-value b{font-size:15px}.stk-hour-stats small{font-size:10px}.stk-hour-table td{white-space:nowrap}}
 
 .stk-lp-intro{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap}.stk-lp-tag{font-size:9px;letter-spacing:1.2px;color:var(--hb-stonk);font-weight:650;white-space:nowrap;padding-top:4px}.stk-lp-intro p{margin:0;font-size:12px;line-height:1.8;color:var(--mut);flex:1;min-width:200px}
 .stk-lp-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
@@ -2722,7 +2722,9 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role="tab"]:focus-vi
 .stk-lp-value{display:block;font-size:11px;color:var(--mut)}.stk-lp-value b{color:var(--txt);font-weight:550;margin-left:5px}.stk-lp-card small{display:block;font-size:10px;color:var(--mut2);margin-top:7px;line-height:1.6;overflow-wrap:anywhere}
 .stk-lp-scope{font-size:11px;line-height:1.8;color:var(--mut);padding:10px 12px;border-left:2px solid var(--hb-stonk);background:color-mix(in srgb,var(--hb-stonk) 4%,var(--panel));margin-bottom:24px}.stk-lp-scope.delayed{border-color:var(--warn)}
 .stk-lp-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;margin:18px 0 24px}.stk-lp-grid>div{min-width:0}.stk-lp-grid h3{font-size:12px;font-weight:500;color:var(--mut);display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 18px}.stk-lp-grid h3 span{font-size:10px;color:var(--hb-stonk)}.stk-lp-area{fill:url(#stkLPFill)}
-.stk-lp-inspect{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:11px;margin:14px 0 8px;font-variant-numeric:tabular-nums}.stk-lp-inspect span{color:var(--mut)}.stk-lp-inspect strong{font-size:20px;color:var(--hb-stonk)}.stk-lp-inspect small{display:block;flex-basis:100%;color:var(--mut);font-size:10px;line-height:1.8}.stk-lp-slider{width:100%;accent-color:var(--hb-stonk);cursor:pointer;margin:6px 0 8px}.stk-lp-slider:focus-visible{outline:2px solid var(--hb-stonk);outline-offset:3px}
+#stkLPChart{touch-action:pan-y;outline-offset:5px}
+.stk-lp-tooltip{width:max-content;max-width:230px}.stk-lp-tip-amount{display:block;font-size:11px;font-weight:550;margin-top:6px}.stk-lp-tip-scope{display:block;color:var(--mut);font-size:10px;line-height:1.65;margin-top:4px}
+
 .stk-lp-table{overflow:auto;max-height:315px}.stk-lp-table table{border-collapse:collapse;width:100%;font-size:11px;font-variant-numeric:tabular-nums}.stk-lp-table th{position:sticky;top:0;background:var(--panel);font-size:10px;font-weight:500;color:var(--mut);z-index:1}.stk-lp-table td,.stk-lp-table th{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.stk-lp-table td:nth-child(n+3),.stk-lp-table th:nth-child(n+3){text-align:right}.stk-lp-table tr.is-stonk td{background:color-mix(in srgb,var(--hb-stonk) 8%,var(--panel));font-weight:650}.stk-lp-table i{font-size:8px;font-style:normal;color:var(--hb-stonk)}
 .stk-hour-stats b.up{color:var(--up)}.stk-hour-stats b.down{color:var(--down)}
 @media(max-width:980px){.stk-lp-grid{grid-template-columns:minmax(0,1fr)}.stk-lp-grid .stk-chart{height:240px}}
@@ -6669,7 +6671,7 @@ function stkLaunchpadHTML(){
     +'<div class="stk-lp-intro"><span class="stk-lp-tag">BLOCKWORKS · SOLANA</span><p>'+(LANG==='zh'?'STONK 占多少？收入、发行代币市值与交易量，各用同一指标下的收录平台作比较。':'How much belongs to STONK? Compare revenue, launched token value and trading within each metric’s tracked platform set.')+'</p></div>'
     +'<div class="stk-lp-cards">'+['revenue','marketcap','volume'].map(function(k){var m=(d.metrics||{})[k],ok=stkLaunchpadValid(m);return '<button type="button" class="stk-lp-card" data-lp-metric="'+k+'" aria-pressed="'+(STK_LPMETRIC===k)+'" onclick="stkLaunchpadTab(\''+k+'\')"><span>'+esc(stkLaunchpadLabel(k))+'</span><strong>'+(ok?m.share.toFixed(2)+'%':'—')+'</strong><span class="stk-lp-value">STONK <b>'+(ok?esc(stkLaunchpadValue(m.stonk)):'—')+'</b></span><small>'+(ok?esc((LANG==='zh'?'分母 ':'Tracked total ')+fmtU(m.total)+' · '+m.platformCount+(LANG==='zh'?' 家已披露平台':' reporting platforms')+(m.missingCount?(LANG==='zh'?' · '+m.missingCount+' 家缺值':' · '+m.missingCount+' missing'):'')):LANG==='zh'?'等待数据源':'Awaiting source data')+'</small><small>'+(m&&m.date?esc(m.date+' UTC · '+(k==='marketcap'?(LANG==='zh'?'日末快照':'day-end snapshot'):(LANG==='zh'?'单日':'one day'))):'—')+'</small></button>';}).join('')+'</div>'
     +'<div class="stk-lp-scope" id="stkLPScope"></div>'
-    +'<div class="stk-lp-grid"><div class="stk-lp-trend"><h3 id="stkLPTitle"></h3><div class="stk-chart stk-axis-chart"><div class="plot-scale" id="stkLPScale"></div><svg id="stkLPChart" viewBox="0 0 1200 300" preserveAspectRatio="none" role="img"></svg></div><div class="stk-hour-axis" id="stkLPAxis"></div><div class="stk-lp-inspect" id="stkLPInspect" aria-live="polite"></div><input class="stk-lp-slider" id="stkLPSlider" type="range" min="0" max="29" value="29" aria-label="'+(LANG==='zh'?'选择统计日期':'Select observation date')+'" oninput="stkLaunchpadSelect(Number(this.value))"><p class="stk-note" id="stkLPTrendNote"></p></div>'
+    +'<div class="stk-lp-grid"><div class="stk-lp-trend"><h3 id="stkLPTitle"></h3><div class="stk-chart stk-axis-chart"><div class="plot-scale" id="stkLPScale"></div><svg id="stkLPChart" viewBox="0 0 1200 300" preserveAspectRatio="none" role="img" tabindex="0" aria-describedby="stkLPTip"></svg><div class="stk-hour-tooltip stk-lp-tooltip" id="stkLPTip" role="status" aria-live="polite" aria-atomic="true"></div></div><div class="stk-hour-axis" id="stkLPAxis"></div><p class="stk-note" id="stkLPTrendNote"></p></div>'
     +'<div class="stk-lp-ranking"><h3>'+(LANG==='zh'?'平台对比':'Platform comparison')+' <span id="stkLPRank"></span></h3><div class="stk-lp-table"><table><thead><tr><th>#</th><th>'+(LANG==='zh'?'平台':'Platform')+'</th><th id="stkLPColumn"></th><th>'+(LANG==='zh'?'份额':'Share')+'</th></tr></thead><tbody id="stkLPRows"></tbody></table></div></div></div>'
     +'<details class="stk-hour-details"><summary>'+(LANG==='zh'?'统计范围与数据源':'Scope & source')+'</summary><p class="stk-note">'+(LANG==='zh'?'收入来自 Blockworks 专用发射平台收入数据；市值是各平台发行代币的合计市值，不是 $STONK 等平台币的市值；交易量包含所发行代币在发射曲线、毕业后及其他资金池的成交。每项分母仅使用该指标已披露且有有效数值的平台，收录范围可能不同，不代表 Solana 全链收入、市值或成交量。':'Revenue uses Blockworks’ dedicated launchpad revenue dataset. Market caps aggregate tokens launched by each platform, not platform tokens such as $STONK. Volume includes bonding curves, graduated tokens and other trading pools. Each denominator includes only platforms with a valid value for that metric. Coverage differs by metric and does not represent the entire Solana chain.')+'</p><p class="stk-note" id="stkLPUpdated"></p><a class="text-button" href="https://app.blockworks.com/projects/solana/analytics/solana-launchpads" target="_blank" rel="noopener">'+(LANG==='zh'?'查看 Blockworks 原始看板 ↗':'Open Blockworks source ↗')+'</a></details></div>';
 }
@@ -6681,9 +6683,8 @@ function stkLaunchpadDraw(){
   if(column)column.textContent=stkLaunchpadLabel(STK_LPMETRIC);
   if(!stkLaunchpadValid(m)){
     if(scope){scope.textContent=LANG==='zh'?'该指标暂未取得可核验的数据；保留空值，不用其他口径估算占比。':'Verified data is unavailable for this metric; no substitute share is estimated.';scope.classList.add('delayed');}
-    svg.innerHTML='';svg.setAttribute('aria-label',LANG==='zh'?'数据暂不可用':'Data unavailable');svg.onpointermove=null;STK_LPVIEW=null;if(rows)rows.innerHTML='';if(rank)rank.textContent='—';
-    ['stkLPScale','stkLPAxis','stkLPTrendNote','stkLPInspect'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='';});
-    var emptySlider=document.getElementById('stkLPSlider');if(emptySlider)emptySlider.disabled=true;
+    svg.innerHTML='';svg.setAttribute('aria-label',LANG==='zh'?'数据暂不可用':'Data unavailable');svg.onpointermove=svg.onpointerdown=svg.onpointerleave=svg.onkeydown=null;STK_LPVIEW=null;var emptyTip=document.getElementById('stkLPTip');if(emptyTip){emptyTip.textContent='';emptyTip.hidden=true;}if(rows)rows.innerHTML='';if(rank)rank.textContent='—';
+    ['stkLPScale','stkLPAxis','stkLPTrendNote'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='';});
     if(updated)updated.textContent=LANG==='zh'?'每轮云端采集尝试更新；源站不可用时保留最近成功数据。':'Each cloud refresh retries the source and retains the last successful data on failure.';return;
   }
   var dayLag=Math.max(0,Math.floor(Date.now()/86400000)-Math.floor(Date.parse(m.date+'T00:00:00Z')/86400000)-1);
@@ -6703,22 +6704,32 @@ function stkLaunchpadDraw(){
   var max=Math.max.apply(null,vals.filter(function(v){return v!==null;}).concat([0]));max=max>0?Math.min(100,max*1.1):1;
   var y=function(v){return 284-264*v/max;},parts=['<defs><linearGradient id="stkLPFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--hb-stonk)" stop-opacity=".18"/><stop offset="100%" stop-color="var(--hb-stonk)" stop-opacity=".01"/></linearGradient></defs>',plotGrid('stkLPScale',max,function(v){return v.toFixed(1)+'%';},20,16)],run=[];
   function flush(){if(run.length>1){var line=run.map(function(p,i){return(i?'L':'M')+p[0]+' '+p[1];}).join(' ');parts.push('<path class="stk-lp-area" d="'+line+' L'+run[run.length-1][0]+' 284 L'+run[0][0]+' 284 Z"/><path class="stk-hour-line" d="'+line+'"/>');}run=[];}
-  vals.forEach(function(v,i){if(v===null){flush();return;}var x=(i+.5)*40;run.push([x,y(v)]);parts.push('<circle class="stk-hour-point" cx="'+x+'" cy="'+y(v)+'" r="3"/>');});flush();parts.push('<line id="stkLPGuide" class="stk-hour-guide" x1="1180" x2="1180" y1="16" y2="284"/>');svg.innerHTML=parts.join('');
-  STK_LPVIEW.y=y;stkLaunchpadSelect(29);
-  svg.onpointermove=function(ev){var rect=svg.getBoundingClientRect();stkLaunchpadSelect(Math.floor((ev.clientX-rect.left)/Math.max(1,rect.width)*30));};
+  vals.forEach(function(v,i){if(v===null){flush();return;}run.push([(i+.5)*40,y(v)]);});flush();
+  vals.forEach(function(v,i){if(v!==null)parts.push('<ellipse class="stk-hour-point" data-dot-radius="2.7" cx="'+((i+.5)*40)+'" cy="'+y(v)+'" rx="3" ry="3"/>');});
+  parts.push('<line id="stkLPGuide" class="stk-hour-cursor" x1="1180" x2="1180" y1="20" y2="284"/><ellipse id="stkLPDot" class="stk-hour-dot" data-dot-radius="4.2" rx="4" ry="4"/>');svg.innerHTML=parts.join('');
+  STK_LPVIEW.y=y;stkChartPoints(svg);stkLaunchpadSelect(29);
+  function point(ev){var rect=svg.getBoundingClientRect();stkLaunchpadSelect(Math.floor((ev.clientX-rect.left)/Math.max(1,rect.width)*30));}
+  svg.onpointermove=point;svg.onpointerdown=point;
+  svg.onpointerleave=function(ev){if(ev.pointerType&&ev.pointerType!=='mouse')return;stkLaunchpadSelect(29);};
+  svg.onkeydown=function(ev){var k=ev.key;if(['ArrowLeft','ArrowRight','Home','End'].indexOf(k)<0)return;ev.preventDefault();stkLaunchpadSelect(k==='Home'?0:k==='End'?29:STK_LPVIEW.index+(k==='ArrowLeft'?-1:1));};
   svg.setAttribute('aria-label',stkLaunchpadLabel(STK_LPMETRIC)+' · STONK '+m.share.toFixed(2)+'% · '+m.date+' UTC');
   var axis=document.getElementById('stkLPAxis');if(axis)axis.innerHTML='<span>'+dates[0].slice(5)+'</span><span>'+dates[15].slice(5)+'</span><span>'+m.date.slice(5)+'</span>';
-  var note=document.getElementById('stkLPTrendNote');if(note)note.textContent=(LANG==='zh'?'当前份额 ':'Latest share ')+m.share.toFixed(2)+'% · '+(LANG==='zh'?'拖动日期查看每日金额与份额；缺失日不连线。平台覆盖范围可能随日期变化。':'Drag to inspect daily values and shares. Missing days break the line; platform coverage can vary by date.');
+  var note=document.getElementById('stkLPTrendNote');if(note)note.textContent=LANG==='zh'?'逐日统计，缺失日不连线。平台覆盖范围可能随日期变化；鼠标移动或点按图中查看。':'Daily observations; missing days break the line. Platform coverage can vary by date. Hover or tap the chart to inspect.';
   if(updated)updated.textContent=(LANG==='zh'?'源数据更新：':'Source updated: ')+(m.sourceUpdated||'—')+' · '+(LANG==='zh'?'本轮采集尝试：':'Fetch attempted: ')+(d.generated?new Date(d.generated*1000).toISOString().slice(0,16).replace('T',' ')+' UTC':'—')+(LANG==='zh'?'。每轮云端小时采集尝试刷新，源数据发布频率由 Blockworks 决定。':'. Retried each hourly cloud refresh; source publication follows Blockworks.');
 }
 
 
 function stkLaunchpadSelect(index){
   var view=STK_LPVIEW;if(!view)return;index=Math.max(0,Math.min(29,index));if(view.index===index)return;view.index=index;
-  var date=view.dates[index],r=view.history.get(date),el=document.getElementById('stkLPInspect'),slider=document.getElementById('stkLPSlider'),guide=document.getElementById('stkLPGuide');
-  if(slider){slider.disabled=false;slider.value=String(index);slider.setAttribute('aria-valuetext',date+' UTC · '+(r&&typeof r.share==='number'?r.share.toFixed(2)+'%':LANG==='zh'?'未采样':'No sample'));}
+  var date=view.dates[index],r=view.history.get(date),tip=document.getElementById('stkLPTip'),guide=document.getElementById('stkLPGuide'),dot=document.getElementById('stkLPDot'),hasValue=view.vals[index]!==null;
   if(guide){guide.setAttribute('x1',(index+.5)*40);guide.setAttribute('x2',(index+.5)*40);}
-  if(el)el.innerHTML='<span>'+date+' UTC</span><strong>'+(r&&typeof r.share==='number'?r.share.toFixed(2)+'%':'—')+'</strong><small>'+(r?esc('STONK '+stkLaunchpadValue(r.stonk)+' / '+(LANG==='zh'?'合计 ':'total ')+stkLaunchpadValue(r.total)+' · '+r.platformCount+(LANG==='zh'?' 家平台':' platforms')):LANG==='zh'?'该日无可核验数据':'No verified observation for this date')+'</small>';
+  if(dot){dot.style.display=hasValue?'':'none';dot.setAttribute('cx',(index+.5)*40);dot.setAttribute('cy',hasValue?view.y(view.vals[index]):150);}
+  if(tip){tip.hidden=false;tip.innerHTML='<span class="stk-hour-tooltip-time">'+date+' UTC</span><div class="stk-hour-tooltip-value"><span>'+esc(stkLaunchpadLabel(STK_LPMETRIC))+'</span><b>'+(hasValue?view.vals[index].toFixed(2)+'%':'—')+'</b></div>'+(hasValue?'<small class="stk-lp-tip-amount">STONK '+esc(stkLaunchpadValue(r.stonk))+'</small><small class="stk-lp-tip-scope">'+esc((LANG==='zh'?'已披露合计 ':'Reported total ')+stkLaunchpadValue(r.total)+' · '+r.platformCount+(LANG==='zh'?' 家平台':' platforms'))+'</small>':'<small class="stk-hour-tooltip-change">'+(LANG==='zh'?'该日未采样，不代表 0':'No observation for this date, not zero')+'</small>');}
+  stkLaunchpadPlaceTooltip();
+}
+function stkLaunchpadPlaceTooltip(){
+  var view=STK_LPVIEW,tip=document.getElementById('stkLPTip'),svg=document.getElementById('stkLPChart');if(!view||!tip||!svg)return;
+  var value=view.vals[view.index];stkPlaceChartTip(svg,tip,(view.index+.5)*40,value===null?150:view.y(value));
 }
 
 function stkHourlyHTML(){
@@ -6728,9 +6739,8 @@ function stkHourlyHTML(){
     +'<div class="view-switch" id="stkHourRanges" aria-label="'+(LANG==='zh'?'小时图范围':'Hourly range')+'">'+[6,24,72].map(function(n){return '<button type="button" data-range="'+n+'" aria-pressed="'+(STK_HRANGE===n)+'" onclick="stkHourRange('+n+')">'+n+'h</button>';}).join('')+'</div></div>'
     +'<div class="stk-hour-stats" id="stkHStats"></div>'
     +'<div class="stk-hour-chart-head"><span><i></i>'+(LANG==='zh'?'每小时趋势':'Hourly trend')+'</span><small id="stkHCoverage"></small></div>'
-    +'<div class="stk-chart stk-axis-chart stk-hour-chart"><div class="plot-scale" id="stkHScale"></div><svg id="stkHChart" viewBox="0 0 1200 300" preserveAspectRatio="none" role="img" tabindex="0"></svg></div>'
+    +'<div class="stk-chart stk-axis-chart stk-hour-chart"><div class="plot-scale" id="stkHScale"></div><svg id="stkHChart" viewBox="0 0 1200 300" preserveAspectRatio="none" role="img" tabindex="0" aria-describedby="stkHTip"></svg><div class="stk-hour-tooltip" id="stkHTip" role="status" aria-live="polite" aria-atomic="true"></div></div>'
     +'<div class="stk-hour-axis" id="stkHAxis"></div>'
-    +'<div class="stk-hour-inspect"><button type="button" id="stkHPrev" onclick="stkHourStep(-1)" aria-label="'+(LANG==='zh'?'上一小时':'Previous hour')+'">←</button><div id="stkHReading" aria-live="polite"></div><button type="button" id="stkHNext" onclick="stkHourStep(1)" aria-label="'+(LANG==='zh'?'下一小时':'Next hour')+'">→</button></div>'
     +'<p class="stk-note" id="stkHSum"></p><div class="stk-hour-meta"><span id="stkHStamp"></span><span>'+(LANG==='zh'?'小时收入 / 销毁为估算':'Hourly revenue / burns are estimates')+'</span></div>'
     +'<details class="stk-hour-details"><summary>'+(LANG==='zh'?'逐小时明细与口径':'Hourly table & methodology')+'</summary><p class="stk-note">'+(LANG==='zh'?'收入与销毁按官方快照分配；完整日按官网日额校准。小时分布为估算，不等于官网精确逐小时流水；交易量为主池口径。此图随云端小时快照更新，与上方每分钟更新的今日收入卡片独立。':'Revenue and burns follow official snapshots and complete-day calibrations. Hourly allocations are estimates, not exact hourly transactions. Volume covers the main pool. This chart updates with cloud hourly snapshots, separately from the live daily revenue card.')+'</p><div class="stk-hour-table"><table><thead><tr><th>UTC</th><th>'+(LANG==='zh'?'小时值':'Hourly value')+'</th><th>'+(LANG==='zh'?'较上小时':'vs prior hour')+'</th></tr></thead><tbody id="stkHRows"></tbody></table></div></details></div>';
 }
@@ -7584,21 +7594,46 @@ function stkHourRange(n){
   document.querySelectorAll('#stkHourRanges button').forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.range===n));});
   STK_HSELECT=null;stkDrawHour(true);
 }
-function stkHourStep(delta){if(STK_HVIEW)stkHourSelect(Math.max(0,Math.min(STK_HVIEW.m.hours.length-1,STK_HVIEW.index+delta)));}
 function stkHourSelect(index){
   var view=STK_HVIEW;if(!view)return;
   var m=view.m,n=m.hours.length;index=Math.max(0,Math.min(n-1,index));if(view.painted&&view.index===index)return;view.painted=true;view.index=index;STK_HSELECT=m.hours[index];
   var value=m.vals[index],prev=mapPrevious(m.hours[index]);
   function mapPrevious(ts){var ix=m.fullHours.indexOf(ts-3600);return ix<0?null:m.fullVals[ix];}
   var diff=value!==null&&prev!==null&&prev>0?value/prev-1:null;
-  var read=document.getElementById('stkHReading');
-  if(read)read.innerHTML='<div><span>'+esc(stkHourLabel(m.hours[index]))+'</span><b>'+esc(stkHourMoney(value))+'</b></div><span class="stk-hour-reading-change">'+esc(value===null?(LANG==='zh'?'未采样，非零收入':'Unsampled, not zero'):LANG==='zh'?'较上小时 '+stkHourChange(diff):'vs prior hour '+stkHourChange(diff))+'</span>';
+  var tip=document.getElementById('stkHTip');
+  var change=value===null?(LANG==='zh'?'未采样，不代表 0':'Unsampled, not zero'):prev===null?(LANG==='zh'?'上小时未采样':'Prior hour not sampled'):prev===0?(LANG==='zh'?'上小时为 0，环比不可比':'Prior hour is zero; change unavailable'):(LANG==='zh'?'较上小时 ':'vs prior hour ')+stkHourChange(diff);
+  if(tip)tip.innerHTML='<span class="stk-hour-tooltip-time">'+esc(stkHourLabel(m.hours[index]))+'</span><div class="stk-hour-tooltip-value"><span>'+esc(stkHourMetric())+'</span><b>'+esc(stkHourMoney(value))+'</b></div><span class="stk-hour-tooltip-change'+(diff!==null?(diff>=0?' up':' down'):'')+'">'+esc(change)+'</span>';
   var cursor=document.getElementById('stkHCursor'),dot=document.getElementById('stkHDot');
   var x=(index+.5)*1200/n;
   if(cursor){cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);}
   if(dot){dot.style.display=value===null?'none':'';dot.setAttribute('cx',x);dot.setAttribute('cy',view.y(value||0));}
-  var before=document.getElementById('stkHPrev'),after=document.getElementById('stkHNext');if(before)before.disabled=index===0;if(after)after.disabled=index===n-1;
+  stkHourPlaceTooltip();
 }
+
+function stkChartPoints(svg){
+  if(!svg)return;var box=svg.getBoundingClientRect();if(!box.width||!box.height)return;
+  svg.querySelectorAll('ellipse[data-dot-radius]').forEach(function(dot){var r=Number(dot.dataset.dotRadius);dot.setAttribute('rx',r*1200/box.width);dot.setAttribute('ry',r*300/box.height);});
+}
+function stkPlaceChartTip(svg,tip,x,y){
+  var chart=svg.parentElement,plot=svg.getBoundingClientRect(),box=chart.getBoundingClientRect();if(!plot.width||!plot.height)return;
+  tip.style.maxWidth=Math.max(80,Math.min(230,plot.width-16))+'px';
+  var w=tip.offsetWidth,h=tip.offsetHeight;
+  x=plot.left-box.left+x/1200*plot.width;y=plot.top-box.top+y/300*plot.height;
+  var left=x+12,plotLeft=plot.left-box.left+6,plotRight=plot.right-box.left-6;
+  if(left+w>plotRight)left=x-w-12;
+  left=Math.max(plotLeft,Math.min(plotRight-w,left));
+  var top=y-h-14;if(top<8)top=y+14;
+  top=Math.max(8,Math.min(box.height-h-8,top));
+  tip.style.left=left+'px';tip.style.top=top+'px';
+}
+function stkHourPlaceTooltip(){
+  var view=STK_HVIEW,tip=document.getElementById('stkHTip'),svg=document.getElementById('stkHChart');if(!view||!tip||!svg)return;
+  var value=view.m.vals[view.index];stkPlaceChartTip(svg,tip,(view.index+.5)*1200/view.m.hours.length,value===null?150:view.y(value));
+}
+window.addEventListener('resize',function(){
+  stkChartPoints(document.getElementById('stkHChart'));stkChartPoints(document.getElementById('stkLPChart'));stkHourPlaceTooltip();stkLaunchpadPlaceTooltip();
+});
+
 function stkDrawHour(){
   var svg=document.getElementById('stkHChart');if(!svg)return;
   var m=stkHourSeries();if(!m)return;
@@ -7617,22 +7652,22 @@ function stkDrawHour(){
     if(vals[i]===null){flush();parts.push('<rect class="stk-hour-gap" x="'+(i*1200/n)+'" y="'+padT+'" width="'+(1200/n)+'" height="'+innerH+'"/>');}
     else run.push([(i+.5)*1200/n,y(vals[i])]);
   }flush();
-  vals.forEach(function(v,i){if(v!==null)parts.push('<circle class="stk-hour-point" data-i="'+i+'" cx="'+((i+.5)*1200/n)+'" cy="'+y(v)+'" r="3"/>');});
-  parts.push('<line class="stk-hour-cursor" id="stkHCursor" y1="'+padT+'" y2="'+y(0)+'"/><circle class="stk-hour-dot" id="stkHDot" r="5"/>');
-  svg.innerHTML=parts.join('');svg.setAttribute('aria-label',(LANG==='zh'?'逐小时':'Hourly ')+stkHourMetric()+' · '+STK_HRANGE+'h · '+m.count+'/'+n+(LANG==='zh'?' 小时有采样；使用左右方向键查看':' sampled hours; use left/right arrows to inspect'));
+  vals.forEach(function(v,i){if(v!==null)parts.push('<ellipse class="stk-hour-point" data-i="'+i+'" data-dot-radius="2.4" cx="'+((i+.5)*1200/n)+'" cy="'+y(v)+'" rx="3" ry="3"/>');});
+  parts.push('<line class="stk-hour-cursor" id="stkHCursor" y1="'+padT+'" y2="'+y(0)+'"/><ellipse class="stk-hour-dot" id="stkHDot" data-dot-radius="4.2" rx="4" ry="4"/>');
+  svg.innerHTML=parts.join('');stkChartPoints(svg);svg.setAttribute('aria-label',(LANG==='zh'?'逐小时':'Hourly ')+stkHourMetric()+' · '+STK_HRANGE+'h · '+m.count+'/'+n+(LANG==='zh'?' 小时有采样；使用左右方向键查看':' sampled hours; use left/right arrows to inspect'));
   var latest=m.latest;
   function tile(label,value,sub,cls){return '<div><span>'+esc(label)+'</span><b'+(cls?' class="'+cls+'"':'')+'>'+esc(value)+'</b><small>'+esc(sub)+'</small></div>';}
   var stats=document.getElementById('stkHStats');
   if(stats)stats.innerHTML=tile(LANG==='zh'?'最近已采样小时':'Latest sampled hour',stkHourMoney(latest?latest.value:null),latest?stkHourLabel(latest.ts):LANG==='zh'?'暂无完整小时采样':'No sampled complete hour')
     +tile(LANG==='zh'?'较相邻上小时':'vs adjacent prior hour',stkHourChange(latest?latest.change:null),latest&&latest.previous!==null?stkHourMoney(latest.previous):LANG==='zh'?'相邻小时缺采样':'Adjacent sample unavailable',latest&&latest.change!==null?(latest.change>=0?'up':'down'):'')
-    +tile(LANG==='zh'?'近 6 小时采样合计':'Last 6h sampled total',stkHourMoney(m.recent.sum),(LANG==='zh'?'覆盖 ':'Coverage ')+m.recent.count+'/6 h')
+    +tile(LANG==='zh'?'选中 '+n+' 小时采样合计':'Selected '+n+'h sampled total',stkHourMoney(m.sum),(LANG==='zh'?'覆盖 ':'Coverage ')+m.count+'/'+n+' h')
     +tile(LANG==='zh'?'近 6 小时 vs 前 6 小时':'Last 6h vs prior 6h',stkHourChange(m.change6),m.change6!==null?(LANG==='zh'?'两个完整 6 小时窗口':'Two complete 6h windows'):(LANG==='zh'?'需连续 12 小时完整采样':'Requires 12 complete samples'),m.change6!==null?(m.change6>=0?'up':'down'):'');
   var ax=document.getElementById('stkHAxis');
   if(ax)ax.innerHTML=[0,Math.floor(n/3),Math.floor(n*2/3),n-1].map(function(i){var dt=new Date(hours[i]*1000);return '<span>'+esc((dt.getUTCMonth()+1)+'/'+dt.getUTCDate()+' '+String(dt.getUTCHours()).padStart(2,'0')+':00')+'</span>';}).join('');
   var coverage=document.getElementById('stkHCoverage');if(coverage)coverage.textContent=m.count+'/'+n+(LANG==='zh'?' 小时已采样 · 灰带为缺失':' hours sampled · grey = missing');
   var stamp=document.getElementById('stkHStamp');if(stamp)stamp.textContent=(LANG==='zh'?'小时快照更新：':'Hourly snapshot updated: ')+(m.generated?new Date(m.generated*1000).toISOString().slice(0,16).replace('T',' ')+' UTC':'—');
   var note=document.getElementById('stkHSum');
-  if(note)note.textContent=(LANG==='zh'?'选中 '+n+' 小时的已采样合计：':'Sampled total in selected '+n+'h: ')+stkHourMoney(m.sum)+(LANG==='zh'?'。仅展示完整 UTC 小时；缺失处断线，灰带不是零值。':' · Complete UTC hours only; gaps break the line and do not mean zero.');
+  if(note)note.textContent=LANG==='zh'?'仅展示完整 UTC 小时；缺失处断线，灰带不是零值。鼠标移动或点按图中查看，左右方向键切换小时。':'Complete UTC hours only; gaps are not zero. Hover or tap the chart to inspect; use left/right arrow keys to step through hours.';
   var rows=document.getElementById('stkHRows');
   if(rows)rows.innerHTML=hours.map(function(ts,i){var ix=hours.length-1-i,v=vals[ix],priorIndex=m.fullHours.indexOf(hours[ix]-3600),prev=priorIndex<0?null:m.fullVals[priorIndex];return '<tr><td>'+esc(stkHourLabel(hours[ix]))+'</td><td>'+esc(v===null?(LANG==='zh'?'未采样':'Unsampled'):stkHourMoney(v))+'</td><td>'+esc(stkHourChange(v!==null&&prev!==null&&prev>0?v/prev-1:null))+'</td></tr>';}).join('');
   var index=STK_HSELECT!==null?hours.indexOf(STK_HSELECT):-1;
@@ -7640,6 +7675,7 @@ function stkDrawHour(){
   STK_HVIEW={m:m,index:index,y:y};stkHourSelect(index);
   function point(ev){var r=svg.getBoundingClientRect();stkHourSelect(Math.floor((ev.clientX-r.left)/Math.max(1,r.width)*n));}
   svg.onpointermove=point;svg.onpointerdown=point;
+  svg.onpointerleave=function(ev){if(ev.pointerType&&ev.pointerType!=='mouse')return;var i=n-1;while(i>0&&vals[i]===null)i--;stkHourSelect(i);};
   svg.onkeydown=function(ev){var k=ev.key;if(['ArrowLeft','ArrowRight','Home','End'].indexOf(k)<0)return;ev.preventDefault();stkHourSelect(k==='Home'?0:k==='End'?n-1:STK_HVIEW.index+(k==='ArrowLeft'?-1:1));};
 }
 

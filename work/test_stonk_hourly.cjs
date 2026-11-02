@@ -14,6 +14,13 @@ assert.notEqual(end, -1, 'stkHourModel must be followed by another function mark
 const context = vm.createContext({});
 vm.runInContext(template.slice(start, end), context);
 const model = context.stkHourModel;
+for (const name of ['stkHourSeries', 'stkHourMoney']) {
+  const functionStart = template.indexOf(`function ${name}(`);
+  assert.notEqual(functionStart, -1, `template must define ${name}`);
+  const functionEnd = template.indexOf('\nfunction ', functionStart + 1);
+  assert.notEqual(functionEnd, -1, `${name} must be followed by another function marker`);
+  vm.runInContext(template.slice(functionStart, functionEnd), context);
+}
 const hour = 3600;
 const now = Date.parse('2026-11-01T09:30:23Z') / 1000;
 const current = Math.floor(now / hour) * hour;
@@ -51,6 +58,36 @@ test('6h, 24h and 72h spans retain the same UTC ending slot', () => {
     assert.equal(actual.vals.length, span);
     assert.equal(actual.hours[0], current - span * hour);
     assert.equal(actual.hours.at(-1), latest);
+  }
+});
+
+test('selected 6h, 24h and 72h totals each include only their own complete hours', () => {
+  const times = Array.from({length: 72}, (_, i) => current - (72 - i) * hour);
+  const amounts = Array(48).fill(1).concat(Array(18).fill(10), Array(6).fill(100));
+  times.push(current - 73 * hour, current);
+  amounts.push(1000000, 1000000);
+  for (const [span, sum] of [[6, 600], [24, 780], [72, 828]]) {
+    const actual = model(times, amounts, span, now);
+    assert.equal(actual.sum, sum, `${span}h total must follow the selected range`);
+    assert.equal(actual.count, span, `${span}h count must follow the selected range`);
+  }
+});
+
+test('selected-range boundaries preserve missing hours and count real zero samples', () => {
+  const offsets = [73, 72, 25, 24, 7, 6, 3, 2, 1, 0];
+  const times = offsets.map(offset => current - offset * hour);
+  const amounts = [999999, 1000, 100, 10, 20, 30, null, 0, 40, 999999];
+  for (const [span, sum, count] of [[6, 70, 3], [24, 100, 5], [72, 1200, 7]]) {
+    const actual = model(times, amounts, span, now);
+    assert.equal(actual.sum, sum, `${span}h sum excludes unsampled and out-of-range hours`);
+    assert.equal(actual.count, count, `${span}h count includes the genuine zero only`);
+    assert.equal(actual.vals.filter(value => value === null).length, span - count);
+    assert.deepEqual(json(actual.vals.slice(-3)), [null, 0, 40]);
+  }
+  for (const span of [6, 24]) {
+    const empty = model([current - 25 * hour], [100], span, now);
+    assert.equal(empty.sum, null, `${span}h without observations has no total`);
+    assert.equal(empty.count, 0);
   }
 });
 
@@ -145,6 +182,33 @@ test('2026-11-01 observed snapshot: hourly rebound +127.5%, six-hour trend -67.0
   assert.equal(actual.recent.count, 6);
   assert.equal(actual.prior.count, 6);
   assert.equal((actual.change6 * 100).toFixed(1), '-67.0');
+});
+
+test('original series and formatter use selected totals and correct units for all three metrics', () => {
+  const times = Array.from({length: 72}, (_, i) => current - (72 - i) * hour);
+  const base = Array(48).fill(1).concat(Array(18).fill(10), Array(6).fill(100));
+  context.stkBundle = () => ({});
+  context.hourlyBundle = () => ({hours: times, generated: now, stonk: {
+    rev: base, burn: base.map(value => value * 100), vol: base.map(value => value * 10),
+  }});
+  context.Date = {now: () => now * 1000};
+  for (const [tab, multiplier, formatted, zero] of [
+    ['rev', 1, '$1,200', '$0'],
+    ['burn', 100, '1,200 STONK', '0 STONK'],
+    ['vol', 10, '$1,200', '$0'],
+  ]) {
+    context.STK_HTAB = tab;
+    for (const [span, total] of [[6, 600], [24, 780], [72, 828]]) {
+      context.STK_HRANGE = span;
+      const actual = context.stkHourSeries();
+      assert.equal(actual.sum, total * multiplier, `${tab} ${span}h must use selected samples`);
+      assert.equal(actual.count, span);
+      assert.equal(actual.generated, now);
+    }
+    assert.equal(context.stkHourMoney(1200), formatted);
+    assert.equal(context.stkHourMoney(0), zero);
+    assert.equal(context.stkHourMoney(null), '—');
+  }
 });
 
 console.log(`STONK hourly model: ${passed} regression groups passed.`);

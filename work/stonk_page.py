@@ -373,6 +373,7 @@ def main():
     days = [d for d in days if d["date"] < today][-30:]
     dly = {
         "dates": [d["date"][5:] for d in days],
+        "datesISO": [d["date"] for d in days],
         "rev": [round(sf_revenue_usd(d), 2) for d in days],
         "buyback": [round(fnum(d.get("buybackUsd")) or 0, 2) for d in days],
         "burn": [round(fnum(d.get("stonkBurnedTokens")) or 0, 2) for d in days],
@@ -531,7 +532,7 @@ def main():
         "burns": burns_feed,
         "flywheel": {
             "rev90": rev90,
-            "dates": dly["dates"], "rev": dly["rev"], "buyback": dly["buyback"], "burnTok": dly["burn"],
+            "dates": dly["dates"], "datesISO": dly["datesISO"], "rev": dly["rev"], "buyback": dly["buyback"], "burnTok": dly["burn"],
             "count": dly["count"],
             "rev7": rev7, "revenue7": revenue7, "rev7prev": rev7p, "chg7": chg7,
             "buyback7": bb7, "buybackDay": bb_day, "bought7": bought7, "avgPx7": avg_px7,

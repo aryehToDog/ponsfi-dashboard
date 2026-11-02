@@ -265,9 +265,9 @@ button:active{transform:translateY(1px)}
 svg{display:block;width:100%;height:auto;overflow:visible}
 .tip{position:absolute;pointer-events:none;background:var(--tip-bg);border:1px solid var(--line2);
   border-radius:var(--r-md);padding:7px 10px;font-size:var(--fs-11);display:none;z-index:9;
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);min-width:150px;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);min-width:150px;max-width:calc(100% - 8px);
   box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
-.tip .d{color:var(--mut);margin-bottom:4px;font-size:var(--fs-10)}
+.tip .d{color:var(--mut);margin-bottom:4px;font-size:var(--fs-10);white-space:normal;overflow-wrap:anywhere;line-height:1.6}
 .tip .r{display:flex;justify-content:space-between;gap:14px}
 
 /* ---------- 表格（日度明细）---------- */
@@ -795,7 +795,7 @@ h1 span{font-size:var(--fs-11);font-weight:500}
 .srcrow .s-badge{font-size:var(--fs-11);font-weight:700;padding:1px 8px;border-radius:var(--r-pill);
   color:var(--ok-txt);background:var(--ok-bg);border:1px solid var(--ok-line)}
 .srcrow .s-badge.wn{color:var(--wn-txt);background:var(--wn-bg);border-color:var(--wn-line)}
-.srcrow .s-last{margin-left:auto;font-family:var(--font-num);color:var(--mut);white-space:nowrap}
+.srcrow .s-last{margin-left:auto;font-family:var(--font-num);color:var(--mut);white-space:normal;overflow-wrap:anywhere;text-align:right;max-width:100%}
 .srcrow .s-note{flex:1 1 100%;font-size:var(--fs-11);color:var(--mut);line-height:1.7;margin-top:-2px}
 .srcsum{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2);
   font-size:var(--fs-11);color:var(--mut);line-height:1.8}
@@ -1833,7 +1833,7 @@ body.stk-on #stkView{display:block;animation:stkIn .3s ease both}
 .sk-b.on{opacity:1}
 .sk-b.sk-p{fill:var(--pons)} .sk-b.sk-s{fill:var(--stonk)} .sk-b.sk-v{fill:var(--hb-pons)} .sk-b.sk-burn{fill:var(--warn)}
 .stk-tip{position:absolute;top:-4px;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .12s ease;
-  font-size:var(--fs-11);white-space:nowrap;background:var(--tip-bg);border:1px solid var(--line2);border-radius:var(--r-sm);
+  font-size:var(--fs-11);white-space:normal;max-width:calc(100% - 10px);width:max-content;overflow-wrap:anywhere;background:var(--tip-bg);border:1px solid var(--line2);border-radius:var(--r-sm);
   padding:5px 9px;color:var(--txt);z-index:5;box-shadow:var(--card-shadow)}
 .stk-tip.on{opacity:1}
 .stk-axis{display:flex;justify-content:space-between;font-size:var(--fs-10);color:var(--mut2);margin-top:6px}
@@ -2723,7 +2723,7 @@ button:focus-visible,summary:focus-visible,a:focus-visible,[role="tab"]:focus-vi
 .stk-lp-scope{font-size:11px;line-height:1.8;color:var(--mut);padding:10px 12px;border-left:2px solid var(--hb-stonk);background:color-mix(in srgb,var(--hb-stonk) 4%,var(--panel));margin-bottom:24px}.stk-lp-scope.delayed{border-color:var(--warn)}
 .stk-lp-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;margin:18px 0 24px}.stk-lp-grid>div{min-width:0}.stk-lp-grid h3{font-size:12px;font-weight:500;color:var(--mut);display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 18px}.stk-lp-grid h3 span{font-size:10px;color:var(--hb-stonk)}.stk-lp-area{fill:url(#stkLPFill)}
 #stkLPChart{touch-action:pan-y;outline-offset:5px}
-.stk-lp-tooltip{width:max-content;max-width:230px}.stk-lp-tip-amount{display:block;font-size:11px;font-weight:550;margin-top:6px}.stk-lp-tip-scope{display:block;color:var(--mut);font-size:10px;line-height:1.65;margin-top:4px}
+.stk-lp-tooltip{width:max-content;max-width:min(260px,calc(100% - 16px))}.stk-lp-tooltip .stk-hour-tooltip-time{white-space:normal;overflow-wrap:anywhere;line-height:1.65}.stk-lp-tip-amount{display:block;font-size:11px;font-weight:550;margin-top:6px}.stk-lp-tip-scope{display:block;color:var(--mut);font-size:10px;line-height:1.65;margin-top:4px}.stk-launchpads .stk-hour-axis span{white-space:nowrap}
 
 .stk-lp-table{overflow:auto;max-height:315px}.stk-lp-table table{border-collapse:collapse;width:100%;font-size:11px;font-variant-numeric:tabular-nums}.stk-lp-table th{position:sticky;top:0;background:var(--panel);font-size:10px;font-weight:500;color:var(--mut);z-index:1}.stk-lp-table td,.stk-lp-table th{padding:10px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.stk-lp-table td:nth-child(n+3),.stk-lp-table th:nth-child(n+3){text-align:right}.stk-lp-table tr.is-stonk td{background:color-mix(in srgb,var(--hb-stonk) 8%,var(--panel));font-weight:650}.stk-lp-table i{font-size:8px;font-style:normal;color:var(--hb-stonk)}
 .stk-hour-stats b.up{color:var(--up)}.stk-hour-stats b.down{color:var(--down)}
@@ -3039,7 +3039,7 @@ zh:{
   navRank:'收入排行', navChart:'趋势图', navTable:'每日明细', navSrc:'数据体检', navGuide:'指标说明',
   secRules:'现在该做什么 · 五个关键指标对照',
   secHourly:'小时监控 · 最近 72 小时',
-  hourSub:'每小时一格：交易量 / 收入 / 销毁，看得出现在是热还是冷。',
+  hourSub:'每小时一格 · 北京时间：交易量 / 收入 / 销毁，看得出现在是热还是冷。',
   hourTabVol:'交易量', hourTabRev:'收入', hourTabBurn:'销毁',
   hourH1:'最近 1 小时', hourH6:'最近 6 小时', hourH24:'最近 24 小时', hourH72:'最近 72 小时',
   hourLive:'● 实时刷新', hourLiveOff:'● 页面快照（实时刷新失败）',
@@ -3048,8 +3048,8 @@ zh:{
   hourEst:'推算', hourChain:'链上', hourOfficial:'官方', hourDailyAligned:'官网日额校准', hourEach:'每小时一根柱：左 PONS · 右 StonkFun',
   hourPeak:'峰值', hourSwipe:'← 左右滑动看更早',
   hourNoteVol:'<b>交易量</b>：PONS/WETH、STONK/SOL 两个主流池的每小时成交额（GeckoTerminal 小时线）。成交量放大说明短线资金在进场，缩下去说明热度在退——这是判断"有没有人在玩"的最快指标。',
-  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 × 校准比率（逐日校准；近期回购可能动用金库）。StonkFun 用官方快照确定小时分布；完整 UTC 日按官网 Total revenue（含 $STONK 报价收入）校准，日合计与官网一致。官网实时累计接口未单独提供报价收入，未完日的报价部分按官方报价收入销毁额和回购比例推算；小时分布请视为估算，缺采样时段留空。',
-  hourNoteBurn:'<b>销毁</b>：Pons 按 Robinhood Chain 上转入死地址的转账统计，小时归桶使用区块时间映射。StonkFun 使用官方累计销毁量快照；完整 UTC 日按官网日总量校准，日合计与官网一致，小时分布按快照比例分配；缺采样时段留空。',
+  hourNoteRev:'<b>收入</b>：Pons 这一列是<b>链上推算</b>——每小时回购花掉的钱 × 校准比率（逐日校准；近期回购可能动用金库）。StonkFun 用官方快照确定小时分布；完整统计日（北京时间 08:00 至次日 08:00）按官网 Total revenue（含 $STONK 报价收入）校准，日合计与官网一致。官网实时累计接口未单独提供报价收入，未完日的报价部分按官方报价收入销毁额和回购比例推算；小时分布请视为估算，缺采样时段留空。',
+  hourNoteBurn:'<b>销毁</b>：Pons 按 Robinhood Chain 上转入死地址的转账统计，小时归桶使用区块时间映射。StonkFun 使用官方累计销毁量快照；完整统计日（北京时间 08:00 至次日 08:00）按官网日总量校准，日合计与官网一致，小时分布按快照比例分配；缺采样时段留空。',
   /* —— 市场占有率（v3.14）：DefiLlama DEX 同源口径 —— */
   secShare:'市场占有率 · 24 小时成交量份额',
   shareLive:'● 每小时更新',
@@ -3187,15 +3187,15 @@ zh:{
   tabRev:'日收入', tabRev7:'7 日均线收入', tabCum:'累计回购销毁', tabPrice:'价格对比（归一）',
   base100:'基准 100', start100:'起点=100', stopLoss:t=>t+' 止损线',
   cumName:n=>n+' 累计回购（窗口内）',
-  thDate:'日期（UTC）', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
+  thDate:'统计日（北京 08:00 起）', thRev:'日收入', thBurn:'回购销毁', thPrice:'币价', thAvg7:'近 7 日均',
   pendingCell:'待更新',
   pendingTip:'DefiLlama 还没出这天的数字（不是看板坏了）。出数后刷新一下就自动补上。',
   suppNew:'最新',
   suppNewPart:h=>'最新·'+h+'h',
-  suppOfficial:'进行中·UTC',
-  suppOfficialTip:stamp=>'官方 UTC 当天累计值，直接来自 StonkFun 日线接口；收入＝Revenue＋$STONK quote revenue。快照 '+stamp+' UTC；当天尚未结束，不计入完整日均值。',
+  suppOfficial:'进行中·08:00 起',
+  suppOfficialTip:stamp=>'本统计日（北京时间 08:00 至次日 08:00）累计值，直接来自 StonkFun 日线接口；收入＝Revenue＋$STONK quote revenue。快照 '+stamp+'；统计日尚未结束，不计入完整日均值。',
   suppWhoPons:'PONS 来自链上回购（收入＝回购支出×逐日校准比率）',
-  suppWhoStonk:'STONK 来自官方 UTC 日线接口',
+  suppWhoStonk:'STONK 来自官方日线接口，统计日为北京时间 08:00 至次日 08:00',
   suppTip:(h,p,who,off)=>'DefiLlama 还没出这天的数，这里显示的是'+(p? ('部分时段（'+h+' 小时）') : '整天（24 小时）')+'的真值 —— '+who+(off? '；这就是全表用的官方口径，今天结束后自动补全。' : '。换算比率按最近 3 个完整日的官方日线自动校准，量级和 DefiLlama 对齐。'),
   srcLatest:d=>'数据源最新 '+d,
   lagBadge:d=>'数据晚了 '+d+' 天',
@@ -3362,7 +3362,7 @@ en:{
   navRank:'Ranking', navChart:'Trends', navTable:'Daily', navSrc:'Data health', navGuide:'Glossary',
   secRules:'What to do now · the five numbers that matter',
   secHourly:'Hourly monitor · last 72 hours',
-  hourSub:'One bar per hour — volume / revenue / burns. Is it heating up or cooling down?',
+  hourSub:'One bar per hour · Beijing time: volume / revenue / burns. Is it heating up or cooling down?',
   hourTabVol:'Volume', hourTabRev:'Revenue', hourTabBurn:'Burns',
   hourH1:'Last 1 hour', hourH6:'Last 6 hours', hourH24:'Last 24 hours', hourH72:'Last 72 hours',
   hourLive:'● live', hourLiveOff:'● page snapshot (live refresh failed)',
@@ -3371,8 +3371,8 @@ en:{
   hourEst:'estimate', hourChain:'on-chain', hourOfficial:'official', hourDailyAligned:'daily-calibrated', hourEach:'One bar per hour: PONS left · StonkFun right',
   hourPeak:'peak', hourSwipe:'← swipe for earlier hours',
   hourNoteVol:'<b>Volume</b>: hourly traded volume of the two main pools (PONS/WETH, STONK/SOL) from GeckoTerminal hourly candles. Rising volume means short-term money is coming in; fading volume means interest is cooling off — the fastest read on whether anyone is trading.',
-  hourNoteRev:'<b>Revenue</b>: Pons is an <b>on-chain estimate</b> based on hourly buyback spend and a calibrated ratio; treasury-funded buybacks can exceed same-day revenue. StonkFun uses official snapshots for the hourly shape. Complete UTC days are calibrated to the official daily Total revenue (including $STONK quote revenue), so daily sums match the site. The live cumulative endpoint does not expose gross quote revenue separately; the quote portion for an unfinished day is inferred from official quote-revenue burns and the buyback share. Treat hourly allocations as estimates; unsampled intervals stay blank.',
-  hourNoteBurn:'<b>Burns</b>: Pons counts transfers to the dead address on Robinhood Chain, with block-time mapping for hour buckets. StonkFun uses official cumulative burn snapshots. Complete UTC days are calibrated to the official daily burn total, so daily sums match the site; hourly values follow the observed snapshot proportions. Unsampled intervals stay blank.',
+  hourNoteRev:'<b>Revenue</b>: Pons is an <b>on-chain estimate</b> based on hourly buyback spend and a calibrated ratio; treasury-funded buybacks can exceed same-day revenue. StonkFun uses official snapshots for the hourly shape. Complete reporting days (08:00 to next-day 08:00 Beijing) are calibrated to the official daily Total revenue (including $STONK quote revenue), so daily sums match the site. The live cumulative endpoint does not expose gross quote revenue separately; the quote portion for an unfinished day is inferred from official quote-revenue burns and the buyback share. Treat hourly allocations as estimates; unsampled intervals stay blank.',
+  hourNoteBurn:'<b>Burns</b>: Pons counts transfers to the dead address on Robinhood Chain, with block-time mapping for hour buckets. StonkFun uses official cumulative burn snapshots. Complete reporting days (08:00 to next-day 08:00 Beijing) are calibrated to the official daily burn total, so daily sums match the site; hourly values follow the observed snapshot proportions. Unsampled intervals stay blank.',
   /* —— Market share (v3.14): DefiLlama DEX scope —— */
   secShare:'Market share · 24h trading volume',
   shareLive:'● hourly',
@@ -3510,15 +3510,15 @@ en:{
   tabRev:'Daily revenue', tabRev7:'7-day average', tabCum:'Cumulative buyback', tabPrice:'Price (rebased)',
   base100:'Base 100', start100:'start = 100', stopLoss:t=>t+' stop-loss',
   cumName:n=>n+' cumulative buyback (window)',
-  thDate:'Date (UTC)', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
+  thDate:'Reporting day (Beijing 08:00 start)', thRev:'Revenue', thBurn:'Buyback', thPrice:'Price', thAvg7:'7-day avg',
   pendingCell:'pending',
   pendingTip:'DefiLlama has not published this day yet (the dashboard is fine). It fills in on the next refresh.',
   suppNew:'Latest',
   suppNewPart:h=>'Latest·'+h+'h',
-  suppOfficial:'In progress·UTC',
-  suppOfficialTip:stamp=>'Official UTC day-to-date values from StonkFun daily API; revenue = Revenue + $STONK quote revenue. Snapshot '+stamp+' UTC; this unfinished day is excluded from complete-day averages.',
+  suppOfficial:'In progress·08:00 start',
+  suppOfficialTip:stamp=>'Reporting day-to-date (08:00 to next-day 08:00 Beijing) from StonkFun daily API; revenue = Revenue + $STONK quote revenue. Snapshot '+stamp+'; this unfinished day is excluded from complete-day averages.',
   suppWhoPons:'PONS from on-chain buybacks (revenue = buyback spend × a per-day calibrated ratio)',
-  suppWhoStonk:'STONK from the official UTC daily API',
+  suppWhoStonk:'STONK from the official daily API; reporting days run 08:00 to next-day 08:00 Beijing',
   suppTip:(h,p,who,off)=>'DefiLlama has not published this day yet; the figure shown is the real value for '+(p? ('a part of the day ('+h+'h)') : 'the full day (24h)')+' — '+who+(off? '; this is the same official basis used across the table and fills in automatically when the day ends.' : '. The conversion is calibrated to the last 3 complete days of official daily data, so it lines up with the DefiLlama basis.'),
   srcLatest:d=>'latest '+d,
   lagBadge:d=>d+'d late',
@@ -3671,7 +3671,7 @@ en:{
   srcLag:n=>'lagging '+n+'d',
   srcStonkNote:'Both STONK daily and hourly figures come from the official API, matching stonkfun.xyz: daily from the official daily series, hourly from official cumulative diffs. DefiLlama is only a fallback (labelled) when the official API is unreachable.',
   srcLbStale:'Last fetch failed (the 4.2MB board endpoint was cut off); showing the previous board. Retries are in place, so the next fetch catches up automatically.',
-  srcHourNote:'PONS revenue is an on-chain estimate based on buyback spend and a calibrated ratio; burns are transfers on Robinhood Chain. STONK hourly allocations for complete UTC days are calibrated to official daily totals; the quote-revenue portion for an unfinished day is inferred. Missing hours remain blank.',
+  srcHourNote:'PONS revenue is an on-chain estimate based on buyback spend and a calibrated ratio; burns are transfers on Robinhood Chain. STONK hourly allocations for complete reporting days (08:00 to next-day 08:00 Beijing) are calibrated to official daily totals; the quote-revenue portion for an unfinished day is inferred. Missing hours remain blank.',
   srcSum:(n,ok,lag)=>n+' sources: '+ok+' up to date'+(lag?(', '+lag+' lagging (highlighted above — upstream publishing cadence, not an outage here; the hourly series is still current)'):'')+'.',
   safeLine:'<b>Read-only dashboard</b> · no wallet connection · no signatures · no transactions<span class="sf-sep">　|　</span>all data from public APIs',
   foot1:'Sources: Pons revenue and buybacks = DefiLlama + on-chain; StonkFun revenue and buybacks = the official API, aligned to the site Total revenue including $STONK quote revenue; volume and market cap = CoinGecko. Pons revenue is what the protocol keeps (creator and Uniswap splits already deducted); StonkFun revenue includes trading fees and $STONK quote revenue. Valuation = mcap ÷ (daily revenue × 365) — lower is cheaper. Reference: pump.fun 30-day revenue $45.28M, mcap $2.46B → 4.45x.',
@@ -3737,6 +3737,39 @@ const fmtU = v => {
 const fmtN = (v,d=2) => (v===null||isNaN(v))?'—':v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 /* 榜单名字来自外部 API，插进 innerHTML 前先转义，避免把页面结构顶坏 */
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Display in Beijing regardless of device timezone; source day keys stay UTC. */
+function bjISO(value){
+  if(value==null || value==='') return '';
+  if(typeof value==='string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value)) value+='Z';
+  const d=new Date(value); if(!Number.isFinite(d.getTime())) return '';
+  const f=bjISO.formatter||(bjISO.formatter=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}));
+  const p={}; f.formatToParts(d).forEach(function(x){p[x.type]=x.value;});
+  return p.year+'-'+p.month+'-'+p.day+' '+p.hour+':'+p.minute+':'+p.second;
+}
+function bjZone(){ return LANG==='zh'?'北京时间':'Beijing'; }
+function bjStamp(value,seconds=false){
+  const s=bjISO(value); return s?s.slice(0,seconds?19:16)+' '+bjZone():'—';
+}
+function bjHour(tsSeconds,zone=true){
+  if(tsSeconds==null || tsSeconds==='' || !Number.isFinite(Number(tsSeconds))) return '—';
+  const s=bjISO(Number(tsSeconds)*1000);
+  return s?Number(s.slice(5,7))+'/'+Number(s.slice(8,10))+' '+s.slice(11,16)+(zone?' '+bjZone():''):'—';
+}
+function bjDay(date,full=false){
+  if(typeof date!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return '—';
+  const ts=Date.parse(date+'T00:00:00Z');
+  if(!Number.isFinite(ts) || new Date(ts).toISOString().slice(0,10)!==date) return '—';
+  const a=bjISO(ts),b=bjISO(ts+86400000);
+  return a.slice(full?0:5,16)+'–'+b.slice(full?0:5,16)+' '+bjZone();
+}
+function bjDayEnd(date){
+  if(typeof date!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return '—';
+  const ts=Date.parse(date+'T00:00:00Z');
+  return Number.isFinite(ts)&&new Date(ts).toISOString().slice(0,10)===date?bjStamp(ts+86400000):'—';
+}
+function bjClock(value,seconds=true){
+  const s=bjISO(value); return s?s.slice(11,seconds?19:16)+' '+bjZone():'—';
+}
 const dayKey = ts => new Date(ts*1000).toISOString().slice(0,10);
 const toMap = (arr,skip) => { const m={}; (arr||[]).forEach(([ts,v])=>{ const k=dayKey(ts); if(skip&&skip.has(k)) return; m[k]=(m[k]||0)+v; }); return m; };
 /* v3.29.21：上游「当天还没结算完」体检 —— 与 work/build_monitor.py 的 pending_days 同一套规则。
@@ -3911,8 +3944,8 @@ function renderStatic(){
 
 /* Shared presentation state: live refreshes preserve open evidence and chart selection. */
 const DESIGN_COPY={
-  zh:{overviewTitle:'协议经营观察',overviewSub:'收入有没有增长，回购有没有兑现，市场如何定价。',analyticsEyebrow:'THE BIG PICTURE',analyticsTitle:'经营走势',dailyView:'日度趋势',hourlyView:'小时监控',hourMethod:'数据口径与估算',shareMethod:'份额口径与数据来源',burnPeers:'查看行业回购排行',revenuePeers:'查看行业榜单与相邻项目',moreMetrics:'其他指标',signals:'查看信号',evidence:'计算与解读',signalNote:'按本站预设阈值观察风险；展开查看计算过程与判断依据。',metric:'观察维度',date:'完整 UTC 日',period:'统计周期不同，名次不能视为历史升降。'},
-  en:{overviewTitle:'Protocol fundamentals',overviewSub:'Follow the revenue. Verify the buybacks. Understand the valuation.',analyticsEyebrow:'THE BIG PICTURE',analyticsTitle:'Operating trends',dailyView:'Daily trends',hourlyView:'Hourly monitor',hourMethod:'Sources & estimates',shareMethod:'Market-share methodology',burnPeers:'Explore industry buybacks',revenuePeers:'Explore industry leaders & peers',moreMetrics:'More metrics',signals:'View signals',evidence:'Calculation & interpretation',signalNote:'Signals use the dashboard’s preset thresholds. Expand a row to inspect its calculation and reasoning.',metric:'Observation',date:'Complete UTC day',period:'Rankings use different periods; they are not historical rank changes.'}
+  zh:{overviewTitle:'协议经营观察',overviewSub:'收入有没有增长，回购有没有兑现，市场如何定价。',analyticsEyebrow:'THE BIG PICTURE',analyticsTitle:'经营走势',dailyView:'日度趋势',hourlyView:'小时监控',hourMethod:'数据口径与估算',shareMethod:'份额口径与数据来源',burnPeers:'查看行业回购排行',revenuePeers:'查看行业榜单与相邻项目',moreMetrics:'其他指标',signals:'查看信号',evidence:'计算与解读',signalNote:'按本站预设阈值观察风险；展开查看计算过程与判断依据。',metric:'观察维度',date:'完整统计日（北京 08:00 起）',period:'统计周期不同，名次不能视为历史升降。'},
+  en:{overviewTitle:'Protocol fundamentals',overviewSub:'Follow the revenue. Verify the buybacks. Understand the valuation.',analyticsEyebrow:'THE BIG PICTURE',analyticsTitle:'Operating trends',dailyView:'Daily trends',hourlyView:'Hourly monitor',hourMethod:'Sources & estimates',shareMethod:'Market-share methodology',burnPeers:'Explore industry buybacks',revenuePeers:'Explore industry leaders & peers',moreMetrics:'More metrics',signals:'View signals',evidence:'Calculation & interpretation',signalNote:'Signals use the dashboard’s preset thresholds. Expand a row to inspect its calculation and reasoning.',metric:'Observation',date:'Complete reporting day (Beijing 08:00 start)',period:'Rankings use different periods; they are not historical rank changes.'}
 };
 function dt(k){return (DESIGN_COPY[LANG]||DESIGN_COPY.zh)[k]||k;}
 const DESIGN_OPEN=new Set();
@@ -4088,7 +4121,7 @@ function renderRank(){
   const total=b.total, mine=(data.near||{}), rk=(data.rank||{});
 
   if(sub){
-    const up=b.updated? new Date(b.updated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'):'—';
+    const up=b.updated?bjStamp(b.updated):'—';
     sub.innerHTML = t('rankSub')(fmtN(total,0))
       + ' <button class="rank-force" onclick="rankForce()">'+IC.refresh+t('rankRefresh')+'</button>'
       + '<div class="rank-updated">'+t('rankUpdated')(up)+'</div>';
@@ -4227,7 +4260,7 @@ function b24Of(pid, st){
             tag:(d.burn24hLive? t('burn24Chain') : (d.burn24hSrc==='official'? t('burn24Official') : t('burn24Snap')))};
   }
   if(x.d1!=null){
-    return {v:x.d1, wait:false, live:false, txs:null, tag:((x.d1date||'').slice(5)), tip:t('burn24DayTip')};
+    return {v:x.d1, wait:false, live:false, txs:null, tag:((x.d1date||'').slice(5))+' 08:00', tip:t('burn24DayTip')+' · '+bjDay(x.d1date,true)};
   }
   return {v:null, wait:true, live:false, txs:null, tag:''};
 }
@@ -4281,11 +4314,11 @@ function renderBurn(){
   const bmk=bd.market||{};
 
   if(sub){
-    const stamp=esc(new Date(DATA.generated||BUNDLE.generated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'));
+    const stamp=esc(bjStamp(DATA.generated||BUNDLE.generated));
     const msv=(msBundle()||{}).versus||{};
     const h=hourlyBundle()||{}, ts=h.generated||0;
     sub.textContent=(LANG==='zh'?'累计销毁与实际回购支出分别统计 · 来源：链上 / StonkFun / DefiLlama':'Burned supply and actual buyback spend are reported separately · On-chain / StonkFun / DefiLlama')
-      +(ts?' · '+new Date(ts*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB'):'');
+      +(ts?' · '+bjStamp(ts*1000):'');
 
   }
 
@@ -4298,7 +4331,7 @@ function renderBurn(){
     const ms=(msBundle()||{})[p.id==='stonkfun'?'stonk':p.id]||null;
     const ARC=2*Math.PI*52, arcFill=(ARC*Math.max(0,Math.min(100,b.pct))/100).toFixed(2);
     const mile=(ms && ms.perDay!=null)
-      ? '<div class="burn-mile" title="'+esc(t('bmTip'))+(ms.generated? ' · '+esc(t('msStamp'))+esc(new Date(ms.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')) : '')+'">'
+      ? '<div class="burn-mile" title="'+esc(t('bmTip'))+(ms.generated? ' · '+esc(t('msStamp'))+esc(bjStamp(ms.generated*1000)) : '')+'">'
         + '<span>'+esc(t('bmSpeedL'))+' <b>'+fmtT(ms.perDay)+t('msPerDay')+'</b>'
         + (ms.speedPct!=null? '<em>'+esc(t('msPerDayPct')(ms.speedPct.toFixed(3)))+'</em>':'')+'</span>'
         + (ms.daysTo!=null? ' · <span>'+esc(t('bmNext')(
@@ -4450,7 +4483,7 @@ async function loadChainBurn(){
       const dead=parseInt(res[0],16)/1e18, sup=parseInt(res[1],16)/1e18;
       if(node && sup>0){ node.burned=Math.round(dead*100)/100; node.supply=sup; node.pct=Math.round(dead/sup*10000)/100; }
     }catch(e){}
-    CHAIN_STATE=new Date().toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    CHAIN_STATE=bjClock(Date.now());
     return true;
   }catch(e){ return false; }
 }
@@ -4487,7 +4520,7 @@ function hourSeries(){
 }
 function hourSum(a,n){ let s=0, any=false; (a||[]).slice(-n).forEach(function(x){ if(x!=null&&isFinite(x)){ s+=x; any=true; } }); return any? s : null; }
 function hourTip(s,i){
-  const d=new Date(s.hours[i]*1000), hm=fmtDay(d);
+  const d=new Date(s.hours[i]*1000), hm=fmtDay(d)+' '+bjZone();
   const pv=s.pons[i], sv=s.stonk[i], pu=s.rawPons[i], su=s.rawStonk[i];
   let out=hm;
   out+='\nPons  '+(pv==null?'—':fmtU(pv))+(HOUR_TAB==='burn'&&pu!=null? '（'+fmtN(pu,0)+' PONS）':'');
@@ -4495,8 +4528,7 @@ function hourTip(s,i){
   return out;
 }
 function fmtDay(d){
-  const p=function(n){ return (n<10?'0':'')+n; };
-  return (d.getMonth()+1)+'/'+d.getDate()+' '+p(d.getHours())+':'+p(d.getMinutes());
+  return bjHour(d.getTime()/1000,false);
 }
 function renderHourly(){
   const sec=document.getElementById('st-hourly'); if(!sec) return;
@@ -4603,8 +4635,8 @@ function renderHourly(){
     const dl=new Date(s.hours[idx]*1000);
     const ongoing=(pick==null) && ((Date.now()/1000) < (s.hours[idx]+3600));
     const head=(pick==null)
-      ? esc(t('hourNow'))+' · '+fmtDay(dl)+(ongoing? ' · '+esc(t('hourOngoing')) : '')
-      : esc(t('hourPick'))+' · '+fmtDay(dl);
+      ? esc(t('hourNow'))+' · '+fmtDay(dl)+' '+bjZone()+(ongoing? ' · '+esc(t('hourOngoing')) : '')
+      : esc(t('hourPick'))+' · '+fmtDay(dl)+' '+bjZone();
     nowBox.innerHTML='<div class="h">'+head+'</div>'
       +'<div class="hv">'
       +'<div class="r p"><span>PONS</span><b>'+hourTxt(s.pons[idx])+'</b></div>'
@@ -4629,7 +4661,7 @@ function renderHourly(){
       i=Math.max(0, Math.min(s.hours.length-1, i));
       mark(i);
       const pv=s.pons[i], sv2=s.stonk[i];
-      tipBox.innerHTML='<div class="t">'+fmtDay(new Date(s.hours[i]*1000))+(i===s.hours.length-1?' · '+esc(t('hourOngoing')):'')+'</div>'
+      tipBox.innerHTML='<div class="t">'+fmtDay(new Date(s.hours[i]*1000))+' '+bjZone()+(i===s.hours.length-1?' · '+esc(t('hourOngoing')):'')+'</div>'
         +'<div class="r p"><span>PONS</span><b>'+hourTxt(pv)+label(s.rawPons[i])+'</b></div>'
         +'<div class="r s"><span>STONK</span><b>'+(sv2==null? esc(t('hourNoData')) : hourTxt(sv2)+label(s.rawStonk[i]))+'</b>'
         +'</div>';
@@ -4810,7 +4842,7 @@ function renderShare(){
   ALL.forEach(function(e){ if(e) e.style.display=''; });
   if(lv){ lv.textContent=t('shareLive'); lv.className='sec-live'; }
   if(sub){
-    var stamp=s.generated? new Date(s.generated*1000).toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '';
+    var stamp=s.generated?bjStamp(s.generated*1000):'';
     sub.innerHTML=esc(t('shareSub')(stamp))+' <a class="qi" href="#gloss-share" title="'+esc(t('gMsT'))+'">?</a>';
   }
   if(cards){
@@ -4889,7 +4921,7 @@ function renderCards(){
       +'<div class="overview-revenue"><div><div class="metric-label">'+t('kAvg7')+'</div><div class="revenue-value">'+fmtU(s.avg7)+'<small>'+t('perDay')+'</small></div></div>'
       +'<div class="revenue-change '+(change>=0?'up':'down')+'">'+pct(change)+'<small>'+t('kMom')+'</small></div></div>'
       +'<div class="kv overview-kv">'
-      +cell(t('kLast')+' · '+date,fmtU(s.lastRev),'')
+      +cell(t('kLast')+' · '+date,fmtU(s.lastRev),esc(bjDay(s.lastDate)))
       +cell(t('kBurn7'),fmtU(s.holdSum7),'')
       +cell(LANG==='zh'?'市值 / 年化收入':'Market cap / annualised revenue',s.ps7?fmtN(s.ps7,2)+'x':'—','')
       +cell(t('kVol24'),fmtU(s.vol24),'')+'</div>'
@@ -5127,6 +5159,12 @@ function renderChart(){
                           const w=el.getBoundingClientRect().width; return w>0? w : 0; })();
   const shellW = cw>0? cw : W, svgScale = cw>0? cw/W : 0;
   const scaleY=svg.getBoundingClientRect().height/H || svgScale;
+  const priceTime=(id,date)=>{
+    const arr=(DATA.priceSeries||{})[id]||[], samples=arr.filter(r=>dayKey(r[0])===date);
+    if(!samples.length) return null;
+    const ts=samples[samples.length-1][0]*1000;
+    return DATA.priceAt && dayKey(DATA.priceAt/1000)===date && dayKey(arr[arr.length-1][0])===date?DATA.priceAt:ts;
+  };
   let series=[], thresholds=[], yfmt = fmtU;
 
   if(MODE==='price'){
@@ -5135,7 +5173,7 @@ function renderChart(){
       const first = sub.find(r=>r[p.id+'_price']!==null);
       base[p.id] = first? first[p.id+'_price'] : null;
     });
-    series = PROJECTS.map(p=>({name:p.name,color:p.color,
+    series = PROJECTS.map(p=>({name:p.name,id:p.id,color:p.color,
       pts: sub.map((r,i)=>({i, v: r[p.id+'_price']!==null&&base[p.id]? r[p.id+'_price']/base[p.id]*100 : null}))}));
     yfmt = v => fmtN(v,0);
     thresholds=[{v:100,label:LANG==='zh'?'基准 100':'Base 100',color:'var(--mut2)'}];
@@ -5177,7 +5215,10 @@ function renderChart(){
   }
   const step = Math.max(1, Math.round(sub.length/7));
   const xl=[];
-  sub.forEach((r,i)=>{ if(i%step===0||i===sub.length-1) xl.push({i, x:X(i), txt:r.date.slice(5)}); });
+  sub.forEach((r,i)=>{ if(i%step===0||i===sub.length-1){
+    const ts=MODE==='price'?Math.max(...PROJECTS.map(p=>priceTime(p.id,r.date)||0)):0;
+    xl.push({i, x:X(i), txt:ts?bjISO(ts).slice(5,10):r.date.slice(5)});
+  } });
   xl.forEach((it,n)=>{ it.alt = (n<xl.length-1 && n%2===1); });
   if(xl.length>1 && (xl[xl.length-1].i - xl[xl.length-2].i) < step*0.9) xl[xl.length-2].close=true;
   marks += xl.map((it,n)=>`<i class="xl${n===0?' l':(n===xl.length-1?' r':'')}"${it.alt&&!it.close?' data-alt="1"':''}${it.close?' data-close="1"':''} style="left:${(it.x/W*100).toFixed(2)}%">${it.txt}</i>`).join('');
@@ -5290,7 +5331,9 @@ function renderChart(){
   });
   svg.innerHTML = g;
   if(cm) cm.innerHTML = marks;
-  const caption=document.getElementById('chartCaption'); if(caption) caption.textContent=(LANG==='zh'?'最近 '+N+' 天 · UTC 日线 · 悬停或轻点查看数据':'Last '+N+' days · UTC daily series · Hover or tap to inspect');
+  const caption=document.getElementById('chartCaption'); if(caption) caption.textContent=MODE==='price'
+    ?(LANG==='zh'?'最近 '+N+' 天 · 日频价格采样 · 北京时间 · 悬停或轻点查看采样时间':'Last '+N+' days · Daily price samples · Beijing time · Hover or tap for sample times')
+    :(LANG==='zh'?'最近 '+N+' 天 · 统计日为北京时间 08:00 至次日 08:00 · 悬停或轻点查看数据':'Last '+N+' days · Reporting days: 08:00 to next-day 08:00 Beijing · Hover or tap to inspect');
   document.getElementById('legend').innerHTML = series.map(s=>
     `<span><i style="background:${s.color}"></i>${s.name}</span>`).join('') +
     (MODE==='price'?'<span style="color:var(--mut2)">'+t('start100')+'</span>':'');
@@ -5302,11 +5345,11 @@ function renderChart(){
     const i = Math.round((relX-P.l)/iw*(sub.length-1));
     if(i<0||i>=sub.length){ tip.style.display='none'; return; }
     const row = sub[i];
-    let html = `<div class="d">${row.date}</div>`;
+    let html = `<div class="d">${MODE==='price'?(LANG==='zh'?'价格采样 / 刷新时间':'Price sample / refresh times'):bjDay(row.date,true)}</div>`;
     series.forEach(s=>{
       const pt = s.pts.find(p=>p.i===i);
       if(pt && pt.v!==null && isFinite(pt.v))
-        html += `<div class="r"><span style="color:${s.color}">${s.name.split(' cumulative')[0]}</span><b>${MODE==='price'?fmtN(pt.v,1):fmtU(pt.v)}</b></div>`;
+        html += `<div class="r"><span style="color:${s.color}">${s.name.split(' cumulative')[0]}</span><b>${MODE==='price'?fmtN(pt.v,1):fmtU(pt.v)}</b></div>`+(MODE==='price'?`<div class="d">${bjStamp(priceTime(s.id,row.date),true)}</div>`:'');
     });
     tip.innerHTML = html;
     tip.style.display='block';
@@ -5362,7 +5405,7 @@ function renderSrc(){
     }
     const lg = lagDays(last);
     push({ st: (lg!=null && lg>=2) ? 'wn' : 'ok', name:t(x[0]), from: from,
-           last: last ? last.slice(5) : '—',
+           last: last ? bjDay(last) : '—',
            badge: (lg!=null && lg>=1) ? t('srcLag')(lg) : null,
            note: x[3] ? t('srcStonkNote') : null });
   });
@@ -5372,14 +5415,13 @@ function renderSrc(){
   const hrs = (hb && hb.hours) || [];
   const lastH = hrs.length ? hrs[hrs.length-1] : null;
   push({ st:'ok', name:t('srcHourly'), from:t('srcHourlyFrom'),
-         last: lastH ? new Date(lastH*1000).toISOString().slice(5,16).replace('T',' ') : '—',
+         last: lastH ? bjHour(lastH) : '—',
          note:t('srcHourNote') });
 
   /* 全站收入排行榜 */
   const lb = rankBoard();
   const lbT = lb && (lb.fetchedAt || lb.updated);
-  const lbLast = lbT ? new Date(lbT).toLocaleString(LANG==='zh'?'zh-CN':'en-GB',
-                    {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+  const lbLast = lbT?bjStamp(lbT):'—';
   push({ st: (lb && lb.stale) ? 'wn' : 'ok', name:t('srcLb'), from:t('srcLbFrom'),
          last: lbLast, note: (lb && lb.stale) ? t('srcLbStale') : null });
 
@@ -5418,7 +5460,7 @@ function renderTable(){
     if(id!=='pons'){
       const official=sfDailyBundle(), d=official&&official.current;
       if(!d || d.date!==day || day!==new Date().toISOString().slice(0,10) || d.source!=='official-daily' || d[key]==null) return null;
-      const stamp=new Date(d.asOf*1000).toISOString().slice(0,16).replace('T',' ');
+      const stamp=bjStamp(d.asOf*1000);
       return {v:d[key], tag:t('suppOfficial'), tip:t('suppOfficialTip')(stamp)};
     }
     const d=(suppData.pons||{})[day];
@@ -5435,7 +5477,7 @@ function renderTable(){
     return `<td class="mono ${cl}"><span class="bar" style="--w:${w(k,v)}%"></span><span class="v">${fmtU(v)}</span>${extra||''}</td>`;
   };
   const lagTag = id => { const s = st[id]; return s.lag>0
-    ? `<span class="lagtag" title="${t('lagTip')}">${t('srcLatest')(s.lastDate.slice(5))}</span>` : ''; };
+    ? `<span class="lagtag" title="${t('lagTip')} · ${bjDay(s.lastDate,true)}">${t('srcLatest')(s.lastDate.slice(5)+' 08:00')}</span>` : ''; };
 
   document.getElementById('tbl').querySelector('thead').innerHTML =
     `<tr class="grp"><th class="c-date" rowspan="2">${t('thDate')}</th>`+
@@ -5447,7 +5489,7 @@ function renderTable(){
   const sum = `<tr class="sum"><td class="mono c-date">${t('thAvg7')}</td>`+
     PROJECTS.map(p=>{
       const s=st[p.id], g='g-'+gc(p);
-      const win = s.lag>0? `<small class="win">${s.winFrom.slice(5)} ~ ${s.winTo? s.winTo.slice(5):s.lastDate.slice(5)}</small>` : '';
+      const win = s.lag>0? `<small class="win" title="${bjDay(s.winFrom,true)} → ${bjDay(s.winTo||s.lastDate,true)}">${s.winFrom.slice(5)} ~ ${s.winTo? s.winTo.slice(5):s.lastDate.slice(5)} · ${LANG==='zh'?'北京08:00起':'Beijing 08:00 start'}</small>` : '';
       return cell(g+' v-rev', p.id+'_rev',  s.avg7, win) +
              cell(g+' v-bb',  p.id+'_hold', s.holdSum7/7) +
              priceTd(s.psv);
@@ -5460,7 +5502,7 @@ function renderTable(){
     /* 源站还没出这天 → 标"待更新"而不是一个光秃秃的破折号；收入与回购两条线各自判断 */
     const pPend = r.date > pLast,   pHoldPend = r.date > pHoldLast;
     const bPend = r.date > bLast,   bHoldPend = r.date > bHoldLast;
-    return `<tr><td class="mono c-date">${r.date}</td>`+
+    return `<tr><td class="mono c-date" title="${bjDay(r.date,true)}">${r.date} 08:00</td>`+
       cell('g-pons v-rev','pons_rev',r.pons_rev, dlt(r.pons_rev, prev.pons_rev), pPend, pPend? suppOf('pons',r.date,'rev'):null)+
       cell('g-pons v-bb','pons_hold',r.pons_hold, '', pHoldPend, pHoldPend? suppOf('pons',r.date,'hold'):null)+
       priceTd(r.pons_price)+
@@ -5972,7 +6014,7 @@ async function loadLive(){
 }
 function setSrc(ok, priceOk){
   const b=document.getElementById('src');
-  const time = new Date().toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const time = bjClock(Date.now());
   if(ok || priceOk){ b.textContent = t('liveAt') + time; b.className='badge live'; }
   else  { b.textContent = t('offline');        b.className='badge off'; }
 }
@@ -6013,8 +6055,8 @@ function renderAll(){
   if(icRevealMeasure){ try{ icRevealMeasure(); }catch(e){} }
   if(window.__miniMeasure){ try{ window.__miniMeasure(); }catch(e){} }
   if(window.__navSpy){ try{ window.__navSpy(); }catch(e){} }   /* v3.20：数据落地后刷新导航高亮 */
-  document.getElementById('gen').textContent = t('updatedAt') + new Date(g).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')
-    + (DATA.priceAt? t('priceLive')(new Date(DATA.priceAt).toLocaleTimeString(LANG==='zh'?'zh-CN':'en-GB',{hour:'2-digit',minute:'2-digit'})) : '');
+  document.getElementById('gen').textContent = t('updatedAt') + bjStamp(g)
+    + (DATA.priceAt? t('priceLive')(bjClock(DATA.priceAt,false)) : '');
   document.getElementById('footMain').innerHTML = t('foot1') + '<br>' + t('foot2') + FOOT_AUTHOR[LANG]
       + '<div class="foot-meta"><span class="dash-ver" title="'+t('verTip')+'">'+DASH_VER+'</span>'
       + '<span class="pv" id="pvStat" title="'+t('pvTip')+'"></span></div>';
@@ -6066,7 +6108,7 @@ zh:{
   secNote:'口径与来源',
   navFly:'回购飞轮', navFlow:'谁在买', navRank:'飞轮名单', navModel:'收入推演',
   kMcap:'市值', kVol24:'24 小时成交', kBurned:'已销毁', kHolders:'持币地址', kDepth:'主池深度',
-  kLiq:'全市场流动性', kBuyback:'上一完整日回购', kBuybackToday:'今日回购（UTC）', kBurnSpeed:'销毁速度',
+  kLiq:'全市场流动性', kBuyback:'上一完整统计日回购', kBuybackToday:'本统计日回购', kBurnSpeed:'销毁速度',
   kTurnover:'换手', kOfMcap:'占市值', kPoolsN:'个资金池', kOfSupply:'占供应', kPerDay:'/天',
   kAcross:'按 7 日均值', kToNext1:'距下一个 1%',
   chipMint:'已放弃增发权限', chipFreeze:'已放弃冻结权限', chipTax:'买卖 0% 税', chipRisk:'风控库无风险标记',
@@ -6119,14 +6161,14 @@ zh:{
   recentBurns:'最近销毁（链上可点开）', txLink:'链上查看',
   flRev7:'近 7 日收入', flBB7:'近 7 日买回', flShare:'买回 ÷ 收入', flVsVol:'日均买回 ÷ 24h 成交',
   flPx:'回购均价 vs 现价', flChg:'收入 7 日环比',
-  chartDaily:'每天的收入与买回（最近 {n} 天）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
+  chartDaily:'每天的收入与买回（最近 {n} 天 · 北京时间每日 08:00 起）', chartDailyHint:'紫＝平台收入 · 绿＝买回花掉的钱',
   chartHourly:'最近 72 小时', hourTabRev:'收入', hourTabBurn:'销毁', hourTabVol:'交易量',
   chartPrice:'价格走势（最近 {n} 天，STONK/SOL 日线收盘）',
   chartRev90:'官方日收入（最近 {n} 天，StonkFun Revenue）',
   r90Latest:'最新一天', r90Avg:'日均收入', r90Peak:'单日峰值', r90Days:'天',
   r90Vs:'较前日', r90NoData:'官方当天无数据（不估算）', r90Swipe:'← 左右滑动看更早',
   r90Fdv:'市值 FDV',
-  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。图中为最近 {n} 个完整日（不含未过完的今天），缺失日不估算；鼠标划过 / 手机轻点柱子看当天收入与市值 FDV（= 当天价格 × 当前总供应，代币发行前没价格的天显示 —）。',
+  r90Note:'来源：StonkFun 官方日线（stonkfun.xyz/revenue）。时间以北京时间显示，每个统计日为 08:00 至次日 08:00；图中为最近 {n} 个完整统计日，未结束日不纳入，缺失日不估算。鼠标划过 / 手机轻点柱子看对应窗口收入与市值 FDV（= 当天价格 × 当前总供应，代币发行前没价格的天显示 —）。',
   pxPill:'区间涨跌（首个收盘 → 最新收盘）', pxRange:'共 {n} 天 · 日线收盘',
   pxTabPx:'价格', pxTabFdv:'FDV',
   pxFdvNote:function(s,b){ return '口径：日线收盘价 × 当前总供应 '+s+'（已扣 '+b+'销毁）'; },
@@ -6177,7 +6219,7 @@ en:{
   secNote:'Method & sources',
   navFly:'Flywheel', navFlow:'Who buys', navRank:'Roster', navModel:'What-if',
   kMcap:'Market cap', kVol24:'24h volume', kBurned:'Burned', kHolders:'Holders', kDepth:'Main pool depth',
-  kLiq:'Market-wide liquidity', kBuyback:'Last full-day buyback', kBuybackToday:'Today buyback (UTC)', kBurnSpeed:'Burn speed',
+  kLiq:'Market-wide liquidity', kBuyback:'Last full reporting-day buyback', kBuybackToday:'Current reporting-day buyback', kBurnSpeed:'Burn speed',
   kTurnover:'Turnover', kOfMcap:'of mcap', kPoolsN:'pools', kOfSupply:'of supply', kPerDay:'/day',
   kAcross:'7-day average', kToNext1:'to next 1%',
   chipMint:'Mint authority renounced', chipFreeze:'Freeze authority renounced', chipTax:'0% transfer tax', chipRisk:'No risk flags',
@@ -6230,14 +6272,14 @@ en:{
   recentBurns:'Recent burns (clickable on-chain)', txLink:'on-chain',
   flRev7:'Revenue, last 7d', flBB7:'Buybacks, last 7d', flShare:'Buyback ÷ revenue', flVsVol:'Avg daily buyback ÷ 24h volume',
   flPx:'Avg buyback price vs now', flChg:'Revenue, 7d change',
-  chartDaily:'Daily revenue and buybacks (last {n} days)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
+  chartDaily:'Daily revenue and buybacks (last {n} days · 08:00 Beijing start)', chartDailyHint:'purple = platform revenue · green = money spent buying back',
   chartHourly:'Last 72 hours', hourTabRev:'Revenue', hourTabBurn:'Burn', hourTabVol:'Volume',
   chartPrice:'Price (last {n} days, STONK/SOL daily close)',
   chartRev90:'Official daily revenue (last {n} days, StonkFun)',
   r90Latest:'Latest day', r90Avg:'Daily average', r90Peak:'Best day', r90Days:'days',
   r90Vs:'vs prev', r90NoData:'no official value that day (never estimated)', r90Swipe:'← swipe for earlier',
   r90Fdv:'Mkt cap (FDV)',
-  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Full days only (today excluded); missing days are never estimated. Hover or tap a bar for that day\u2019s revenue and market-cap FDV (= that day\u2019s price \u00d7 current supply; \u2014 before the token existed).',
+  r90Note:'Source: StonkFun official daily API (stonkfun.xyz/revenue). Times use Beijing time; each reporting day runs from 08:00 to the next 08:00. Only the last {n} complete reporting days are included; missing days are never estimated. Hover or tap a bar for window revenue and market-cap FDV (= that day\u2019s price \u00d7 current supply; \u2014 before the token existed).',
   pxPill:'Change over the window (first close → latest close)', pxRange:'{n} days · daily close',
   pxTabPx:'Price', pxTabFdv:'FDV',
   pxFdvNote:function(s,b){ return 'basis: daily close × current supply '+s+' (net of '+b+' burned)'; },
@@ -6453,7 +6495,7 @@ function stkRender(){
     out.push(stkSecHead(scn.id, scn.ic, scn.t, scn.sub));
     out.push(body[scn.id]);
   });
-  out.push('<div class="stk-last"><span>'+t('updatedAt')+(gen? gen.toLocaleString(LANG==='zh'?'zh-CN':'en-GB') : '—')+'</span><span>'+esc(d.srcNote||'')+'</span></div>');
+  out.push('<div class="stk-last"><span>'+t('updatedAt')+(gen? bjStamp(gen) : '—')+'</span><span>'+esc(d.srcNote||'')+'</span></div>');
   root.innerHTML=out.join('');
   /* v3.27.3：深度页的板块标题是动态生成的，补 ic-in，否则图标被全局动画规则藏住（opacity:0） */
   try{ [].forEach.call(root.querySelectorAll('.sec-title'), function(el){ el.classList.add('ic-in'); }); }catch(e){}
@@ -6482,21 +6524,21 @@ function stkRevenueView(now){
   var fresh=!!(valid&&stamp&&now/1000-stamp<=180&&now/1000-stamp>=-60&&!STK_REVENUE_FAILED);
   var money=function(n){return '$'+n.toLocaleString('en-US',{maximumFractionDigits:0,minimumFractionDigits:0});};
   return {today:today,valid:!!valid,fresh:fresh,total:valid?money(row.rev):'—',base:valid?money(row.baseRev):'—',quote:valid?money(row.quoteRev):'—',
-    stamp:stamp?new Date(stamp*1000).toISOString().slice(0,19).replace('T',' ')+' UTC':'',
-    status:LANG==='zh'?(fresh?'实时同步':valid?'数据延迟':'等待当天数据'):(fresh?'Live':valid?'Delayed':'Awaiting today’s data')};
+    stamp:stamp?bjStamp(stamp*1000,true):'',
+    status:LANG==='zh'?(fresh?'实时同步':valid?'数据延迟':'等待本统计日数据'):(fresh?'Live':valid?'Delayed':'Awaiting reporting-day data')};
 }
 function stkRevenueHTML(){
   var v=stkRevenueView();
-  return '<section class="stk-income" id="stkRevenue" aria-label="'+(LANG==='zh'?'STONK 今日收入':'STONK today’s revenue')+'">'
-    +'<div><div class="stk-income-label"><b>'+(LANG==='zh'?'今日收入':'Today’s revenue')+'</b><span>UTC</span><span id="stkRevenueStatus" class="stk-income-status '+(v.fresh?'fresh':'delayed')+'">'+esc(v.status)+'</span></div>'
+  return '<section class="stk-income" id="stkRevenue" aria-label="'+(LANG==='zh'?'STONK 本统计日收入':'STONK current reporting-day revenue')+'">'
+    +'<div><div class="stk-income-label"><b>'+(LANG==='zh'?'本统计日收入':'Reporting-day revenue')+'</b><span>'+(LANG==='zh'?'北京 08:00 起':'08:00 Beijing start')+'</span><span id="stkRevenueStatus" class="stk-income-status '+(v.fresh?'fresh':'delayed')+'">'+esc(v.status)+'</span></div>'
     +'<div class="stk-income-total" id="stkRevenueTotal" aria-live="polite">'+v.total+'</div></div>'
     +'<div><div class="stk-income-parts"><span>'+(LANG==='zh'?'基础收入':'Base revenue')+'<b id="stkRevenueBase">'+v.base+'</b></span><span>+ $STONK '+(LANG==='zh'?'计价收入':'quote revenue')+'<b id="stkRevenueQuote">'+v.quote+'</b></span></div>'
-    +'<div class="stk-income-meta"><span id="stkRevenueStamp">'+esc(v.stamp||(v.today+' UTC'))+'</span> · '+(LANG==='zh'?'每 60 秒同步 · 当天累计，进行中':'Syncs every 60s · UTC day in progress')+'<br><a href="https://www.stonkfun.xyz/revenue" target="_blank" rel="noopener">'+(LANG==='zh'?'官网 Total revenue ↗':'Official Total revenue ↗')+'</a></div></div></section>';
+    +'<div class="stk-income-meta"><span id="stkRevenueStamp">'+esc(v.stamp||bjDay(v.today,true))+'</span> · '+(LANG==='zh'?'每 60 秒同步 · 统计日累计，进行中':'Syncs every 60s · Reporting day in progress')+'<br><a href="https://www.stonkfun.xyz/revenue" target="_blank" rel="noopener">'+(LANG==='zh'?'官网 Total revenue ↗':'Official Total revenue ↗')+'</a></div></div></section>';
 }
 function stkRevenuePaint(){
   var root=document.getElementById('stkRevenue'); if(!root)return;
   var v=stkRevenueView();
-  [['stkRevenueTotal',v.total],['stkRevenueBase',v.base],['stkRevenueQuote',v.quote],['stkRevenueStamp',v.stamp||(v.today+' UTC')]].forEach(function(x){var el=document.getElementById(x[0]);if(el)el.textContent=x[1];});
+  [['stkRevenueTotal',v.total],['stkRevenueBase',v.base],['stkRevenueQuote',v.quote],['stkRevenueStamp',v.stamp||bjDay(v.today,true)]].forEach(function(x){var el=document.getElementById(x[0]);if(el)el.textContent=x[1];});
   var status=document.getElementById('stkRevenueStatus');if(status){status.textContent=v.status;status.className='stk-income-status '+(v.fresh?'fresh':'delayed');}
 }
 async function stkRevenueRefresh(){
@@ -6518,6 +6560,15 @@ setInterval(function(){if(!document.hidden&&document.body.classList.contains('st
 document.addEventListener('visibilitychange',function(){if(!document.hidden)stkRevenueRefresh();});
 
 /* ---------- 首屏 ---------- */
+function stkDailyDates(fw){
+  const dates=fw.dates||[],iso=fw.datesISO||[],known=(fw.rev90||{}).dates||[];
+  return dates.map(function(date,i){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+    if(iso[i] && iso[i].slice(5)===date) return iso[i];
+    const matches=known.filter(d=>d.slice(5)===date);
+    return matches.length===1?matches[0]:'';
+  });
+}
 function stkHeroHTML(h, fw, dm, sf){
   var hd=(dm&&dm.holders)||{};
   /* v3.27.1 全站一个价：优先用总览页同一套数字（官方快照 + DefiLlama 实时刷新），
@@ -6529,12 +6580,12 @@ function stkHeroHTML(h, fw, dm, sf){
   /* v3.29.6：首屏分主次 —— 前 4 格是核心（x 类放大 + 底色）：市值 / 日回购 / 已销毁 / 销毁速度；
      回购值改用「最近一个完整日」（与结论卡同口径），7 日均挪到小字；后 4 格为次层明细。 */
   var lastBB=(fw.buyback&&fw.buyback.length)? fw.buyback[fw.buyback.length-1] : null;
-  var lastDate=(fw.dates&&fw.dates.length)? fw.dates[fw.dates.length-1] : '';
+  var dailyDates=stkDailyDates(fw),lastDate=dailyDates[dailyDates.length-1]||'';
   var current=(sfDailyBundle()||{}).current;
   var hasToday=current && current.date===new Date().toISOString().slice(0,10) && current.hold!=null;
   var buybackLabel=hasToday?'kBuybackToday':'kBuyback';
   var buybackValue=hasToday?current.hold:lastBB;
-  var buybackStamp=hasToday?new Date(current.asOf*1000).toISOString().slice(11,16)+' UTC':lastDate+' UTC';
+  var buybackStamp=hasToday?(LANG==='zh'?'北京 08:00 起 · 更新 ':'08:00 Beijing start · updated ')+bjStamp(current.asOf*1000):bjDay(lastDate);
   var cells=[
     ['kMcap', fmtU(mc), '', 1],
     [buybackLabel, (buybackValue!=null? fmtU(buybackValue):'—'), buybackStamp+(fw.buybackDay!=null?' · '+(LANG==='zh'?'7 日均 ':'7d avg ')+fmtU(fw.buybackDay):''), 1],
@@ -6665,11 +6716,13 @@ function stkLaunchpadBundle(){return (typeof DATA!=='undefined'&&DATA.launchpads
 function stkLaunchpadLabel(k){var zh={revenue:'发射平台收入',marketcap:'发行代币市值',volume:'发行代币交易量'},en={revenue:'Launchpad revenue',marketcap:'Launched token market caps',volume:'Launched token volume'};return (LANG==='zh'?zh:en)[k];}
 function stkLaunchpadValid(m){return !!(m&&m.available!==false&&typeof m.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(m.date)&&Number.isFinite(Date.parse(m.date+'T00:00:00Z'))&&typeof m.stonk==='number'&&Number.isFinite(m.stonk)&&m.stonk>=0&&typeof m.total==='number'&&Number.isFinite(m.total)&&m.total>0&&typeof m.share==='number'&&Number.isFinite(m.share)&&m.share>=0&&m.share<=100);}
 function stkLaunchpadValue(v){return typeof v==='number'&&Number.isFinite(v)?'$'+v.toLocaleString('en-US',{maximumFractionDigits:0}):'—';}
+function stkLaunchpadPeriod(date,metric,full){return metric==='marketcap'?bjDayEnd(date):bjDay(date,!!full);}
+function stkLaunchpadAxisDay(date,metric){return metric==='marketcap'?bjDayEnd(date).slice(5,16):bjDay(date).slice(0,5)+' 08:00';}
 function stkLaunchpadHTML(){
   var d=stkLaunchpadBundle();
   return '<div class="card stk-card stk-sec stk-launchpads" id="stkLaunchpadMonitor">'
     +'<div class="stk-lp-intro"><span class="stk-lp-tag">BLOCKWORKS · SOLANA</span><p>'+(LANG==='zh'?'STONK 占多少？收入、发行代币市值与交易量，各用同一指标下的收录平台作比较。':'How much belongs to STONK? Compare revenue, launched token value and trading within each metric’s tracked platform set.')+'</p></div>'
-    +'<div class="stk-lp-cards">'+['revenue','marketcap','volume'].map(function(k){var m=(d.metrics||{})[k],ok=stkLaunchpadValid(m);return '<button type="button" class="stk-lp-card" data-lp-metric="'+k+'" aria-pressed="'+(STK_LPMETRIC===k)+'" onclick="stkLaunchpadTab(\''+k+'\')"><span>'+esc(stkLaunchpadLabel(k))+'</span><strong>'+(ok?m.share.toFixed(2)+'%':'—')+'</strong><span class="stk-lp-value">STONK <b>'+(ok?esc(stkLaunchpadValue(m.stonk)):'—')+'</b></span><small>'+(ok?esc((LANG==='zh'?'分母 ':'Tracked total ')+fmtU(m.total)+' · '+m.platformCount+(LANG==='zh'?' 家已披露平台':' reporting platforms')+(m.missingCount?(LANG==='zh'?' · '+m.missingCount+' 家缺值':' · '+m.missingCount+' missing'):'')):LANG==='zh'?'等待数据源':'Awaiting source data')+'</small><small>'+(m&&m.date?esc(m.date+' UTC · '+(k==='marketcap'?(LANG==='zh'?'日末快照':'day-end snapshot'):(LANG==='zh'?'单日':'one day'))):'—')+'</small></button>';}).join('')+'</div>'
+    +'<div class="stk-lp-cards">'+['revenue','marketcap','volume'].map(function(k){var m=(d.metrics||{})[k],ok=stkLaunchpadValid(m);return '<button type="button" class="stk-lp-card" data-lp-metric="'+k+'" aria-pressed="'+(STK_LPMETRIC===k)+'" onclick="stkLaunchpadTab(\''+k+'\')"><span>'+esc(stkLaunchpadLabel(k))+'</span><strong>'+(ok?m.share.toFixed(2)+'%':'—')+'</strong><span class="stk-lp-value">STONK <b>'+(ok?esc(stkLaunchpadValue(m.stonk)):'—')+'</b></span><small>'+(ok?esc((LANG==='zh'?'分母 ':'Tracked total ')+fmtU(m.total)+' · '+m.platformCount+(LANG==='zh'?' 家已披露平台':' reporting platforms')+(m.missingCount?(LANG==='zh'?' · '+m.missingCount+' 家缺值':' · '+m.missingCount+' missing'):'')):LANG==='zh'?'等待数据源':'Awaiting source data')+'</small><small>'+(m&&m.date?esc(stkLaunchpadPeriod(m.date,k,true)+(k==='marketcap'?(LANG==='zh'?' · 日末快照':' · day-end snapshot'):'')):'—')+'</small></button>';}).join('')+'</div>'
     +'<div class="stk-lp-scope" id="stkLPScope"></div>'
     +'<div class="stk-lp-grid"><div class="stk-lp-trend"><h3 id="stkLPTitle"></h3><div class="stk-chart stk-axis-chart"><div class="plot-scale" id="stkLPScale"></div><svg id="stkLPChart" viewBox="0 0 1200 300" preserveAspectRatio="none" role="img" tabindex="0" aria-describedby="stkLPTip"></svg><div class="stk-hour-tooltip stk-lp-tooltip" id="stkLPTip" role="status" aria-live="polite" aria-atomic="true"></div></div><div class="stk-hour-axis" id="stkLPAxis"></div><p class="stk-note" id="stkLPTrendNote"></p></div>'
     +'<div class="stk-lp-ranking"><h3>'+(LANG==='zh'?'平台对比':'Platform comparison')+' <span id="stkLPRank"></span></h3><div class="stk-lp-table"><table><thead><tr><th>#</th><th>'+(LANG==='zh'?'平台':'Platform')+'</th><th id="stkLPColumn"></th><th>'+(LANG==='zh'?'份额':'Share')+'</th></tr></thead><tbody id="stkLPRows"></tbody></table></div></div></div>'
@@ -6679,7 +6732,7 @@ function stkLaunchpadTab(k){if(['revenue','marketcap','volume'].indexOf(k)<0)ret
 function stkLaunchpadDraw(){
   var d=stkLaunchpadBundle(),m=(d.metrics||{})[STK_LPMETRIC],svg=document.getElementById('stkLPChart');if(!svg)return;
   var scope=document.getElementById('stkLPScope'),rows=document.getElementById('stkLPRows'),title=document.getElementById('stkLPTitle'),rank=document.getElementById('stkLPRank'),column=document.getElementById('stkLPColumn'),updated=document.getElementById('stkLPUpdated');
-  if(title)title.textContent=(LANG==='zh'?'STONK 份额趋势 · 最近 30 天':'STONK share · last 30 days');
+  if(title)title.textContent=(LANG==='zh'?'STONK 份额趋势 · 最近 30 天':'STONK share · last 30 days')+' · '+bjZone();
   if(column)column.textContent=stkLaunchpadLabel(STK_LPMETRIC);
   if(!stkLaunchpadValid(m)){
     if(scope){scope.textContent=LANG==='zh'?'该指标暂未取得可核验的数据；保留空值，不用其他口径估算占比。':'Verified data is unavailable for this metric; no substitute share is estimated.';scope.classList.add('delayed');}
@@ -6689,7 +6742,7 @@ function stkLaunchpadDraw(){
   }
   var dayLag=Math.max(0,Math.floor(Date.now()/86400000)-Math.floor(Date.parse(m.date+'T00:00:00Z')/86400000)-1);
   var missing=m.missingCount||0;
-  var scopeText=(LANG==='zh'?'数据截至 ':'Data through ')+m.date+' UTC · '+(STK_LPMETRIC==='marketcap'?(LANG==='zh'?'已披露市值平台内的份额':'Share among platforms disclosing market caps'):(LANG==='zh'?'已收录平台内的单日份额':'Daily share among tracked platforms'));
+  var scopeText=(STK_LPMETRIC==='marketcap'?(LANG==='zh'?'日末快照 ':'Day-end snapshot '):(LANG==='zh'?'统计区间 ':'Reporting window '))+stkLaunchpadPeriod(m.date,STK_LPMETRIC,true)+' · '+(STK_LPMETRIC==='marketcap'?(LANG==='zh'?'已披露市值平台内的份额':'Share among platforms disclosing market caps'):(LANG==='zh'?'已收录平台内的单日份额':'Daily share among tracked platforms'));
   if(dayLag>0)scopeText+=(LANG==='zh'?' · 源数据落后最近完整日 ':' · Source lags the last complete day by ')+dayLag+(LANG==='zh'?' 天':' day(s)');
   if(missing)scopeText+=(LANG==='zh'?'。另有 '+missing+' 家未披露有效值，未计入分母。':'. '+missing+' platforms have no valid value and are excluded.');
   if(m.partialCount)scopeText+=(LANG==='zh'?'。另有 '+m.partialCount+' 家收入子来源缺项，按源图已披露金额计入。':'. '+m.partialCount+' platforms have partial revenue coverage; reported amounts are included as in the source.');
@@ -6712,10 +6765,10 @@ function stkLaunchpadDraw(){
   svg.onpointermove=point;svg.onpointerdown=point;
   svg.onpointerleave=function(ev){if(ev.pointerType&&ev.pointerType!=='mouse')return;stkLaunchpadSelect(29);};
   svg.onkeydown=function(ev){var k=ev.key;if(['ArrowLeft','ArrowRight','Home','End'].indexOf(k)<0)return;ev.preventDefault();stkLaunchpadSelect(k==='Home'?0:k==='End'?29:STK_LPVIEW.index+(k==='ArrowLeft'?-1:1));};
-  svg.setAttribute('aria-label',stkLaunchpadLabel(STK_LPMETRIC)+' · STONK '+m.share.toFixed(2)+'% · '+m.date+' UTC');
-  var axis=document.getElementById('stkLPAxis');if(axis)axis.innerHTML='<span>'+dates[0].slice(5)+'</span><span>'+dates[15].slice(5)+'</span><span>'+m.date.slice(5)+'</span>';
-  var note=document.getElementById('stkLPTrendNote');if(note)note.textContent=LANG==='zh'?'逐日统计，缺失日不连线。平台覆盖范围可能随日期变化；鼠标移动或点按图中查看。':'Daily observations; missing days break the line. Platform coverage can vary by date. Hover or tap the chart to inspect.';
-  if(updated)updated.textContent=(LANG==='zh'?'源数据更新：':'Source updated: ')+(m.sourceUpdated||'—')+' · '+(LANG==='zh'?'本轮采集尝试：':'Fetch attempted: ')+(d.generated?new Date(d.generated*1000).toISOString().slice(0,16).replace('T',' ')+' UTC':'—')+(LANG==='zh'?'。每轮云端小时采集尝试刷新，源数据发布频率由 Blockworks 决定。':'. Retried each hourly cloud refresh; source publication follows Blockworks.');
+  svg.setAttribute('aria-label',stkLaunchpadLabel(STK_LPMETRIC)+' · STONK '+m.share.toFixed(2)+'% · '+stkLaunchpadPeriod(m.date,STK_LPMETRIC,true));
+  var axis=document.getElementById('stkLPAxis');if(axis){axis.setAttribute('aria-label',bjZone());axis.innerHTML=[dates[0],dates[15],m.date].map(function(date){return '<span title="'+esc(stkLaunchpadPeriod(date,STK_LPMETRIC,true))+'">'+esc(stkLaunchpadAxisDay(date,STK_LPMETRIC))+'</span>';}).join('');}
+  var note=document.getElementById('stkLPTrendNote');if(note)note.textContent=(STK_LPMETRIC==='marketcap'?(LANG==='zh'?'横轴为日末快照时间。':'The axis shows day-end snapshot times.'):(LANG==='zh'?'横轴为每日统计窗口起点（08:00 至次日 08:00）。':'The axis shows each daily window’s start (08:00 to 08:00 the next day).'))+' '+(LANG==='zh'?'逐日统计，缺失日不连线。平台覆盖范围可能随日期变化；鼠标移动或点按图中查看。':'Daily observations; missing days break the line. Platform coverage can vary by date. Hover or tap the chart to inspect.');
+  if(updated)updated.textContent=(LANG==='zh'?'源数据更新：':'Source updated: ')+bjStamp(m.sourceUpdated)+' · '+(LANG==='zh'?'本轮采集尝试：':'Fetch attempted: ')+bjStamp(d.generated?d.generated*1000:null)+(LANG==='zh'?'。每轮云端小时采集尝试刷新，源数据发布频率由 Blockworks 决定。':'. Retried each hourly cloud refresh; source publication follows Blockworks.');
 }
 
 
@@ -6724,7 +6777,7 @@ function stkLaunchpadSelect(index){
   var date=view.dates[index],r=view.history.get(date),tip=document.getElementById('stkLPTip'),guide=document.getElementById('stkLPGuide'),dot=document.getElementById('stkLPDot'),hasValue=view.vals[index]!==null;
   if(guide){guide.setAttribute('x1',(index+.5)*40);guide.setAttribute('x2',(index+.5)*40);}
   if(dot){dot.style.display=hasValue?'':'none';dot.setAttribute('cx',(index+.5)*40);dot.setAttribute('cy',hasValue?view.y(view.vals[index]):150);}
-  if(tip){tip.hidden=false;tip.innerHTML='<span class="stk-hour-tooltip-time">'+date+' UTC</span><div class="stk-hour-tooltip-value"><span>'+esc(stkLaunchpadLabel(STK_LPMETRIC))+'</span><b>'+(hasValue?view.vals[index].toFixed(2)+'%':'—')+'</b></div>'+(hasValue?'<small class="stk-lp-tip-amount">STONK '+esc(stkLaunchpadValue(r.stonk))+'</small><small class="stk-lp-tip-scope">'+esc((LANG==='zh'?'已披露合计 ':'Reported total ')+stkLaunchpadValue(r.total)+' · '+r.platformCount+(LANG==='zh'?' 家平台':' platforms'))+'</small>':'<small class="stk-hour-tooltip-change">'+(LANG==='zh'?'该日未采样，不代表 0':'No observation for this date, not zero')+'</small>');}
+  if(tip){tip.hidden=false;tip.innerHTML='<span class="stk-hour-tooltip-time">'+esc(stkLaunchpadPeriod(date,STK_LPMETRIC,true))+(STK_LPMETRIC==='marketcap'?(LANG==='zh'?' · 日末快照':' · day-end snapshot'):'')+'</span><div class="stk-hour-tooltip-value"><span>'+esc(stkLaunchpadLabel(STK_LPMETRIC))+'</span><b>'+(hasValue?view.vals[index].toFixed(2)+'%':'—')+'</b></div>'+(hasValue?'<small class="stk-lp-tip-amount">STONK '+esc(stkLaunchpadValue(r.stonk))+'</small><small class="stk-lp-tip-scope">'+esc((LANG==='zh'?'已披露合计 ':'Reported total ')+stkLaunchpadValue(r.total)+' · '+r.platformCount+(LANG==='zh'?' 家平台':' platforms'))+'</small>':'<small class="stk-hour-tooltip-change">'+(LANG==='zh'?'该日未采样，不代表 0':'No observation for this date, not zero')+'</small>');}
   stkLaunchpadPlaceTooltip();
 }
 function stkLaunchpadPlaceTooltip(){
@@ -6742,15 +6795,16 @@ function stkHourlyHTML(){
     +'<div class="stk-chart stk-axis-chart stk-hour-chart"><div class="plot-scale" id="stkHScale"></div><svg id="stkHChart" viewBox="0 0 1200 300" preserveAspectRatio="none" role="img" tabindex="0" aria-describedby="stkHTip"></svg><div class="stk-hour-tooltip" id="stkHTip" role="status" aria-live="polite" aria-atomic="true"></div></div>'
     +'<div class="stk-hour-axis" id="stkHAxis"></div>'
     +'<p class="stk-note" id="stkHSum"></p><div class="stk-hour-meta"><span id="stkHStamp"></span><span>'+(LANG==='zh'?'小时收入 / 销毁为估算':'Hourly revenue / burns are estimates')+'</span></div>'
-    +'<details class="stk-hour-details"><summary>'+(LANG==='zh'?'逐小时明细与口径':'Hourly table & methodology')+'</summary><p class="stk-note">'+(LANG==='zh'?'收入与销毁按官方快照分配；完整日按官网日额校准。小时分布为估算，不等于官网精确逐小时流水；交易量为主池口径。此图随云端小时快照更新，与上方每分钟更新的今日收入卡片独立。':'Revenue and burns follow official snapshots and complete-day calibrations. Hourly allocations are estimates, not exact hourly transactions. Volume covers the main pool. This chart updates with cloud hourly snapshots, separately from the live daily revenue card.')+'</p><div class="stk-hour-table"><table><thead><tr><th>UTC</th><th>'+(LANG==='zh'?'小时值':'Hourly value')+'</th><th>'+(LANG==='zh'?'较上小时':'vs prior hour')+'</th></tr></thead><tbody id="stkHRows"></tbody></table></div></details></div>';
+    +'<details class="stk-hour-details"><summary>'+(LANG==='zh'?'逐小时明细与口径':'Hourly table & methodology')+'</summary><p class="stk-note">'+(LANG==='zh'?'时间统一显示北京时间；收入与销毁按官方快照分配，统计日为北京 08:00 至次日 08:00，完整统计日按官网日额校准。小时分布为估算，不等于官网精确逐小时流水；交易量为主池口径。此图随云端小时快照更新，与上方每分钟更新的本统计日收入卡片独立。':'Times use Beijing time. Revenue and burns follow official snapshots and full reporting-day calibrations (08:00 to the next 08:00 Beijing). Hourly allocations are estimates, not exact hourly transactions. Volume covers the main pool. This chart updates with cloud hourly snapshots, separately from the live reporting-day revenue card.')+'</p><div class="stk-hour-table"><table><thead><tr><th>'+(LANG==='zh'?'北京时间':'Beijing time')+'</th><th>'+(LANG==='zh'?'小时值':'Hourly value')+'</th><th>'+(LANG==='zh'?'较上小时':'vs prior hour')+'</th></tr></thead><tbody id="stkHRows"></tbody></table></div></details></div>';
 }
 
 /* ---------- 飞轮 ---------- */
 function stkFlyHTML(fw, h){
+  var dailyDates=stkDailyDates(fw);
   var tiles=[
     [st('flRev7'), fmtU(fw.revenue7), LANG==='zh'?'日均 '+fmtU(fw.rev7):'avg '+fmtU(fw.rev7)+'/day'],
     [st('flBB7'), fmtU(fw.buyback7), LANG==='zh'?'日均 '+fmtU(fw.buybackDay):'avg '+fmtU(fw.buybackDay)+'/day'],
-    [st('flShare'), (fw.share!=null? (fw.share*100).toFixed(1)+'%':''), LANG==='zh'?'近 7 个完整 UTC 日':'last 7 complete UTC days'],
+    [st('flShare'), (fw.share!=null? (fw.share*100).toFixed(1)+'%':''), LANG==='zh'?'近 7 个完整统计日 · 北京 08:00 起':'last 7 complete reporting days · 08:00 Beijing start'],
     [st('flVsVol'), (fw.vsVol!=null? (fw.vsVol*100).toFixed(1)+'%':''), LANG==='zh'?'7 日均买回 ÷ 主池 24h 成交':'7d avg buyback ÷ main-pool 24h volume'],
     [st('flPx'), (fw.pxRatio!=null? fw.pxRatio.toFixed(2)+'x':''), LANG==='zh'?('回购均价 '+pxS(fw.avgPx7)):('avg buyback '+pxS(fw.avgPx7))],
     [st('flChg'), (fw.chg7!=null? pctS(fw.chg7):''), LANG==='zh'?'近 7 日 vs 前 7 日':'7d vs prior 7d']
@@ -6768,7 +6822,7 @@ function stkFlyHTML(fw, h){
     + '<div class="stk-h3">'+esc(st('chartDaily').replace('{n}', (fw.dates||[]).length || 0))+'</div>'
     + '<div class="stk-legend"><span><em style="background:var(--metric-revenue)"></em>'+(LANG==='zh'?'平台收入':'Revenue')+'</span><span><em style="background:var(--stonk)"></em>'+(LANG==='zh'?'回购支出':'Buyback spend')+'</span></div>'
     + '<div class="stk-chart stk-axis-chart"><div class="plot-scale" id="stkDScale"></div><svg id="stkDChart" viewBox="0 0 1200 300" preserveAspectRatio="none"></svg><div class="stk-tip" id="stkDTip"></div></div>'
-    + '<div class="stk-axis"><span>'+esc(((fw.dates||[])[0]||''))+'</span><span>'+esc(((fw.dates||[])[(fw.dates||[]).length-1]||''))+'</span></div>'
+    + '<div class="stk-axis"><span>'+esc(bjISO((dailyDates[0]||'')+'T00:00:00Z').slice(5,16))+'</span><span>'+esc(bjISO((dailyDates[dailyDates.length-1]||'')+'T00:00:00Z').slice(5,16))+'</span></div>'
     + '</div>'
     + '<div class="card stk-card stk-sec stk-series-panel" id="stkPCard" role="tabpanel" aria-labelledby="stk-tab-price" data-series="price"'+(STK_CTAB!=='price'?' hidden':'')+'>'
     +   '<div class="stk-legend"><span><em style="background:var(--hb-stonk)"></em>'+esc(st('chartPrice').replace('{n}', ((stkBundle()||{}).priceHist||[]).length || 0))+'</span></div>'
@@ -6893,7 +6947,7 @@ function stkRankHTML(fr){
         return '<div class="stk-cell"><div class="k">'+esc(c[0])+'</div><div class="v">'+(c[1]||'—')+'</div></div>';
       }).join('')+'</div>'
     + '<div class="stk-model-note">'+esc(st('rkNote'))+'<br>'+esc(st('rkVolSource'))
-      +(fr.volumeUpdated?' · '+esc(new Date(fr.volumeUpdated).toLocaleString(LANG==='zh'?'zh-CN':'en-GB')):'')+'</div>'
+      +(fr.volumeUpdated?' · '+esc(bjStamp(fr.volumeUpdated)):'')+'</div>'
     + '</div>';
 }
 
@@ -7504,10 +7558,13 @@ function stkHover(svg, tip, n, cb){
     var i=at(ev);
     tip.innerHTML=cb(i);
     tip.classList.add('on');
-    /* v3.27.3：气泡贴到左右边缘时收进来 —— 手机端点两端柱子不再溢出卡片 */
-    var rr=svg.getBoundingClientRect(), rw=Math.max(1,rr.width);
-    var tw=Math.min(tip.offsetWidth||90, Math.max(70, rw-10));
-    var tx=Math.max(tw/2+2, Math.min(rw-tw/2-2, ((i+0.5)/n)*rw));
+    /* Clamp the actual tooltip inside its positioning box, including the axis gutter. */
+    var rr=svg.getBoundingClientRect(), holder=tip.offsetParent||svg.parentElement, hr=holder.getBoundingClientRect();
+    var width=Math.max(1,holder.clientWidth||hr.width), edge=6;
+    tip.style.boxSizing='border-box';tip.style.maxWidth=Math.max(0,width-edge*2)+'px';
+    var tw=tip.getBoundingClientRect().width, origin=hr.left+(holder.clientLeft||0);
+    var anchor=rr.left-origin+((i+.5)/n)*rr.width;
+    var tx=Math.max(edge+tw/2,Math.min(width-edge-tw/2,anchor));
     tip.style.left=tx.toFixed(1)+'px';
     var rs=svg.querySelectorAll('.sk-b');
     for(var k=0;k<rs.length;k++) rs[k].classList.toggle('on', +rs[k].getAttribute('data-i')===i);
@@ -7523,12 +7580,7 @@ function stkHover(svg, tip, n, cb){
   svg.addEventListener('touchmove', show, {passive:true});
   svg.addEventListener('touchend', hide);
 }
-function stkHourLabel(ts){
-  try{
-    var d=new Date(ts*1000);
-    return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+' '+String(d.getUTCHours()).padStart(2,'0')+':00 UTC';
-  }catch(e){ return ''; }
-}
+function stkHourLabel(ts){return bjHour(ts);}
 function plotGrid(id,max,format,top,bottom){
   var labels=document.getElementById(id), grid='', marks='';
   [1,2/3,1/3,0].forEach(function(f){var y=top+(1-f)*(300-top-bottom);grid+='<line class="plot-grid" x1="0" x2="1200" y1="'+y+'" y2="'+y+'"/>';marks+='<i style="top:'+(y/3)+'%">'+format(max*f)+'</i>';});
@@ -7539,7 +7591,7 @@ function stkDrawDaily(){
   var d=stkBundle(); if(!d) return;
   var fw=d.flywheel||{}; var svg=document.getElementById('stkDChart'), tip=document.getElementById('stkDTip');
   if(!svg||!tip) return;
-  var rev=fw.rev||[], bb=fw.buyback||[], dates=fw.dates||[];
+  var rev=fw.rev||[], bb=fw.buyback||[], dates=stkDailyDates(fw);
   var n=rev.length; if(!n){ svg.innerHTML=''; return; }
   var H=300, padT=12, padB=16, innerH=H-padT-padB;
   var mx=0; for(var i=0;i<n;i++) mx=Math.max(mx, rev[i]||0, bb[i]||0);
@@ -7554,7 +7606,7 @@ function stkDrawDaily(){
   }
   svg.innerHTML=parts.join('');
   stkHover(svg, tip, n, function(i){
-    return '<b>'+esc(dates[i]||'')+'</b> · '+(LANG==='zh'?'收入 ':'rev ')+fmtU(rev[i])+' · '+(LANG==='zh'?'买回 ':'buyback ')+fmtU(bb[i]);
+    return '<b>'+esc(bjDay(dates[i]||'',true))+'</b> · '+(LANG==='zh'?'收入 ':'rev ')+fmtU(rev[i])+' · '+(LANG==='zh'?'买回 ':'buyback ')+fmtU(bb[i]);
   });
 }
 /* Complete UTC hours only. Missing intervals remain null and cannot enter full-window comparisons. */
@@ -7663,11 +7715,11 @@ function stkDrawHour(){
     +tile(LANG==='zh'?'选中 '+n+' 小时采样合计':'Selected '+n+'h sampled total',stkHourMoney(m.sum),(LANG==='zh'?'覆盖 ':'Coverage ')+m.count+'/'+n+' h')
     +tile(LANG==='zh'?'近 6 小时 vs 前 6 小时':'Last 6h vs prior 6h',stkHourChange(m.change6),m.change6!==null?(LANG==='zh'?'两个完整 6 小时窗口':'Two complete 6h windows'):(LANG==='zh'?'需连续 12 小时完整采样':'Requires 12 complete samples'),m.change6!==null?(m.change6>=0?'up':'down'):'');
   var ax=document.getElementById('stkHAxis');
-  if(ax)ax.innerHTML=[0,Math.floor(n/3),Math.floor(n*2/3),n-1].map(function(i){var dt=new Date(hours[i]*1000);return '<span>'+esc((dt.getUTCMonth()+1)+'/'+dt.getUTCDate()+' '+String(dt.getUTCHours()).padStart(2,'0')+':00')+'</span>';}).join('');
+  if(ax)ax.innerHTML=[0,Math.floor(n/3),Math.floor(n*2/3),n-1].map(function(i){return '<span>'+esc(bjHour(hours[i],false))+'</span>';}).join('');
   var coverage=document.getElementById('stkHCoverage');if(coverage)coverage.textContent=m.count+'/'+n+(LANG==='zh'?' 小时已采样 · 灰带为缺失':' hours sampled · grey = missing');
-  var stamp=document.getElementById('stkHStamp');if(stamp)stamp.textContent=(LANG==='zh'?'小时快照更新：':'Hourly snapshot updated: ')+(m.generated?new Date(m.generated*1000).toISOString().slice(0,16).replace('T',' ')+' UTC':'—');
+  var stamp=document.getElementById('stkHStamp');if(stamp)stamp.textContent=(LANG==='zh'?'小时快照更新：':'Hourly snapshot updated: ')+(m.generated?bjStamp(m.generated*1000):'—');
   var note=document.getElementById('stkHSum');
-  if(note)note.textContent=LANG==='zh'?'仅展示完整 UTC 小时；缺失处断线，灰带不是零值。鼠标移动或点按图中查看，左右方向键切换小时。':'Complete UTC hours only; gaps are not zero. Hover or tap the chart to inspect; use left/right arrow keys to step through hours.';
+  if(note)note.textContent=LANG==='zh'?'北京时间 · 仅展示已结束的完整小时；缺失处断线，灰带不是零值。鼠标移动或点按图中查看，左右方向键切换小时。':'Beijing time · Complete hours only; gaps are not zero. Hover or tap the chart to inspect; use left/right arrow keys to step through hours.';
   var rows=document.getElementById('stkHRows');
   if(rows)rows.innerHTML=hours.map(function(ts,i){var ix=hours.length-1-i,v=vals[ix],priorIndex=m.fullHours.indexOf(hours[ix]-3600),prev=priorIndex<0?null:m.fullVals[priorIndex];return '<tr><td>'+esc(stkHourLabel(hours[ix]))+'</td><td>'+esc(v===null?(LANG==='zh'?'未采样':'Unsampled'):stkHourMoney(v))+'</td><td>'+esc(stkHourChange(v!==null&&prev!==null&&prev>0?v/prev-1:null))+'</td></tr>';}).join('');
   var index=STK_HSELECT!==null?hours.indexOf(STK_HSELECT):-1;
@@ -7697,8 +7749,8 @@ function stkDrawPrice(){
     hideMark('stkPHiDot','stkPHiTag'); hideMark('stkPLoDot','stkPLoTag');
     return;
   }
-  function d2(ts){ var dt=new Date(ts*1000); return String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
-  function d4(ts){ var dt=new Date(ts*1000); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
+  function d2(ts){return bjISO(ts*1000).slice(5,10);}
+  function d4(ts){return bjStamp(ts*1000);}
   /* v3.29.21：价格 / FDV 两档切换（FDV = 当日收盘价 × 当前总供应，两条线同形）。
      头部大数字、纵轴、气泡全跟着切换，口径写在下方小字里。
      v3.29.23：这里以前拿 d.model.supply（= 初始供应 10.00 亿）当乘数 —— STONK 已经烧掉
@@ -7861,11 +7913,13 @@ function stkDrawPrice(){
       var i=at(ev), row=sv[i];
       tip.innerHTML='<b>'+d4(row[0])+'</b> · '+(isFdv?'FDV ':'')+vTxt(row[1]);
       tip.classList.add('on');
-      var rr=svg.getBoundingClientRect(), rw=Math.max(1,rr.width);
-      var off=box? (rr.left-box.getBoundingClientRect().left) : 0;   /* 气泡按卡片定位，得补上左侧刻度栏 */
-      var tw=Math.min(tip.offsetWidth||92, Math.max(70, rw-10));
-      var tx=Math.max(tw/2+2, Math.min(rw-tw/2-2, (i/Math.max(1,n-1))*rw));
-      tip.style.left=(off+tx).toFixed(1)+'px';
+      var rr=svg.getBoundingClientRect(), holder=tip.offsetParent||box||svg.parentElement, hr=holder.getBoundingClientRect();
+      var width=Math.max(1,holder.clientWidth||hr.width), edge=6;
+      tip.style.boxSizing='border-box';tip.style.maxWidth=Math.max(0,width-edge*2)+'px';
+      var tw=tip.getBoundingClientRect().width, origin=hr.left+(holder.clientLeft||0);
+      var anchor=rr.left-origin+(i/Math.max(1,n-1))*rr.width;
+      var tx=Math.max(edge+tw/2,Math.min(width-edge-tw/2,anchor));
+      tip.style.left=tx.toFixed(1)+'px';
       var yp=(pts[i][1]/300*100);
       if(cross){ cross.style.left=XL(i/Math.max(1,n-1)); cross.classList.add('on'); }
       if(dot){ dot.style.left=XL(i/Math.max(1,n-1)); dot.style.top=yp.toFixed(2)+'%'; dot.classList.add('on'); }
@@ -7933,9 +7987,9 @@ function stkDrawRev90(){
     var lastV=null, lastD='';
     for(var q=n-1;q>=0;q--){ if(rev[q]!=null&&isFinite(rev[q])){ lastV=rev[q]; lastD=dates[q]; break; } }
     stat.innerHTML=[
-      '<div class="stk-cell"><div class="k">'+esc(st('r90Latest'))+'</div><div class="v">'+(lastV!=null? fmtU(lastV):'—')+'<small>'+esc(String(lastD||'').slice(5))+'</small></div></div>',
+      '<div class="stk-cell"><div class="k">'+esc(st('r90Latest'))+'</div><div class="v">'+(lastV!=null? fmtU(lastV):'—')+'<small>'+esc(bjDay(lastD))+'</small></div></div>',
       '<div class="stk-cell"><div class="k">'+esc(st('r90Avg'))+'</div><div class="v">'+(r9.avg!=null? fmtU(r9.avg):'—')+'<small>'+esc((r9.n||n)+' '+st('r90Days'))+'</small></div></div>',
-      '<div class="stk-cell"><div class="k">'+esc(st('r90Peak'))+'</div><div class="v">'+(r9.max!=null? fmtU(r9.max):'—')+'<small>'+esc(String(r9.maxDate||'').slice(5))+'</small></div></div>'
+      '<div class="stk-cell"><div class="k">'+esc(st('r90Peak'))+'</div><div class="v">'+(r9.max!=null? fmtU(r9.max):'—')+'<small>'+esc(bjDay(r9.maxDate||''))+'</small></div></div>'
     ].join('');
   }
   var sum=document.getElementById('stkR90Sum');
@@ -7960,7 +8014,7 @@ function stkDrawRev90(){
   }
   svg.innerHTML=parts.join('');
   if(ax){
-    var md=function(s){ return String(s||'').slice(5); };
+    var md=function(s){return bjISO(String(s||'')+'T00:00:00Z').slice(5,16);};
     var ids=[0, Math.round((n-1)/3), Math.round((n-1)*2/3), n-1], uniq=[];
     ids.forEach(function(k){ if(uniq.indexOf(k)<0) uniq.push(k); });
     ax.innerHTML=uniq.map(function(k){ return '<span>'+esc(md(dates[k]))+'</span>'; }).join('');
@@ -7980,9 +8034,9 @@ function stkDrawRev90(){
     stkR90Hover(svg, svg.closest('.stk-r90box')||svg.parentNode||svg, tip, n, function(k){
       var v2=rev[k], day=dates[k]||'', line2='';
       var t2;
-      if(v2==null||!isFinite(v2)) t2='<b>'+esc(day)+'</b> · '+esc(st('r90NoData'));
+      if(v2==null||!isFinite(v2)) t2='<b>'+esc(bjDay(day,true))+'</b> · '+esc(st('r90NoData'));
       else{
-        t2='<b>'+esc(day)+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
+        t2='<b>'+esc(bjDay(day,true))+'</b> · '+esc(st('hourTabRev'))+' '+fmtU(v2);
         var pv=(k>0? rev[k-1] : null);
         if(pv!=null&&isFinite(pv)&&pv>0){ var pc=v2/pv-1; line2=esc(st('r90Vs'))+' '+(pc>=0?'+':'')+(pc*100).toFixed(1)+'%'; }
       }
